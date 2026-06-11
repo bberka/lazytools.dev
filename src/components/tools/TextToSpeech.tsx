@@ -178,7 +178,7 @@ export function TextToSpeech() {
     };
 
     utterance.onerror = (e) => {
-      console.error('SpeechSynthesis error:', e);
+      console.error('SpeechSynthesis error:', e.error || e);
       if (isPlayingRef.current) {
         playSentenceRef.current(index + 1);
       }

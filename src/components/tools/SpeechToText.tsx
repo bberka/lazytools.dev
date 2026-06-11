@@ -281,7 +281,7 @@ export function SpeechToText() {
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event);
+        console.error('Speech recognition error:', event.error);
         if (event.error === 'not-allowed') {
           setError('Microphone access blocked. Please enable mic permissions in your browser.');
         } else {
