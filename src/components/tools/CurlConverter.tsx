@@ -475,7 +475,7 @@ export function CurlConverter() {
               onValueChange={(val) => setActiveTab(val as TargetLanguage)}
               className="w-full"
             >
-              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 gap-1 bg-muted/60 p-1 rounded-lg">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 gap-1 bg-muted/60 p-1 rounded-lg h-auto">
                 <TabsTrigger value="js-fetch" className="text-xs font-semibold py-1.5 px-2">Fetch</TabsTrigger>
                 <TabsTrigger value="js-axios" className="text-xs font-semibold py-1.5 px-2">Axios</TabsTrigger>
                 <TabsTrigger value="python-requests" className="text-xs font-semibold py-1.5 px-2">Python</TabsTrigger>

@@ -292,7 +292,7 @@ export function MorseBinaryConverter() {
         onValueChange={(val) => handleToolTypeChange(val as ToolType)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="morse" className="flex items-center gap-2 font-semibold">
             <Music className="h-4 w-4 text-primary" />
             Morse Code
@@ -310,7 +310,7 @@ export function MorseBinaryConverter() {
         onValueChange={(val) => handleModeChange(val as Mode)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2 font-semibold">
             Encode Text (Plain to Code)
           </TabsTrigger>

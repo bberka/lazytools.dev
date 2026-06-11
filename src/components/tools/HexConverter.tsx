@@ -140,7 +140,7 @@ export function HexConverter() {
         onValueChange={(val) => handleModeChange(val as Mode)}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2 font-semibold">
             <Binary className="h-4 w-4 text-primary" />
             String to Hex (Encode)
