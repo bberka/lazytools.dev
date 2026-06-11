@@ -318,6 +318,39 @@ export const TOOL_REGISTRY = {
     component: () =>
       import('@/components/tools/UrlEncoder').then((module) => module.UrlEncoder),
   },
+  'hex-converter': {
+    name: 'Hex ↔ String Converter',
+    description: 'Convert text to hex representations and vice-versa.',
+    tags: ['encoders-decoders'],
+    icon: 'Binary',
+    keywords: ['hex', 'string', 'text', 'convert', 'encode', 'decode', 'binary'],
+    component: () =>
+      import('@/components/tools/HexConverter').then(
+        (module) => module.HexConverter
+      ),
+  },
+  'punycode-converter': {
+    name: 'Punycode Converter',
+    description: 'Translate domain names to and from Punycode format.',
+    tags: ['encoders-decoders'],
+    icon: 'Globe',
+    keywords: ['punycode', 'domain', 'idn', 'unicode', 'ascii', 'convert', 'dns'],
+    component: () =>
+      import('@/components/tools/PunycodeConverter').then(
+        (module) => module.PunycodeConverter
+      ),
+  },
+  'morse-binary-converter': {
+    name: 'Morse Code & Binary Converter',
+    description: 'Convert text to Morse code or binary, with audio playback.',
+    tags: ['encoders-decoders'],
+    icon: 'Music',
+    keywords: ['morse', 'binary', 'audio', 'beep', 'play', 'text', 'encode', 'decode'],
+    component: () =>
+      import('@/components/tools/MorseBinaryConverter').then(
+        (module) => module.MorseBinaryConverter
+      ),
+  },
   'url-parser-builder': {
     name: 'URL Parser & Builder',
     description: 'Deconstruct, edit, and rebuild complex URL query parameters.',

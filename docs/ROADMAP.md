@@ -17,9 +17,9 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [x] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats (integrated inside the existing JSON / YAML / XML / CSV / TOML Converter).
 
 ### 2. Encoders & Decoders
-- [ ] **Hex to String / String to Hex**: Convert text to hex representations and vice-versa.
-- [ ] **Punycode Encoder/Decoder**: Translate internationalized domain names (IDN) to/from Punycode.
-- [ ] **Morse Code / Binary Encoder**: Encode text to binary or Morse code (with optional audio playback).
+- [x] **Hex to String / String to Hex**: Convert text to hex representations and vice-versa.
+- [x] **Punycode Encoder/Decoder**: Translate internationalized domain names (IDN) to/from Punycode.
+- [x] **Morse Code / Binary Encoder**: Encode text to binary or Morse code (with optional audio playback).
 
 ### 3. Generators
 - [ ] **Mock/Dummy Data Generator**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.

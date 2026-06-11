@@ -35,17 +35,17 @@ All tools must be:
 
 ### 2. Encoders & Decoders
 
-#### Hex to String / String to Hex Converter
+#### Hex to String / String to Hex Converter (Status: Implemented)
 - **Description**: Convert text to hexadecimal representation and vice-versa.
 - **Key Features**: Customizable prefixes (`\x`, `0x`), byte count summaries.
 - **Implementation**: Native JS string conversion.
 
-#### Punycode Encoder/Decoder
+#### Punycode Encoder/Decoder (Status: Implemented)
 - **Description**: Translate internationalized domain names (IDN) to/from Punycode.
 - **Key Features**: Encodes special characters (e.g. `münchen` ↔ `xn--mnchen-3ya`).
 - **Implementation**: Lightweight `punycode.js` library.
 
-#### Morse Code / Binary Encoder
+#### Morse Code / Binary Encoder (Status: Implemented)
 - **Description**: Encode text to binary or Morse code (with optional audio playback).
 - **Key Features**: Plays audio representing Morse code using the browser's Web Audio API oscillators.
 - **Implementation**: Custom Morse dictionary mapping; native audio synthesis.
