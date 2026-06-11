@@ -265,6 +265,28 @@ export const TOOL_REGISTRY = {
         (module) => module.CsvJsonConverter
       ),
   },
+  'curl-to-code': {
+    name: 'cURL Command to Code',
+    description: 'Convert cURL commands to Fetch, Axios, Python, Go, and Rust.',
+    tags: ['converters'],
+    icon: 'Terminal',
+    keywords: ['curl', 'fetch', 'axios', 'python', 'go', 'rust', 'request', 'convert', 'snippet'],
+    component: () =>
+      import('@/components/tools/CurlConverter').then(
+        (module) => module.CurlConverter
+      ),
+  },
+  'json-to-typescript': {
+    name: 'JSON to TypeScript',
+    description: 'Convert raw JSON payloads into typed TypeScript interfaces.',
+    tags: ['converters'],
+    icon: 'FileCode',
+    keywords: ['json', 'typescript', 'ts', 'interface', 'type', 'convert', 'generate', 'schema'],
+    component: () =>
+      import('@/components/tools/JsonToTypescript').then(
+        (module) => module.JsonToTypescript
+      ),
+  },
   'markdown-to-docx': {
     name: 'Markdown to DOCX Converter',
     description: 'Convert Markdown to styled Word documents (.docx) format.',

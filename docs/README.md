@@ -21,7 +21,7 @@ Static web app for everyday browser-side workflows: converting files, formatting
 
 ## Tool Categories
 
-- Converters: 6 tools
+- Converters: 8 tools
 - Encoders & Decoders: 5 tools
 - Generators: 5 tools
 - Formatters & Validators: 6 tools

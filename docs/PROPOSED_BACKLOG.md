@@ -16,17 +16,17 @@ All tools must be:
 
 ### 1. Converters
 
-#### cURL Command to Fetch/Axios Converter
+#### cURL Command to Fetch/Axios Converter (Status: Implemented)
 - **Description**: Convert raw cURL commands into JavaScript fetch, Axios, Python requests, or Go snippets.
 - **Key Features**: Auto-parsing of raw curl options, selection of target language output, highlight styling.
 - **Implementation**: Pure client-side parsing using standard string parsing or the `curlconverter` package.
 
-#### JSON to TypeScript Interface Generator
+#### JSON to TypeScript Interface Generator (Status: Implemented)
 - **Description**: Convert JSON payloads into typed TypeScript interfaces.
 - **Key Features**: Handles nested arrays/objects, generates clean exports, toggles optional properties.
 - **Implementation**: Client-side recursive interface generator or standard typescript typings package.
 
-#### JSON/CSV to TOML
+#### JSON/CSV to TOML (Status: Implemented)
 - **Description**: Bidirectional conversion between JSON, CSV, and TOML formats.
 - **Key Features**: Prettification, indentation spacing settings.
 - **Implementation**: Dynamic imports of `@iarna/toml` or a lightweight YAML/TOML package.

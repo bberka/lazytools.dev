@@ -12,9 +12,9 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 ## Tool Expansion Backlog
 
 ### 1. Converters
-- [ ] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
-- [ ] **JSON to TypeScript Interface**: Convert JSON payloads into typed TypeScript interfaces.
-- [ ] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats.
+- [x] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
+- [x] **JSON to TypeScript Interface**: Convert JSON payloads into typed TypeScript interfaces.
+- [x] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats (integrated inside the existing JSON / YAML / XML / CSV / TOML Converter).
 
 ### 2. Encoders & Decoders
 - [ ] **Hex to String / String to Hex**: Convert text to hex representations and vice-versa.
