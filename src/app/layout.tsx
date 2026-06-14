@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { CommandPalette } from '@/components/CommandPalette';
 import { PWARegister } from '@/components/PWARegister';
 import { MainLayout } from '@/components/MainLayout';
+import { TauriWindowHandler } from '@/components/TauriWindowHandler';
 import '@/styles/globals.css';
 
 const outfit = Outfit({
@@ -123,6 +124,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
+          <TauriWindowHandler />
           <PWARegister />
           <div className="min-h-screen overflow-x-clip bg-background">
             <Header />

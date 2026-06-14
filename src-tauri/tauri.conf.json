@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "lazytools",
   "version": "0.1.0",
-  "identifier": "dev.lazytools.app",
+  "identifier": "dev.lazytools",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -10,13 +10,15 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "LazyTools",
         "width": 800,
         "height": 600,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "visible": false
       }
     ],
     "security": {
