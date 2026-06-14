@@ -232,7 +232,7 @@ For manual verification:
 - [ ] Affected workflow was manually tested
 - [ ] UI works in light and dark mode
 - [ ] Mobile layout was checked
-- [ ] Version bumped in the root `VERSION` file (if releasing)
+- [ ] Pushed Git release tag `v*` (if releasing; this updates package versioning dynamically)
 - [ ] Documentation was updated when behavior changed
 - [ ] No unrelated generated files were included
 

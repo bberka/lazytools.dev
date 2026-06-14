@@ -10,7 +10,7 @@ This document reflects the current application architecture for LazyTools Collec
 - Tool interactions run in browser-side client components
 - The production build output is written to `out/`
 - Native desktop applications (Windows, macOS, Linux) are wrapped using Tauri v2 in `src-tauri/`
-- Centralized version management is located in `VERSION` and propagated before building via `scripts/sync-version.js`
+- Versions are automatically set during release workflows (tag pushes) via the `scripts/sync-version.js` helper.
 
 ## Rendering Model
 
@@ -30,8 +30,7 @@ The app is a static export with client-side tool execution layered on top. It is
 - `src/lib/utils/tool-registry.ts`
 - `src/lib/utils/tools-config.ts`
 - `src/lib/contexts/*`
-- `VERSION` (single version source)
-- `scripts/sync-version.js` (keeps package.json, tauri.conf.json, and Cargo.toml versions in sync)
+- `scripts/sync-version.js` (invoked in CI to keep package.json, tauri.conf.json, and Cargo.toml versions in sync with the pushed Git release tag)
 - `src-tauri/tauri.conf.json` (Tauri app packaging configuration)
 
 ## Tool Wiring

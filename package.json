@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "start": "next start",
-    "build": "node scripts/sync-version.js && next build && node scripts/generate-sw-precache.js",
+    "build": "next build && node scripts/generate-sw-precache.js",
     "analyze": "cross-env ANALYZE=true next build --webpack",
     "preview": "next start",
     "typecheck": "tsc --noEmit",
@@ -20,8 +20,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps",
     "tauri": "tauri",
-    "desktop:dev": "node scripts/sync-version.js && tauri dev",
-    "desktop:build": "node scripts/sync-version.js && tauri build"
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build"
   },
   "repository": {
     "type": "git",

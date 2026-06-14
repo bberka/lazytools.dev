@@ -2,18 +2,19 @@ const fs = require('fs');
 const path = require('path');
 
 try {
-  // 1. Read version from VERSION file
-  const versionPath = path.join(__dirname, '../VERSION');
-  if (!fs.existsSync(versionPath)) {
-    console.error('VERSION file not found in root.');
-    process.exit(1);
-  }
-  const version = fs.readFileSync(versionPath, 'utf8').trim();
+  // 1. Get version from command line argument
+  let version = process.argv[2]?.trim();
   if (!version) {
-    console.error('VERSION file is empty.');
+    console.error('Error: Please provide a version argument (e.g. 0.2.0 or v0.2.0).');
     process.exit(1);
   }
-  console.log(`Syncing version to: ${version}`);
+
+  // Remove leading 'v' if present (e.g. v0.2.0 -> 0.2.0)
+  if (version.startsWith('v')) {
+    version = version.substring(1);
+  }
+
+  console.log(`Syncing project versions to: ${version}`);
 
   // 2. Update package.json
   const packageJsonPath = path.join(__dirname, '../package.json');
