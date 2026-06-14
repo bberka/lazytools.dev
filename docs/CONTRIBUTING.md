@@ -7,6 +7,7 @@ Thanks for helping improve LazyTools Collection. This guide reflects the current
 - Node.js 20 or newer
 - npm
 - Git
+- Rust toolchain (required for desktop/Tauri development only)
 - Working knowledge of TypeScript, React, Tailwind CSS, and browser APIs
 
 ## Development Setup
@@ -18,6 +19,12 @@ npm run dev
 
 The dev server runs at `http://localhost:3000` by default.
 
+To develop the desktop app:
+
+```bash
+npm run desktop:dev
+```
+
 To verify a production static export:
 
 ```bash
@@ -25,6 +32,12 @@ npm run build
 ```
 
 The generated static site is written to `out/`.
+
+To build desktop installers locally:
+
+```bash
+npm run desktop:build
+```
 
 ## Project Structure
 
@@ -219,6 +232,7 @@ For manual verification:
 - [ ] Affected workflow was manually tested
 - [ ] UI works in light and dark mode
 - [ ] Mobile layout was checked
+- [ ] Version bumped in the root `VERSION` file (if releasing)
 - [ ] Documentation was updated when behavior changed
 - [ ] No unrelated generated files were included
 

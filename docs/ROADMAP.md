@@ -8,6 +8,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [ ] Add focused tests for pure transform helpers
 - [x] Add Playwright smoke tests for search, favorites, command palette, and a tool page
 - [ ] Add generated Open Graph images
+- [x] Support full desktop multi-platform release wrapper (Tauri v2)
 
 ## Tool Expansion Backlog
 

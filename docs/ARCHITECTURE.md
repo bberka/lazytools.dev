@@ -9,6 +9,8 @@ This document reflects the current application architecture for LazyTools Collec
 - All live tool pages are generated from the typed registry in `src/lib/utils/tool-registry.ts`
 - Tool interactions run in browser-side client components
 - The production build output is written to `out/`
+- Native desktop applications (Windows, macOS, Linux) are wrapped using Tauri v2 in `src-tauri/`
+- Centralized version management is located in `VERSION` and propagated before building via `scripts/sync-version.js`
 
 ## Rendering Model
 
@@ -28,6 +30,9 @@ The app is a static export with client-side tool execution layered on top. It is
 - `src/lib/utils/tool-registry.ts`
 - `src/lib/utils/tools-config.ts`
 - `src/lib/contexts/*`
+- `VERSION` (single version source)
+- `scripts/sync-version.js` (keeps package.json, tauri.conf.json, and Cargo.toml versions in sync)
+- `src-tauri/tauri.conf.json` (Tauri app packaging configuration)
 
 ## Tool Wiring
 
@@ -52,7 +57,7 @@ With `output: 'export'`:
 - `robots.txt` and `sitemap.xml` are emitted statically
 - Tool pages generate metadata from the shared tool config
 
-## Build And Deploy
+### Web Build and Deploy
 
 ```bash
 npm install
@@ -60,9 +65,22 @@ npm run build
 ```
 
 Output:
-
 ```text
 out/
 ```
 
 If deploying with Wrangler, the asset directory should point to `./out`.
+
+### Desktop Build
+
+Requires Rust toolchain.
+
+```bash
+npm run desktop:build
+```
+
+Outputs:
+- **Build Target**: `src-tauri/target/release/`
+- **Installers**: `src-tauri/target/release/bundle/` (e.g. `.msi`, `.exe` on Windows)
+
+Automated builds for Windows, macOS, and Linux occur via GitHub Actions on new tag pushes (`v*`), generating installer files and a version-prefixed web static zip (e.g., `0.1.0-lazytools-web.zip`).
