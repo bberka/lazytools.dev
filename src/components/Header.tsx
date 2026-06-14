@@ -10,7 +10,7 @@ export function Header() {
   const { fullWidth } = useSettings();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-md transition-all duration-300">
       <div
         className={cn(
           fullWidth ? 'w-full max-w-none px-4 sm:px-6 lg:px-8' : 'container',
@@ -28,9 +28,11 @@ export function Header() {
               window.dispatchEvent(new CustomEvent('reset-home-state'));
             } catch (e) {}
           }}
-          className="min-w-0 text-lg font-bold transition-opacity hover:opacity-80 sm:text-2xl"
+          className="min-w-0 flex items-center gap-2 group"
         >
-          LazyTools
+          <span className="text-xl font-extrabold tracking-tight sm:text-2xl bg-gradient-to-r from-primary via-purple-600 to-indigo-500 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105 transform origin-left">
+            LazyTools
+          </span>
         </Link>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <CommandPaletteButton />

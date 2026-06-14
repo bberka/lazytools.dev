@@ -5,6 +5,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-sans: var(--font-outfit), sans-serif;
+
   /* Colors mapped to standard Shadcn CSS variables */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -67,27 +69,27 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 224 71.4% 4.1%;
+  --background: 260 20% 98%;
+  --foreground: 260 50% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 224 71.4% 4.1%;
+  --card-foreground: 260 50% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 224 71.4% 4.1%;
-  --primary: 220.9 39.3% 11%;
+  --popover-foreground: 260 50% 10%;
+  --primary: 262 80% 50%;
   --primary-foreground: 210 20% 98%;
-  --secondary: 220 14.3% 95.9%;
-  --secondary-foreground: 220.9 39.3% 11%;
-  --muted: 220 14.3% 95.9%;
-  --muted-foreground: 220 8.9% 46.1%;
-  --accent: 220 14.3% 95.9%;
-  --accent-foreground: 220.9 39.3% 11%;
+  --secondary: 260 20% 95%;
+  --secondary-foreground: 262 80% 50%;
+  --muted: 260 10% 96%;
+  --muted-foreground: 260 15% 45%;
+  --accent: 260 20% 95%;
+  --accent-foreground: 262 80% 50%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 20% 98%;
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 224 71.4% 4.1%;
-  --radius: 0.5rem;
-  --chart-1: 12 76% 61%;
+  --border: 260 15% 92%;
+  --input: 260 15% 92%;
+  --ring: 262 80% 50%;
+  --radius: 0.75rem;
+  --chart-1: 262 80% 50%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
@@ -95,26 +97,26 @@
 }
 
 .dark {
-  --background: 224 71.4% 4.1%;
-  --foreground: 210 20% 98%;
-  --card: 224 71.4% 4.1%;
-  --card-foreground: 210 20% 98%;
-  --popover: 224 71.4% 4.1%;
-  --popover-foreground: 210 20% 98%;
-  --primary: 210 20% 98%;
-  --primary-foreground: 220.9 39.3% 11%;
-  --secondary: 215 27.9% 16.9%;
-  --secondary-foreground: 210 20% 98%;
-  --muted: 215 27.9% 16.9%;
-  --muted-foreground: 217.9 10.6% 64.9%;
-  --accent: 215 27.9% 16.9%;
-  --accent-foreground: 210 20% 98%;
+  --background: 260 30% 4.5%;
+  --foreground: 260 10% 98%;
+  --card: 260 25% 7.5%;
+  --card-foreground: 260 10% 98%;
+  --popover: 260 25% 7.5%;
+  --popover-foreground: 260 10% 98%;
+  --primary: 263 90% 65%;
+  --primary-foreground: 260 30% 4.5%;
+  --secondary: 260 20% 12%;
+  --secondary-foreground: 260 10% 98%;
+  --muted: 260 15% 12%;
+  --muted-foreground: 260 10% 65%;
+  --accent: 260 20% 14%;
+  --accent-foreground: 263 90% 65%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 20% 98%;
-  --border: 215 27.9% 16.9%;
-  --input: 215 27.9% 16.9%;
-  --ring: 216 12.2% 83.9%;
-  --chart-1: 220 70% 50%;
+  --border: 260 20% 13%;
+  --input: 260 20% 13%;
+  --ring: 263 90% 65%;
+  --chart-1: 263 90% 65%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
@@ -134,6 +136,10 @@ body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-feature-settings: 'rlig' 1, 'calt' 1;
+  background-image: 
+    radial-gradient(at 0% 0%, color-mix(in srgb, var(--color-primary) 7%, transparent) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, color-mix(in srgb, var(--color-primary) 7%, transparent) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
 @layer components {

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Outfit } from 'next/font/google';
 import { Providers } from './providers';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -6,6 +7,12 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { PWARegister } from '@/components/PWARegister';
 import { MainLayout } from '@/components/MainLayout';
 import '@/styles/globals.css';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -92,7 +99,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={outfit.variable} suppressHydrationWarning>
       <head>
         {/* Prevent theme flicker - must run before page renders */}
         <script

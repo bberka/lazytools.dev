@@ -31,6 +31,16 @@ All tools must be:
 - **Key Features**: Prettification, indentation spacing settings.
 - **Implementation**: Dynamic imports of `@iarna/toml` or a lightweight YAML/TOML package.
 
+#### Roman Numeral Converter
+- **Description**: Convert numbers to Roman numerals and vice versa.
+- **Key Features**: Bidirectional conversion, validates standard Roman numeral syntax.
+- **Implementation**: Custom parsing algorithm.
+
+#### List Converter
+- **Description**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
+- **Key Features**: Custom delimiters, quoting options, removing duplicates.
+- **Implementation**: Native JS string/array operations.
+
 ---
 
 ### 2. Encoders & Decoders
@@ -49,6 +59,11 @@ All tools must be:
 - **Description**: Encode text to binary or Morse code (with optional audio playback).
 - **Key Features**: Plays audio representing Morse code using the browser's Web Audio API oscillators.
 - **Implementation**: Custom Morse dictionary mapping; native audio synthesis.
+
+#### Outlook Safelink Decoder
+- **Description**: Decode obfuscated enterprise Outlook safelinks back to their original URLs.
+- **Key Features**: Extracts the original URL from the `url=` parameter.
+- **Implementation**: URL search params decoding.
 
 ---
 
@@ -74,6 +89,21 @@ All tools must be:
 - **Key Features**: Real-time counter, scanning inputs.
 - **Implementation**: Uses `otplib` or lightweight HMAC-SHA1 calculation.
 
+#### ULID Generator
+- **Description**: Generate Universally Unique Lexicographically Sortable Identifiers.
+- **Key Features**: Timestamp-based sorting, random generation.
+- **Implementation**: Dynamically imported `ulid` library.
+
+#### Basic Auth Generator
+- **Description**: Generate HTTP `Basic` authentication headers.
+- **Key Features**: Encodes `username:password` in base64.
+- **Implementation**: Native `btoa()` base64 encoding.
+
+#### WiFi QR Code Generator
+- **Description**: Generate QR codes that automatically connect devices to a WiFi network.
+- **Key Features**: WPA/WEP/Hidden network support.
+- **Implementation**: QR code generator with specific WiFi string format `WIFI:T:WPA;S:MyNetwork;P:MyPassword;;`.
+
 ---
 
 ### 4. Formatters & Validators
@@ -92,6 +122,21 @@ All tools must be:
 - **Description**: Validate JSON data instances against a provided JSON Schema.
 - **Key Features**: Two-pane editor layout, displays exact validation exceptions with line numbers.
 - **Implementation**: Dynamically imported `ajv` validator library.
+
+#### JSON Minify
+- **Description**: Minify JSON payloads by removing all whitespace and newlines.
+- **Key Features**: One-click minification, copy to clipboard.
+- **Implementation**: `JSON.stringify()` with no spaces.
+
+#### Phone Parser and Formatter
+- **Description**: Parse international phone numbers to extract country codes and formats.
+- **Key Features**: Country flags, validity checking, formatting (E.164, national).
+- **Implementation**: `google-libphonenumber` or `awesome-phonenumber`.
+
+#### IBAN Validator and Parser
+- **Description**: Validate international bank account numbers and extract bank details.
+- **Key Features**: Country format validation, checksum verification.
+- **Implementation**: Client-side IBAN validation library.
 
 ---
 
@@ -112,6 +157,46 @@ All tools must be:
 - **Key Features**: Visual columns/rows adding, alignment selectors.
 - **Implementation**: Standard state-bound React grid.
 
+#### Slugify String
+- **Description**: Convert standard text into URL-friendly slugs.
+- **Key Features**: Removes special characters, replaces spaces with hyphens, lowers case.
+- **Implementation**: Native regex replacement or `slugify` library.
+
+#### Text to NATO Alphabet
+- **Description**: Translate words into the NATO phonetic alphabet.
+- **Key Features**: Bidirectional translation if possible, copy out.
+- **Implementation**: Dictionary mapping.
+
+#### Text to Unicode / ASCII Art
+- **Description**: Convert text into stylized Unicode fonts or ASCII art.
+- **Key Features**: Various font styles (Fraktur, script, bold), Figlet ASCII art.
+- **Implementation**: Unicode character mapping, `figlet.js`.
+
+#### Email Normalizer
+- **Description**: Normalize email addresses (e.g., stripping `+tags` or dots for Gmail).
+- **Key Features**: Domain-specific rules (Gmail, Outlook).
+- **Implementation**: Regex parsing.
+
+#### Numeronym Generator
+- **Description**: Generate i18n-style abbreviations (e.g., "internationalization" -> "i18n").
+- **Key Features**: Selectable word length threshold.
+- **Implementation**: Native JS string manipulation.
+
+#### HTML WYSIWYG Editor
+- **Description**: A rich-text editor that exports to clean HTML.
+- **Key Features**: Formatting toolbar, HTML source view.
+- **Implementation**: Lightweight editor like `quill` or `tiptap`.
+
+#### JSON Diff
+- **Description**: Visual diff tool specifically for comparing two JSON objects.
+- **Key Features**: Highlights added, removed, and changed keys, ignores key order.
+- **Implementation**: React diff viewer with parsed JSON.
+
+#### AI Summarizer
+- **Description**: Generate concise summaries from text or documents.
+- **Key Features**: Adjustable summary length.
+- **Implementation**: Web LLM API or integration with external AI APIs.
+
 ---
 
 ### 6. Utilities
@@ -130,6 +215,41 @@ All tools must be:
 - **Description**: Display live viewport specs, pixel ratio, orientation, and browser preferences.
 - **Key Features**: Real-time listener on window resizing.
 - **Implementation**: Browser standard APIs.
+
+#### Chmod Calculator
+- **Description**: Visual Unix file permission calculator (e.g., `rwx` to `777`).
+- **Key Features**: Checkboxes for Owner/Group/Public, octal and symbolic output.
+- **Implementation**: Bitwise operations.
+
+#### Docker Run to Docker Compose
+- **Description**: Convert `docker run` shell commands into `docker-compose.yml` configurations.
+- **Key Features**: Parses environment variables, ports, and volumes.
+- **Implementation**: Client-side parsing algorithm.
+
+#### MIME Types Reference
+- **Description**: Searchable directory of file extensions and their MIME types.
+- **Key Features**: Fast offline lookup.
+- **Implementation**: Static dictionary dataset.
+
+#### User-Agent Parser
+- **Description**: Parse and display device, OS, and browser info from a User-Agent string.
+- **Key Features**: Visual badges for browser/OS, current user-agent detection.
+- **Implementation**: `ua-parser-js` library.
+
+#### Keycode Info
+- **Description**: Press any key to see its Javascript event `keyCode`, `code`, and `key` values.
+- **Key Features**: Interactive keyboard listener.
+- **Implementation**: Global `keydown` event listener.
+
+#### Git & Regex Cheatsheets
+- **Description**: Quick reference guides for standard Git commands and Regex syntax.
+- **Key Features**: Categorized commands, click-to-copy.
+- **Implementation**: Static markdown/JSON data.
+
+#### Open Graph Meta Generator
+- **Description**: Generate and preview SEO/Open Graph HTML meta tags for websites.
+- **Key Features**: Facebook/Twitter card previews.
+- **Implementation**: React state to HTML string generation.
 
 ---
 
@@ -150,6 +270,16 @@ All tools must be:
 - **Key Features**: Custom organization details, Common Names.
 - **Implementation**: Uses `node-forge`.
 
+#### BIP39 Passphrase Generator
+- **Description**: Generate secure crypto wallet recovery phrases (BIP39).
+- **Key Features**: 12 or 24 words, multiple languages.
+- **Implementation**: `bip39` client-side library.
+
+#### String Obfuscator
+- **Description**: Obfuscate text or email addresses to hide them from simple bots.
+- **Key Features**: HTML entity encoding, JS `document.write` wrappers.
+- **Implementation**: Text encoding utilities.
+
 ---
 
 ### 8. Networking
@@ -168,6 +298,31 @@ All tools must be:
 - **Description**: Identify NIC manufacturers from MAC address OUI prefixes.
 - **Key Features**: Offline fallback dictionary lookup.
 - **Implementation**: Static dataset parser.
+
+#### IPv4 Address Converter
+- **Description**: Convert IPs between Decimal, Hex, Octal, and Binary formats.
+- **Key Features**: Bidirectional conversion.
+- **Implementation**: Bitwise IP conversion.
+
+#### IPv4 Range Expander
+- **Description**: Expand CIDR notations or IP ranges into a full list of IP addresses.
+- **Key Features**: CIDR to IP list, start/end IP to list.
+- **Implementation**: IP math calculations.
+
+#### IPv6 ULA Generator
+- **Description**: Generate Unique Local IPv6 Addresses (ULA).
+- **Key Features**: Random `/48` prefix generation following RFC 4193.
+- **Implementation**: Native Math.random() / Web Crypto.
+
+#### MAC Address Generator
+- **Description**: Generate random valid MAC addresses.
+- **Key Features**: Unicast/Multicast, specific OUI prefixes.
+- **Implementation**: Hex string generation.
+
+#### Random Port Generator
+- **Description**: Generate random unassigned high-numbered network ports.
+- **Key Features**: Avoids known registered ports.
+- **Implementation**: Random number within `1024-65535` range.
 
 ---
 
@@ -188,17 +343,22 @@ All tools must be:
 - **Key Features**: Add/remove container elements, live styling preview.
 - **Implementation**: Reactive Tailwind grid elements.
 
+#### SVG Placeholder Generator
+- **Description**: Generate lightweight SVG placeholder images with custom dimensions and text.
+- **Key Features**: Colors, dimensions, text customization, data-URI export.
+- **Implementation**: Dynamic SVG string generation.
+
 ---
 
 ### 10. PDF & Image Tools
 
 #### Client-Side PDF OCR (Image-to-Text)
-- **Description**: Scan and extract editable text from scanned PDFs/images using `tesseract.js` in WASM.
+- **Description**: Scan and extract editable text from scanned PDFs/images.
 - **Key Features**: Drag-and-drop file inputs, language selection, loader indicators.
 - **Implementation**: Dynamically imported `tesseract.js`.
 
 #### PDF Metadata Editor
-- **Description**: View and update standard PDF fields (Author, Title, Subject) via `pdf-lib`.
+- **Description**: View and update standard PDF fields (Author, Title, Subject).
 - **Key Features**: Edit forms, download updated documents.
 - **Implementation**: Direct edits using `pdf-lib`.
 
@@ -206,6 +366,26 @@ All tools must be:
 - **Description**: Overlay text on top/bottom of uploaded images and export to PNG.
 - **Key Features**: Customize fonts, outlines, sizes, drag positions.
 - **Implementation**: HTML Canvas pipeline.
+
+#### Advanced Conversions
+- **Description**: Extract data from PDF into editable presentations or spreadsheets.
+- **Key Features**: Convert PDF to PowerPoint, Excel, or PDF/A format.
+- **Implementation**: External API or advanced WASM PDF parsing.
+
+#### Security & Compliance
+- **Description**: Remove or add password security and encryption to PDF documents.
+- **Key Features**: AES encryption, digital signatures, blackout redaction.
+- **Implementation**: `pdf-lib` encryption features, canvas overlays.
+
+#### Document Manipulation
+- **Description**: Crop margins or use a side-by-side diff viewer to spot changes between versions.
+- **Key Features**: Visual crop box, add page numbers.
+- **Implementation**: `pdf.js` rendering and manipulation.
+
+#### AI & Processing
+- **Description**: Repair corrupted PDFs, fill interactive forms, capture mobile scans, translate text.
+- **Key Features**: Cross-reference table repair, camera integration, form field detection.
+- **Implementation**: File parsing algorithms, MediaDevices API, translation APIs.
 
 ---
 
@@ -220,3 +400,18 @@ All tools must be:
 - **Description**: Project investment growth with monthly contributions and interest graphs.
 - **Key Features**: Clean CSS graphs/charts.
 - **Implementation**: Compounding formula models.
+
+#### Math Evaluator
+- **Description**: Parse and evaluate complex mathematical expressions.
+- **Key Features**: Variables, functions (sin, cos), constants.
+- **Implementation**: `mathjs` library.
+
+#### ETA Calculator
+- **Description**: Calculate estimated time of arrival based on distance and speed.
+- **Key Features**: Various units (km, miles, knots).
+- **Implementation**: Standard physics equations.
+
+#### Chronometer / Benchmark Builder
+- **Description**: Stopwatches, timers, and JS performance benchmark runners.
+- **Key Features**: Lap times, operations per second (ops/sec).
+- **Implementation**: `performance.now()` API, `benchmark.js`.

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   RefreshCw,
   Lock,
@@ -268,7 +269,7 @@ export function HomeContent() {
           {filteredTools.length > 0 ? (
             <ToolGrid compactMode={compactMode}>
               {filteredTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} compactMode={compactMode} showTags={true} />
+                <ToolCard key={tool.id} tool={tool} compactMode={compactMode} />
               ))}
             </ToolGrid>
           ) : (
@@ -381,7 +382,9 @@ function ToolGrid({
         compactMode ? 'gap-2' : 'gap-4'
       )}
     >
-      {children}
+      <AnimatePresence mode="popLayout">
+        {children}
+      </AnimatePresence>
     </div>
   );
 }
@@ -389,58 +392,63 @@ function ToolGrid({
 function ToolCard({
   tool,
   compactMode,
-  showTags = false,
 }: {
   tool: Tool;
   compactMode: boolean;
-  showTags?: boolean;
 }) {
   const toolTags = tool.tags.map((tagId) => TAGS[tagId]).filter(Boolean);
+  const primaryTag = toolTags[0];
+  const IconComponent = primaryTag ? TAG_ICONS[primaryTag.icon] : null;
+
   return (
-    <Link href={`/tools/${tool.id}`} className="group block h-full">
-      <Card className={cn(
-        "h-full transition-all hover:border-primary/50 hover:shadow-lg",
-        compactMode && "flex flex-col justify-center"
-      )}>
-        <CardHeader
-          className={cn(compactMode ? 'space-y-0 p-3' : 'p-4 sm:p-6')}
-        >
-          <div className={cn("flex justify-between gap-2", compactMode ? "items-center" : "items-start")}>
-            <div className="space-y-1">
-              {showTags && toolTags.length > 0 && (
-                <div className="flex items-center flex-wrap gap-1.5 mb-1.5">
-                  {toolTags.map((tag) => {
-                    const Icon = TAG_ICONS[tag.icon];
-                    return (
-                      <span
-                        key={tag.id}
-                        className={cn(
-                          'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider',
-                          tag.color
-                        )}
-                      >
-                        {Icon && <Icon className="h-3 w-3 shrink-0" />}
-                        <span>{tag.name}</span>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-              <CardTitle
-                className={cn(
-                  'transition-colors group-hover:text-primary',
-                  compactMode ? 'text-base leading-snug' : 'text-lg'
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, scale: 0.92, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, y: 10 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="h-full"
+    >
+      <Link href={`/tools/${tool.id}`} className="group block h-full">
+        <Card className={cn(
+          "h-full transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(139,92,246,0.15)]",
+          compactMode && "flex flex-col justify-center"
+        )}>
+          <CardHeader
+            className={cn(compactMode ? 'p-3' : 'p-4 sm:p-5')}
+          >
+            <div className={cn("flex justify-between gap-3", compactMode ? "items-center" : "items-start")}>
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                {!compactMode && IconComponent && (
+                  <div className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/80 transition-all duration-300 group-hover:scale-110",
+                    primaryTag.color
+                  )}>
+                    <IconComponent className="h-5 w-5" />
+                  </div>
                 )}
-              >
-                {tool.name}
-              </CardTitle>
+                <div className="space-y-1 min-w-0 flex-1">
+                  <CardTitle
+                    className={cn(
+                      'transition-colors group-hover:text-primary font-bold tracking-tight break-words',
+                      compactMode ? 'text-sm leading-snug' : 'text-base'
+                    )}
+                  >
+                    {tool.name}
+                  </CardTitle>
+                </div>
+              </div>
+              <FavoriteButton toolId={tool.id} variant="card" />
             </div>
-            <FavoriteButton toolId={tool.id} variant="card" />
-          </div>
-          {!compactMode && <CardDescription>{tool.description}</CardDescription>}
-        </CardHeader>
-      </Card>
-    </Link>
+            {!compactMode && (
+              <CardDescription className="mt-2 text-xs line-clamp-2 leading-relaxed">
+                {tool.description}
+              </CardDescription>
+            )}
+          </CardHeader>
+        </Card>
+      </Link>
+    </motion.div>
   );
 }
 

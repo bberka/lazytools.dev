@@ -38,7 +38,7 @@ export function SettingsDialog() {
     <Dialog>
       <TooltipSimple content="Settings">
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Open settings">
+          <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary transition-all duration-300" aria-label="Open settings">
             <Settings className="h-5 w-5" />
           </Button>
         </DialogTrigger>
