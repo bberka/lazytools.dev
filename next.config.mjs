@@ -15,7 +15,7 @@ const nextConfig = {
   },
 
   // Trailing slashes configuration
-  trailingSlash: false,
+  trailingSlash: true,
 
   // Enable React strict mode for better development experience
   reactStrictMode: true,

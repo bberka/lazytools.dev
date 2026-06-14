@@ -1,6 +1,6 @@
 {
   "name": "lazytools.dev",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "directories": {
@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "start": "next start",
-    "build": "next build && node scripts/generate-sw-precache.js",
+    "build": "node scripts/sync-version.js && next build && node scripts/generate-sw-precache.js",
     "analyze": "cross-env ANALYZE=true next build --webpack",
     "preview": "next start",
     "typecheck": "tsc --noEmit",
@@ -18,7 +18,10 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install --with-deps"
+    "test:e2e:install": "playwright install --with-deps",
+    "tauri": "tauri",
+    "desktop:dev": "node scripts/sync-version.js && tauri dev",
+    "desktop:build": "node scripts/sync-version.js && tauri build"
   },
   "repository": {
     "type": "git",
@@ -89,6 +92,7 @@
   "devDependencies": {
     "@next/bundle-analyzer": "^16.2.4",
     "@playwright/test": "^1.49.0",
+    "@tauri-apps/cli": "^2.11.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/blueimp-md5": "^2.18.2",
     "@types/iarna__toml": "^2.0.5",
