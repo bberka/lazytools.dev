@@ -8,7 +8,7 @@ Live at: **[lazytools.dev](https://lazytools.dev/)**
 
 ## About
 
-Static web app for everyday browser-side workflows: converting files, formatting code and data, generating values, previewing content, inspecting inputs, and handling lightweight utilities — without sending user content to a server. Tool interactions run in the browser; the site is generated at build time.
+A privacy-first static web app and native desktop application for everyday browser-side and offline developer workflows: converting files, formatting code and data, generating values, previewing content, inspecting inputs, and handling lightweight utilities — without sending user content to a server. All tool interactions run completely locally (in the browser or native desktop webview); the site is generated at build time.
 
 ## Features
 
