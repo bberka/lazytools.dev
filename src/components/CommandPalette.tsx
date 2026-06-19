@@ -29,7 +29,7 @@ import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
 import { getModifierKey, isModifierKey } from '@/lib/utils/keyboard';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { cn } from '@/lib/utils/cn';
 import { TooltipSimple } from './ui/tooltip';
 
@@ -361,6 +361,9 @@ export function CommandPalette() {
         className="w-[calc(100%-1rem)] max-w-2xl gap-0 overflow-hidden border bg-popover p-0 text-popover-foreground sm:w-[calc(100%-2rem)]"
       >
         <DialogTitle className="sr-only">Command Search</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search for developer tools and run commands.
+        </DialogDescription>
         <Command
           className="flex max-h-[min(80vh,36rem)] min-h-0 flex-col overflow-hidden"
           shouldFilter={false}
