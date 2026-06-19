@@ -117,6 +117,36 @@ const TAG_STYLES: Record<string, TagStyle> = {
   },
 };
 
+function TagIconBadge({ tagId }: { tagId: ToolTag }) {
+  const tag = TAGS[tagId];
+  if (!tag) return null;
+  const styles = TAG_STYLES[tagId] || {
+    bg: 'bg-muted',
+    text: 'text-muted-foreground',
+    border: 'border-transparent',
+  };
+  const TagIcon = TAG_ICONS[tag.icon];
+
+  return (
+    <TooltipSimple content={tag.name}>
+      <span
+        className={cn(
+          "inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105",
+          styles.bg,
+          styles.text,
+          styles.border
+        )}
+      >
+        {TagIcon ? (
+          <TagIcon className="h-3.5 w-3.5" />
+        ) : (
+          <span className="text-[9px] font-semibold">{tag.name.substring(0, 2)}</span>
+        )}
+      </span>
+    </TooltipSimple>
+  );
+}
+
 export function CommandPalette() {
   const router = useRouter();
   const { open, setOpen } = useCommandPalette();
@@ -382,27 +412,9 @@ export function CommandPalette() {
                         )}
                         <span className="flex-1">{tool.name}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => {
-                            const tag = TAGS[tagId];
-                            const styles = TAG_STYLES[tagId] || {
-                              bg: 'bg-muted',
-                              text: 'text-muted-foreground',
-                              border: 'border-transparent',
-                            };
-                            return (
-                              <span
-                                key={tagId}
-                                className={cn(
-                                  "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase transition-colors",
-                                  styles.bg,
-                                  styles.text,
-                                  styles.border
-                                )}
-                              >
-                                {tag.name}
-                              </span>
-                            );
-                          })}
+                          {tool.tags.map((tagId) => (
+                            <TagIconBadge key={tagId} tagId={tagId} />
+                          ))}
                         </div>
                       </Command.Item>
                     );
@@ -424,27 +436,9 @@ export function CommandPalette() {
                         <Clock className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
                         <span className="flex-1">{tool.name}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => {
-                            const tag = TAGS[tagId];
-                            const styles = TAG_STYLES[tagId] || {
-                              bg: 'bg-muted',
-                              text: 'text-muted-foreground',
-                              border: 'border-transparent',
-                            };
-                            return (
-                              <span
-                                key={tagId}
-                                className={cn(
-                                  "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase transition-colors",
-                                  styles.bg,
-                                  styles.text,
-                                  styles.border
-                                )}
-                              >
-                                {tag.name}
-                              </span>
-                            );
-                          })}
+                          {tool.tags.map((tagId) => (
+                            <TagIconBadge key={tagId} tagId={tagId} />
+                          ))}
                         </div>
                         <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
                       </Command.Item>
@@ -467,27 +461,9 @@ export function CommandPalette() {
                         <Star className="mr-2 h-4 w-4 fill-yellow-500 text-yellow-500 shrink-0" />
                         <span className="flex-1">{tool.name}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => {
-                            const tag = TAGS[tagId];
-                            const styles = TAG_STYLES[tagId] || {
-                              bg: 'bg-muted',
-                              text: 'text-muted-foreground',
-                              border: 'border-transparent',
-                            };
-                            return (
-                              <span
-                                key={tagId}
-                                className={cn(
-                                  "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase transition-colors",
-                                  styles.bg,
-                                  styles.text,
-                                  styles.border
-                                )}
-                              >
-                                {tag.name}
-                              </span>
-                            );
-                          })}
+                          {tool.tags.map((tagId) => (
+                            <TagIconBadge key={tagId} tagId={tagId} />
+                          ))}
                         </div>
                         <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
                       </Command.Item>
@@ -528,27 +504,9 @@ export function CommandPalette() {
                             )}
                             <span className="flex-1">{tool.name}</span>
                             <div className="flex items-center gap-1 shrink-0">
-                              {tool.tags.map((tId) => {
-                                const t = TAGS[tId];
-                                const styles = TAG_STYLES[tId] || {
-                                  bg: 'bg-muted',
-                                  text: 'text-muted-foreground',
-                                  border: 'border-transparent',
-                                };
-                                return (
-                                  <span
-                                    key={tId}
-                                    className={cn(
-                                      "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase transition-colors",
-                                      styles.bg,
-                                      styles.text,
-                                      styles.border
-                                    )}
-                                  >
-                                    {t.name}
-                                  </span>
-                                );
-                              })}
+                              {tool.tags.map((tId) => (
+                                <TagIconBadge key={tId} tagId={tId} />
+                              ))}
                             </div>
                           </Command.Item>
                         );

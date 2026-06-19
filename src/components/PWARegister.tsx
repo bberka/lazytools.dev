@@ -9,6 +9,16 @@ export function PWARegister() {
     }
 
     if (process.env.NODE_ENV === 'development') {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().then((success) => {
+            if (success) {
+              console.log('[PWA] Unregistered active service worker for development mode');
+              window.location.reload();
+            }
+          });
+        }
+      });
       return;
     }
 
