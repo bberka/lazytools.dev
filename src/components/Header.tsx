@@ -1,13 +1,26 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CommandPaletteButton } from './CommandPaletteButton';
 import { SettingsDialog } from './SettingsDialog';
+import { Button } from './ui/button';
+import { InstallDialog } from './InstallDialog';
+import { Download } from 'lucide-react';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { cn } from '@/lib/utils';
 
 export function Header() {
   const { fullWidth } = useSettings();
+  const [isInstallOpen, setIsInstallOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI__;
+  const showInstall = isMounted && !isTauri;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-md transition-all duration-300">
@@ -35,6 +48,20 @@ export function Header() {
           </span>
         </Link>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {showInstall && (
+            <>
+              <Button
+                variant="outline"
+                className="gap-2 bg-background/30 hover:bg-background/80 border-border/40 hover:border-primary/40 hover:text-primary transition-all duration-300 shadow-sm"
+                onClick={() => setIsInstallOpen(true)}
+                aria-label="Install or Download application"
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Install</span>
+              </Button>
+              <InstallDialog isOpen={isInstallOpen} onClose={() => setIsInstallOpen(false)} />
+            </>
+          )}
           <CommandPaletteButton />
           <SettingsDialog />
         </div>
