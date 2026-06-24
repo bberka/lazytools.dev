@@ -26,7 +26,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [ ] **Outlook Safelink Decoder**: Decode obfuscated enterprise Outlook safelinks back to their original URLs.
 
 ### 3. Generators
-- [ ] **Mock/Dummy Data Generator**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.
+- [x] **Mock/Dummy Data Generator**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.
 - [ ] **SSH Key Generator**: Generate client-side SSH public and private key pairs (RSA, ECDSA) via WebCrypto.
 - [ ] **Barcode Generator**: Generate linear 1D barcodes (Code 128, EAN, UPC) in SVG/PNG format.
 - [ ] **TOTP (2FA) Code Generator**: Generate and display 6-digit 2FA authenticator codes from secret keys.

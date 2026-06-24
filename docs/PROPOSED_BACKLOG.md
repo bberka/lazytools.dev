@@ -69,7 +69,7 @@ All tools must be:
 
 ### 3. Generators
 
-#### Mock/Dummy Data Generator
+#### Mock/Dummy Data Generator (Status: Implemented)
 - **Description**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.
 - **Key Features**: Custom schemas (names, addresses, phone numbers, emails), adjustable row limits.
 - **Implementation**: Custom mock lists or dynamic imports of a lightweight faking utility.
