@@ -1025,6 +1025,28 @@ export const TOOL_REGISTRY = {
         (module) => module.PdfWatermark
       ),
   },
+  'roman-numeral-converter': {
+    name: 'Roman Numeral Converter',
+    description: 'Bidirectional converter between decimal and Roman numerals.',
+    tags: ['converters', 'calculators'],
+    icon: 'Binary',
+    keywords: ['roman', 'numeral', 'decimal', 'number', 'convert', 'math'],
+    component: () =>
+      import('@/components/tools/RomanNumeralConverter').then(
+        (module) => module.RomanNumeralConverter
+      ),
+  },
+  'list-converter': {
+    name: 'List Converter',
+    description: 'Convert lists to JSON, CSV, SQL IN clauses, and custom formats.',
+    tags: ['converters', 'text-tools'],
+    icon: 'ListCollapse',
+    keywords: ['list', 'convert', 'csv', 'json', 'sql', 'in', 'array', 'format'],
+    component: () =>
+      import('@/components/tools/ListConverter').then(
+        (module) => module.ListConverter
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
 
 // Enforce strict limits on tool description lengths to ensure visual consistency in the UI
