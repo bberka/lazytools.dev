@@ -1,7 +1,7 @@
 {
   "name": "LazyTools",
   "short_name": "LazyTools",
-  "description": "A collection of browser-based developer utilities for converters, formatters, generators, security tools, networking helpers, and design tools.",
+  "description": "A private, browser-side collection of online tools and productivity utilities including PDF, image, text, design, and code formatting tools.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

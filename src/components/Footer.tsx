@@ -99,7 +99,7 @@ export function Footer() {
           {/* Footer Text */}
           <div className="text-center text-sm text-muted-foreground">
             <p>
-              Open source developer tools built with Next.js, React, and
+              Open source web utilities & developer tools built with Next.js, React, and
               Tailwind CSS
             </p>
             <p className="mt-1">

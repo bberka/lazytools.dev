@@ -362,7 +362,7 @@ export function CommandPalette() {
       >
         <DialogTitle className="sr-only">Command Search</DialogTitle>
         <DialogDescription className="sr-only">
-          Search for developer tools and run commands.
+          Search for tools, utilities, and commands.
         </DialogDescription>
         <Command
           className="flex max-h-[min(80vh,36rem)] min-h-0 flex-col overflow-hidden"

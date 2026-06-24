@@ -1,6 +1,6 @@
 # LazyTools Collection
 
-> A privacy-first collection of browser-based developer and productivity tools built with Next.js App Router, React, shadcn-style components, Tailwind CSS, and static export.
+> A privacy-first collection of browser-based web utilities, developer tools, and productivity helpers built with Next.js App Router, React, shadcn-style components, Tailwind CSS, and static export.
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -8,7 +8,7 @@ Live at: **[lazytools.dev](https://lazytools.dev/)**
 
 ## About
 
-A privacy-first static web app and native desktop application for everyday browser-side and offline developer workflows: converting files, formatting code and data, generating values, previewing content, inspecting inputs, and handling lightweight utilities — without sending user content to a server. All tool interactions run completely locally (in the browser or native desktop webview); the site is generated at build time.
+A privacy-first static web app and native desktop application for everyday browser-side and offline workflows: converting files, processing PDFs, compressing images, formatting code and data, generating values, editing text, calculating metrics, and managing general utilities — without sending user content to a server. All tool interactions run completely locally (in the browser or native desktop webview); the site is generated at build time.
 
 ## Features
 

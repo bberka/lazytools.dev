@@ -4,7 +4,7 @@ This guide is for coding agents working in this repository. It is grounded in th
 
 ## Project Snapshot
 
-- Product: LazyTools, a privacy-first collection of browser-side developer and productivity tools.
+- Product: LazyTools, a privacy-first collection of browser-side web utilities, developer tools, and productivity helpers.
 - Live site: `https://lazytools.dev/`.
 - Main app: Next.js 16 App Router in `src/`.
 - UI stack: React 19, TypeScript, Tailwind CSS v4, shadcn-style components, Lucide icons.

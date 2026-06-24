@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">Dev Tools</title>
+  <title id="title">LazyTools</title>
   <rect width="512" height="512" rx="112" fill="#0f172a"/>
   <path fill="#38bdf8" d="M151 177 72 256l79 79 34-34-45-45 45-45-34-34Z"/>
   <path fill="#a3e635" d="m361 177-34 34 45 45-45 45 34 34 79-79-79-79Z"/>

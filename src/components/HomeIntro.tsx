@@ -38,8 +38,8 @@ export function HomeIntro() {
             transition={{ duration: 0.6, delay: 0.25 }}
             className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg lg:text-xl font-normal leading-relaxed"
           >
-            A comprehensive suite of developer utilities built to run entirely in
-            your browser. Your data never leaves your device.
+            A comprehensive collection of secure, browser-based utilities and developer tools.
+            Everything runs locally in your browser, keeping your data entirely offline and safe.
           </motion.p>
         )}
       </div>

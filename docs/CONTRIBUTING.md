@@ -114,7 +114,7 @@ Edit `src/lib/utils/tool-registry.ts`:
 ```ts
 'example-tool': {
   name: 'Example Tool',
-  description: 'Do one useful developer task',
+  description: 'Do one useful utility task',
   category: 'utilities',
   icon: 'Wrench',
   keywords: ['example', 'utility'],
@@ -223,7 +223,7 @@ For manual verification:
 - Add automated tests for route coverage and core tool behavior
 - Continue improving route-level bundle references after the first heavy dependency split
 - Add generated Open Graph images
-- Expand the next tool families: PDF, image, utilities, text, developer, and calculators
+- Expand the next tool families: PDF, image, utilities, text, web dev, and calculators
 - Split broader current tools into dedicated routes where that improves discovery and SEO
 
 ## Pull Request Checklist
