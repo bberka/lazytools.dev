@@ -1047,6 +1047,17 @@ export const TOOL_REGISTRY = {
         (module) => module.ListConverter
       ),
   },
+  'mock-data-generator': {
+    name: 'Mock Data Generator',
+    description: 'Generate mock user lists, addresses, and custom schemas.',
+    tags: ['generators', 'utilities'],
+    icon: 'Database',
+    keywords: ['mock', 'dummy', 'data', 'generate', 'generator', 'csv', 'json', 'schema', 'test'],
+    component: () =>
+      import('@/components/tools/MockDataGenerator').then(
+        (module) => module.MockDataGenerator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
 
 // Enforce strict limits on tool description lengths to ensure visual consistency in the UI
