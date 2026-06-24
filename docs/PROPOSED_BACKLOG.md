@@ -21,10 +21,10 @@ All tools must be:
 - **Key Features**: Auto-parsing of raw curl options, selection of target language output, highlight styling.
 - **Implementation**: Pure client-side parsing using standard string parsing or the `curlconverter` package.
 
-#### JSON to TypeScript Interface Generator (Status: Implemented)
-- **Description**: Convert JSON payloads into typed TypeScript interfaces.
-- **Key Features**: Handles nested arrays/objects, generates clean exports, toggles optional properties.
-- **Implementation**: Client-side recursive interface generator or standard typescript typings package.
+#### JSON/YAML/XML to Multi-Language Model Generator
+- **Description**: Convert JSON, YAML, or XML payloads into typed code models for multiple languages.
+- **Key Features**: Supports input parsing of JSON, YAML, and XML; generates typed interfaces, classes, or structs for TypeScript, C#, Go, Rust, Java, Python, and PHP; customizable declaration style, property optionals, and formatting config.
+- **Implementation**: Client-side AST parsing and mapping.
 
 #### JSON/CSV to TOML (Status: Implemented)
 - **Description**: Bidirectional conversion between JSON, CSV, and TOML formats.
@@ -352,6 +352,11 @@ All tools must be:
 - **Description**: Generate lightweight SVG placeholder images with custom dimensions and text.
 - **Key Features**: Colors, dimensions, text customization, data-URI export.
 - **Implementation**: Dynamic SVG string generation.
+
+#### Code Snippet Image Generator
+- **Description**: Convert code snippets into beautiful, styled screenshot images.
+- **Key Features**: Rich syntax highlighting for multiple languages, customizable background gradients, macOS-style window controls, padding and typography adjustments, export as PNG.
+- **Implementation**: Client-side rendering utilizing `highlight.js` for syntax highlighting and `html2canvas` for DOM-to-image capture.
 
 ---
 

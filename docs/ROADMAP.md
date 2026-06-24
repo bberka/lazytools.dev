@@ -14,7 +14,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 
 ### 1. Converters
 - [x] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
-- [x] **JSON to TypeScript Interface**: Convert JSON payloads into typed TypeScript interfaces.
+- [ ] **JSON/YAML/XML to Multi-Language Model**: Convert payloads to typed TypeScript, C#, Go, Rust, Java, Python, or PHP models.
 - [x] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats.
 - [x] **Roman Numeral Converter**: Convert numbers to Roman numerals and vice versa.
 - [x] **List Converter**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
@@ -90,6 +90,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [ ] **SVG Waves & Shape Generator**: Visual math-based generator for custom header waves and vector blobs.
 - [ ] **Tailwind Flexbox & Grid Builder**: Click-to-build visual layout grid generating responsive Tailwind CSS.
 - [ ] **SVG Placeholder Generator**: Generate lightweight SVG placeholder images with custom dimensions and text.
+- [ ] **Code Snippet Image Generator**: Convert code snippets into styled screenshot images with syntax highlighting.
 
 ### 10. PDF & Image Tools
 - [ ] **Client-Side PDF OCR (Image-to-Text)**: Scan and extract editable text from scanned PDFs/images.
