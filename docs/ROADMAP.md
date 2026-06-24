@@ -24,6 +24,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [x] **Punycode Encoder/Decoder**: Translate internationalized domain names (IDN) to/from Punycode.
 - [x] **Morse Code / Binary Encoder**: Encode text to binary or Morse code (with optional audio playback).
 - [ ] **Outlook Safelink Decoder**: Decode obfuscated enterprise Outlook safelinks back to their original URLs.
+- [ ] **Compression Algorithms**: Compress/decompress text using LZW, RLE, and Huffman coding.
 
 ### 3. Generators
 - [x] **Mock/Dummy Data Generator**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.

@@ -65,6 +65,11 @@ All tools must be:
 - **Key Features**: Extracts the original URL from the `url=` parameter.
 - **Implementation**: URL search params decoding.
 
+#### Compression Algorithms Visualizer
+- **Description**: Compress and decompress text using LZW, RLE, and Huffman coding.
+- **Key Features**: Step-by-step compression walkthrough, dictionary generation trees, compression ratio statistics.
+- **Implementation**: Client-side implementations of Lempel–Ziv–Welch (LZW), Run-Length Encoding (RLE), and Huffman coding.
+
 ---
 
 ### 3. Generators
