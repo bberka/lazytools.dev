@@ -16,8 +16,8 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 - [x] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
 - [x] **JSON to TypeScript Interface**: Convert JSON payloads into typed TypeScript interfaces.
 - [x] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats.
-- [ ] **Roman Numeral Converter**: Convert numbers to Roman numerals and vice versa.
-- [ ] **List Converter**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
+- [x] **Roman Numeral Converter**: Convert numbers to Roman numerals and vice versa.
+- [x] **List Converter**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
 
 ### 2. Encoders & Decoders
 - [x] **Hex to String / String to Hex**: Convert text to hex representations and vice-versa.

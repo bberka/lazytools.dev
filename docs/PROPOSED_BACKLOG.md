@@ -31,12 +31,12 @@ All tools must be:
 - **Key Features**: Prettification, indentation spacing settings.
 - **Implementation**: Dynamic imports of `@iarna/toml` or a lightweight YAML/TOML package.
 
-#### Roman Numeral Converter
+#### Roman Numeral Converter (Status: Implemented)
 - **Description**: Convert numbers to Roman numerals and vice versa.
 - **Key Features**: Bidirectional conversion, validates standard Roman numeral syntax.
 - **Implementation**: Custom parsing algorithm.
 
-#### List Converter
+#### List Converter (Status: Implemented)
 - **Description**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
 - **Key Features**: Custom delimiters, quoting options, removing duplicates.
 - **Implementation**: Native JS string/array operations.
