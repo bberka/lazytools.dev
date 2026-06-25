@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RefreshCw,
@@ -48,11 +49,99 @@ const TAG_ICONS: Record<string, LucideIcon> = {
 };
 
 export function HomeContent() {
+  const router = useRouter();
   const { favorites } = useFavorites();
   const { compactMode } = useSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<ToolTag | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
+
+  // Reset selection when search query or filters change
+  useEffect(() => {
+    setSelectedSearchIndex(-1);
+  }, [searchQuery, selectedTag, showFavoritesOnly]);
+
+  const getGridColumns = () => {
+    if (typeof window === 'undefined') return 1;
+    const width = window.innerWidth;
+    if (width >= 1920) return 6;
+    if (width >= 1536) return 5;
+    if (width >= 1280) return 4;
+    if (width >= 1024) return 3;
+    if (width >= 640) return 2;
+    return 1;
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (filteredTools.length === 0) return;
+
+    // Only navigate via keyboard when search or filter is active
+    const isFlatList = !!(searchQuery || showFavoritesOnly || selectedTag);
+    if (!isFlatList) return;
+
+    const cols = getGridColumns();
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSearchIndex((prev) => {
+        if (prev === -1) {
+          const nextIndex = 0;
+          const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
+          activeElement?.scrollIntoView({ block: 'nearest' });
+          return nextIndex;
+        }
+        const nextIndex = Math.min(prev + cols, filteredTools.length - 1);
+        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
+        activeElement?.scrollIntoView({ block: 'nearest' });
+        return nextIndex;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSearchIndex((prev) => {
+        if (prev === -1) return -1;
+        const nextIndex = prev - cols;
+        if (nextIndex < 0) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return -1;
+        }
+        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
+        activeElement?.scrollIntoView({ block: 'nearest' });
+        return nextIndex;
+      });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSelectedSearchIndex((prev) => {
+        if (prev === -1) return -1;
+        const nextIndex = Math.min(prev + 1, filteredTools.length - 1);
+        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
+        activeElement?.scrollIntoView({ block: 'nearest' });
+        return nextIndex;
+      });
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSelectedSearchIndex((prev) => {
+        if (prev === -1) return -1;
+        const nextIndex = prev - 1;
+        if (nextIndex < 0) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return -1;
+        }
+        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
+        activeElement?.scrollIntoView({ block: 'nearest' });
+        return nextIndex;
+      });
+    } else if (e.key === 'Enter') {
+      if (selectedSearchIndex >= 0 && selectedSearchIndex < filteredTools.length) {
+        e.preventDefault();
+        const tool = filteredTools[selectedSearchIndex];
+        router.push(`/tools/${tool.id}`);
+      }
+    } else if (e.key === 'Escape') {
+      setSelectedSearchIndex(-1);
+      setSearchQuery('');
+    }
+  };
 
   const filteredTools = useMemo(
     () =>
@@ -243,7 +332,7 @@ export function HomeContent() {
   return (
     <div className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}>
       <div className="flex justify-center">
-        <SearchBar value={searchQuery} onSearch={handleSearchChange} />
+        <SearchBar value={searchQuery} onSearch={handleSearchChange} onKeyDown={handleKeyDown} />
       </div>
 
       <div className="flex justify-center">
@@ -268,8 +357,13 @@ export function HomeContent() {
           </h2>
           {filteredTools.length > 0 ? (
             <ToolGrid compactMode={compactMode}>
-              {filteredTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} compactMode={compactMode} />
+              {filteredTools.map((tool, index) => (
+                <ToolCard
+                  key={tool.id}
+                  tool={tool}
+                  compactMode={compactMode}
+                  isActive={selectedSearchIndex === index}
+                />
               ))}
             </ToolGrid>
           ) : (
@@ -325,13 +419,17 @@ export function HomeContent() {
                     <span>{tag.name}</span>
                   </h2>
                   <ToolGrid compactMode={compactMode}>
-                    {tagTools.map((tool) => (
-                      <ToolCard
-                        key={tool.id}
-                        tool={tool}
-                        compactMode={compactMode}
-                      />
-                    ))}
+                    {tagTools.map((tool) => {
+                      const globalIndex = filteredTools.findIndex((t) => t.id === tool.id);
+                      return (
+                        <ToolCard
+                          key={tool.id}
+                          tool={tool}
+                          compactMode={compactMode}
+                          isActive={selectedSearchIndex === globalIndex}
+                        />
+                      );
+                    })}
                   </ToolGrid>
                 </section>
               );
@@ -344,8 +442,13 @@ export function HomeContent() {
         <section>
           {filteredTools.length > 0 ? (
             <ToolGrid compactMode={compactMode}>
-              {filteredTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} compactMode={compactMode} />
+              {filteredTools.map((tool, index) => (
+                <ToolCard
+                  key={tool.id}
+                  tool={tool}
+                  compactMode={compactMode}
+                  isActive={selectedSearchIndex === index}
+                />
               ))}
             </ToolGrid>
           ) : (
@@ -392,9 +495,11 @@ function ToolGrid({
 function ToolCard({
   tool,
   compactMode,
+  isActive,
 }: {
   tool: Tool;
   compactMode: boolean;
+  isActive?: boolean;
 }) {
   const toolTags = tool.tags.map((tagId) => TAGS[tagId]).filter(Boolean);
   const primaryTag = toolTags[0];
@@ -408,10 +513,12 @@ function ToolCard({
       exit={{ opacity: 0, scale: 0.92, y: 10 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className="h-full"
+      data-tool-id={tool.id}
     >
       <Link href={`/tools/${tool.id}`} className="group block h-full">
         <Card className={cn(
           "h-full transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(139,92,246,0.15)]",
+          isActive && "-translate-y-1.5 border-primary shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(139,92,246,0.15)] bg-primary/[0.01] dark:bg-primary/[0.03]",
           compactMode && "flex flex-col justify-center"
         )}>
           <CardHeader
@@ -422,6 +529,7 @@ function ToolCard({
                 {!compactMode && IconComponent && (
                   <div className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/80 transition-all duration-300 group-hover:scale-110",
+                    isActive && "scale-110",
                     primaryTag.color
                   )}>
                     <IconComponent className="h-5 w-5" />
@@ -431,6 +539,7 @@ function ToolCard({
                   <CardTitle
                     className={cn(
                       'transition-colors group-hover:text-primary font-bold tracking-tight break-words',
+                      isActive && 'text-primary',
                       compactMode ? 'text-sm leading-snug' : 'text-base'
                     )}
                   >
