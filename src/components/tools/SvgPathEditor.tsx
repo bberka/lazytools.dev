@@ -231,7 +231,7 @@ export function SvgPathEditor() {
             <CardDescription>Visual representation of the SVG path</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center items-center p-8 bg-muted rounded-md">
+            <div className="flex justify-center items-center p-4 sm:p-8 bg-muted rounded-md">
               <svg
                 viewBox={viewBox}
                 className="max-w-full h-auto border border-input"

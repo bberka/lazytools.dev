@@ -176,7 +176,10 @@ export function ExampleTool() {
 
 - Do not edit files inside `src/components/ui` just to solve page-level layout issues; fix spacing and responsiveness at the usage site or in shared non-UI app styles.
 - Treat mobile as the default layout. Add larger spacing or extra columns at `sm` and up, not the other way around.
-- Prefer compact card padding on tool pages. On mobile, target roughly `p-4` instead of the default shadcn `p-6` unless the screen genuinely benefits from more whitespace.
+- Prefer compact card padding on tool pages. The default `<Card>` primitives (headers, contents, and footers) are configured to automatically drop to `p-4` on mobile (screens < `sm`) and scale to `p-6` on desktop. Avoid overriding this to restore larger paddings on small screens. Homepage tool cards are even more compact: they use `p-3 sm:p-5` in normal mode and `p-2 sm:p-4` in compact mode.
+- Avoid using static large grid and flexbox gaps (like `gap-6` or `gap-8`) which cause excessive empty space when elements stack vertically on mobile. Instead, use responsive spacing like `gap-4 sm:gap-6` or `gap-4 sm:gap-8`.
+- For large padding containers, like drag-and-drop file dropzones or result previews, use responsive paddings like `p-4 sm:p-8` instead of a static `p-8` class.
+- Keep empty state placeholders and instructions compact on mobile using responsive vertical paddings (like `py-4 sm:py-8` or `py-6 sm:py-12`) instead of hardcoded tall paddings like `py-8` or `py-12`.
 - Avoid stacking multiple padded wrappers with the same inset. If a card contains another bordered panel, reduce the inner panel padding on mobile.
 - For `CardHeader` and `CardContent`, keep content density balanced: short forms and result cards should not waste horizontal space on phones.
 - Collapse multi-column grids early. If a layout feels cramped at phone widths, use one column until `sm` or `md`.

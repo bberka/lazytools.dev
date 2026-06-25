@@ -112,7 +112,7 @@ export function ListConverter() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
+    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: Input & Config */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -263,7 +263,7 @@ export function ListConverter() {
       {/* Right panel: Outputs */}
       <div className="space-y-4 lg:col-span-3">
         {processedItems.length === 0 ? (
-          <Card className="h-full flex items-center justify-center py-12 text-muted-foreground">
+          <Card className="h-full flex items-center justify-center py-6 sm:py-12 text-muted-foreground">
             <CardContent className="text-center">
               <p>Enter list items above to see converted formats</p>
             </CardContent>

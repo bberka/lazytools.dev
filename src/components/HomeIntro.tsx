@@ -7,7 +7,7 @@ export function HomeIntro() {
   const { compactMode } = useSettings();
 
   return (
-    <div className="space-y-4 text-center sm:space-y-6 py-6 sm:py-10">
+    <div className="space-y-4 text-center sm:space-y-6 py-4 sm:py-10">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}

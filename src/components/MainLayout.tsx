@@ -14,7 +14,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     <main
       className={cn(
         fullWidth ? 'w-full max-w-none px-4 sm:px-6 lg:px-8' : 'container',
-        'py-4 sm:py-6 lg:py-8'
+        'py-3 sm:py-6 lg:py-8'
       )}
     >
       {children}

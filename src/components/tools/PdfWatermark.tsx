@@ -523,7 +523,7 @@ export function PdfWatermark() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
+            className="border-2 border-dashed border-border rounded-xl p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             <input
@@ -546,14 +546,14 @@ export function PdfWatermark() {
       </Card>
 
       {rendering && (
-        <div className="flex flex-col items-center justify-center p-8 space-y-3">
+        <div className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3">
           <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Generating live preview...</p>
         </div>
       )}
 
       {pdfFile && previewLoaded && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* SIDEBAR: Configuration Controls */}
           <div className="lg:col-span-5 space-y-4">
             <Card className="border-border/60 shadow-md">

@@ -450,7 +450,7 @@ export function ClampCalculator() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
         {/* Left Column: Form Controls */}
         <div className="space-y-6 lg:col-span-7">
           <Card className="border-border/50 bg-card/60 backdrop-blur-sm">
@@ -747,7 +747,7 @@ export function ClampCalculator() {
 
       {/* Row 2: Graph & Live Viewport Simulator */}
       {!calculations.error && graphData && svgCoords && simulatedSize && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-12">
           {/* SVG Visualizer Chart */}
           <Card className="border-border/50 bg-card/60 backdrop-blur-sm md:col-span-7 flex flex-col justify-between">
             <CardHeader className="pb-3">

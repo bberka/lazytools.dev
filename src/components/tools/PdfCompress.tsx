@@ -168,7 +168,7 @@ export function PdfCompress() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
+            className="border-2 border-dashed border-border rounded-xl p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             <input
@@ -280,7 +280,7 @@ export function PdfCompress() {
       )}
 
       {compressing && (
-        <Card className="border-border/60 shadow-md p-8 flex flex-col items-center justify-center space-y-4">
+        <Card className="border-border/60 shadow-md p-4 sm:p-8 flex flex-col items-center justify-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <div className="text-center">
             <p className="text-sm font-semibold">Compressing PDF...</p>

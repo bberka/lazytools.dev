@@ -401,7 +401,7 @@ export function BoxShadowVisualizer() {
   return (
     <div className="space-y-6">
       {/* Dynamic layout: left controls side, right preview side */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,460px)] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,460px)] gap-4 sm:gap-6">
         
         {/* Left Side: Controls & Editor */}
         <div className="space-y-6 order-2 lg:order-1">

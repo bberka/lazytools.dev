@@ -139,7 +139,7 @@ export function ImageToIcon() {
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
               dragging
                 ? 'border-primary bg-primary/5'
                 : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'

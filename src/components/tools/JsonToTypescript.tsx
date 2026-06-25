@@ -244,7 +244,7 @@ export function JsonToTypescript() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Input area */}
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">

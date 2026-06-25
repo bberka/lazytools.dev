@@ -334,7 +334,7 @@ export function MorseBinaryConverter() {
         </CardHeader>
         <CardContent>
           {toolType === 'morse' ? (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -402,7 +402,7 @@ export function MorseBinaryConverter() {
       </Card>
 
       {/* Inputs / Outputs */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">

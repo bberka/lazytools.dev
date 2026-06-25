@@ -522,7 +522,7 @@ function ToolCard({
           compactMode && "flex flex-col justify-center"
         )}>
           <CardHeader
-            className={cn(compactMode ? 'p-3' : 'p-4 sm:p-5')}
+            className={cn(compactMode ? 'p-2 sm:p-4' : 'p-3 sm:p-5')}
           >
             <div className={cn("flex justify-between gap-3", compactMode ? "items-center" : "items-start")}>
               <div className={cn("flex min-w-0 flex-1", compactMode ? "items-center gap-2" : "items-start gap-3")}>

@@ -274,7 +274,7 @@ export function TextToSpeech() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
       {/* Settings Panel (4 cols on lg, full width otherwise) */}
       <div className="space-y-6 lg:col-span-4">
         <Card className="shadow-md">

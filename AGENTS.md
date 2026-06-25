@@ -82,7 +82,10 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Avoid styling overrides using hardcoded colors (e.g. `bg-blue-500` or `text-slate-900`) for standard elements. Always prefer Tailwind theme variables and semantic classes (`bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`, etc.) to guarantee seamless light/dark mode compatibility.
 - Always use the common ColorPicker component (`@/components/ui/color-picker`) when color selection is needed, rather than browser native inputs or custom color fields (unless building a dedicated color picker page).
 - Mobile is the default. Add larger layouts at `sm`, `md`, and up.
-- Keep tool pages compact on phones. Prefer roughly `p-4` mobile card padding unless the workflow needs more space.
+- Keep tool pages compact on phones. The default `<Card>` primitives (headers, contents, and footers) are configured to automatically drop to `p-4` on mobile (screens < `sm`) and scale to `p-6` on desktop. Avoid overriding this to restore larger paddings on small screens. Homepage tool cards are even more compact: they use `p-3 sm:p-5` in normal mode and `p-2 sm:p-4` in compact mode.
+- Avoid using static large grid/flexbox gaps (like `gap-6` or `gap-8`) which cause excessive empty space when elements stack vertically on mobile. Instead, use responsive spacing like `gap-4 sm:gap-6` or `gap-4 sm:gap-8`.
+- For large padding containers (e.g., drag-and-drop file dropzones or result previews), use responsive paddings like `p-4 sm:p-8` instead of a static `p-8` class.
+- Keep empty state placeholders and instructions compact on mobile using responsive vertical paddings (like `py-4 sm:py-8` or `py-6 sm:py-12`) instead of hardcoded tall paddings like `py-8` or `py-12`.
 - Avoid horizontal overflow. Action rows should wrap or stack on small screens.
 - Avoid nested full cards unless the grouping genuinely needs it; prefer lighter bordered panels inside cards.
 - Use real-time processing for lightweight converters, encoders, formatters, and text transforms.

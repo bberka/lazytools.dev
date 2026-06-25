@@ -171,7 +171,7 @@ export function ColorContrastChecker() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div
-            className="p-8 rounded-md border border-input"
+            className="p-4 sm:p-8 rounded-md border border-input"
             style={{ backgroundColor: background, color: foreground }}
           >
             <p className="text-base mb-2">Normal text (16px)</p>

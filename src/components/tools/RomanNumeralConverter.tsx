@@ -129,7 +129,7 @@ export function RomanNumeralConverter() {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
       <div className="space-y-4 md:col-span-2">
         <Card>
           <CardHeader>

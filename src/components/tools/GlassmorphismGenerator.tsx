@@ -498,10 +498,10 @@ export function GlassmorphismGenerator() {
       </Card>
 
       {/* Main Interactive Grid */}
-      <div className="grid gap-6 lg:grid-cols-[1fr,minmax(380px,440px)]">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr,minmax(380px,440px)]">
         
         {/* Left Side: Interactive Live Preview Playground */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
           <Card className="flex flex-1 flex-col overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>

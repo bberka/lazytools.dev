@@ -355,7 +355,7 @@ export function QrCodeGenerator() {
               </div>
             </>
           ) : (
-            <div className="rounded-md border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed px-4 py-6 sm:py-10 text-center text-sm text-muted-foreground">
               <QrCode className="mx-auto mb-3 h-10 w-10 opacity-50" />
               No QR code generated yet.
             </div>

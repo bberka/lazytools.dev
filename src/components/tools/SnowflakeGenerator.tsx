@@ -539,7 +539,7 @@ type DecodeResult = DecodeSuccess | DecodeError;
       </Tabs>
 
       {activeTab === 'generate' && (
-        <div className="grid gap-6 lg:grid-cols-12">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
           {/* Generator settings */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="shadow-lg border-border/60">
@@ -825,7 +825,7 @@ type DecodeResult = DecodeSuccess | DecodeError;
               </CardHeader>
               <CardContent className="p-0 flex-1 min-h-[300px] flex flex-col overflow-hidden">
                 {generatedIds.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center space-y-2 flex-1">
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 sm:p-8 text-center space-y-2 flex-1">
                     <Info className="h-8 w-8 stroke-[1.5]" />
                     <p className="text-sm font-medium">No Snowflake IDs generated yet.</p>
                     <p className="text-xs">Adjust configuration on the left and click Generate.</p>

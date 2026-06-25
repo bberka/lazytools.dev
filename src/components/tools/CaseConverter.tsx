@@ -174,7 +174,7 @@ export function CaseConverter() {
 
       {!input && (
         <Card>
-          <CardContent className="py-8">
+          <CardContent className="py-4 sm:py-8">
             <div className="text-center text-muted-foreground">
               Enter some text above to see conversions
             </div>

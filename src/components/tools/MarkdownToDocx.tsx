@@ -941,7 +941,7 @@ export function MarkdownToDocx() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left pane: Editor & Settings */}
         <Card className="flex flex-col border shadow-sm">
           <Tabs value={activeLeftTab} onValueChange={(val: string) => setActiveLeftTab(val as 'layout' | 'typography' | 'breaks')} className="w-full flex flex-col flex-1">
@@ -1285,7 +1285,7 @@ export function MarkdownToDocx() {
                       </p>
 
                       {blocks.length === 0 ? (
-                        <div className="text-center py-10 border border-dashed rounded-xl text-muted-foreground text-sm">
+                        <div className="text-center py-6 sm:py-10 border border-dashed rounded-xl text-muted-foreground text-sm">
                           No content blocks. Write some Markdown to begin!
                         </div>
                       ) : (

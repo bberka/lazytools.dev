@@ -282,7 +282,7 @@ export function ImageConverter() {
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
               dragging
                 ? 'border-primary bg-primary/5'
                 : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
@@ -396,7 +396,7 @@ export function ImageConverter() {
                       onChange={setRotation}
                     />
                   </div>
-                  <div className="flex gap-6 items-center h-full pt-4">
+                  <div className="flex gap-4 sm:gap-6 items-center h-full pt-4">
                     <Checkbox
                       checked={flipHorizontal}
                       onCheckedChange={setFlipHorizontal}

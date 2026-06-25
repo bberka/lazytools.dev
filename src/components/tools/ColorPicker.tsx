@@ -390,7 +390,7 @@ export function ColorPicker() {
             Pick a color, tune channels, and copy production-ready values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[minmax(290px,380px),1fr]">
+        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px),1fr]">
           <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
             <div
               className="flex min-h-48 flex-col justify-end px-6 py-5"

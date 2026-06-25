@@ -850,8 +850,8 @@ export function ExifViewerRemover() {
               <div
                 className={
                   singleDragging
-                    ? 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors border-primary bg-primary/5'
-                    : 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                    ? 'border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors border-primary bg-primary/5'
+                    : 'border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
                 }
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={handleSingleDragOver}
@@ -1025,7 +1025,7 @@ export function ExifViewerRemover() {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-md border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+                  <div className="rounded-md border border-dashed px-4 py-4 sm:py-8 text-center text-sm text-muted-foreground">
                     No EXIF fields were detected in this file, or the format does not expose EXIF data in this viewer.
                   </div>
                 )}
