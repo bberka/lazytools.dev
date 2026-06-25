@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -295,13 +296,11 @@ export function ImageConverter() {
                 {outputFormat !== 'png' && outputFormat !== 'ico' && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Quality: {quality}%</label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="100"
+                    <Slider
+                      min={1}
+                      max={100}
                       value={quality}
-                      onChange={(e) => setQuality(parseInt((e.target as HTMLInputElement).value))}
-                      className="w-full"
+                      onChange={setQuality}
                     />
                   </div>
                 )}
@@ -341,14 +340,12 @@ export function ImageConverter() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <label className="text-xs text-muted-foreground">Rotate: {rotation}°</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="270"
-                      step="90"
+                    <Slider
+                      min={0}
+                      max={270}
+                      step={90}
                       value={rotation}
-                      onChange={(e) => setRotation(parseInt((e.target as HTMLInputElement).value))}
-                      className="w-full"
+                      onChange={setRotation}
                     />
                   </div>
                   <div className="flex gap-6 items-center h-full pt-4">
@@ -384,49 +381,41 @@ export function ImageConverter() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Blur: {blur}px</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
+                <Slider
+                  min={0}
+                  max={20}
                   value={blur}
-                  onChange={(e) => setBlur(parseInt((e.target as HTMLInputElement).value))}
-                  className="w-full"
+                  onChange={setBlur}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Brightness: {brightness}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
+                <Slider
+                  min={0}
+                  max={200}
                   value={brightness}
-                  onChange={(e) => setBrightness(parseInt((e.target as HTMLInputElement).value))}
-                  className="w-full"
+                  onChange={setBrightness}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Contrast: {contrast}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
+                <Slider
+                  min={0}
+                  max={200}
                   value={contrast}
-                  onChange={(e) => setContrast(parseInt((e.target as HTMLInputElement).value))}
-                  className="w-full"
+                  onChange={setContrast}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Saturation: {saturation}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
+                <Slider
+                  min={0}
+                  max={200}
                   value={saturation}
-                  onChange={(e) => setSaturation(parseInt((e.target as HTMLInputElement).value))}
-                  className="w-full"
+                  onChange={setSaturation}
                 />
               </div>
 

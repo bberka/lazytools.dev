@@ -28,6 +28,15 @@ import { Switch } from '@/components/ui/switch';
 import { useCopyToClipboard } from '@/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipSimple } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 interface ShadowLayer {
   id: string;
@@ -631,11 +640,11 @@ export function BoxShadowVisualizer() {
                   <div className="space-y-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shadow Color</label>
                     <div className="flex gap-2">
-                      <Input
-                        type="color"
+                      <ColorPicker
                         value={activeLayer.color}
-                        onChange={(e) => updateSelectedLayer('color', e.target.value)}
-                        className="w-10 h-10 p-1 shrink-0 rounded-lg cursor-pointer"
+                        onChange={(val) => updateSelectedLayer('color', val)}
+                        showText={false}
+                        className="w-10 h-10 p-0 rounded-lg"
                       />
                       <Input
                         type="text"
@@ -728,11 +737,11 @@ export function BoxShadowVisualizer() {
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                   <label className="text-xs font-semibold text-muted-foreground">Box BG Color</label>
                   <div className="flex gap-2">
-                    <Input
-                      type="color"
+                    <ColorPicker
                       value={boxBgColor}
-                      onChange={(e) => setBoxBgColor(e.target.value)}
-                      className="w-10 h-10 p-1 shrink-0 rounded-lg cursor-pointer"
+                      onChange={setBoxBgColor}
+                      showText={false}
+                      className="w-10 h-10 p-0 rounded-lg"
                     />
                     <Input
                       type="text"
@@ -769,29 +778,35 @@ export function BoxShadowVisualizer() {
 
                 {/* Border Style */}
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-muted-foreground">Border Style</span>
-                  <select
+                  <span className="text-xs font-semibold text-muted-foreground mb-1 block">Border Style</span>
+                  <Select
                     value={borderStyle}
-                    onChange={(e) => setBorderStyle(e.target.value as 'solid' | 'dashed' | 'dotted' | 'double' | 'none')}
-                    className="w-full text-xs h-9 rounded-md border border-input bg-transparent px-3 py-1 shadow-sm focus:outline-none"
+                    onValueChange={(val) => setBorderStyle(val as 'solid' | 'dashed' | 'dotted' | 'double' | 'none')}
                   >
-                    <option value="solid">Solid</option>
-                    <option value="dashed">Dashed</option>
-                    <option value="dotted">Dotted</option>
-                    <option value="double">Double</option>
-                    <option value="none">None</option>
-                  </select>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Select style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="solid">Solid</SelectItem>
+                        <SelectItem value="dashed">Dashed</SelectItem>
+                        <SelectItem value="dotted">Dotted</SelectItem>
+                        <SelectItem value="double">Double</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Border Color */}
                 <div className="space-y-1">
                   <span className="text-xs font-semibold text-muted-foreground">Border Color</span>
                   <div className="flex gap-2">
-                    <Input
-                      type="color"
+                    <ColorPicker
                       value={borderColor}
-                      onChange={(e) => setBorderColor(e.target.value)}
-                      className="w-8 h-8 p-0.5 shrink-0 rounded cursor-pointer"
+                      onChange={setBorderColor}
+                      showText={false}
+                      className="w-8 h-8 p-0"
                     />
                     <Input
                       type="text"
@@ -942,14 +957,14 @@ export function BoxShadowVisualizer() {
                 {/* Custom bg input */}
                 <div className="flex items-center gap-1">
                   <TooltipSimple content="Custom Canvas Color">
-                    <Input
-                      type="color"
+                    <ColorPicker
                       value={canvasCustomBg}
-                      onChange={(e) => {
-                        setCanvasCustomBg(e.target.value);
+                      onChange={(val) => {
+                        setCanvasCustomBg(val);
                         setCanvasBgType('custom');
                       }}
-                      className="w-5 h-5 p-0 border border-black/10 rounded cursor-pointer shrink-0"
+                      showText={false}
+                      className="w-5 h-5 p-0 border border-black/10 rounded"
                     />
                   </TooltipSimple>
                 </div>

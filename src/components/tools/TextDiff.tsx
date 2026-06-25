@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { GitCompare, Trash2 } from 'lucide-react';
 import { diffLines, diffWords } from 'diff';
 
@@ -198,12 +199,12 @@ export function TextDiff() {
             <CardDescription>Paste the original text here</CardDescription>
           </CardHeader>
           <CardContent>
-            <textarea
+            <Textarea
               value={leftText}
-              onChange={(e) => setLeftText((e.target as HTMLTextAreaElement).value)}
+              onChange={(e) => setLeftText(e.target.value)}
               placeholder="Enter original text..."
               rows={12}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+              className="font-mono"
             />
           </CardContent>
         </Card>
@@ -214,12 +215,12 @@ export function TextDiff() {
             <CardDescription>Paste the modified text here</CardDescription>
           </CardHeader>
           <CardContent>
-            <textarea
+            <Textarea
               value={rightText}
-              onChange={(e) => setRightText((e.target as HTMLTextAreaElement).value)}
+              onChange={(e) => setRightText(e.target.value)}
               placeholder="Enter modified text..."
               rows={12}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+              className="font-mono"
             />
           </CardContent>
         </Card>

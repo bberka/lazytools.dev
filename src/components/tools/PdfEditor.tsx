@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import {
   FileText,
   Upload,
@@ -741,13 +742,12 @@ export function PdfEditor() {
                       </div>
                       <div className="flex items-center gap-1.5 border-l pl-3">
                         <span>Size:</span>
-                        <input
-                          type="range"
-                          min="1"
-                          max="15"
+                        <Slider
+                          min={1}
+                          max={15}
                           value={brushSize}
-                          onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                          className="w-16 h-1 bg-slate-300 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                          onChange={setBrushSize}
+                          className="w-16 py-0"
                         />
                         <span className="w-4 text-right">{brushSize}px</span>
                       </div>
@@ -785,13 +785,12 @@ export function PdfEditor() {
                         ))}
                       </div>
                       <div className="flex items-center gap-1 border-l pl-2">
-                        <input
-                          type="range"
-                          min="10"
-                          max="36"
+                        <Slider
+                          min={10}
+                          max={36}
                           value={textSize}
-                          onChange={(e) => setTextSize(parseInt(e.target.value))}
-                          className="w-16 h-1 rounded-lg appearance-none cursor-pointer"
+                          onChange={setTextSize}
+                          className="w-16 py-0"
                         />
                         <span>{textSize}px</span>
                       </div>

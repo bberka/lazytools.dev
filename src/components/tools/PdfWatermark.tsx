@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { FileText, Upload, Download, Trash2, Stamp, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { cn } from '@/lib/utils';
@@ -628,11 +629,11 @@ export function PdfWatermark() {
                               style={{ backgroundColor: c }}
                             />
                           ))}
-                          <input
-                            type="color"
+                          <ColorPicker
                             value={textColor}
-                            onChange={(e) => setTextColor(e.target.value)}
-                            className="w-5 h-5 rounded-full border border-black/10 overflow-hidden cursor-pointer"
+                            onChange={setTextColor}
+                            showText={false}
+                            className="w-5 h-5 rounded-full border border-black/10"
                           />
                         </div>
                       </div>

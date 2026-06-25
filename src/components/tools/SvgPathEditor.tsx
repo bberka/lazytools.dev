@@ -6,6 +6,7 @@ import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
+import { ColorPicker } from '../ui/color-picker';
 import { Copy, Check, Pen, Download, Maximize2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
 
@@ -166,11 +167,11 @@ export function SvgPathEditor() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Stroke Color</label>
               <div className="flex gap-2">
-                <Input
-                  type="color"
+                <ColorPicker
                   value={strokeColor}
-                  onChange={(e) => setStrokeColor((e.target as HTMLInputElement).value)}
-                  className="w-16 h-10 p-1"
+                  onChange={setStrokeColor}
+                  showText={false}
+                  className="w-16 h-10 rounded border"
                 />
                 <Input
                   type="text"
@@ -184,12 +185,12 @@ export function SvgPathEditor() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Fill Color</label>
               <div className="flex gap-2">
-                <Input
-                  type="color"
+                <ColorPicker
                   value={fillColor === 'none' ? '#ffffff' : fillColor}
-                  onChange={(e) => setFillColor((e.target as HTMLInputElement).value)}
-                  className="w-16 h-10 p-1"
+                  onChange={setFillColor}
                   disabled={fillColor === 'none'}
+                  showText={false}
+                  className="w-16 h-10 rounded border"
                 />
                 <Input
                   type="text"

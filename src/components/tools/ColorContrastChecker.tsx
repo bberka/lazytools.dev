@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
+import { ColorPicker } from '../ui/color-picker';
 import { Eye, Check, X, ArrowLeftRight } from 'lucide-react';
 
 interface ContrastResult {
@@ -112,11 +113,11 @@ export function ColorContrastChecker() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Foreground Color (Text)</label>
               <div className="flex gap-2">
-                <Input
-                  type="color"
+                <ColorPicker
                   value={foreground}
-                  onChange={(e) => setForeground((e.target as HTMLInputElement).value)}
-                  className="w-16 h-10 p-1"
+                  onChange={setForeground}
+                  showText={false}
+                  className="w-16 h-10 rounded border"
                 />
                 <Input
                   type="text"
@@ -131,11 +132,11 @@ export function ColorContrastChecker() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Background Color</label>
               <div className="flex gap-2">
-                <Input
-                  type="color"
+                <ColorPicker
                   value={background}
-                  onChange={(e) => setBackground((e.target as HTMLInputElement).value)}
-                  className="w-16 h-10 p-1"
+                  onChange={setBackground}
+                  showText={false}
+                  className="w-16 h-10 rounded border"
                 />
                 <Input
                   type="text"

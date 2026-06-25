@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useCopyToClipboard } from '@/hooks';
 
 // Type definitions
@@ -819,14 +820,12 @@ export function GlassmorphismGenerator() {
                 </h3>
                 
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border/80 shadow-inner">
-                    <input
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => setBgColor(e.target.value)}
-                      className="absolute -inset-1 h-12 w-12 cursor-pointer border-none bg-transparent"
-                    />
-                  </div>
+                  <ColorPicker
+                    value={bgColor}
+                    onChange={setBgColor}
+                    showText={false}
+                    className="relative h-10 w-10 shrink-0 rounded-lg border border-border/80"
+                  />
                   <div className="min-w-0 flex-1">
                     <label className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">HEX Code</label>
                     <Input
@@ -914,14 +913,12 @@ export function GlassmorphismGenerator() {
                 {borderWidth > 0 && (
                   <div className="space-y-4 rounded-xl border border-border bg-muted/10 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="relative h-8 w-8 overflow-hidden rounded-md border border-border">
-                        <input
-                          type="color"
-                          value={borderColor}
-                          onChange={(e) => setBorderColor(e.target.value)}
-                          className="absolute -inset-1 h-10 w-10 cursor-pointer border-none bg-transparent"
-                        />
-                      </div>
+                      <ColorPicker
+                        value={borderColor}
+                        onChange={setBorderColor}
+                        showText={false}
+                        className="h-8 w-8 rounded-md border border-border"
+                      />
                       <div className="flex-1">
                         <Input
                           value={borderColor}
@@ -1051,14 +1048,12 @@ export function GlassmorphismGenerator() {
                 {enableShadow && (
                   <div className="space-y-4 rounded-xl border border-border bg-muted/10 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="relative h-8 w-8 overflow-hidden rounded-md border border-border">
-                        <input
-                          type="color"
-                          value={shadowColor}
-                          onChange={(e) => setShadowColor(e.target.value)}
-                          className="absolute -inset-1 h-10 w-10 cursor-pointer border-none bg-transparent"
-                        />
-                      </div>
+                      <ColorPicker
+                        value={shadowColor}
+                        onChange={setShadowColor}
+                        showText={false}
+                        className="h-8 w-8 rounded-md border border-border"
+                      />
                       <div className="flex-1">
                         <Input
                           value={shadowColor}

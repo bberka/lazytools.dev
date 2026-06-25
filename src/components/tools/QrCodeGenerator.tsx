@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useActionButton, useCopyToClipboard } from '@/hooks';
 
 type ErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
@@ -256,24 +257,20 @@ export function QrCodeGenerator() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Colors</label>
               <div className="grid grid-cols-2 gap-2">
-                <Input
-                  type="color"
-                  value={foregroundColor}
-                  onChange={(event) =>
-                    setForegroundColor((event.target as HTMLInputElement).value)
-                  }
-                  aria-label="Foreground color"
-                  className="h-11 p-1"
-                />
-                <Input
-                  type="color"
-                  value={backgroundColor}
-                  onChange={(event) =>
-                    setBackgroundColor((event.target as HTMLInputElement).value)
-                  }
-                  aria-label="Background color"
-                  className="h-11 p-1"
-                />
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Foreground</span>
+                  <ColorPicker
+                    value={foregroundColor}
+                    onChange={setForegroundColor}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Background</span>
+                  <ColorPicker
+                    value={backgroundColor}
+                    onChange={setBackgroundColor}
+                  />
+                </div>
               </div>
             </div>
           </div>

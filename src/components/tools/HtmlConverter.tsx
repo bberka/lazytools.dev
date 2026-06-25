@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useCopyToClipboard } from '@/hooks';
 import {
   Check,
@@ -846,12 +847,10 @@ export function HtmlConverter() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">PDF background</label>
-                    <Input
-                      type="color"
+                    <ColorPicker
                       value={backgroundColor}
-                      onChange={(event) => setBackgroundColor(event.currentTarget.value)}
+                      onChange={setBackgroundColor}
                       disabled={exporting}
-                      className="h-10 p-1"
                     />
                   </div>
                 </div>

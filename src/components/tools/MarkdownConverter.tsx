@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { FileText, Download, Eye, Trash2, Loader2, Printer } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js/lib/core';
@@ -901,12 +902,10 @@ export function MarkdownConverter() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Background</label>
-                  <input
-                    type="color"
+                  <ColorPicker
                     value={backgroundColor}
-                    onChange={(event) => setBackgroundColor(event.currentTarget.value)}
+                    onChange={setBackgroundColor}
                     disabled={exporting}
-                    className="h-10 w-full rounded-md border border-input bg-background p-1 cursor-pointer"
                   />
                 </div>
 

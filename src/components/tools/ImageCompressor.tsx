@@ -3,6 +3,8 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { Image as ImageIcon, Upload, Download, Trash2, Zap } from 'lucide-react';
 
 export function ImageCompressor() {
@@ -117,22 +119,19 @@ export function ImageCompressor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Quality: {quality}%</label>
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
+                <Slider
+                  min={1}
+                  max={100}
                   value={quality}
-                  onChange={(e) => setQuality(parseInt(e.target.value))}
-                  className="w-full"
+                  onChange={setQuality}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Max Width/Height (Optional)</label>
-                <input
+                <Input
                   type="number"
                   value={maxWidth}
                   onChange={(e) => setMaxWidth(e.target.value ? parseInt(e.target.value) : '')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="e.g. 1920"
                 />
               </div>
