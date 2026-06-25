@@ -362,6 +362,7 @@ export function ExifViewerRemover() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [singleDragging, setSingleDragging] = useState(false);
   const copyResult = useCopyToClipboard();
 
   // Batch processing types
@@ -646,14 +647,7 @@ export function ExifViewerRemover() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.target as HTMLInputElement;
-    const nextFile = input.files?.[0];
-
-    if (!nextFile) {
-      return;
-    }
-
+  const loadSingleImage = async (nextFile: File) => {
     setError('');
     setFile(nextFile);
     setCleanFile(null);
@@ -680,6 +674,31 @@ export function ExifViewerRemover() {
           ? readError.message
           : 'Unable to inspect metadata for the selected file.'
       );
+    }
+  };
+
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0];
+    if (nextFile) {
+      await loadSingleImage(nextFile);
+    }
+  };
+
+  const handleSingleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setSingleDragging(true);
+  };
+
+  const handleSingleDragLeave = () => {
+    setSingleDragging(false);
+  };
+
+  const handleSingleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setSingleDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      await loadSingleImage(file);
     }
   };
 
@@ -828,13 +847,37 @@ export function ExifViewerRemover() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
-              />
+              <div
+                className={
+                  singleDragging
+                    ? 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors border-primary bg-primary/5'
+                    : 'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                }
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleSingleDragOver}
+                onDragLeave={handleSingleDragLeave}
+                onDrop={handleSingleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+                <p className="text-sm font-semibold">Drag & drop an image here or click to browse</p>
+                <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
+                {file && (
+                  <div
+                    className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    <span>{`${file.name} (${formatBytes(file.size)})`}</span>
+                  </div>
+                )}
+              </div>
 
               {file && (
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

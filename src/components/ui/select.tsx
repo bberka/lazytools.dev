@@ -47,16 +47,20 @@ interface SelectContextType {
   search: string;
   setSearch: (search: string) => void;
   items: Map<string, string>;
+  filteredItems: { value: string; label: string }[];
+  highlightedValue: string;
+  setHighlightedValue: (val: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
   showSearch?: boolean;
   searchThreshold: number;
   disabled?: boolean;
+  handleKeyDown: (e: React.KeyboardEvent) => void;
 }
 
 const SelectContext = React.createContext<SelectContextType | null>(null);
 
-export function Select({
+function Select({
   children,
   value,
   onValueChange,
@@ -80,12 +84,21 @@ export function Select({
   const [open, setOpen] = React.useState(openProp || false);
   const [selectedValue, setSelectedValue] = React.useState(defaultValue || '');
   const [search, setSearch] = React.useState('');
+  const [highlightedValue, setHighlightedValue] = React.useState('');
 
   const items = React.useMemo(() => {
     const map = new Map<string, string>();
     extractItems(children, map);
     return map;
   }, [children]);
+
+  const filteredItems = React.useMemo(() => {
+    return Array.from(items.entries())
+      .map(([value, label]) => ({ value, label }))
+      .filter((item) =>
+        !search || item.label.toLowerCase().includes(search.toLowerCase())
+      );
+  }, [items, search]);
 
   React.useEffect(() => {
     if (openProp !== undefined) setOpen(openProp);
@@ -109,6 +122,43 @@ export function Select({
 
   const activeValue = value !== undefined ? value : selectedValue;
 
+  React.useEffect(() => {
+    if (open) {
+      const exists = filteredItems.some((item) => item.value === activeValue);
+      setHighlightedValue(exists ? activeValue : filteredItems[0]?.value || '');
+    }
+  }, [open, activeValue, filteredItems]);
+
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (filteredItems.length === 0) return;
+
+    const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const nextIndex = currentIndex + 1 >= filteredItems.length ? 0 : currentIndex + 1;
+        setHighlightedValue(filteredItems[nextIndex].value);
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prevIndex = currentIndex - 1 < 0 ? filteredItems.length - 1 : currentIndex - 1;
+        setHighlightedValue(filteredItems[prevIndex].value);
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        if (currentIndex !== -1) {
+          handleValueChange(filteredItems[currentIndex].value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }, [filteredItems, highlightedValue]);
+
   return (
     <SelectContext.Provider
       value={{
@@ -117,11 +167,15 @@ export function Select({
         search,
         setSearch,
         items,
+        filteredItems,
+        highlightedValue,
+        setHighlightedValue,
         open,
         setOpen: handleOpenChange,
         showSearch,
         searchThreshold,
         disabled,
+        handleKeyDown,
       }}
     >
       <Popover open={open} onOpenChange={handleOpenChange}>
@@ -134,9 +188,19 @@ export function Select({
 const SelectTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ComponentPropsWithoutRef<typeof Button>
->(({ className, children, ...props }, ref) => {
+>(({ className, children, onKeyDown, ...props }, ref) => {
   const context = React.useContext(SelectContext);
   const disabled = props.disabled || context?.disabled;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) return;
+    if (disabled) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      context?.setOpen(true);
+    }
+  };
 
   return (
     <PopoverTrigger asChild disabled={disabled}>
@@ -149,6 +213,7 @@ const SelectTrigger = React.forwardRef<
           className
         )}
         disabled={disabled}
+        onKeyDown={handleKeyDown}
         {...props}
       >
         {children}
@@ -186,6 +251,7 @@ const SelectContent = React.forwardRef<
         'w-[var(--radix-popover-trigger-width)] min-w-[8rem] p-1 flex flex-col',
         className
       )}
+      onKeyDown={context.handleKeyDown}
       {...props}
     >
       {showSearch && (
@@ -217,30 +283,60 @@ const SelectItem = React.forwardRef<
   }
 >(({ className, value, children, ...props }, ref) => {
   const context = React.useContext(SelectContext);
-  if (!context) return null;
 
   const label = React.useMemo(() => {
     return extractText(children);
   }, [children]);
 
-  const isSelected = context.value === value;
+  const isSelected = context ? context.value === value : false;
+  const isHighlighted = context ? context.highlightedValue === value : false;
 
-  const matchesSearch =
-    !context.search ||
-    label.toLowerCase().includes(context.search.toLowerCase());
+  const matchesSearch = context
+    ? !context.search || label.toLowerCase().includes(context.search.toLowerCase())
+    : true;
 
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+
+  const handleRef = React.useCallback(
+    (node: HTMLButtonElement | null) => {
+      buttonRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as any).current = node;
+    },
+    [ref]
+  );
+
+  React.useEffect(() => {
+    if (isHighlighted && buttonRef.current) {
+      buttonRef.current.scrollIntoView({
+        block: 'nearest',
+      });
+      // Focus the button if search input is not focused
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      if (!isInputFocused) {
+        buttonRef.current.focus();
+      }
+    }
+  }, [isHighlighted]);
+
+  if (!context) return null;
   if (!matchesSearch) return null;
 
   return (
     <button
-      ref={ref}
+      ref={handleRef}
       type="button"
       role="option"
+      tabIndex={-1}
       aria-selected={isSelected}
       onClick={() => context.onValueChange(value)}
+      onMouseEnter={() => context.setHighlightedValue(value)}
+      onFocus={() => context.setHighlightedValue(value)}
       className={cn(
-        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-left',
-        isSelected && 'bg-accent/50 font-medium',
+        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-left transition-colors duration-150',
+        isSelected && 'bg-accent/40 font-medium',
+        isHighlighted && 'bg-accent text-accent-foreground',
         className
       )}
       {...props}
@@ -283,6 +379,7 @@ const SelectScrollUpButton = () => null;
 const SelectScrollDownButton = () => null;
 
 export {
+  Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
