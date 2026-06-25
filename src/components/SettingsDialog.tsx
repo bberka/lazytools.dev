@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Moon, Settings, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -23,6 +24,7 @@ export function SettingsDialog() {
   const { compactMode, setCompactMode, fullWidth, setFullWidth } = useSettings();
   const { favorites, clearFavorites } = useFavorites();
   const { recentTools, clearRecentTools } = useRecentTools();
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   const handleClearFavorites = () => {
     clearFavorites();
@@ -43,9 +45,15 @@ export function SettingsDialog() {
           </Button>
         </DialogTrigger>
       </TooltipSimple>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          titleRef.current?.focus();
+        }}
+        className="w-[calc(100%-1rem)] sm:w-full rounded-xl sm:rounded-xl max-h-[90vh] overflow-y-auto"
+      >
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
+          <DialogTitle ref={titleRef} tabIndex={-1} className="focus:outline-none">Settings</DialogTitle>
           <DialogDescription>
             Adjust the interface and clear local browsing data.
           </DialogDescription>

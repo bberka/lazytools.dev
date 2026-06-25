@@ -47,7 +47,7 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[550px] p-6 gap-6 border-border/40 bg-background/95 backdrop-blur-md">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full sm:max-w-[550px] rounded-xl sm:rounded-xl max-h-[90vh] overflow-y-auto p-6 gap-6 border-border/40 bg-background/95 backdrop-blur-md">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-2xl font-bold tracking-tight text-center sm:text-left bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
             Install LazyTools

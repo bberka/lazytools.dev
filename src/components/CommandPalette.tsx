@@ -20,6 +20,12 @@ import {
   Calculator,
   FileText,
   Image as ImageIcon,
+  Settings,
+  Moon,
+  Sun,
+  Layers,
+  Maximize2,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import { TOOLS, TAGS, searchTools } from '@/lib/utils/tools-config';
@@ -27,6 +33,8 @@ import type { Tool, ToolTag } from '@/lib/types';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
+import { useSettings } from '@/lib/contexts/SettingsContext';
+import { useTheme } from '@/lib/contexts/ThemeContext';
 import { getModifierKey, isModifierKey } from '@/lib/utils/keyboard';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
@@ -150,14 +158,113 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
 export function CommandPalette() {
   const router = useRouter();
   const { open, setOpen } = useCommandPalette();
-  const { favorites, toggleFavorite } = useFavorites();
+  const { favorites, toggleFavorite, clearFavorites } = useFavorites();
   const { recentTools, addRecentTool, clearRecentTools } = useRecentTools();
+  const { theme, toggleTheme } = useTheme();
+  const { compactMode, setCompactMode, fullWidth, setFullWidth } = useSettings();
 
   const [search, setSearch] = useState('');
   const modKey = getModifierKey();
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Settings commands definitions
+  const settingsCommands = useMemo(() => {
+    return [
+      {
+        id: 'cmd-theme',
+        name: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+        status: theme === 'dark' ? 'Dark' : 'Light',
+        icon: theme === 'dark' ? Sun : Moon,
+        keywords: ['theme', 'dark', 'light', 'mode', 'toggle', 'switch', 'appearance', 'color'],
+        action: () => {
+          toggleTheme();
+          toast.success(`Switched to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+          setOpen(false);
+        },
+      },
+      {
+        id: 'cmd-compact',
+        name: compactMode ? 'Disable Compact Mode' : 'Enable Compact Mode',
+        status: compactMode ? 'Enabled' : 'Disabled',
+        icon: Layers,
+        keywords: ['compact', 'mode', 'size', 'toggle', 'layout', 'spacing', 'appearance'],
+        action: () => {
+          setCompactMode(!compactMode);
+          toast.success(`Compact mode ${!compactMode ? 'enabled' : 'disabled'}`);
+          setOpen(false);
+        },
+      },
+      {
+        id: 'cmd-full',
+        name: fullWidth ? 'Disable Full Width Mode' : 'Enable Full Width Mode',
+        status: fullWidth ? 'Enabled' : 'Disabled',
+        icon: Maximize2,
+        keywords: ['full', 'width', 'mode', 'toggle', 'layout', 'expand', 'appearance'],
+        action: () => {
+          setFullWidth(!fullWidth);
+          toast.success(`Full width mode ${!fullWidth ? 'enabled' : 'disabled'}`);
+          setOpen(false);
+        },
+      },
+      {
+        id: 'cmd-clear-recents',
+        name: 'Clear Recent Tools',
+        status: recentTools.length > 0 ? `${recentTools.length} tools` : 'Empty',
+        icon: Trash2,
+        keywords: ['clear', 'recent', 'tools', 'delete', 'history', 'reset'],
+        action: () => {
+          if (recentTools.length === 0) {
+            toast.info('No recent tools to clear');
+            return;
+          }
+          clearRecentTools();
+          toast.success('Recent tools cleared');
+          setOpen(false);
+        },
+      },
+      {
+        id: 'cmd-clear-favorites',
+        name: 'Clear Favorites',
+        status: favorites.length > 0 ? `${favorites.length} tools` : 'Empty',
+        icon: Trash2,
+        keywords: ['clear', 'favorites', 'bookmarks', 'delete', 'reset'],
+        action: () => {
+          if (favorites.length === 0) {
+            toast.info('No favorites to clear');
+            return;
+          }
+          clearFavorites();
+          toast.success('Favorites cleared');
+          setOpen(false);
+        },
+      },
+    ];
+  }, [
+    theme,
+    toggleTheme,
+    compactMode,
+    setCompactMode,
+    fullWidth,
+    setFullWidth,
+    recentTools,
+    clearRecentTools,
+    favorites,
+    clearFavorites,
+    setOpen,
+  ]);
+
+  // Filter settings commands based on search
+  const searchedSettingsCommands = useMemo(() => {
+    if (!search) return [];
+    const cleanSearch = search.trim().toLowerCase();
+    return settingsCommands.filter(
+      (cmd) =>
+        cmd.name.toLowerCase().includes(cleanSearch) ||
+        cmd.keywords.some((k) => k.toLowerCase().includes(cleanSearch))
+    );
+  }, [search, settingsCommands]);
 
   const handleToggleFavorite = useCallback((toolId: string) => {
     const wasFavorite = favorites.includes(toolId);
@@ -224,15 +331,15 @@ export function CommandPalette() {
         return;
       }
 
-      // Ctrl/Cmd+Shift+F to toggle favorite on selected tool
-      if (key === 'f' && e.shiftKey && isModifierKey(e) && selectedTool) {
+      // Ctrl/Cmd+Shift+F to toggle favorite on selected tool (only if it is a tool, not a command)
+      if (key === 'f' && e.shiftKey && isModifierKey(e) && selectedTool && !selectedTool.startsWith('cmd-')) {
         e.preventDefault();
         handleToggleFavorite(selectedTool);
         return;
       }
 
-      // Ctrl/Cmd+Enter to open in new tab
-      if (e.key === 'Enter' && isModifierKey(e) && selectedTool) {
+      // Ctrl/Cmd+Enter to open in new tab (only if it is a tool, not a command)
+      if (e.key === 'Enter' && isModifierKey(e) && selectedTool && !selectedTool.startsWith('cmd-')) {
         e.preventDefault();
         addRecentTool(selectedTool);
         window.open(`/tools/${selectedTool}`, '_blank');
@@ -358,14 +465,14 @@ export function CommandPalette() {
     >
       <DialogContent
         hideClose
-        className="w-[calc(100%-1rem)] max-w-2xl gap-0 overflow-hidden border bg-popover p-0 text-popover-foreground sm:w-[calc(100%-2rem)]"
+        className="w-[calc(100%-1rem)] max-w-2xl gap-0 overflow-hidden rounded-xl sm:rounded-xl border bg-popover p-0 text-popover-foreground sm:w-[calc(100%-2rem)]"
       >
         <DialogTitle className="sr-only">Command Search</DialogTitle>
         <DialogDescription className="sr-only">
           Search for tools, utilities, and commands.
         </DialogDescription>
         <Command
-          className="flex max-h-[min(80vh,36rem)] min-h-0 flex-col overflow-hidden"
+          className="flex max-h-[min(80vh,36rem)] min-h-[330px] flex-col overflow-hidden md:min-h-[400px]"
           shouldFilter={false}
         >
           {/* Search Input */}
@@ -383,16 +490,15 @@ export function CommandPalette() {
           {/* Results */}
           <Command.List
             ref={listRef}
-            className="max-h-[50vh] min-h-0 overflow-y-auto p-2 scrollbar-thin md:max-h-[400px]"
+            className="flex-1 overflow-y-auto p-2 scrollbar-thin"
             style={{
-              height: 'var(--cmdk-list-height)',
               scrollPaddingBlockStart: '0.5rem',
               scrollPaddingBlockEnd: '0.5rem',
             }}
           >
-              {search && searchedTools.length === 0 && (
+              {search && searchedTools.length === 0 && searchedSettingsCommands.length === 0 && (
                 <div className="py-6 text-center text-sm text-muted-foreground">
-                  No tools found matching &quot;{search}&quot;
+                  No tools or commands found matching &quot;{search}&quot;
                 </div>
               )}
 
@@ -419,6 +525,38 @@ export function CommandPalette() {
                             <TagIconBadge key={tagId} tagId={tagId} />
                           ))}
                         </div>
+                      </Command.Item>
+                    );
+                  })}
+                </Command.Group>
+              )}
+
+              {/* Search Results - Settings Commands */}
+              {search && searchedSettingsCommands.length > 0 && (
+                <Command.Group
+                  heading={
+                    <span className="flex items-center gap-1.5">
+                      <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span>Settings & Commands</span>
+                    </span>
+                  }
+                >
+                  {searchedSettingsCommands.map((cmd) => {
+                    const Icon = cmd.icon;
+                    return (
+                      <Command.Item
+                        key={cmd.id}
+                        value={cmd.id}
+                        onSelect={cmd.action}
+                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                      >
+                        <Icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1">{cmd.name}</span>
+                        {cmd.status && (
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                            {cmd.status}
+                          </span>
+                        )}
                       </Command.Item>
                     );
                   })}
@@ -517,6 +655,38 @@ export function CommandPalette() {
                   );
                 }
               )}
+
+              {/* Settings Group */}
+              {!search && (
+                <Command.Group
+                  heading={
+                    <span className="flex items-center gap-1.5">
+                      <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span>Settings & Commands</span>
+                    </span>
+                  }
+                >
+                  {settingsCommands.map((cmd) => {
+                    const Icon = cmd.icon;
+                    return (
+                      <Command.Item
+                        key={cmd.id}
+                        value={cmd.id}
+                        onSelect={cmd.action}
+                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                      >
+                        <Icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1">{cmd.name}</span>
+                        {cmd.status && (
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                            {cmd.status}
+                          </span>
+                        )}
+                      </Command.Item>
+                    );
+                  })}
+                </Command.Group>
+              )}
           </Command.List>
 
           {/* Footer with shortcuts */}
@@ -564,10 +734,10 @@ export function CommandPalette() {
                 <TooltipSimple content="Toggle favorite for focused tool">
                   <button
                     type="button"
-                    onClick={() => selectedTool && handleToggleFavorite(selectedTool)}
+                    onClick={() => selectedTool && !selectedTool.startsWith('cmd-') && handleToggleFavorite(selectedTool)}
                     className="hover:text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Toggle favorite for focused tool"
-                    disabled={!selectedTool}
+                    disabled={!selectedTool || selectedTool.startsWith('cmd-')}
                   >
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
                       {modKey}+⇧+F
