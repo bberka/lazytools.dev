@@ -12,10 +12,18 @@ export function PdfSplit() {
   const [pageCount, setPageCount] = useState<number>(0);
   const [range, setRange] = useState('');
   const [splitting, setSplitting] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const loadPdfFile = async (file: File) => {
     if (!file || file.type !== 'application/pdf') return;
 
     setPdfFile(file);
@@ -26,6 +34,31 @@ export function PdfSplit() {
       setRange(`1-${pdf.getPageCount()}`);
     } catch (error) {
       console.error('Error loading PDF:', error);
+    }
+  };
+
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await loadPdfFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      await loadPdfFile(file);
     }
   };
 
@@ -85,13 +118,34 @@ export function PdfSplit() {
           <CardDescription>Extract specific pages or ranges from a PDF document</CardDescription>
         </CardHeader>
         <CardContent>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf"
-            onChange={handleFileUpload}
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-          />
+          <div
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+              dragging
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+            }`}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <p className="text-sm font-semibold">Drag & drop a PDF file here or click to browse</p>
+            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
+            {pdfFile && (
+              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
+                <FileText className="h-3.5 w-3.5" />
+                {pdfFile.name} ({formatSize(pdfFile.size)})
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

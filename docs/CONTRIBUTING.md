@@ -96,7 +96,9 @@ Commit prefixes used in this repo:
 - Use TypeScript for new code.
 - Avoid `any` unless the API is genuinely dynamic and a narrower type would be misleading.
 - Use React function components and hooks.
-- Use existing UI components from `src/components/ui` before adding new primitives.
+- Use existing UI components from `src/components/ui` (such as `Select`, `Slider`, `Switch`, `Checkbox`, `Input`, `Button`, `ColorPicker`) before adding new primitives. Avoid using native browser elements like `<select>`, `<input type="range">`, `<input type="checkbox">`, `<input type="color">`.
+- Ensure all interactive elements like dropdowns, custom select inputs, search boxes, and list items are fully keyboard accessible (navigable with `ArrowUp`/`ArrowDown` and selectable with `Enter`/`Space`).
+- Avoid hardcoding color classes (such as `bg-blue-500` or `text-slate-900`) for standard elements. Always use Tailwind CSS variables and semantic design tokens (like `bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`) to maintain light/dark mode compatibility.
 - Keep browser-only APIs inside client components, effects, or event handlers.
 - Keep tools client-side and privacy-first unless a feature explicitly requires an external API.
 - Prefer real-time processing for lightweight conversions.

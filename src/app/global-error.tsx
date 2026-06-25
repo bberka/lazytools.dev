@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Script from 'next/script';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home, Terminal, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
@@ -56,7 +57,11 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     <html lang="en">
       <head>
         <title>Critical Application Error | LazyTools</title>
-        <script
+      </head>
+      <body className="bg-background text-foreground font-sans antialiased min-h-screen">
+        <Script
+          id="theme-preloader-error"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -73,8 +78,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             `,
           }}
         />
-      </head>
-      <body className="bg-background text-foreground font-sans antialiased min-h-screen">
         <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
           {/* Glowing background meshes */}
           <div className="absolute inset-0 -z-10 flex items-center justify-center opacity-30 dark:opacity-20">

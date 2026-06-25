@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -174,11 +174,9 @@ export function MockDataGenerator() {
     setGeneratedData(data);
   };
 
-  // Generate data initially on mount or if configuration changes
-  useMemo(() => {
-    if (generatedData.length === 0) {
-      generateData();
-    }
+  // Generate data initially on mount
+  useEffect(() => {
+    generateData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

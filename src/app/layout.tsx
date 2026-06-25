@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Outfit } from 'next/font/google';
+import Script from 'next/script';
 import { Providers } from './providers';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -39,7 +40,6 @@ export const metadata: Metadata = {
     'json formatter',
     'uuid generator',
     'regex tester',
-    'color converter',
     'markdown editor',
     'url encoder',
     'password generator',
@@ -110,9 +110,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={outfit.variable} suppressHydrationWarning>
-      <head>
+      <head />
+      <body>
         {/* Prevent theme flicker - must run before page renders */}
-        <script
+        <Script
+          id="theme-preloader"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -130,8 +133,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body>
         <Providers>
           <TauriWindowHandler />
           <PWARegister />

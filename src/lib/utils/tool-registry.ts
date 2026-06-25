@@ -373,17 +373,6 @@ export const TOOL_REGISTRY = {
         (module) => module.HtmlEncoder
       ),
   },
-  'color-converter': {
-    name: 'Color Converter',
-    description: 'Convert colors between HEX, RGB, HSL, and other formats.',
-    tags: ['design'],
-    icon: 'Palette',
-    keywords: ['color', 'hex', 'rgb', 'hsl', 'convert'],
-    component: () =>
-      import('@/components/tools/ColorConverter').then(
-        (module) => module.ColorConverter
-      ),
-  },
   'case-converter': {
     name: 'Case Converter',
     description: 'Convert text between camelCase, snake_case, and more.',

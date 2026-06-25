@@ -308,7 +308,7 @@ export function GlassmorphismGenerator() {
     return {
       background,
       backdropFilter,
-      webkitBackdropFilter: backdropFilter,
+      WebkitBackdropFilter: backdropFilter,
       border,
       borderRadius: borderRadiusStyle,
       boxShadow,

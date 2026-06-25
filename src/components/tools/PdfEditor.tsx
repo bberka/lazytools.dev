@@ -61,6 +61,7 @@ export function PdfEditor() {
   
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [dragging, setDragging] = useState(false);
   
   // Annotation states
   const [activeTool, setActiveTool] = useState<'pan' | 'draw' | 'text'>('pan');
@@ -104,8 +105,7 @@ export function PdfEditor() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const loadPdfFile = async (file: File) => {
     if (!file || file.type !== 'application/pdf') return;
 
     setPdfFile(file);
@@ -157,6 +157,31 @@ export function PdfEditor() {
       alert('Failed to load PDF file.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await loadPdfFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      await loadPdfFile(file);
     }
   };
 
@@ -553,8 +578,15 @@ export function PdfEditor() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+              dragging
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+            }`}
             onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <input
               ref={fileInputRef}
@@ -563,8 +595,8 @@ export function PdfEditor() {
               onChange={handleFileUpload}
               className="hidden"
             />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4 animate-bounce" />
-            <p className="text-sm font-semibold">Click to upload a PDF file</p>
+            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <p className="text-sm font-semibold">Drag & drop a PDF file here or click to browse</p>
             <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
             {pdfFile && (
               <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20">

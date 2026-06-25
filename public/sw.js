@@ -29,7 +29,6 @@ const COMMON_TOOL_ROUTES = self.__precacheRoutes || [
   '/tools/url-encoder',
   '/tools/markdown-editor',
   '/tools/regex-tester',
-  '/tools/color-converter',
 ];
 
 const PRECACHE_URLS = [...STATIC_ASSETS, ...COMMON_TOOL_ROUTES];

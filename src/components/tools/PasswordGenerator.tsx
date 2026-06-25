@@ -104,6 +104,7 @@ function formatSeparator(separator: string) {
 }
 
 export function PasswordGenerator() {
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<GenerationMode>('random');
   const [length, setLength] = useState(16);
   const [uppercase, setUppercase] = useState(true);
@@ -131,6 +132,10 @@ export function PasswordGenerator() {
   const [manualPassword, setManualPassword] = useState('');
   const [refreshNonce, setRefreshNonce] = useState(0);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const buildRandomPassword = useCallback(() => {
     const sets = [
@@ -263,6 +268,7 @@ export function PasswordGenerator() {
   ]);
 
   const livePassword = useMemo(() => {
+    if (!mounted) return '';
     const refreshToken = refreshNonce;
     const generated =
       mode === 'pin'
@@ -272,9 +278,9 @@ export function PasswordGenerator() {
           : buildRandomPassword();
 
     return refreshToken >= 0 ? generated : generated;
-  }, [buildPassphrase, buildPin, buildRandomPassword, mode, refreshNonce]);
+  }, [buildPassphrase, buildPin, buildRandomPassword, mode, refreshNonce, mounted]);
 
-  const password = autoGenerate ? livePassword : manualPassword || livePassword;
+  const password = mounted ? (autoGenerate ? livePassword : manualPassword || livePassword) : '';
 
   const handleGenerateNow = () => {
     if (autoGenerate) {
