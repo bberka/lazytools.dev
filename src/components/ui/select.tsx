@@ -7,12 +7,45 @@ import { Popover, PopoverTrigger, PopoverContent } from './popover';
 import { Input } from './input';
 import { Button } from './button';
 
+const extractText = (node: React.ReactNode): string => {
+  if (node === null || node === undefined) return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) {
+    return node.map(extractText).join('');
+  }
+  if (React.isValidElement(node)) {
+    const props = node.props as any;
+    if (props && props.children) {
+      return extractText(props.children);
+    }
+  }
+  return '';
+};
+
+const extractItems = (children: React.ReactNode, map: Map<string, string>) => {
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child)) {
+      const type = child.type as any;
+      if (type && (type.displayName === 'SelectItem' || type.name === 'SelectItem')) {
+        const props = child.props as any;
+        const value = props.value;
+        const label = extractText(props.children);
+        map.set(value, label);
+      } else {
+        const props = child.props as any;
+        if (props && props.children) {
+          extractItems(props.children, map);
+        }
+      }
+    }
+  });
+};
+
 interface SelectContextType {
   value: string;
   onValueChange: (value: string) => void;
   search: string;
   setSearch: (search: string) => void;
-  registerItem: (value: string, label: string) => () => void;
   items: Map<string, string>;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -47,7 +80,12 @@ export function Select({
   const [open, setOpen] = React.useState(openProp || false);
   const [selectedValue, setSelectedValue] = React.useState(defaultValue || '');
   const [search, setSearch] = React.useState('');
-  const [items, setItems] = React.useState<Map<string, string>>(new Map());
+
+  const items = React.useMemo(() => {
+    const map = new Map<string, string>();
+    extractItems(children, map);
+    return map;
+  }, [children]);
 
   React.useEffect(() => {
     if (openProp !== undefined) setOpen(openProp);
@@ -69,23 +107,6 @@ export function Select({
     setSearch('');
   };
 
-  const registerItem = React.useCallback((val: string, label: string) => {
-    setItems((prev) => {
-      if (prev.get(val) === label) return prev;
-      const next = new Map(prev);
-      next.set(val, label);
-      return next;
-    });
-    return () => {
-      setItems((prev) => {
-        if (!prev.has(val)) return prev;
-        const next = new Map(prev);
-        next.delete(val);
-        return next;
-      });
-    };
-  }, []);
-
   const activeValue = value !== undefined ? value : selectedValue;
 
   return (
@@ -95,7 +116,6 @@ export function Select({
         onValueChange: handleValueChange,
         search,
         setSearch,
-        registerItem,
         items,
         open,
         setOpen: handleOpenChange,
@@ -200,13 +220,8 @@ const SelectItem = React.forwardRef<
   if (!context) return null;
 
   const label = React.useMemo(() => {
-    if (typeof children === 'string') return children;
-    return String(children);
+    return extractText(children);
   }, [children]);
-
-  React.useEffect(() => {
-    return context.registerItem(value, label);
-  }, [value, label, context.registerItem]);
 
   const isSelected = context.value === value;
 
