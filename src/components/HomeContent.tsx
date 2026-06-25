@@ -525,14 +525,15 @@ function ToolCard({
             className={cn(compactMode ? 'p-3' : 'p-4 sm:p-5')}
           >
             <div className={cn("flex justify-between gap-3", compactMode ? "items-center" : "items-start")}>
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                {!compactMode && IconComponent && (
+              <div className={cn("flex min-w-0 flex-1", compactMode ? "items-center gap-2" : "items-start gap-3")}>
+                {IconComponent && (
                   <div className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary/80 transition-all duration-300 group-hover:scale-110",
+                    "flex shrink-0 items-center justify-center bg-secondary/80 transition-all duration-300 group-hover:scale-110",
+                    compactMode ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl",
                     isActive && "scale-110",
                     primaryTag.color
                   )}>
-                    <IconComponent className="h-5 w-5" />
+                    <IconComponent className={cn(compactMode ? "h-4 w-4" : "h-5 w-5")} />
                   </div>
                 )}
                 <div className="space-y-1 min-w-0 flex-1">
