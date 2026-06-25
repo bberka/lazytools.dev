@@ -443,7 +443,6 @@ export function CommandPalette() {
                             <TagIconBadge key={tagId} tagId={tagId} />
                           ))}
                         </div>
-                        <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
                       </Command.Item>
                     );
                   })}
