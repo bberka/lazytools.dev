@@ -278,22 +278,18 @@ export function PasswordHasher() {
   return (
     <div className="space-y-6">
       {/* Mode Selector */}
-      <Card className="border border-border bg-card shadow-sm">
-        <CardContent className="pt-6">
-          <Tabs value={mode} onValueChange={(val) => handleModeChange(val as Mode)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-auto">
-              <TabsTrigger value="hash" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Hash Password
-              </TabsTrigger>
-              <TabsTrigger value="verify" className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                Verify Password
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardContent>
-      </Card>
+      <Tabs value={mode} onValueChange={(val) => handleModeChange(val as Mode)} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-auto">
+          <TabsTrigger value="hash" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Hash Password
+          </TabsTrigger>
+          <TabsTrigger value="verify" className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Verify Password
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Configuration Settings (only in hash mode) */}
       {mode === 'hash' && (

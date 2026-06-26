@@ -321,8 +321,7 @@ export function MarkdownEditor() {
       </div>
 
       {!fullPreview && (
-        <Card className="border-none shadow-none bg-transparent">
-          <CardContent className="p-0 flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1">
             <TooltipSimple content="H1">
               <Button variant="outline" size="icon" onClick={() => insertText('# ', '')} aria-label="Heading 1"><Heading1 className="h-4 w-4" /></Button>
             </TooltipSimple>
@@ -353,8 +352,7 @@ export function MarkdownEditor() {
             <TooltipSimple content="Quote">
               <Button variant="outline" size="icon" onClick={() => insertText('> ', '')} aria-label="Quote"><Quote className="h-4 w-4" /></Button>
             </TooltipSimple>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       <div className={cn(

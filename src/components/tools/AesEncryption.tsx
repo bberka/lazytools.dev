@@ -215,39 +215,35 @@ export function AesEncryption() {
   return (
     <div className="space-y-6">
       {/* Mode Toggle */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <Tabs
-              value={mode}
-              onValueChange={(val) => {
-                setMode(val as Mode);
-                setOutput('');
-                setError('');
-              }}
-              className="flex-1 w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 h-auto">
-                <TabsTrigger value="encrypt" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  Encrypt
-                </TabsTrigger>
-                <TabsTrigger value="decrypt" className="flex items-center gap-2">
-                  <Unlock className="h-4 w-4" />
-                  Decrypt
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {output && (
-              <TooltipSimple content="Swap input/output">
-                <Button variant="ghost" size="icon" onClick={handleSwapMode} aria-label="Swap input/output">
-                  <ArrowLeftRight className="h-4 w-4" />
-                </Button>
-              </TooltipSimple>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <Tabs
+          value={mode}
+          onValueChange={(val) => {
+            setMode(val as Mode);
+            setOutput('');
+            setError('');
+          }}
+          className="flex-1 w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="encrypt" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Encrypt
+            </TabsTrigger>
+            <TabsTrigger value="decrypt" className="flex items-center gap-2">
+              <Unlock className="h-4 w-4" />
+              Decrypt
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {output && (
+          <TooltipSimple content="Swap input/output">
+            <Button variant="ghost" size="icon" onClick={handleSwapMode} aria-label="Swap input/output">
+              <ArrowLeftRight className="h-4 w-4" />
+            </Button>
+          </TooltipSimple>
+        )}
+      </div>
 
       {/* Password Input */}
       <Card>

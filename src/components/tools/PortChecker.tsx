@@ -193,7 +193,7 @@ export function PortChecker() {
   const checkingPorts = scanResults.filter((r) => r.status === 'checking').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Warning */}
       <Card className="border-yellow-500/20 bg-yellow-500/5">
         <CardContent className="pt-6">
@@ -216,26 +216,22 @@ export function PortChecker() {
       </Card>
 
       {/* Mode Selection */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-2">
-            <Button
-              variant={scanMode === 'common' ? 'default' : 'outline'}
-              onClick={() => setScanMode('common')}
-              className="flex-1 sm:flex-none"
-            >
-              Common Ports
-            </Button>
-            <Button
-              variant={scanMode === 'custom' ? 'default' : 'outline'}
-              onClick={() => setScanMode('custom')}
-              className="flex-1 sm:flex-none"
-            >
-              Custom Ports
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex gap-2">
+        <Button
+          variant={scanMode === 'common' ? 'default' : 'outline'}
+          onClick={() => setScanMode('common')}
+          className="flex-1 sm:flex-none"
+        >
+          Common Ports
+        </Button>
+        <Button
+          variant={scanMode === 'custom' ? 'default' : 'outline'}
+          onClick={() => setScanMode('custom')}
+          className="flex-1 sm:flex-none"
+        >
+          Custom Ports
+        </Button>
+      </div>
 
       {/* Input */}
       <Card>
@@ -409,32 +405,13 @@ export function PortChecker() {
         </Card>
       )}
 
-      {/* Information Card */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <div className="text-blue-600 dark:text-blue-500">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div className="text-sm space-y-2">
-              <p className="font-medium">Status Meanings</p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li><strong>Open:</strong> Port responded to connection attempt</li>
-                <li><strong>Closed:</strong> Port actively refused connection</li>
-                <li><strong>Filtered:</strong> No response or blocked by firewall</li>
-                <li><strong>Checking:</strong> Currently testing the port</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Status Legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground px-1">
+        <span><CheckCircle className="inline h-3.5 w-3.5 text-green-600 dark:text-green-500 mr-1" /><strong>Open</strong> – Port responded</span>
+        <span><XCircle className="inline h-3.5 w-3.5 text-red-600 dark:text-red-500 mr-1" /><strong>Closed</strong> – Connection refused</span>
+        <span><AlertCircle className="inline h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 mr-1" /><strong>Filtered</strong> – No response / blocked</span>
+        <span><Loader2 className="inline h-3.5 w-3.5 text-blue-600 dark:text-blue-500 mr-1" /><strong>Checking</strong> – Testing port</span>
+      </div>
     </div>
   );
 }

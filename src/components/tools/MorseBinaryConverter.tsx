@@ -293,12 +293,12 @@ export function MorseBinaryConverter() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
-          <TabsTrigger value="morse" className="flex items-center gap-2 font-semibold">
-            <Music className="h-4 w-4 text-primary" />
+          <TabsTrigger value="morse" className="flex items-center gap-2">
+            <Music className="h-4 w-4" />
             Morse Code
           </TabsTrigger>
-          <TabsTrigger value="binary" className="flex items-center gap-2 font-semibold">
-            <Binary className="h-4 w-4 text-primary" />
+          <TabsTrigger value="binary" className="flex items-center gap-2">
+            <Binary className="h-4 w-4" />
             Binary String
           </TabsTrigger>
         </TabsList>
@@ -311,10 +311,10 @@ export function MorseBinaryConverter() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
-          <TabsTrigger value="encode" className="flex items-center gap-2 font-semibold">
+          <TabsTrigger value="encode" className="flex items-center gap-2">
             Encode Text (Plain to Code)
           </TabsTrigger>
-          <TabsTrigger value="decode" className="flex items-center gap-2 font-semibold">
+          <TabsTrigger value="decode" className="flex items-center gap-2">
             Decode Text (Code to Plain)
           </TabsTrigger>
         </TabsList>

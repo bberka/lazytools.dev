@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useCallback, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Image as ImageIcon, Upload, Download, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Upload, Download, Trash2, Loader2, Crop as CropIcon } from 'lucide-react';
+import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 type OutputFormat = 'png' | 'jpeg' | 'webp' | 'ico';
 
@@ -64,8 +66,50 @@ export function ImageConverter() {
   const [processing, setProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cropImgRef = useRef<HTMLImageElement>(null);
 
   const [dragging, setDragging] = useState(false);
+  const [crop, setCrop] = useState<CropType>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [cropAspect, setCropAspect] = useState<number | undefined>(undefined);
+
+  const onCropImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (cropAspect) {
+      const { width, height } = e.currentTarget;
+      setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, cropAspect, width, height), width, height));
+    }
+  }, [cropAspect]);
+
+  const handleDownloadCropped = useCallback(() => {
+    const image = cropImgRef.current;
+    if (!image || !completedCrop) return;
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const canvas = document.createElement('canvas');
+    const pixelRatio = window.devicePixelRatio;
+    canvas.width = completedCrop.width * scaleX * pixelRatio;
+    canvas.height = completedCrop.height * scaleY * pixelRatio;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(
+      image,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0, 0,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+    );
+    const mimeType = originalFile?.type || 'image/png';
+    const ext = mimeType.split('/')[1] || 'png';
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL(mimeType);
+    link.download = `cropped-${originalFile?.name || `image.${ext}`}`;
+    link.click();
+  }, [completedCrop, originalFile]);
 
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -263,6 +307,8 @@ export function ImageConverter() {
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -285,7 +331,7 @@ export function ImageConverter() {
             className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
               dragging
                 ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                : 'border-border hover:bg-muted/50'
             }`}
             onClick={() => fileInputRef.current?.click()}
             onDragOver={handleDragOver}
@@ -314,6 +360,48 @@ export function ImageConverter() {
 
       {originalImage && (
         <>
+          {/* Crop Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CropIcon className="h-5 w-5" />
+                Crop
+              </CardTitle>
+              <CardDescription>Select an area to crop from your image</CardDescription>
+              <div className="flex gap-2 flex-wrap pt-2">
+                <Button variant={cropAspect === undefined ? 'default' : 'outline'} size="sm" onClick={() => { setCropAspect(undefined); setCrop(undefined); setCompletedCrop(undefined); }}>Free</Button>
+                <Button variant={cropAspect === 1 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(1)}>1:1</Button>
+                <Button variant={cropAspect === 16 / 9 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(16 / 9)}>16:9</Button>
+                <Button variant={cropAspect === 4 / 3 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(4 / 3)}>4:3</Button>
+                <Button variant={cropAspect === 9 / 16 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(9 / 16)}>9:16</Button>
+                <Button variant={cropAspect === 3 / 4 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(3 / 4)}>3:4</Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-center">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(c) => setCrop(c)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={cropAspect}
+                >
+                  <img ref={cropImgRef} alt="Crop" src={originalImage} onLoad={onCropImageLoad} style={{ maxHeight: '500px', minWidth: '200px', width: 'auto', maxWidth: '100%' }} />
+                </ReactCrop>
+              </div>
+              {completedCrop && cropImgRef.current && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Crop: {Math.round(completedCrop.width * (cropImgRef.current.naturalWidth / cropImgRef.current.width))}×{Math.round(completedCrop.height * (cropImgRef.current.naturalHeight / cropImgRef.current.height))}px
+                </p>
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={handleDownloadCropped} disabled={!completedCrop} className="flex-1 min-h-11 sm:min-h-10">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Cropped Image
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Settings</CardTitle>
@@ -471,10 +559,7 @@ export function ImageConverter() {
                 <Button onClick={handleConvert} disabled={processing} className="min-h-11 sm:min-h-10">
                   {processing ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
                     </>
                   ) : (
@@ -519,10 +604,7 @@ export function ImageConverter() {
               )}
               {processing && (
                 <div className="mt-4 text-center text-sm text-muted-foreground">
-                  <svg className="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin" />
                   Processing image...
                 </div>
               )}

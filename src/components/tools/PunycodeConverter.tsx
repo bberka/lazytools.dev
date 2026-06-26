@@ -294,12 +294,12 @@ export function PunycodeConverter() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
-          <TabsTrigger value="encode" className="flex items-center gap-2 font-semibold">
-            <Globe className="h-4 w-4 text-primary" />
+          <TabsTrigger value="encode" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
             Unicode to Punycode (Encode)
           </TabsTrigger>
-          <TabsTrigger value="decode" className="flex items-center gap-2 font-semibold">
-            <FileText className="h-4 w-4 text-primary" />
+          <TabsTrigger value="decode" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
             Punycode to Unicode (Decode)
           </TabsTrigger>
         </TabsList>

@@ -245,9 +245,19 @@ export function filterTools(
     filtered = filtered.filter((tool) => tool.tags.includes(tag));
   }
 
-  // Filter by favorites
+  // Filter by favorites — include hidden sub-tools that are individually favorited
   if (favoritesOnly) {
-    filtered = filtered.filter((tool) => favorites.includes(tool.id));
+    const favoritedHidden = TOOLS.filter(
+      (t) => t.hidden && favorites.includes(t.id)
+    ).map((t) => ({ ...t, score: undefined }));
+    const combined = [...filtered, ...favoritedHidden];
+    // Deduplicate by id
+    const seen = new Set<string>();
+    filtered = combined.filter((tool) => {
+      if (seen.has(tool.id)) return false;
+      seen.add(tool.id);
+      return favorites.includes(tool.id);
+    });
   }
 
   return filtered;
