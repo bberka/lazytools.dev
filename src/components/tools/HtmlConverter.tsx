@@ -39,6 +39,15 @@ import {
 type ExportFormat = 'pdf' | 'md' | 'html' | 'txt';
 type PageSize = 'A4' | 'Letter' | 'Legal';
 type Orientation = 'portrait' | 'landscape';
+type PdfTheme = 'light' | 'dark';
+
+type PreviewDocumentOptions = {
+  readonly html: string;
+  readonly styleTag: string;
+  readonly backgroundColor: string;
+  readonly pdfTheme: PdfTheme;
+  readonly pageStyle: CSSProperties;
+};
 
 const sampleHtml = `<article>
   <h1>Release Notes</h1>
@@ -374,6 +383,66 @@ function downloadText(filename: string, contents: string, type: string) {
   URL.revokeObjectURL(url);
 }
 
+function isPdfTheme(value: string): value is PdfTheme {
+  return value === 'light' || value === 'dark';
+}
+
+function splitHtmlDocument(html: string): { readonly head: string; readonly body: string } {
+  if (typeof window === 'undefined') {
+    return { head: '', body: html };
+  }
+
+  const containsDocumentShell = /<(?:!doctype|html|head|body)\b/i.test(html);
+  if (!containsDocumentShell) {
+    return { head: '', body: html };
+  }
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return {
+    head: doc.head.innerHTML,
+    body: doc.body.innerHTML,
+  };
+}
+
+function buildPreviewDocument(options: PreviewDocumentOptions): string {
+  const documentParts = splitHtmlDocument(options.html);
+  const pageStyles = Object.entries(options.pageStyle)
+    .map(([property, value]) => `${property.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}: ${value};`)
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${documentParts.head}
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: ${options.backgroundColor};
+    }
+
+    body {
+      padding: 1rem;
+    }
+
+    .html-converter-preview {
+      ${pageStyles}
+    }
+
+    ${options.styleTag}
+  </style>
+</head>
+<body>
+  <main class="html-converter-preview ${options.pdfTheme === 'dark' ? 'dark-pdf' : ''}">
+    ${documentParts.body}
+  </main>
+</body>
+</html>`;
+}
+
 export function HtmlConverter() {
   const [input, setInput] = useState(sampleHtml);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
@@ -382,9 +451,9 @@ export function HtmlConverter() {
   const [margin, setMargin] = useState(16);
   const [scale, setScale] = useState(2);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [pdfTheme, setPdfTheme] = useState<'light' | 'dark'>('light');
+  const [pdfTheme, setPdfTheme] = useState<PdfTheme>('light');
 
-  const handlePdfThemeChange = (theme: 'light' | 'dark') => {
+  const handlePdfThemeChange = (theme: PdfTheme) => {
     setPdfTheme(theme);
     if (theme === 'dark') {
       setBackgroundColor('#000000');
@@ -400,7 +469,7 @@ export function HtmlConverter() {
   const [exportProgress, setExportProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printFrameRef = useRef<HTMLIFrameElement | null>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const markdownOutput = useMemo(() => htmlToMarkdown(input), [input]);
@@ -423,6 +492,13 @@ export function HtmlConverter() {
     maxWidth: `${Math.round(pageWidth * 3.78)}px`,
     minHeight: `${Math.round((pageHeight / pageWidth) * Math.round(pageWidth * 3.78))}px`,
   };
+  const previewDocument = buildPreviewDocument({
+    html: input,
+    styleTag,
+    backgroundColor,
+    pdfTheme,
+    pageStyle: previewPageStyle,
+  });
 
   const exportPrintPdf = () => {
     const pageRule = `${pageLabels[pageSize]} ${orientation}`;
@@ -523,7 +599,12 @@ export function HtmlConverter() {
   };
 
   const exportSnapshotPdf = async () => {
-    if (!previewRef.current) {
+    const previewDocumentElement =
+      previewFrameRef.current?.contentDocument?.querySelector<HTMLElement>(
+        '.html-converter-preview'
+      );
+
+    if (!previewDocumentElement) {
       return;
     }
 
@@ -534,13 +615,13 @@ export function HtmlConverter() {
       import('jspdf'),
       import('html2canvas'),
     ]);
-    const canvas = await html2canvas(previewRef.current, {
+    const canvas = await html2canvas(previewDocumentElement, {
       scale,
       backgroundColor,
       logging: false,
       useCORS: true,
-      windowWidth: previewRef.current.scrollWidth,
-      windowHeight: previewRef.current.scrollHeight,
+      windowWidth: previewDocumentElement.scrollWidth,
+      windowHeight: previewDocumentElement.scrollHeight,
     });
 
     setExportProgress('Composing PDF...');
@@ -556,7 +637,6 @@ export function HtmlConverter() {
     const usableWidth = pdfWidth - margin * 2;
     const usableHeight = pdfHeight - margin * 2;
     const imgWidth = usableWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
     const pageHeightInImage = (usableHeight * canvas.width) / usableWidth;
 
     let sourceY = 0;
@@ -830,7 +910,11 @@ export function HtmlConverter() {
                     <label className="text-sm font-medium">PDF theme</label>
                     <Select
                       value={pdfTheme}
-                      onValueChange={(value) => handlePdfThemeChange(value as 'light' | 'dark')}
+                      onValueChange={(value) => {
+                        if (isPdfTheme(value)) {
+                          handlePdfThemeChange(value);
+                        }
+                      }}
                       disabled={exporting}
                     >
                       <SelectTrigger>
@@ -925,14 +1009,12 @@ export function HtmlConverter() {
           </CardHeader>
           <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             <div className="flex-1 rounded-md border bg-muted/30 p-3 sm:p-4">
-              <style>{styleTag}</style>
-              <div
-                ref={previewRef}
-                className={`html-converter-preview mx-auto w-full overflow-hidden p-4 shadow-sm sm:p-6 lg:p-8 ${
-                  pdfTheme === 'dark' ? 'dark-pdf' : ''
-                }`}
-                style={previewPageStyle}
-                dangerouslySetInnerHTML={{ __html: input }}
+              <iframe
+                ref={previewFrameRef}
+                title="HTML preview"
+                sandbox="allow-same-origin"
+                srcDoc={previewDocument}
+                className="h-[70vh] min-h-[520px] w-full rounded-md border bg-background shadow-sm"
               />
             </div>
           </CardContent>
