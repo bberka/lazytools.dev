@@ -13,12 +13,34 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-import { analyzeResumeText, type ResumeAnalysis } from '@/lib/utils/resume-ats-analyzer';
+import {
+  analyzeResumeText,
+  RESUME_LANGUAGE_OPTIONS,
+  type LanguageSelection,
+  type ResumeAnalysis,
+  type ResumeLanguage,
+} from '@/lib/utils/resume-ats-analyzer';
 
 type PdfTextExtractor = {
-  getDocument: (source: { data: Uint8Array }) => { promise: Promise<{ numPages: number; getPage: (page: number) => Promise<{ getTextContent: () => Promise<{ items: Array<{ str?: string; hasEOL?: boolean; transform?: number[] }> }> }> }> };
+  getDocument: (source: { data: Uint8Array }) => {
+    promise: Promise<{
+      numPages: number;
+      getPage: (page: number) => Promise<{
+        getTextContent: () => Promise<{
+          items: Array<{ str?: string; hasEOL?: boolean; transform?: number[] }>;
+        }>;
+      }>;
+    }>;
+  };
   GlobalWorkerOptions: { workerSrc: string };
 };
 
@@ -91,9 +113,15 @@ function formatMinutes(minutes: number) {
   return remainder ? `${mins} min ${remainder} sec` : `${mins} min`;
 }
 
+function getLanguageLabel(language: ResumeLanguage) {
+  return RESUME_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language;
+}
+
 export function ResumeAtsAnalyzer() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState('');
+  const [resumeLanguage, setResumeLanguage] = useState<LanguageSelection>('auto');
+  const [jobDescriptionLanguage, setJobDescriptionLanguage] = useState<LanguageSelection>('auto');
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
   const [error, setError] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -127,14 +155,17 @@ export function ResumeAtsAnalyzer() {
       }
 
       setExtractedText(text);
-      setAnalysis(analyzeResumeText(text, pageCount, jobDescription));
+      setAnalysis(
+        analyzeResumeText(text, pageCount, jobDescription, {
+          resumeLanguage,
+          jobDescriptionLanguage,
+        })
+      );
     } catch (analysisError) {
       setAnalysis(null);
       setExtractedText('');
       setError(
-        analysisError instanceof Error
-          ? analysisError.message
-          : 'The PDF could not be analyzed.'
+        analysisError instanceof Error ? analysisError.message : 'The PDF could not be analyzed.'
       );
     } finally {
       setIsAnalyzing(false);
@@ -144,6 +175,8 @@ export function ResumeAtsAnalyzer() {
   const handleClear = () => {
     setResumeFile(null);
     setJobDescription('');
+    setResumeLanguage('auto');
+    setJobDescriptionLanguage('auto');
     setAnalysis(null);
     setExtractedText('');
     setError('');
@@ -177,6 +210,50 @@ export function ResumeAtsAnalyzer() {
             className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
           />
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="resume-language" className="block text-sm font-medium">
+                Resume language
+              </label>
+              <Select
+                value={resumeLanguage}
+                onValueChange={(value) => setResumeLanguage(value as LanguageSelection)}
+              >
+                <SelectTrigger id="resume-language" className="bg-background font-medium">
+                  <SelectValue placeholder="Select language..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESUME_LANGUAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="job-description-language" className="block text-sm font-medium">
+                Job description language
+              </label>
+              <Select
+                value={jobDescriptionLanguage}
+                onValueChange={(value) => setJobDescriptionLanguage(value as LanguageSelection)}
+              >
+                <SelectTrigger id="job-description-language" className="bg-background font-medium">
+                  <SelectValue placeholder="Select language..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESUME_LANGUAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
             <label htmlFor="job-description" className="mb-2 block text-sm font-medium">
               Optional Job Description
@@ -192,7 +269,11 @@ export function ResumeAtsAnalyzer() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button onClick={handleAnalyze} disabled={!resumeFile || isAnalyzing} className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleAnalyze}
+              disabled={!resumeFile || isAnalyzing}
+              className="min-h-11 sm:min-h-9"
+            >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -214,7 +295,10 @@ export function ResumeAtsAnalyzer() {
           {resumeFile && (
             <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm">
               <span className="font-medium">{resumeFile.name}</span>
-              <span className="text-muted-foreground"> · {(resumeFile.size / 1024).toFixed(0)} KB</span>
+              <span className="text-muted-foreground">
+                {' '}
+                · {(resumeFile.size / 1024).toFixed(0)} KB
+              </span>
             </div>
           )}
         </CardContent>
@@ -236,20 +320,56 @@ export function ResumeAtsAnalyzer() {
                   ATS Score
                 </CardTitle>
                 <CardDescription>
-                  Weighted from contact details, structure, readability, ATS heuristics, and keyword match.
+                  Weighted from contact details, structure, readability, ATS heuristics, and keyword
+                  match.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className={`text-5xl font-semibold tracking-tight ${getScoreTone(analysis.scores.overall)}`}>
+                <div
+                  className={`text-5xl font-semibold tracking-tight ${getScoreTone(analysis.scores.overall)}`}
+                >
                   {analysis.scores.overall}/100
                 </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                  <span>
+                    Resume language:{' '}
+                    <strong className="font-medium text-foreground">
+                      {getLanguageLabel(analysis.language)}
+                    </strong>
+                  </span>
+                  <span>
+                    {analysis.languageSource === 'auto'
+                      ? `${Math.round(analysis.languageConfidence * 100)}% auto-detected`
+                      : 'manually selected'}
+                  </span>
+                  {analysis.jobDescriptionLanguage && (
+                    <span>
+                      Job description: {getLanguageLabel(analysis.jobDescriptionLanguage)}
+                    </span>
+                  )}
+                </div>
+                {analysis.languageSource === 'auto' && analysis.languageConfidence < 0.6 && (
+                  <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Language detection is uncertain. Select the résumé language manually for more
+                      reliable scoring.
+                    </span>
+                  </div>
+                )}
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <MetricCard label="Pages" value={analysis.pageCount} />
                   <MetricCard label="Words" value={analysis.wordCount.toLocaleString()} />
                   <MetricCard label="Bullets" value={analysis.bulletCount.toLocaleString()} />
                   <MetricCard label="Sentences" value={analysis.sentenceCount.toLocaleString()} />
-                  <MetricCard label="Read Time" value={formatMinutes(analysis.estimatedReadingMinutes)} />
-                  <MetricCard label="Action Verbs" value={analysis.actionVerbCount.toLocaleString()} />
+                  <MetricCard
+                    label="Read Time"
+                    value={formatMinutes(analysis.estimatedReadingMinutes)}
+                  />
+                  <MetricCard
+                    label="Action Verbs"
+                    value={analysis.actionVerbCount.toLocaleString()}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -273,7 +393,9 @@ export function ResumeAtsAnalyzer() {
             <Card>
               <CardHeader>
                 <CardTitle>Section Coverage</CardTitle>
-                <CardDescription>Standard ATS-friendly resume sections detected in the extracted text.</CardDescription>
+                <CardDescription>
+                  Standard ATS-friendly resume sections detected in the extracted text.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -287,14 +409,19 @@ export function ResumeAtsAnalyzer() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Found sections</p>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.sectionsFound.length > 0 ? (
-                      analysis.sectionsFound.map((section) => (
-                        <span key={section} className="rounded-full border bg-muted/30 px-3 py-1 text-xs font-medium">
+                    {analysis.localizedSectionsFound.length > 0 ? (
+                      analysis.localizedSectionsFound.map((section) => (
+                        <span
+                          key={section}
+                          className="rounded-full border bg-muted/30 px-3 py-1 text-xs font-medium"
+                        >
                           {section}
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-muted-foreground">No standard sections detected.</span>
+                      <span className="text-sm text-muted-foreground">
+                        No standard sections detected.
+                      </span>
                     )}
                   </div>
                 </div>
@@ -302,8 +429,11 @@ export function ResumeAtsAnalyzer() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Missing opportunities</p>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.missingSections.map((section) => (
-                      <span key={section} className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground">
+                    {analysis.localizedMissingSections.map((section) => (
+                      <span
+                        key={section}
+                        className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
+                      >
                         {section}
                       </span>
                     ))}
@@ -320,10 +450,26 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3 sm:grid-cols-2">
-                <MetricCard label="Flesch Score" value={analysis.readability.fleschReadingEase} />
-                <MetricCard label="Avg Sentence" value={`${analysis.readability.averageSentenceLength} words`} />
-                <MetricCard label="Avg Word" value={`${analysis.readability.averageWordLength} chars`} />
-                <MetricCard label="Top Keywords" value={analysis.topResumeKeywords.slice(0, 3).join(', ') || '—'} />
+                <MetricCard
+                  label={analysis.readability.formula}
+                  value={analysis.readability.score}
+                />
+                <MetricCard
+                  label="Avg Sentence"
+                  value={`${analysis.readability.averageSentenceLength} words`}
+                />
+                <MetricCard
+                  label="Avg Word"
+                  value={`${analysis.readability.averageWordLength} chars`}
+                />
+                <MetricCard
+                  label="Avg Syllables"
+                  value={analysis.readability.averageSyllablesPerWord}
+                />
+                <MetricCard
+                  label="Top Keywords"
+                  value={analysis.topResumeKeywords.slice(0, 3).join(', ') || '—'}
+                />
               </CardContent>
             </Card>
           </div>
@@ -355,11 +501,16 @@ export function ResumeAtsAnalyzer() {
             <Card>
               <CardHeader>
                 <CardTitle>Suggestions</CardTitle>
-                <CardDescription>Priority improvements based on the extracted content.</CardDescription>
+                <CardDescription>
+                  Priority improvements based on the extracted content.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {analysis.suggestions.map((suggestion) => (
-                  <div key={suggestion} className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+                  <div
+                    key={suggestion}
+                    className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-3"
+                  >
                     <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                     <p className="text-sm">{suggestion}</p>
                   </div>
@@ -373,7 +524,8 @@ export function ResumeAtsAnalyzer() {
               <div>
                 <CardTitle>Extracted Text Preview</CardTitle>
                 <CardDescription>
-                  Review the parsed text because ATS scoring depends on what the browser can actually extract.
+                  Review the parsed text because ATS scoring depends on what the browser can
+                  actually extract.
                 </CardDescription>
               </div>
               <Button
@@ -399,7 +551,9 @@ export function ResumeAtsAnalyzer() {
 function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 break-words font-mono text-lg">{value}</p>
     </div>
   );
@@ -449,7 +603,10 @@ function KeywordGroup({
       <div className="flex flex-wrap gap-2">
         {items.length > 0 ? (
           items.map((item) => (
-            <span key={item} className={`rounded-full border px-3 py-1 text-xs font-medium ${className}`}>
+            <span
+              key={item}
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${className}`}
+            >
               {item}
             </span>
           ))
