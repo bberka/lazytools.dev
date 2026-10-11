@@ -23,6 +23,7 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
 import {
   Check,
   Code2,
@@ -36,7 +37,9 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { printHtmlDocument } from '@/lib/export/print-document';
 import { saveSnapshotPdf } from '@/lib/export/snapshot-pdf';
+import { downloadText, readFileAsText } from '@/lib/files';
 
 type ExportFormat = 'pdf' | 'md' | 'html' | 'txt';
 type PageSize = 'A4' | 'Letter' | 'Legal';
@@ -375,16 +378,6 @@ function htmlToMarkdown(html: string): string {
     .trim();
 }
 
-function downloadText(filename: string, contents: string, type: string) {
-  const blob = new Blob([contents], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 function isPdfTheme(value: string): value is PdfTheme {
   return value === 'light' || value === 'dark';
 }
@@ -469,8 +462,6 @@ export function HtmlConverter() {
   const [printCss, setPrintCss] = useState(defaultPrintCss);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const printFrameRef = useRef<HTMLIFrameElement | null>(null);
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
@@ -546,58 +537,7 @@ export function HtmlConverter() {
 </body>
 </html>`;
 
-    const existingFrame = printFrameRef.current;
-    if (existingFrame) {
-      existingFrame.remove();
-    }
-
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-
-    iframe.onload = () => {
-      const frameWindow = iframe.contentWindow;
-      if (!frameWindow) {
-        return;
-      }
-
-      const originalTitle = document.title;
-      document.title = safeFilename;
-
-      frameWindow.focus();
-      frameWindow.print();
-
-      const cleanup = () => {
-        setTimeout(() => {
-          document.title = originalTitle;
-          iframe.remove();
-          if (printFrameRef.current === iframe) {
-            printFrameRef.current = null;
-          }
-        }, 500);
-      };
-
-      frameWindow.onafterprint = cleanup;
-      setTimeout(cleanup, 5000);
-    };
-
-    document.body.appendChild(iframe);
-    printFrameRef.current = iframe;
-
-    const frameDocument = iframe.contentDocument;
-    if (!frameDocument) {
-      return;
-    }
-
-    frameDocument.open();
-    frameDocument.write(printDocument);
-    frameDocument.close();
+    printHtmlDocument(printDocument, safeFilename);
   };
 
   const exportSnapshotPdf = async () => {
@@ -644,13 +584,13 @@ export function HtmlConverter() {
           exportPrintPdf();
           break;
         case 'md':
-          downloadText(`${safeFilename}.md`, markdownOutput, 'text/markdown');
+          downloadText(markdownOutput, `${safeFilename}.md`, 'text/markdown');
           break;
         case 'html':
-          downloadText(`${safeFilename}.html`, input, 'text/html');
+          downloadText(input, `${safeFilename}.html`, 'text/html');
           break;
         case 'txt':
-          downloadText(`${safeFilename}.txt`, plainTextOutput, 'text/plain');
+          downloadText(plainTextOutput, `${safeFilename}.txt`, 'text/plain');
           break;
       }
     } finally {
@@ -677,17 +617,15 @@ export function HtmlConverter() {
     setInput('');
   };
 
-  const importHtmlFile = (file: File | undefined) => {
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setInput(typeof reader.result === 'string' ? reader.result : '');
-    };
-    reader.readAsText(file);
+  const importHtmlFile = (file: File) => {
+    readFileAsText(file)
+      .then(setInput)
+      .catch(() => toast.error('Failed to read file'));
   };
+
+  // The picker suggests HTML files (set on the input below) but any file is
+  // taken: whatever text it holds becomes the input.
+  const intake = useFileIntake({ onFiles: ([file]) => importHtmlFile(file) });
 
   const currentOutput =
     exportFormat === 'md' ? markdownOutput : exportFormat === 'txt' ? plainTextOutput : input;
@@ -714,17 +652,12 @@ export function HtmlConverter() {
 
             <div className="flex flex-wrap gap-2">
               <input
-                ref={fileInputRef}
-                type="file"
+                {...intake.inputProps}
                 accept=".html,.htm,text/html"
-                className="hidden"
-                onChange={(event) => {
-                  importHtmlFile(event.currentTarget.files?.[0]);
-                  event.currentTarget.value = '';
-                }}
+                aria-label="Import HTML file"
               />
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={intake.open}
                 variant="outline"
                 size="sm"
                 disabled={exporting}

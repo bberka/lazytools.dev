@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import {
   FileText,
-  Upload,
   Download,
   Trash2,
   RotateCw,
@@ -19,7 +18,16 @@ import {
 } from 'lucide-react';
 import { PDFDocument, degrees } from 'pdf-lib';
 import { cn } from '@/lib/utils';
-import { isPdfFile, openPdf, pdfBlob, type OpenedPdf } from '@/lib/pdf';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import {
+  downloadBlob,
+  formatBytes,
+  outputFileName,
+  readFileAsArrayBuffer,
+  type FormatBytesOptions,
+} from '@/lib/files';
+import { PDF_MIME_TYPE, openPdf, pdfBlob, type OpenedPdf } from '@/lib/pdf';
 
 interface Point {
   x: number;
@@ -50,6 +58,9 @@ interface PageState {
   texts: TextAnnotation[];
 }
 
+// The size next to the file name reads "0.5 KB", "845.3 KB", "2.4 MB".
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' };
+
 export function PdfEditor() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageState[]>([]);
@@ -57,7 +68,6 @@ export function PdfEditor() {
   
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
 
   // Annotation states
@@ -72,8 +82,8 @@ export function PdfEditor() {
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfDocRef = useRef<OpenedPdf | null>(null); // opened document, used for page previews
+  const loadIdRef = useRef(0); // names the latest load; an older one must not install its document
   const workspaceRef = useRef<HTMLDivElement>(null);
   const pageCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -93,18 +103,26 @@ export function PdfEditor() {
     '#00ffff', // Cyan
   ];
 
-  // Clean up states when file clears
-  const handleClearAll = () => {
-    setPdfFile(null);
-    setPages([]);
-    setSelectedPageId(null);
-    setError('');
+  // Releases the opened document and its worker. Called when another file
+  // replaces the document, when the tool is cleared and when it unmounts.
+  const releaseDocument = () => {
+    const doc = pdfDocRef.current;
     pdfDocRef.current = null;
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    void doc?.destroy();
   };
 
+  useEffect(
+    () => () => {
+      loadIdRef.current += 1;
+      void pdfDocRef.current?.destroy();
+      pdfDocRef.current = null;
+    },
+    []
+  );
+
   const loadPdfFile = async (file: File) => {
-    if (!isPdfFile(file)) return;
+    const loadId = ++loadIdRef.current;
+    releaseDocument();
 
     setPdfFile(file);
     setLoading(true);
@@ -114,12 +132,19 @@ export function PdfEditor() {
 
     try {
       const pdf = await openPdf(file);
+      // Replaced, cleared or unmounted while the file was being opened.
+      if (loadId !== loadIdRef.current) {
+        void pdf.destroy();
+        return;
+      }
       pdfDocRef.current = pdf;
 
       const loadedPages: PageState[] = [];
       for (let i = 1; i <= pdf.pageCount; i++) {
         const page = await pdf.page(i);
         const thumbnail = await page.render({ scale: 0.3 }); // Small thumbnail size
+        // The document was released under this load; whoever did that owns the state now.
+        if (loadId !== loadIdRef.current) return;
 
         if (thumbnail) {
           loadedPages.push({
@@ -138,36 +163,32 @@ export function PdfEditor() {
         setSelectedPageId(loadedPages[0].id);
       }
     } catch (loadError) {
+      // A load that was superseded fails because its document was released.
+      if (loadId !== loadIdRef.current) return;
       console.error('Error loading PDF:', loadError);
+      releaseDocument();
       setError('Failed to load PDF file.');
     } finally {
-      setLoading(false);
+      if (loadId === loadIdRef.current) setLoading(false);
     }
   };
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await loadPdfFile(file);
-    }
-  };
+  // The intake only passes PDFs on; anything else is reported in the drop area.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => loadPdfFile(file),
+  });
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (isPdfFile(file)) {
-      await loadPdfFile(file);
-    }
+  // Clean up states when file clears
+  const handleClearAll = () => {
+    loadIdRef.current += 1;
+    releaseDocument();
+    setPdfFile(null);
+    setPages([]);
+    setSelectedPageId(null);
+    setLoading(false);
+    setError('');
+    intake.reset();
   };
 
   const selectedPage = pages.find((p) => p.id === selectedPageId) || null;
@@ -204,7 +225,8 @@ export function PdfEditor() {
           redrawDrawingCanvas(drawCanvas, selectedPage.drawPaths);
         }
       } catch (renderError) {
-        console.error('Error rendering page preview:', renderError);
+        // A render cut short by a page change or a released document is not a failure.
+        if (active) console.error('Error rendering page preview:', renderError);
       }
     };
 
@@ -448,7 +470,7 @@ export function PdfEditor() {
     setError('');
 
     try {
-      const originalArrayBuffer = await pdfFile.arrayBuffer();
+      const originalArrayBuffer = await readFileAsArrayBuffer(pdfFile);
       const srcPdf = await PDFDocument.load(originalArrayBuffer);
       const newPdf = await PDFDocument.create();
 
@@ -516,27 +538,13 @@ export function PdfEditor() {
       }
 
       const pdfBytes = await newPdf.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `edited-${pdfFile.name}`;
-      link.click();
-
-      URL.revokeObjectURL(url);
+      downloadBlob(pdfBlob(pdfBytes), outputFileName(pdfFile.name, { prefix: 'edited-' }));
     } catch (exportError) {
       console.error('Error exporting edited PDF:', exportError);
       setError('Failed to generate output PDF.');
     } finally {
       setExporting(false);
     }
-  };
-
-  const formatSize = (bytes: number) => {
-    const kb = bytes / 1024;
-    if (kb < 1024) return kb.toFixed(1) + ' KB';
-    return (kb / 1024).toFixed(1) + ' MB';
   };
 
   return (
@@ -552,34 +560,19 @@ export function PdfEditor() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Drag & drop a PDF file here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-            {pdfFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20">
-                <FileText className="h-3.5 w-3.5" />
-                {pdfFile.name} ({formatSize(pdfFile.size)})
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            intake={intake}
+            label="Drag & drop a PDF file here or click to browse"
+            hint="Files remain local on your machine"
+            selected={
+              pdfFile && (
+                <>
+                  <FileText className="h-3.5 w-3.5" />
+                  {pdfFile.name} ({formatBytes(pdfFile.size, SIZE_FORMAT)})
+                </>
+              )
+            }
+          />
 
           {pages.length > 0 && (
             <div className="mt-4 flex gap-2 flex-wrap">

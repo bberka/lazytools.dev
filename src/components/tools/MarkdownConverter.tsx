@@ -17,7 +17,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { FileText, Download, Eye, Trash2, Loader2, Printer } from 'lucide-react';
 import { toast } from 'sonner';
+import { printHtmlDocument } from '@/lib/export/print-document';
 import { saveSnapshotPdf } from '@/lib/export/snapshot-pdf';
+import { downloadBlob, downloadText, sanitizeFileName } from '@/lib/files';
 import {
   MARKDOWN_PREVIEW_CSS,
   buildStandaloneHtml,
@@ -33,11 +35,9 @@ type ExportFormat = 'pdf' | 'html' | 'txt' | 'png' | 'jpg';
 type PageSize = 'A4' | 'Letter';
 type Orientation = 'portrait' | 'landscape';
 
-const getSafeFilename = (htmlContent: string, defaultName: string): string => {
-  const firstHeader = firstHeadingText(htmlContent);
-  if (!firstHeader) return defaultName;
-  return firstHeader.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim() || defaultName;
-};
+// Exports are named after the document's first heading.
+const getSafeFilename = (htmlContent: string, defaultName: string): string =>
+  sanitizeFileName(firstHeadingText(htmlContent), defaultName);
 
 const pageFormats: Record<PageSize, [number, number]> = {
   A4: [210, 297],
@@ -95,7 +95,6 @@ export function MarkdownConverter() {
   const [exportProgress, setExportProgress] = useState('');
   const previewRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const printFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const handlePreviewDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const line = sourceLineAt(e.target as HTMLElement);
@@ -143,58 +142,7 @@ export function MarkdownConverter() {
       page: { size: pageSize, orientation, marginMm: margin },
     });
 
-    const existingFrame = printFrameRef.current;
-    if (existingFrame) {
-      existingFrame.remove();
-    }
-
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-
-    iframe.onload = () => {
-      const frameWindow = iframe.contentWindow;
-      if (!frameWindow) {
-        return;
-      }
-
-      const originalTitle = document.title;
-      document.title = firstHeader || '';
-
-      frameWindow.focus();
-      frameWindow.print();
-
-      const cleanup = () => {
-        setTimeout(() => {
-          document.title = originalTitle;
-          iframe.remove();
-          if (printFrameRef.current === iframe) {
-            printFrameRef.current = null;
-          }
-        }, 500);
-      };
-
-      frameWindow.onafterprint = cleanup;
-      setTimeout(cleanup, 5000);
-    };
-
-    document.body.appendChild(iframe);
-    printFrameRef.current = iframe;
-
-    const frameDocument = iframe.contentDocument;
-    if (!frameDocument) {
-      return;
-    }
-
-    frameDocument.open();
-    frameDocument.write(printDocument);
-    frameDocument.close();
+    printHtmlDocument(printDocument, firstHeader);
   };
 
   const exportHtml = () => {
@@ -205,25 +153,11 @@ export function MarkdownConverter() {
       backgroundColor,
     });
 
-    const blob = new Blob([fullHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const filename = getSafeFilename(html, 'markdown-export');
-    link.href = url;
-    link.download = `${filename}.html`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadText(fullHtml, `${getSafeFilename(html, 'markdown-export')}.html`, 'text/html');
   };
 
   const exportText = () => {
-    const blob = new Blob([input], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const filename = getSafeFilename(html, 'markdown-export');
-    link.href = url;
-    link.download = `${filename}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadText(input, `${getSafeFilename(html, 'markdown-export')}.txt`);
   };
 
   const exportImage = async (format: 'png' | 'jpg') => {
@@ -250,13 +184,7 @@ export function MarkdownConverter() {
       canvas.toBlob(
         (blob) => {
           if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          const filename = getSafeFilename(html, 'markdown-export');
-          link.href = url;
-          link.download = `${filename}.${format}`;
-          link.click();
-          URL.revokeObjectURL(url);
+          downloadBlob(blob, `${getSafeFilename(html, 'markdown-export')}.${format}`);
           setExportProgress('');
         },
         `image/${format === 'jpg' ? 'jpeg' : 'png'}`,
@@ -264,7 +192,7 @@ export function MarkdownConverter() {
       );
     } catch (error) {
       console.error(`Error exporting ${format.toUpperCase()}:`, error);
-      alert(`Error exporting ${format.toUpperCase()}. Please try again.`);
+      toast.error(`Error exporting ${format.toUpperCase()}. Please try again.`);
       setExportProgress('');
     }
   };
@@ -295,7 +223,7 @@ export function MarkdownConverter() {
 
   const handleExport = async () => {
     if (!input.trim()) {
-      alert('Please enter markdown content first');
+      toast.error('Please enter markdown content first');
       return;
     }
 

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Upload, Trash2, ArrowUp, ArrowDown, Files } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
-import { isPdfFile, pdfBlob } from '@/lib/pdf';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, formatBytes, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
+import { PDF_MIME_TYPE, pdfBlob } from '@/lib/pdf';
 
 interface PdfFile {
   id: string;
@@ -14,27 +16,31 @@ interface PdfFile {
   size: number;
 }
 
+// Sizes in the list read "0.5 KB", "845.3 KB", "2.4 MB".
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' };
+
 export function PdfMerge() {
   const [pdfFiles, setPdfFiles] = useState<PdfFile[]>([]);
   const [merging, setMerging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newFiles = files
-      .filter((file) => isPdfFile(file))
-      .map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        file,
-        name: file.name,
-        size: file.size,
-      }));
+  // The intake only passes PDFs on; anything else is reported under the drop area.
+  const addFiles = (files: File[]) => {
+    const newFiles = files.map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file,
+      name: file.name,
+      size: file.size,
+    }));
 
+    setError('');
     setPdfFiles((prev) => [...prev, ...newFiles]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const intake = useFileIntake({ accept: PDF_MIME_TYPE, multiple: true, onFiles: addFiles });
+
   const removeFile = (id: string) => {
+    setError('');
     setPdfFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
@@ -54,36 +60,29 @@ export function PdfMerge() {
   const mergePdfs = async () => {
     if (pdfFiles.length < 2) return;
     setMerging(true);
+    setError('');
 
     try {
       const mergedPdf = await PDFDocument.create();
 
       for (const pdfFile of pdfFiles) {
-        const arrayBuffer = await pdfFile.file.arrayBuffer();
+        const arrayBuffer = await readFileAsArrayBuffer(pdfFile.file);
         const pdf = await PDFDocument.load(arrayBuffer);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
 
       const pdfBytes = await mergedPdf.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'merged.pdf';
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error merging PDFs:', error);
+      downloadBlob(pdfBlob(pdfBytes), 'merged.pdf');
+    } catch (mergeError) {
+      console.error('Error merging PDFs:', mergeError);
+      setError(
+        'Failed to merge PDFs: ' +
+          (mergeError instanceof Error ? mergeError.message : String(mergeError))
+      );
     } finally {
       setMerging(false);
     }
-  };
-
-  const formatSize = (bytes: number) => {
-    const kb = bytes / 1024;
-    if (kb < 1024) return kb.toFixed(1) + ' KB';
-    return (kb / 1024).toFixed(1) + ' MB';
   };
 
   return (
@@ -98,23 +97,31 @@ export function PdfMerge() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            {...intake.dropzoneProps}
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              intake.isDragging
+                ? 'border-primary bg-primary/5'
+                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
+            }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <input {...intake.inputProps} aria-label="Upload PDF files" />
+            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">Click to upload or drag and drop PDFs</p>
             <p className="text-xs text-muted-foreground mt-1">Combine documents in any order</p>
           </div>
+          {intake.error && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {intake.error}
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {pdfFiles.length > 0 && (
         <Card>
@@ -137,7 +144,7 @@ export function PdfMerge() {
                 <FileText className="h-5 w-5 text-red-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{f.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatSize(f.size)}</p>
+                  <p className="text-xs text-muted-foreground">{formatBytes(f.size, SIZE_FORMAT)}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button

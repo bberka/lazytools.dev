@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, Trash2, FileInput } from 'lucide-react';
@@ -8,6 +8,8 @@ import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 // @ts-expect-error - mammoth does not export typescript declarations
 import mammoth from 'mammoth/mammoth.browser.min.js';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, outputFileName, readFileAsArrayBuffer } from '@/lib/files';
 import { pdfBlob } from '@/lib/pdf';
 
 // Roboto ships with the app in public/fonts, so the text font needs no third-party request.
@@ -16,17 +18,19 @@ const FONT_URL = '/fonts/Roboto-Regular.ttf';
 export function WordToPdf() {
   const [wordFile, setWordFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
-  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
+  // The converted document. It is kept as a Blob, so there is no object URL to revoke.
+  const [pdfResult, setPdfResult] = useState<Blob | null>(null);
   const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.name.endsWith('.docx')) return;
-    setWordFile(file);
-    setPdfDataUrl(null);
-    setError('');
-  };
+  // The intake only passes .docx files on; anything else is reported under the drop area.
+  const intake = useFileIntake({
+    accept: '.docx',
+    onFiles: ([file]) => {
+      setWordFile(file);
+      setPdfResult(null);
+      setError('');
+    },
+  });
 
   const convertToPdf = async () => {
     if (!wordFile) return;
@@ -35,7 +39,7 @@ export function WordToPdf() {
 
     try {
       // 1. Extract text from Word document using mammoth
-      const arrayBuffer = await wordFile.arrayBuffer();
+      const arrayBuffer = await readFileAsArrayBuffer(wordFile);
       const result = await mammoth.extractRawText({ arrayBuffer });
       const text = result.value;
 
@@ -105,9 +109,7 @@ export function WordToPdf() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-      setPdfDataUrl(url);
+      setPdfResult(pdfBlob(pdfBytes));
 
     } catch (conversionError) {
       console.error('Error converting Word to PDF:', conversionError);
@@ -121,11 +123,8 @@ export function WordToPdf() {
   };
 
   const handleDownload = () => {
-    if (!pdfDataUrl || !wordFile) return;
-    const link = document.createElement('a');
-    link.href = pdfDataUrl;
-    link.download = `${wordFile.name.replace('.docx', '')}.pdf`;
-    link.click();
+    if (!pdfResult || !wordFile) return;
+    downloadBlob(pdfResult, outputFileName(wordFile.name, { extension: 'pdf' }));
   };
 
   return (
@@ -144,27 +143,37 @@ export function WordToPdf() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            {...intake.dropzoneProps}
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              intake.isDragging
+                ? 'border-primary bg-primary/5'
+                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
+            }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".docx"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <input {...intake.inputProps} aria-label="Upload a Word document" />
+            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">Click to upload a Word Document (.docx)</p>
             {wordFile && <p className="text-xs text-primary mt-2">{wordFile.name}</p>}
           </div>
+          {intake.error && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {intake.error}
+            </p>
+          )}
 
-          {wordFile && !pdfDataUrl && (
+          {wordFile && !pdfResult && (
             <div className="mt-4 flex gap-2">
               <Button onClick={convertToPdf} disabled={converting} className="flex-1">
                 {converting ? 'Converting...' : 'Convert to PDF'}
               </Button>
-              <Button variant="outline" onClick={() => { setWordFile(null); setError(''); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setWordFile(null);
+                  setError('');
+                  intake.reset();
+                }}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
@@ -177,13 +186,20 @@ export function WordToPdf() {
             </div>
           )}
 
-          {pdfDataUrl && (
+          {pdfResult && (
             <div className="mt-4 flex gap-2">
               <Button onClick={handleDownload} className="flex-1 bg-red-600 hover:bg-red-700">
                 <Download className="h-4 w-4 mr-2" />
                 Download .pdf
               </Button>
-              <Button variant="outline" onClick={() => { setWordFile(null); setPdfDataUrl(null); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setWordFile(null);
+                  setPdfResult(null);
+                  intake.reset();
+                }}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>

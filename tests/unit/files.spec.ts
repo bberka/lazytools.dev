@@ -75,6 +75,35 @@ test.describe('formatBytes', () => {
     expect(formatBytes(1536, perUnit)).toBe('1.5 KB');
     expect(formatBytes(2.5 * MB, perUnit)).toBe('2.50 MB');
   });
+
+  test('can be held between a smallest and a largest unit', () => {
+    const kbToMb = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' } as const;
+    expect(formatBytes(0, kbToMb)).toBe('0.0 KB');
+    expect(formatBytes(512, kbToMb)).toBe('0.5 KB');
+    expect(formatBytes(1536, kbToMb)).toBe('1.5 KB');
+    expect(formatBytes(MB - 1, kbToMb)).toBe('1024.0 KB');
+    expect(formatBytes(2.5 * MB, kbToMb)).toBe('2.5 MB');
+    expect(formatBytes(1.5 * GB, kbToMb)).toBe('1536.0 MB');
+  });
+
+  test('stays in one unit when the smallest and the largest are the same', () => {
+    const kbOnly = { decimals: 0, minUnit: 'KB', maxUnit: 'KB' } as const;
+    expect(formatBytes(300, kbOnly)).toBe('0 KB');
+    expect(formatBytes(245 * KB, kbOnly)).toBe('245 KB');
+    expect(formatBytes(2.4 * MB, kbOnly)).toBe('2458 KB');
+  });
+
+  test('takes either unit bound on its own', () => {
+    expect(formatBytes(512, { minUnit: 'KB' })).toBe('0.5 KB');
+    expect(formatBytes(5 * GB, { minUnit: 'KB' })).toBe('5 GB');
+    expect(formatBytes(512, { maxUnit: 'MB' })).toBe('512 Bytes');
+    expect(formatBytes(5 * GB, { maxUnit: 'MB' })).toBe('5120 MB');
+  });
+
+  test('ignores a largest unit that is below the smallest one', () => {
+    expect(formatBytes(5 * GB, { minUnit: 'MB', maxUnit: 'KB' })).toBe('5120 MB');
+    expect(formatBytes(512, { minUnit: 'MB', maxUnit: 'KB' })).toBe('0 MB');
+  });
 });
 
 test.describe('file names', () => {

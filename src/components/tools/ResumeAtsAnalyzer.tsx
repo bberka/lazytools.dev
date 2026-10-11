@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { formatBytes, type FormatBytesOptions } from '@/lib/files';
 import {
   analyzeResumeText,
   RESUME_LANGUAGE_OPTIONS,
@@ -29,7 +31,7 @@ import {
   type ResumeAnalysis,
   type ResumeLanguage,
 } from '@/lib/utils/resume-ats-analyzer';
-import { openPdf } from '@/lib/pdf';
+import { PDF_MIME_TYPE, openPdf } from '@/lib/pdf';
 
 async function extractPdfText(file: File) {
   const pdf = await openPdf(file);
@@ -46,6 +48,9 @@ async function extractPdfText(file: File) {
     await pdf.destroy();
   }
 }
+
+// The size next to the file name is always in whole kilobytes: "0 KB", "245 KB", "2458 KB".
+const SIZE_FORMAT: FormatBytesOptions = { decimals: 0, minUnit: 'KB', maxUnit: 'KB' };
 
 function getScoreTone(score: number) {
   if (score >= 80) return 'text-green-600 dark:text-green-400';
@@ -74,17 +79,18 @@ export function ResumeAtsAnalyzer() {
   const [error, setError] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedText, setExtractedText] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    setResumeFile(file);
-    setAnalysis(null);
-    setExtractedText('');
-    setError('');
-  };
+  // The intake only passes PDFs on; anything else is reported under the picker.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => {
+      setResumeFile(file);
+      setAnalysis(null);
+      setExtractedText('');
+      setError('');
+    },
+  });
 
   const handleAnalyze = async () => {
     if (!resumeFile) {
@@ -128,9 +134,7 @@ export function ResumeAtsAnalyzer() {
     setAnalysis(null);
     setExtractedText('');
     setError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    intake.reset();
   };
 
   const handleCopyText = async () => {
@@ -150,13 +154,31 @@ export function ResumeAtsAnalyzer() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
-          />
+          {/* Stands in for a native file input: a button, the chosen file's name, and files can be dropped on it. */}
+          <div
+            onDragOver={intake.dropzoneProps.onDragOver}
+            onDragLeave={intake.dropzoneProps.onDragLeave}
+            onDrop={intake.dropzoneProps.onDrop}
+            className="flex items-center gap-4 text-sm text-muted-foreground"
+          >
+            <input {...intake.inputProps} aria-label="Upload PDF resume" />
+            <Button
+              type="button"
+              onClick={intake.open}
+              aria-label="Choose File, PDF resume"
+              className="shrink-0 font-semibold shadow-none"
+            >
+              Choose File
+            </Button>
+            <span className="min-w-0 truncate">
+              {resumeFile ? resumeFile.name : 'No file chosen'}
+            </span>
+          </div>
+          {intake.error && (
+            <p role="alert" className="text-sm font-medium text-destructive">
+              {intake.error}
+            </p>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -245,7 +267,7 @@ export function ResumeAtsAnalyzer() {
               <span className="font-medium">{resumeFile.name}</span>
               <span className="text-muted-foreground">
                 {' '}
-                · {(resumeFile.size / 1024).toFixed(0)} KB
+                · {formatBytes(resumeFile.size, SIZE_FORMAT)}
               </span>
             </div>
           )}

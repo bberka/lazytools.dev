@@ -24,26 +24,40 @@ export interface FormatBytesOptions {
   fixed?: boolean;
   /** How whole bytes are labelled: "512 Bytes" (default) or "512 B". */
   byteUnit?: 'Bytes' | 'B';
+  /**
+   * Smallest unit to use. With 'KB' a size under 1 KB reads "0.5 KB" instead
+   * of whole bytes. Default: whole bytes.
+   */
+  minUnit?: ByteUnit;
+  /**
+   * Largest unit to use. With 'MB' a size of 1 GB or more stays in MB
+   * ("2048 MB"). Never lower than `minUnit`. Default 'TB'.
+   */
+  maxUnit?: ByteUnit;
 }
 
 /**
  * Human-readable size: `0 Bytes`, `1023 Bytes`, `1 KB`, `1.5 KB`, `2.25 MB`.
  *
  * The default is the format most tools already showed. The options exist so a
- * tool whose sizes read differently ("1.50 KB", "512 B") keeps its text.
- * Anything that is not a positive finite number is shown as zero.
+ * tool whose sizes read differently ("1.50 KB", "512 B", always in KB) keeps
+ * its text. Anything that is not a positive finite number is shown as zero.
  */
 export function formatBytes(bytes: number, options: FormatBytesOptions = {}): string {
-  const { decimals = 2, fixed = false, byteUnit = 'Bytes' } = options;
+  const { decimals = 2, fixed = false, byteUnit = 'Bytes', minUnit, maxUnit = 'TB' } = options;
   let value = Number.isFinite(bytes) && bytes > 0 ? bytes : 0;
 
-  if (value < 1024) {
+  // -1 stands for whole bytes, the unit below KB.
+  const minIndex = minUnit ? BYTE_UNITS.indexOf(minUnit) : -1;
+  const maxIndex = Math.max(BYTE_UNITS.indexOf(maxUnit), minIndex);
+
+  if (minIndex < 0 && value < 1024) {
     const whole = Math.round(value);
     return `${whole} ${byteUnit === 'Bytes' && whole === 1 ? 'Byte' : byteUnit}`;
   }
 
   let unitIndex = -1;
-  while (value >= 1024 && unitIndex < BYTE_UNITS.length - 1) {
+  while (unitIndex < minIndex || (value >= 1024 && unitIndex < maxIndex)) {
     value /= 1024;
     unitIndex += 1;
   }

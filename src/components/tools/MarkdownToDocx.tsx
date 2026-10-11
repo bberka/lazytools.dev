@@ -27,6 +27,8 @@ import {
   Minus,
   Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { downloadBlob, sanitizeFileName } from '@/lib/files';
 import { createMarkdownParser } from '@/lib/markdown/parser';
 
 // Define options structure
@@ -911,31 +913,20 @@ export function MarkdownToDocx() {
       });
 
       const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
 
       // Extract filename from H1 if possible
-      let docTitle = 'markdown-export';
       const firstHeading = blocks.find((b) => b.type === 'heading');
-      if (firstHeading && firstHeading.text) {
-        docTitle = firstHeading.text
-          .replace(/[\\/:*?"<>|]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
+      const docTitle = sanitizeFileName(firstHeading?.text ?? '', 'markdown-export');
 
-      link.download = `${docTitle}.docx`;
-      link.click();
+      downloadBlob(blob, `${docTitle}.docx`);
 
-      // Defer revocation and spinner reset to give the browser time to initiate the large file download
+      // Defer the spinner reset to give the browser time to initiate the large file download
       setTimeout(() => {
-        URL.revokeObjectURL(url);
         setExporting(false);
       }, 1500);
     } catch (err) {
       console.error('Error compiling docx:', err);
-      alert('Failed to generate Word document.');
+      toast.error('Failed to generate Word document.');
       setExporting(false);
     }
   };

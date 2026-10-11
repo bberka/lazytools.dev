@@ -1,20 +1,33 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown, Upload, Download, CheckCircle2 } from 'lucide-react';
+import { FileDown, Download, CheckCircle2 } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { cn } from '@/lib/utils';
-import { isPdfFile, openPdf, pdfBlob } from '@/lib/pdf';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import {
+  downloadBlob,
+  formatBytes,
+  outputFileName,
+  readFileAsArrayBuffer,
+  type FormatBytesOptions,
+} from '@/lib/files';
+import { PDF_MIME_TYPE, openPdf, pdfBlob } from '@/lib/pdf';
 
 interface CompressionResult {
   originalSize: number;
   compressedSize: number;
   reductionPercentage: number;
-  downloadUrl: string;
+  // The compressed document. It is kept as a Blob, so there is no object URL to revoke.
+  blob: Blob;
   fileName: string;
 }
+
+// Sizes on this page read "0.5 KB", "845.3 KB", "2.4 MB".
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' };
 
 export function PdfCompress() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -26,24 +39,24 @@ export function PdfCompress() {
   // Settings
   const [compressionLevel, setCompressionLevel] = useState<'high' | 'medium' | 'low'>('medium');
   const [compressionMode, setCompressionMode] = useState<'image' | 'structure'>('image');
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!isPdfFile(file)) return;
-    setPdfFile(file);
-    setResult(null);
-    setProgress(null);
-    setError('');
-  };
+  // The intake only passes PDFs on; anything else is reported in the drop area.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => {
+      setPdfFile(file);
+      setResult(null);
+      setProgress(null);
+      setError('');
+    },
+  });
 
   const handleClear = () => {
     setPdfFile(null);
     setResult(null);
     setProgress(null);
     setError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    intake.reset();
   };
 
   const compressPdf = async () => {
@@ -59,7 +72,7 @@ export function PdfCompress() {
       if (compressionMode === 'structure') {
         // Mode 1: Optimize structure (strips metadata and compresses streams)
         setProgress({ current: 1, total: 1 });
-        const arrayBuffer = await pdfFile.arrayBuffer();
+        const arrayBuffer = await readFileAsArrayBuffer(pdfFile);
         const pdfDoc = await PDFDocument.load(arrayBuffer);
         
         // Strip common metadata
@@ -128,8 +141,8 @@ export function PdfCompress() {
         originalSize: pdfFile.size,
         compressedSize: blob.size,
         reductionPercentage: Math.max(0, parseFloat(reduction.toFixed(1))),
-        downloadUrl: URL.createObjectURL(blob),
-        fileName: `compressed-${pdfFile.name}`,
+        blob,
+        fileName: outputFileName(pdfFile.name, { prefix: 'compressed-' }),
       });
     } catch (compressionError) {
       console.error('Error compressing PDF:', compressionError);
@@ -143,10 +156,9 @@ export function PdfCompress() {
     }
   };
 
-  const formatSize = (bytes: number) => {
-    const kb = bytes / 1024;
-    if (kb < 1024) return kb.toFixed(1) + ' KB';
-    return (kb / 1024).toFixed(1) + ' MB';
+  const handleDownload = () => {
+    if (!result) return;
+    downloadBlob(result.blob, result.fileName);
   };
 
   return (
@@ -162,26 +174,12 @@ export function PdfCompress() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className="border-2 border-dashed border-border rounded-xl p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Click to upload a PDF file</p>
-            <p className="text-xs text-muted-foreground mt-1">Processed entirely in your browser</p>
-            {pdfFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20">
-                {pdfFile.name} ({formatSize(pdfFile.size)})
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            intake={intake}
+            label="Click to upload a PDF file"
+            hint="Processed entirely in your browser"
+            selected={pdfFile && `${pdfFile.name} (${formatBytes(pdfFile.size, SIZE_FORMAT)})`}
+          />
         </CardContent>
       </Card>
 
@@ -316,14 +314,14 @@ export function PdfCompress() {
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
                   Original Size
                 </span>
-                <span className="text-lg font-bold mt-1">{formatSize(result.originalSize)}</span>
+                <span className="text-lg font-bold mt-1">{formatBytes(result.originalSize, SIZE_FORMAT)}</span>
               </div>
               <div className="p-4 rounded-xl border bg-card/50 flex flex-col">
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
                   Compressed Size
                 </span>
                 <span className="text-lg font-bold mt-1 text-primary">
-                  {formatSize(result.compressedSize)}
+                  {formatBytes(result.compressedSize, SIZE_FORMAT)}
                 </span>
               </div>
               <div className="p-4 rounded-xl border bg-primary/10 border-primary/20 flex flex-col justify-center">
@@ -337,11 +335,9 @@ export function PdfCompress() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button asChild className="flex-1 bg-primary hover:bg-primary/90">
-                <a href={result.downloadUrl} download={result.fileName}>
-                  Download PDF
-                  <Download className="h-4 w-4 ml-2" />
-                </a>
+              <Button onClick={handleDownload} className="flex-1 bg-primary hover:bg-primary/90">
+                Download PDF
+                <Download className="h-4 w-4 ml-2" />
               </Button>
               <Button variant="outline" onClick={handleClear}>
                 Compress Another File

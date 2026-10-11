@@ -1,38 +1,54 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
+import { downloadBlob, readFileAsArrayBuffer } from '@/lib/files';
 import { pdfBlob } from '@/lib/pdf';
 
-export function ImageToPdf() {
-  const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([]);
-  const [generating, setGenerating] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+// The preview URL belongs to the thumbnail: it is revoked when the image is
+// removed from the list or the tool unmounts.
+function ImageThumbnail({ file }: { file: File }) {
+  const url = useObjectUrl(file);
+  if (!url) return null;
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  return <img src={url} alt="Uploaded" className="object-cover w-full h-full" />;
+}
+
+export function ImageToPdf() {
+  const [images, setImages] = useState<{ id: string; file: File }[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+
+  // The intake only passes JPEG and PNG on; anything else is reported under the drop area.
+  const addImages = (files: File[]) => {
     const newImages = files.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
-      url: URL.createObjectURL(file),
       file,
     }));
+
+    setError('');
     setImages((prev) => [...prev, ...newImages]);
   };
+
+  const intake = useFileIntake({ accept: 'image/jpeg,image/png', multiple: true, onFiles: addImages });
 
   const generatePdf = async () => {
     if (images.length === 0) return;
     setGenerating(true);
+    setError('');
 
     try {
       const pdfDoc = await PDFDocument.create();
 
       for (const imgData of images) {
-        const imgBytes = await imgData.file.arrayBuffer();
+        const imgBytes = await readFileAsArrayBuffer(imgData.file);
         let pdfImg;
-        
+
         if (imgData.file.type === 'image/jpeg' || imgData.file.type === 'image/jpg') {
           pdfImg = await pdfDoc.embedJpg(imgBytes);
         } else if (imgData.file.type === 'image/png') {
@@ -53,27 +69,21 @@ export function ImageToPdf() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'images.pdf';
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
+      downloadBlob(pdfBlob(pdfBytes), 'images.pdf');
+    } catch (generateError) {
+      console.error('Error generating PDF:', generateError);
+      setError(
+        'Failed to generate PDF: ' +
+          (generateError instanceof Error ? generateError.message : String(generateError))
+      );
     } finally {
       setGenerating(false);
     }
   };
 
   const removeImage = (id: string) => {
-    setImages((prev) => {
-      const filtered = prev.filter((img) => img.id !== id);
-      const removed = prev.find((img) => img.id === id);
-      if (removed) URL.revokeObjectURL(removed.url);
-      return filtered;
-    });
+    setError('');
+    setImages((prev) => prev.filter((img) => img.id !== id));
   };
 
   return (
@@ -88,22 +98,30 @@ export function ImageToPdf() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            {...intake.dropzoneProps}
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              intake.isDragging
+                ? 'border-primary bg-primary/5'
+                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
+            }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/jpeg,image/png"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <input {...intake.inputProps} aria-label="Upload JPEG or PNG images" />
+            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">Click to upload JPEG or PNG images</p>
           </div>
+          {intake.error && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {intake.error}
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {images.length > 0 && (
         <Card>
@@ -119,7 +137,7 @@ export function ImageToPdf() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {images.map((img) => (
                 <div key={img.id} className="relative group aspect-square border rounded-md overflow-hidden bg-slate-100">
-                  <img src={img.url} alt="Uploaded" className="object-cover w-full h-full" />
+                  <ImageThumbnail file={img.file} />
                   <button
                     onClick={() => removeImage(img.id)}
                     className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"

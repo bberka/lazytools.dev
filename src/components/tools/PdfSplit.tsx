@@ -1,74 +1,56 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, Upload, Trash2, Scissors } from 'lucide-react';
+import { FileText, Trash2, Scissors } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
-import { isPdfFile, parsePageRange, pdfBlob } from '@/lib/pdf';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, formatBytes, outputFileName, readFileAsArrayBuffer } from '@/lib/files';
+import { PDF_MIME_TYPE, parsePageRange, pdfBlob } from '@/lib/pdf';
 
 export function PdfSplit() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number>(0);
   const [range, setRange] = useState('');
   const [splitting, setSplitting] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const [error, setError] = useState('');
 
   const loadPdfFile = async (file: File) => {
-    if (!isPdfFile(file)) return;
-
     setPdfFile(file);
+    // Nothing of the previous document may be left if this one fails to load.
+    setPageCount(0);
+    setRange('');
+    setError('');
+
     try {
-      const arrayBuffer = await file.arrayBuffer();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
       const pdf = await PDFDocument.load(arrayBuffer);
       setPageCount(pdf.getPageCount());
       setRange(`1-${pdf.getPageCount()}`);
-    } catch (error) {
-      console.error('Error loading PDF:', error);
+    } catch (loadError) {
+      console.error('Error loading PDF:', loadError);
+      setError(
+        'Failed to load PDF: ' + (loadError instanceof Error ? loadError.message : String(loadError))
+      );
     }
   };
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await loadPdfFile(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (isPdfFile(file)) {
-      await loadPdfFile(file);
-    }
-  };
+  // The intake only passes PDFs on; anything else is reported in the drop area.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => loadPdfFile(file),
+  });
 
   const splitPdf = async () => {
     if (!pdfFile || !range) return;
     setSplitting(true);
+    setError('');
 
     try {
-      const arrayBuffer = await pdfFile.arrayBuffer();
+      const arrayBuffer = await readFileAsArrayBuffer(pdfFile);
       const pdf = await PDFDocument.load(arrayBuffer);
       const newPdf = await PDFDocument.create();
 
@@ -79,18 +61,22 @@ export function PdfSplit() {
       copiedPages.forEach((page) => newPdf.addPage(page));
 
       const pdfBytes = await newPdf.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `split-${pdfFile.name}`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error splitting PDF:', error);
+      downloadBlob(pdfBlob(pdfBytes), outputFileName(pdfFile.name, { prefix: 'split-' }));
+    } catch (splitError) {
+      console.error('Error splitting PDF:', splitError);
+      setError(
+        'Failed to split PDF: ' +
+          (splitError instanceof Error ? splitError.message : String(splitError))
+      );
     } finally {
       setSplitting(false);
     }
+  };
+
+  const handleClear = () => {
+    setPdfFile(null);
+    setError('');
+    intake.reset();
   };
 
   return (
@@ -104,36 +90,27 @@ export function PdfSplit() {
           <CardDescription>Extract specific pages or ranges from a PDF document</CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Drag & drop a PDF file here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-            {pdfFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
-                <FileText className="h-3.5 w-3.5" />
-                {pdfFile.name} ({formatSize(pdfFile.size)})
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            intake={intake}
+            label="Drag & drop a PDF file here or click to browse"
+            hint="Files remain local on your machine"
+            selected={
+              pdfFile && (
+                <>
+                  <FileText className="h-3.5 w-3.5" />
+                  {pdfFile.name} ({formatBytes(pdfFile.size)})
+                </>
+              )
+            }
+          />
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {pdfFile && (
         <Card>
@@ -154,7 +131,7 @@ export function PdfSplit() {
               <Button onClick={splitPdf} disabled={splitting || !range} className="flex-1">
                 {splitting ? 'Splitting...' : 'Extract Pages'}
               </Button>
-              <Button variant="outline" onClick={() => setPdfFile(null)}>
+              <Button variant="outline" onClick={handleClear}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>

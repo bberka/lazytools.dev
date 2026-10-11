@@ -1,25 +1,29 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, Trash2, FileOutput } from 'lucide-react';
-import { isPdfFile, openPdf } from '@/lib/pdf';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, outputFileName } from '@/lib/files';
+import { PDF_MIME_TYPE, openPdf } from '@/lib/pdf';
 
 export function PdfToWord() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
-  const [wordDataUrl, setWordDataUrl] = useState<string | null>(null);
+  // The converted document. It is kept as a Blob, so there is no object URL to revoke.
+  const [wordBlob, setWordBlob] = useState<Blob | null>(null);
   const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!isPdfFile(file)) return;
-    setPdfFile(file);
-    setWordDataUrl(null);
-    setError('');
-  };
+  // The intake only passes PDFs on; anything else is reported under the drop area.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => {
+      setPdfFile(file);
+      setWordBlob(null);
+      setError('');
+    },
+  });
 
   const convertToWord = async () => {
     if (!pdfFile) return;
@@ -57,9 +61,7 @@ export function PdfToWord() {
         ],
       });
 
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      setWordDataUrl(url);
+      setWordBlob(await Packer.toBlob(doc));
 
     } catch (conversionError) {
       console.error('Error converting PDF to Word:', conversionError);
@@ -73,11 +75,8 @@ export function PdfToWord() {
   };
 
   const handleDownload = () => {
-    if (!wordDataUrl || !pdfFile) return;
-    const link = document.createElement('a');
-    link.href = wordDataUrl;
-    link.download = `${pdfFile.name.replace('.pdf', '')}.docx`;
-    link.click();
+    if (!wordBlob || !pdfFile) return;
+    downloadBlob(wordBlob, outputFileName(pdfFile.name, { extension: 'docx' }));
   };
 
   return (
@@ -96,27 +95,37 @@ export function PdfToWord() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            {...intake.dropzoneProps}
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              intake.isDragging
+                ? 'border-primary bg-primary/5'
+                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
+            }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <input {...intake.inputProps} aria-label="Upload a PDF" />
+            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">Click to upload a PDF</p>
             {pdfFile && <p className="text-xs text-primary mt-2">{pdfFile.name}</p>}
           </div>
+          {intake.error && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {intake.error}
+            </p>
+          )}
 
-          {pdfFile && !wordDataUrl && (
+          {pdfFile && !wordBlob && (
             <div className="mt-4 flex gap-2">
               <Button onClick={convertToWord} disabled={converting} className="flex-1">
                 {converting ? 'Extracting Text...' : 'Convert to Word'}
               </Button>
-              <Button variant="outline" onClick={() => { setPdfFile(null); setError(''); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPdfFile(null);
+                  setError('');
+                  intake.reset();
+                }}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
@@ -129,13 +138,20 @@ export function PdfToWord() {
             </div>
           )}
 
-          {wordDataUrl && (
+          {wordBlob && (
             <div className="mt-4 flex gap-2">
               <Button onClick={handleDownload} className="flex-1 bg-green-600 hover:bg-green-700">
                 <Download className="h-4 w-4 mr-2" />
                 Download .docx
               </Button>
-              <Button variant="outline" onClick={() => { setPdfFile(null); setWordDataUrl(null); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPdfFile(null);
+                  setWordBlob(null);
+                  intake.reset();
+                }}
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>

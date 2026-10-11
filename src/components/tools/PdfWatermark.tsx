@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { Upload, Download, Stamp } from 'lucide-react';
+import { Download, Stamp } from 'lucide-react';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { cn } from '@/lib/utils';
-import { isPdfFile, openPdf, parsePageRange, pdfBlob, type OpenedPdf } from '@/lib/pdf';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, loadImage, outputFileName, readFileAsArrayBuffer } from '@/lib/files';
+import { PDF_MIME_TYPE, openPdf, parsePageRange, pdfBlob, type OpenedPdf } from '@/lib/pdf';
 
 export function PdfWatermark() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -27,6 +30,7 @@ export function PdfWatermark() {
   const [watermarkImageFile, setWatermarkImageFile] = useState<File | null>(null);
   const [imageScale, setImageScale] = useState(50);
   const [watermarkImgElement, setWatermarkImgElement] = useState<HTMLImageElement | null>(null);
+  const [imageError, setImageError] = useState('');
   
   // Global Settings
   const [opacity, setOpacity] = useState(30); // 0-100 scale for slider
@@ -40,31 +44,33 @@ export function PdfWatermark() {
   const [loadError, setLoadError] = useState('');
   const [exportError, setExportError] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const pdfDocRef = useRef<OpenedPdf | null>(null); // opened document, used for the preview
+  const loadIdRef = useRef(0); // names the latest load; an older one must not install its document
   const [actualPageSize, setActualPageSize] = useState({ width: 612, height: 792 }); // Letter default
 
-  // Clean up references
-  const handleClearAll = () => {
-    setPdfFile(null);
+  // Releases the opened document and its worker. Called when another file
+  // replaces the document, when the tool is cleared and when it unmounts.
+  const releaseDocument = () => {
+    const doc = pdfDocRef.current;
     pdfDocRef.current = null;
-    setPreviewLoaded(false);
-    setLoadError('');
-    setExportError('');
-    setWatermarkImageFile(null);
-    setWatermarkImgElement(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (imageInputRef.current) imageInputRef.current.value = '';
+    void doc?.destroy();
   };
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!isPdfFile(file)) return;
+  useEffect(
+    () => () => {
+      loadIdRef.current += 1;
+      void pdfDocRef.current?.destroy();
+      pdfDocRef.current = null;
+    },
+    []
+  );
+
+  const loadPdfFile = async (file: File) => {
+    const loadId = ++loadIdRef.current;
+    releaseDocument();
 
     setPdfFile(file);
     setRendering(true);
@@ -74,32 +80,80 @@ export function PdfWatermark() {
 
     try {
       const pdf = await openPdf(file);
+      // Replaced, cleared or unmounted while the file was being opened.
+      if (loadId !== loadIdRef.current) {
+        void pdf.destroy();
+        return;
+      }
       pdfDocRef.current = pdf;
 
       const page = await pdf.page(1);
+      // The document was released under this load; whoever did that owns the state now.
+      if (loadId !== loadIdRef.current) return;
+
       setActualPageSize({ width: page.width, height: page.height });
       setPreviewLoaded(true);
     } catch (error) {
+      // A load that was superseded fails because its document was released.
+      if (loadId !== loadIdRef.current) return;
       console.error('Error loading PDF:', error);
+      releaseDocument();
       setLoadError('Failed to parse PDF.');
     } finally {
-      setRendering(false);
+      if (loadId === loadIdRef.current) setRendering(false);
     }
   };
 
-  // Load image watermark helper
+  // The intakes only pass on a PDF and a PNG or JPEG image; anything else is
+  // reported next to the control it was given to.
+  const pdfIntake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => loadPdfFile(file),
+  });
+
+  const imageIntake = useFileIntake({
+    accept: 'image/png,image/jpeg',
+    onFiles: ([file]) => {
+      setImageError('');
+      setWatermarkImageFile(file);
+    },
+  });
+
+  // Clean up references
+  const handleClearAll = () => {
+    loadIdRef.current += 1;
+    releaseDocument();
+    setPdfFile(null);
+    setRendering(false);
+    setPreviewLoaded(false);
+    setLoadError('');
+    setExportError('');
+    setWatermarkImageFile(null);
+    setWatermarkImgElement(null);
+    setImageError('');
+    pdfIntake.reset();
+    imageIntake.reset();
+  };
+
+  // Decode the watermark image for the preview and for its pixel size
   useEffect(() => {
-    if (!watermarkImageFile) {
-      setWatermarkImgElement(null);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => setWatermarkImgElement(img);
-      img.src = e.target?.result as string;
+    if (!watermarkImageFile) return;
+
+    let active = true;
+
+    loadImage(watermarkImageFile)
+      .then((image) => {
+        if (active) setWatermarkImgElement(image);
+      })
+      .catch(() => {
+        if (!active) return;
+        setWatermarkImgElement(null);
+        setImageError('Unable to load the selected image.');
+      });
+
+    return () => {
+      active = false;
     };
-    reader.readAsDataURL(watermarkImageFile);
   }, [watermarkImageFile]);
 
   // Render first page to preview canvas
@@ -133,7 +187,8 @@ export function PdfWatermark() {
           drawOverlayWatermark(overlay, rendered.width, page.width);
         }
       } catch (error) {
-        console.error('Error rendering preview page:', error);
+        // A render cut short by a released document is not a failure.
+        if (active) console.error('Error rendering preview page:', error);
       }
     };
 
@@ -295,7 +350,7 @@ export function PdfWatermark() {
     setExportError('');
 
     try {
-      const arrayBuffer = await pdfFile.arrayBuffer();
+      const arrayBuffer = await readFileAsArrayBuffer(pdfFile);
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const pageCount = pdfDoc.getPageCount();
       
@@ -313,7 +368,7 @@ export function PdfWatermark() {
       // Embed watermark image if type is image
       let embeddedImage: import('pdf-lib').PDFImage | null = null;
       if (watermarkType === 'image' && watermarkImageFile) {
-        const imgBytes = await watermarkImageFile.arrayBuffer();
+        const imgBytes = await readFileAsArrayBuffer(watermarkImageFile);
         if (watermarkImageFile.type === 'image/png') {
           embeddedImage = await pdfDoc.embedPng(imgBytes);
         } else {
@@ -465,14 +520,7 @@ export function PdfWatermark() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = pdfBlob(pdfBytes);
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `watermarked-${pdfFile.name}`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(pdfBlob(pdfBytes), outputFileName(pdfFile.name, { prefix: 'watermarked-' }));
     } catch (err) {
       console.error('Error watermarking PDF:', err);
       setExportError('Failed to apply watermark.');
@@ -504,26 +552,12 @@ export function PdfWatermark() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className="border-2 border-dashed border-border rounded-xl p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/40 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Click to upload a PDF file</p>
-            <p className="text-xs text-muted-foreground mt-1">Processed securely client-side</p>
-            {pdfFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20">
-                {pdfFile.name}
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            intake={pdfIntake}
+            label="Click to upload a PDF file"
+            hint="Processed securely client-side"
+            selected={pdfFile && pdfFile.name}
+          />
         </CardContent>
       </Card>
 
@@ -664,16 +698,32 @@ export function PdfWatermark() {
                   <div className="space-y-4 border rounded-xl p-3 bg-muted/10">
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium">Upload Image (PNG/JPG)</label>
-                      <input
-                        ref={imageInputRef}
-                        type="file"
-                        accept="image/png, image/jpeg"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) setWatermarkImageFile(file);
-                        }}
-                        className="block w-full text-xs text-muted-foreground file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                      />
+                      {/* Stands in for a native file input: a button, the chosen file's name, and files can be dropped on it. */}
+                      <div
+                        onDragOver={imageIntake.dropzoneProps.onDragOver}
+                        onDragLeave={imageIntake.dropzoneProps.onDragLeave}
+                        onDrop={imageIntake.dropzoneProps.onDrop}
+                        className="flex items-center gap-3 text-xs text-muted-foreground"
+                      >
+                        <input {...imageIntake.inputProps} aria-label="Upload watermark image (PNG/JPG)" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={imageIntake.open}
+                          aria-label="Choose File, watermark image (PNG/JPG)"
+                          className="h-auto shrink-0 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20 hover:text-primary"
+                        >
+                          Choose File
+                        </Button>
+                        <span className="min-w-0 truncate">
+                          {watermarkImageFile ? watermarkImageFile.name : 'No file chosen'}
+                        </span>
+                      </div>
+                      {(imageIntake.error || imageError) && (
+                        <p role="alert" className="text-xs font-medium text-destructive">
+                          {imageIntake.error || imageError}
+                        </p>
+                      )}
                     </div>
 
                     {watermarkImageFile && (
