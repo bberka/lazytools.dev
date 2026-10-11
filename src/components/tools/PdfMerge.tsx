@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Trash2, ArrowUp, ArrowDown, Files } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
+import { FileText, Trash2, ArrowUp, ArrowDown, Files } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
 import { useFileIntake } from '@/hooks/useFileIntake';
-import { downloadBlob, formatBytes, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
+import { downloadBlob, formatBytes, type FormatBytesOptions } from '@/lib/files';
 import { PDF_MIME_TYPE, pdfBlob } from '@/lib/pdf';
+import { describePdfFailure, mergePdfs } from '@/lib/tools/pdf-page-ops';
 
 interface PdfFile {
   id: string;
@@ -19,21 +20,25 @@ interface PdfFile {
 // Sizes in the list read "0.5 KB", "845.3 KB", "2.4 MB".
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' };
 
+const MERGED_FILE_NAME = 'merged.pdf';
+
 export function PdfMerge() {
   const [pdfFiles, setPdfFiles] = useState<PdfFile[]>([]);
   const [merging, setMerging] = useState(false);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
-  // The intake only passes PDFs on; anything else is reported under the drop area.
+  // The intake only passes PDFs on; anything else is reported in the drop area.
   const addFiles = (files: File[]) => {
     const newFiles = files.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       file,
       name: file.name,
       size: file.size,
     }));
 
     setError('');
+    setStatus('');
     setPdfFiles((prev) => [...prev, ...newFiles]);
   };
 
@@ -41,11 +46,13 @@ export function PdfMerge() {
 
   const removeFile = (id: string) => {
     setError('');
+    setStatus('');
     setPdfFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   const moveFile = (id: string, direction: 'up' | 'down') => {
     const index = pdfFiles.findIndex((f) => f.id === id);
+    setStatus('');
     if (direction === 'up' && index > 0) {
       const newFiles = [...pdfFiles];
       [newFiles[index - 1], newFiles[index]] = [newFiles[index], newFiles[index - 1]];
@@ -57,29 +64,23 @@ export function PdfMerge() {
     }
   };
 
-  const mergePdfs = async () => {
+  const mergePdfFiles = async () => {
     if (pdfFiles.length < 2) return;
     setMerging(true);
     setError('');
+    setStatus('');
 
     try {
-      const mergedPdf = await PDFDocument.create();
-
-      for (const pdfFile of pdfFiles) {
-        const arrayBuffer = await readFileAsArrayBuffer(pdfFile.file);
-        const pdf = await PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
-      }
-
-      const pdfBytes = await mergedPdf.save();
-      downloadBlob(pdfBlob(pdfBytes), 'merged.pdf');
+      const { bytes, pageCount } = await mergePdfs(
+        pdfFiles.map(({ name, file }) => ({ name, data: file }))
+      );
+      downloadBlob(pdfBlob(bytes), MERGED_FILE_NAME);
+      setStatus(
+        `Merged ${pdfFiles.length} files (${pageCount} ${pageCount === 1 ? 'page' : 'pages'}) into ${MERGED_FILE_NAME}.`
+      );
     } catch (mergeError) {
       console.error('Error merging PDFs:', mergeError);
-      setError(
-        'Failed to merge PDFs: ' +
-          (mergeError instanceof Error ? mergeError.message : String(mergeError))
-      );
+      setError(describePdfFailure(mergeError, 'Failed to merge PDFs'));
     } finally {
       setMerging(false);
     }
@@ -96,24 +97,11 @@ export function PdfMerge() {
           <CardDescription>Combine multiple PDF documents into a single file</CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            {...intake.dropzoneProps}
-            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-              intake.isDragging
-                ? 'border-primary bg-primary/5'
-                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
-            }`}
-          >
-            <input {...intake.inputProps} aria-label="Upload PDF files" />
-            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-medium">Click to upload or drag and drop PDFs</p>
-            <p className="text-xs text-muted-foreground mt-1">Combine documents in any order</p>
-          </div>
-          {intake.error && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
-              {intake.error}
-            </p>
-          )}
+          <FileDropzone
+            intake={intake}
+            label="Click to upload or drag and drop PDFs"
+            hint="Combine documents in any order"
+          />
         </CardContent>
       </Card>
 
@@ -126,31 +114,36 @@ export function PdfMerge() {
       {pdfFiles.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium flex justify-between items-center">
+            <CardTitle className="text-sm font-medium flex justify-between items-center gap-2">
               Selected Files ({pdfFiles.length})
               {pdfFiles.length >= 2 && (
-                <Button onClick={mergePdfs} disabled={merging}>
+                <Button onClick={mergePdfFiles} disabled={merging}>
                   {merging ? 'Merging...' : 'Merge PDFs'}
                 </Button>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
+            {pdfFiles.length === 1 && (
+              <p className="text-sm text-muted-foreground">Add at least one more PDF to merge.</p>
+            )}
             {pdfFiles.map((f, index) => (
               <div
                 key={f.id}
                 className="flex items-center gap-3 p-3 border rounded-md bg-card"
               >
-                <FileText className="h-5 w-5 text-red-500 shrink-0" />
+                <FileText aria-hidden="true" className="h-5 w-5 text-red-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{f.name}</p>
                   <p className="text-xs text-muted-foreground">{formatBytes(f.size, SIZE_FORMAT)}</p>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* The order is fixed while it is being merged, so the result matches the list. */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    disabled={index === 0}
+                    aria-label={`Move ${f.name} up`}
+                    disabled={merging || index === 0}
                     onClick={() => moveFile(f.id, 'up')}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -158,7 +151,8 @@ export function PdfMerge() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    disabled={index === pdfFiles.length - 1}
+                    aria-label={`Move ${f.name} down`}
+                    disabled={merging || index === pdfFiles.length - 1}
                     onClick={() => moveFile(f.id, 'down')}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -166,6 +160,8 @@ export function PdfMerge() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={`Remove ${f.name}`}
+                    disabled={merging}
                     className="text-destructive hover:text-destructive"
                     onClick={() => removeFile(f.id)}
                   >
@@ -174,6 +170,11 @@ export function PdfMerge() {
                 </div>
               </div>
             ))}
+            {status && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {status}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

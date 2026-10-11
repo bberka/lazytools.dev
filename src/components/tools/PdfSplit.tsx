@@ -1,40 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FileText, Trash2, Scissors } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
 import { FileDropzone } from '@/components/FileDropzone';
 import { useFileIntake } from '@/hooks/useFileIntake';
-import { downloadBlob, formatBytes, outputFileName, readFileAsArrayBuffer } from '@/lib/files';
-import { PDF_MIME_TYPE, parsePageRange, pdfBlob } from '@/lib/pdf';
+import { downloadBlob, formatBytes, outputFileName } from '@/lib/files';
+import { PDF_MIME_TYPE, pdfBlob } from '@/lib/pdf';
+import {
+  describePdfFailure,
+  extractPdfPages,
+  formatPageList,
+  loadPdf,
+} from '@/lib/tools/pdf-page-ops';
 
 export function PdfSplit() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number>(0);
   const [range, setRange] = useState('');
+  const [loading, setLoading] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
+
+  const rangeId = useId();
+  // Names the latest file; work that was started for an earlier one must not report back.
+  const loadIdRef = useRef(0);
+
+  useEffect(
+    () => () => {
+      loadIdRef.current += 1;
+    },
+    []
+  );
 
   const loadPdfFile = async (file: File) => {
+    const loadId = ++loadIdRef.current;
+
     setPdfFile(file);
     // Nothing of the previous document may be left if this one fails to load.
     setPageCount(0);
     setRange('');
     setError('');
+    setStatus('');
+    setLoading(true);
 
     try {
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      const pdf = await PDFDocument.load(arrayBuffer);
-      setPageCount(pdf.getPageCount());
-      setRange(`1-${pdf.getPageCount()}`);
+      const count = (await loadPdf(file)).getPageCount();
+      // Replaced or cleared while the file was being read.
+      if (loadId !== loadIdRef.current) return;
+      setPageCount(count);
+      setRange(`1-${count}`);
     } catch (loadError) {
+      if (loadId !== loadIdRef.current) return;
       console.error('Error loading PDF:', loadError);
-      setError(
-        'Failed to load PDF: ' + (loadError instanceof Error ? loadError.message : String(loadError))
-      );
+      setError(describePdfFailure(loadError, 'Failed to load PDF'));
+    } finally {
+      if (loadId === loadIdRef.current) setLoading(false);
     }
   };
 
@@ -45,37 +69,41 @@ export function PdfSplit() {
   });
 
   const splitPdf = async () => {
-    if (!pdfFile || !range) return;
+    if (!pdfFile || !range.trim()) return;
+    const loadId = loadIdRef.current;
+
     setSplitting(true);
     setError('');
+    setStatus('');
 
     try {
-      const arrayBuffer = await readFileAsArrayBuffer(pdfFile);
-      const pdf = await PDFDocument.load(arrayBuffer);
-      const newPdf = await PDFDocument.create();
-
       // Requested pages, without duplicates and in document order
-      const uniquePages = parsePageRange(range, pageCount);
+      const { bytes, pages } = await extractPdfPages(pdfFile, range);
+      const fileName = outputFileName(pdfFile.name, { prefix: 'split-', extension: 'pdf' });
+      downloadBlob(pdfBlob(bytes), fileName);
 
-      const copiedPages = await newPdf.copyPages(pdf, uniquePages);
-      copiedPages.forEach((page) => newPdf.addPage(page));
-
-      const pdfBytes = await newPdf.save();
-      downloadBlob(pdfBlob(pdfBytes), outputFileName(pdfFile.name, { prefix: 'split-' }));
-    } catch (splitError) {
-      console.error('Error splitting PDF:', splitError);
-      setError(
-        'Failed to split PDF: ' +
-          (splitError instanceof Error ? splitError.message : String(splitError))
+      // The download was asked for; the message belongs to a file that is no longer shown.
+      if (loadId !== loadIdRef.current) return;
+      setStatus(
+        `Extracted ${pages.length === 1 ? 'page' : 'pages'} ${formatPageList(pages)} to ${fileName}.`
       );
+    } catch (splitError) {
+      if (loadId !== loadIdRef.current) return;
+      console.error('Error splitting PDF:', splitError);
+      setError(describePdfFailure(splitError, 'Failed to split PDF'));
     } finally {
       setSplitting(false);
     }
   };
 
   const handleClear = () => {
+    loadIdRef.current += 1;
     setPdfFile(null);
+    setPageCount(0);
+    setRange('');
+    setLoading(false);
     setError('');
+    setStatus('');
     intake.reset();
   };
 
@@ -116,19 +144,37 @@ export function PdfSplit() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Split Options</CardTitle>
-            <CardDescription>PDF contains {pageCount} pages</CardDescription>
+            {loading ? (
+              <CardDescription>Reading PDF...</CardDescription>
+            ) : (
+              pageCount > 0 && (
+                <CardDescription>
+                  PDF contains {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+                </CardDescription>
+              )
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Page Range (e.g. 1-3, 5, 7-10)</label>
+              <label htmlFor={rangeId} className="text-sm font-medium">
+                Page Range (e.g. 1-3, 5, 7-10)
+              </label>
               <Input
+                id={rangeId}
                 value={range}
-                onChange={(e) => setRange(e.target.value)}
+                onChange={(e) => {
+                  setRange(e.target.value);
+                  setStatus('');
+                }}
                 placeholder="1-3, 5"
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={splitPdf} disabled={splitting || !range} className="flex-1">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={splitPdf}
+                disabled={splitting || loading || pageCount === 0 || !range.trim()}
+                className="flex-1"
+              >
                 {splitting ? 'Splitting...' : 'Extract Pages'}
               </Button>
               <Button variant="outline" onClick={handleClear}>
@@ -136,6 +182,11 @@ export function PdfSplit() {
                 Clear
               </Button>
             </div>
+            {status && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {status}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

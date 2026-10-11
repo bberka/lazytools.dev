@@ -1,26 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown, Download, CheckCircle2 } from 'lucide-react';
+import { FileDown, Download, CheckCircle2, Info } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { cn } from '@/lib/utils';
 import { FileDropzone } from '@/components/FileDropzone';
 import { useFileIntake } from '@/hooks/useFileIntake';
-import {
-  downloadBlob,
-  formatBytes,
-  outputFileName,
-  readFileAsArrayBuffer,
-  type FormatBytesOptions,
-} from '@/lib/files';
+import { downloadBlob, formatBytes, outputFileName, type FormatBytesOptions } from '@/lib/files';
 import { PDF_MIME_TYPE, openPdf, pdfBlob } from '@/lib/pdf';
+import {
+  COMPRESSION_PRESETS,
+  fitRenderScale,
+  optimizePdfStructure,
+  renderDpi,
+  summarizeCompression,
+  type CompressionLevel,
+  type CompressionSummary,
+} from '@/lib/tools/pdf-compress';
+import { PdfToolError, describePdfFailure } from '@/lib/tools/pdf-page-ops';
 
-interface CompressionResult {
-  originalSize: number;
-  compressedSize: number;
-  reductionPercentage: number;
+interface CompressionResult extends CompressionSummary {
   // The compressed document. It is kept as a Blob, so there is no object URL to revoke.
   blob: Blob;
   fileName: string;
@@ -28,6 +29,17 @@ interface CompressionResult {
 
 // Sizes on this page read "0.5 KB", "845.3 KB", "2.4 MB".
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, decimals: 1, minUnit: 'KB', maxUnit: 'MB' };
+
+// The resolution is worked out from the scale each level renders at, so the label cannot drift from it.
+const COMPRESSION_LEVELS: ReadonlyArray<{ id: CompressionLevel; name: string; desc: string }> = [
+  { id: 'low', name: 'Low', desc: `Clear (${renderDpi(COMPRESSION_PRESETS.low.scale)} DPI)` },
+  {
+    id: 'medium',
+    name: 'Medium',
+    desc: `Balanced (${renderDpi(COMPRESSION_PRESETS.medium.scale)} DPI)`,
+  },
+  { id: 'high', name: 'High', desc: `Smallest (${renderDpi(COMPRESSION_PRESETS.high.scale)} DPI)` },
+];
 
 export function PdfCompress() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -37,14 +49,29 @@ export function PdfCompress() {
   const [error, setError] = useState('');
 
   // Settings
-  const [compressionLevel, setCompressionLevel] = useState<'high' | 'medium' | 'low'>('medium');
+  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('medium');
   const [compressionMode, setCompressionMode] = useState<'image' | 'structure'>('image');
+
+  const modeLabelId = useId();
+  const levelLabelId = useId();
+  // Names the latest run; one that was overtaken by another file, a clear or
+  // an unmount stops and must not report back.
+  const runIdRef = useRef(0);
+
+  useEffect(
+    () => () => {
+      runIdRef.current += 1;
+    },
+    []
+  );
 
   // The intake only passes PDFs on; anything else is reported in the drop area.
   const intake = useFileIntake({
     accept: PDF_MIME_TYPE,
     onFiles: ([file]) => {
+      runIdRef.current += 1;
       setPdfFile(file);
+      setCompressing(false);
       setResult(null);
       setProgress(null);
       setError('');
@@ -52,7 +79,9 @@ export function PdfCompress() {
   });
 
   const handleClear = () => {
+    runIdRef.current += 1;
     setPdfFile(null);
+    setCompressing(false);
     setResult(null);
     setProgress(null);
     setError('');
@@ -61,6 +90,9 @@ export function PdfCompress() {
 
   const compressPdf = async () => {
     if (!pdfFile) return;
+    const runId = ++runIdRef.current;
+    const overtaken = () => runId !== runIdRef.current;
+
     setCompressing(true);
     setResult(null);
     setProgress(null);
@@ -72,87 +104,81 @@ export function PdfCompress() {
       if (compressionMode === 'structure') {
         // Mode 1: Optimize structure (strips metadata and compresses streams)
         setProgress({ current: 1, total: 1 });
-        const arrayBuffer = await readFileAsArrayBuffer(pdfFile);
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
-        
-        // Strip common metadata
-        pdfDoc.setTitle('');
-        pdfDoc.setAuthor('');
-        pdfDoc.setSubject('');
-        pdfDoc.setCreator('');
-        pdfDoc.setProducer('');
-        
-        // Save with object stream compression
-        compressedBytes = await pdfDoc.save({ useObjectStreams: true });
+        compressedBytes = await optimizePdfStructure(pdfFile);
       } else {
         // Mode 2: Re-compress images (render pages to JPEG at lower quality/DPI)
         const pdf = await openPdf(pdfFile);
+        // One canvas for every page; a canvas per page can exhaust canvas memory on long documents.
+        const canvas = document.createElement('canvas');
 
         try {
           const totalPages = pdf.pageCount;
 
           setProgress({ current: 0, total: totalPages });
           const newPdf = await PDFDocument.create();
-
-          // Preset parameters
-          let scale = 1.5;
-          let quality = 0.65;
-          if (compressionLevel === 'high') {
-            scale = 1.0;
-            quality = 0.45;
-          } else if (compressionLevel === 'low') {
-            scale = 2.0;
-            quality = 0.85;
-          }
+          const { scale, quality } = COMPRESSION_PRESETS[compressionLevel];
 
           for (let i = 1; i <= totalPages; i++) {
+            if (overtaken()) return;
             setProgress({ current: i, total: totalPages });
             const page = await pdf.page(i);
 
             // Render to canvas at target compression scale (DPI adjustments)
-            const rendered = await page.render({ scale });
+            const rendered = await page.render({
+              canvas,
+              scale: fitRenderScale(page.width, page.height, scale),
+            });
 
-            if (rendered) {
-              // Compress page rendering as JPEG
-              const jpegDataUrl = rendered.canvas.toDataURL('image/jpeg', quality);
-              const image = await newPdf.embedJpg(jpegDataUrl);
+            // Compress page rendering as JPEG
+            const jpegDataUrl = rendered ? rendered.canvas.toDataURL('image/jpeg', quality) : '';
 
-              // Add a page matching original dimensions (in points) to keep layout physical size
-              const newPage = newPdf.addPage([page.width, page.height]);
-              newPage.drawImage(image, {
-                x: 0,
-                y: 0,
-                width: page.width,
-                height: page.height,
-              });
+            // A canvas the browser could not set up or encode yields no JPEG.
+            // Leaving the page out would hand back a shorter document as a success.
+            if (!jpegDataUrl.startsWith('data:image/jpeg')) {
+              throw new PdfToolError(
+                `Page ${i} could not be rendered, so the PDF was not compressed. Try Optimize Structure instead.`
+              );
             }
+
+            const image = await newPdf.embedJpg(jpegDataUrl);
+
+            // Add a page matching original dimensions (in points) to keep layout physical size
+            const newPage = newPdf.addPage([page.width, page.height]);
+            newPage.drawImage(image, {
+              x: 0,
+              y: 0,
+              width: page.width,
+              height: page.height,
+            });
           }
 
           compressedBytes = await newPdf.save();
         } finally {
+          // Give the pixels back right away instead of waiting for garbage collection.
+          canvas.width = 0;
+          canvas.height = 0;
           await pdf.destroy();
         }
       }
 
+      if (overtaken()) return;
+
       const blob = pdfBlob(compressedBytes);
-      const reduction = ((pdfFile.size - blob.size) / pdfFile.size) * 100;
-      
       setResult({
-        originalSize: pdfFile.size,
-        compressedSize: blob.size,
-        reductionPercentage: Math.max(0, parseFloat(reduction.toFixed(1))),
+        ...summarizeCompression(pdfFile.size, blob.size),
         blob,
-        fileName: outputFileName(pdfFile.name, { prefix: 'compressed-' }),
+        fileName: outputFileName(pdfFile.name, { prefix: 'compressed-', extension: 'pdf' }),
       });
     } catch (compressionError) {
+      // Whatever went wrong in a run that was overtaken concerns a file that is no longer shown.
+      if (overtaken()) return;
       console.error('Error compressing PDF:', compressionError);
-      setError(
-        'Failed to compress PDF: ' +
-          (compressionError instanceof Error ? compressionError.message : String(compressionError))
-      );
+      setError(describePdfFailure(compressionError, 'Failed to compress PDF'));
     } finally {
-      setCompressing(false);
-      setProgress(null);
+      if (!overtaken()) {
+        setCompressing(false);
+        setProgress(null);
+      }
     }
   };
 
@@ -194,17 +220,21 @@ export function PdfCompress() {
           <CardHeader>
             <CardTitle className="text-sm font-semibold">Compression Settings</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <CardContent className="space-y-4 sm:space-y-6">
+            <div className="space-y-3" role="group" aria-labelledby={modeLabelId}>
+              <p
+                id={modeLabelId}
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
                 Compression Mode
-              </label>
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
                   type="button"
+                  aria-pressed={compressionMode === 'image'}
                   onClick={() => setCompressionMode('image')}
                   className={cn(
-                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1",
+                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     compressionMode === 'image'
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border/80 bg-card"
@@ -218,9 +248,10 @@ export function PdfCompress() {
 
                 <button
                   type="button"
+                  aria-pressed={compressionMode === 'structure'}
                   onClick={() => setCompressionMode('structure')}
                   className={cn(
-                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1",
+                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     compressionMode === 'structure'
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border/80 bg-card"
@@ -235,24 +266,22 @@ export function PdfCompress() {
             </div>
 
             {compressionMode === 'image' && (
-              <div className="space-y-3">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-3" role="group" aria-labelledby={levelLabelId}>
+                <p
+                  id={levelLabelId}
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
                   Compression Level
-                </label>
+                </p>
                 <div className="grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      { id: 'low', name: 'Low', desc: 'Clear (220 DPI)' },
-                      { id: 'medium', name: 'Medium', desc: 'Balanced (150 DPI)' },
-                      { id: 'high', name: 'High', desc: 'Smallest (72 DPI)' },
-                    ] as const
-                  ).map((lvl) => (
+                  {COMPRESSION_LEVELS.map((lvl) => (
                     <button
                       key={lvl.id}
                       type="button"
+                      aria-pressed={compressionLevel === lvl.id}
                       onClick={() => setCompressionLevel(lvl.id)}
                       className={cn(
-                        "p-3 rounded-lg border text-center transition-all hover:bg-muted/20 flex flex-col items-center gap-0.5",
+                        "p-3 rounded-lg border text-center transition-all hover:bg-muted/20 flex flex-col items-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         compressionLevel === lvl.id
                           ? "border-primary bg-primary/5 font-semibold"
                           : "border-border/80 bg-card text-muted-foreground"
@@ -266,7 +295,7 @@ export function PdfCompress() {
               </div>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-2">
               <Button onClick={compressPdf} className="flex-1 bg-primary hover:bg-primary/90">
                 Compress PDF
               </Button>
@@ -279,7 +308,10 @@ export function PdfCompress() {
       )}
 
       {compressing && (
-        <Card className="border-border/60 shadow-md p-4 sm:p-8 flex flex-col items-center justify-center space-y-4">
+        <Card
+          role="status"
+          className="border-border/60 shadow-md p-4 sm:p-8 flex flex-col items-center justify-center space-y-4"
+        >
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <div className="text-center">
             <p className="text-sm font-semibold">Compressing PDF...</p>
@@ -301,14 +333,32 @@ export function PdfCompress() {
       )}
 
       {result && (
-        <Card className="border-border/60 shadow-lg bg-emerald-500/5 border-emerald-500/20">
+        <Card
+          className={cn(
+            "border-border/60 shadow-lg",
+            result.smaller && "bg-emerald-500/5 border-emerald-500/20"
+          )}
+        >
           <CardHeader>
-            <CardTitle className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2 text-base font-semibold">
-              <CheckCircle2 className="h-5 w-5" />
-              Compression Successful!
-            </CardTitle>
+            {result.smaller ? (
+              <CardTitle className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2 text-base font-semibold">
+                <CheckCircle2 className="h-5 w-5" />
+                Compression Successful!
+              </CardTitle>
+            ) : (
+              <>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  No Size Reduction
+                </CardTitle>
+                <CardDescription>
+                  The result is not smaller than the original, so this PDF is probably compact
+                  already. Other settings may still help.
+                </CardDescription>
+              </>
+            )}
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-xl border bg-card/50 flex flex-col">
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
@@ -329,16 +379,31 @@ export function PdfCompress() {
                   Space Saved
                 </span>
                 <span className="text-2xl font-black mt-1 text-primary">
-                  -{result.reductionPercentage}%
+                  {result.smaller ? `-${result.reductionPercentage}%` : '0%'}
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button onClick={handleDownload} className="flex-1 bg-primary hover:bg-primary/90">
-                Download PDF
-                <Download className="h-4 w-4 ml-2" />
-              </Button>
+              {result.smaller ? (
+                <Button onClick={handleDownload} className="flex-1 bg-primary hover:bg-primary/90">
+                  Download PDF
+                  <Download className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => setResult(null)}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                  >
+                    Try Other Settings
+                  </Button>
+                  <Button variant="outline" onClick={handleDownload}>
+                    Download Anyway
+                    <Download className="h-4 w-4 ml-2" />
+                  </Button>
+                </>
+              )}
               <Button variant="outline" onClick={handleClear}>
                 Compress Another File
               </Button>
