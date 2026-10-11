@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadBlob, sanitizeFileName } from '@/lib/files';
+import { sanitizePreviewHtml } from '@/lib/markdown/sanitize';
 import {
   DOCX_THEME_PRESETS,
   adjustBlockSpacing,
@@ -73,9 +74,12 @@ function convertMarkdown(mdText) {
 Use the "Spacing & Outline" tab in the right pane to toggle manual page breaks and add spaces!
 `;
 
+// The sample the tool opens with is shipped by the app, so the preview shows it as rendered.
+const SAMPLE_HTML = renderPreviewHtml(defaultMarkdown);
+
 export function MarkdownToDocx() {
   const [input, setInput] = useState(defaultMarkdown);
-  const [html, setHtml] = useState(() => renderPreviewHtml(defaultMarkdown));
+  const [html, setHtml] = useState(SAMPLE_HTML);
   const [activeRightTab, setActiveRightTab] = useState<'preview' | 'outline'>('outline');
   const [activeLeftTab, setActiveLeftTab] = useState<'layout' | 'typography' | 'breaks'>('layout');
   const [themeKey, setThemeKey] = useState<string>('modern');
@@ -97,6 +101,9 @@ export function MarkdownToDocx() {
   const [footerText, setFooterText] = useState('Confidential');
   const [includePageNumbers, setIncludePageNumbers] = useState(true);
   const [pageNumberPosition, setPageNumberPosition] = useState<'left' | 'center' | 'right'>('center');
+
+  // What the user types is cleaned before it is shown; the DOCX is built from the Markdown itself.
+  const previewHtml = useMemo(() => sanitizePreviewHtml(html, SAMPLE_HTML), [html]);
 
   const [blocks, setBlocks] = useState<MarkdownBlock[]>(() => parseMarkdownBlocks(defaultMarkdown));
   const [exporting, setExporting] = useState(false);
@@ -370,7 +377,7 @@ export function MarkdownToDocx() {
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-body-font-size" className="text-xs font-semibold">Body Font Size ({options.bodyFontSize}pt)</span>
                         </div>
-                        <Slider
+                        <Slider aria-labelledby="docx-body-font-size"
                           value={options.bodyFontSize}
                           min={9}
                           max={16}
@@ -382,7 +389,7 @@ export function MarkdownToDocx() {
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-paragraph-spacing" className="text-xs font-semibold">Paragraph Spacing After ({options.paragraphSpacingAfter}pt)</span>
                         </div>
-                        <Slider
+                        <Slider aria-labelledby="docx-paragraph-spacing"
                           value={options.paragraphSpacingAfter}
                           min={0}
                           max={24}
@@ -397,7 +404,7 @@ export function MarkdownToDocx() {
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-h1-size" className="text-xs font-semibold">Heading 1 Size ({options.h1FontSize}pt)</span>
                         </div>
-                        <Slider
+                        <Slider aria-labelledby="docx-h1-size"
                           value={options.h1FontSize}
                           min={14}
                           max={32}
@@ -409,7 +416,7 @@ export function MarkdownToDocx() {
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-heading-spacing" className="text-xs font-semibold">Heading Spacing Before ({options.headingSpacingBefore}pt)</span>
                         </div>
-                        <Slider
+                        <Slider aria-labelledby="docx-heading-spacing"
                           value={options.headingSpacingBefore}
                           min={4}
                           max={36}
@@ -525,7 +532,7 @@ export function MarkdownToDocx() {
                         fontFamily: options.fontFamily === 'Segoe UI' ? 'system-ui' : options.fontFamily,
                         lineHeight: options.bodyLineSpacing,
                       }}
-                      dangerouslySetInnerHTML={{ __html: html }}
+                      dangerouslySetInnerHTML={{ __html: previewHtml }}
                     />
                   )}
                 </TabsContent>

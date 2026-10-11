@@ -174,6 +174,54 @@ test.describe('Document tools', () => {
       expect(height).toBeGreaterThan(0);
     });
 
+    test('strips active content from the preview and keeps what the preview is for', async ({ page }) => {
+      await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
+      await editor(page).fill(
+        [
+          '# Safe',
+          '',
+          '<script>document.title = "script"</script>',
+          '',
+          `<a href="javascript:document.title = 'link'">click me</a>`,
+          '',
+          '<iframe src="about:blank"></iframe>',
+          '',
+          `<svg onload="document.title = 'svg'"><circle r="1"></circle></svg>`,
+          '',
+          '<style>main { display: none }</style>',
+          '',
+          `<img alt="dot" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onerror="document.title = 'img'">`,
+          '',
+          '```js',
+          'const answer = 42;',
+          '```',
+          '',
+          'Maths: $E=mc^2$',
+        ].join('\n')
+      );
+
+      const preview = sheet(page);
+      await expect(preview.getByRole('heading', { level: 1, name: 'Safe' })).toBeVisible();
+      await expect(preview.locator('.katex')).toHaveCount(1);
+
+      // Nothing that runs, restyles the app or embeds another page survives.
+      for (const active of ['script', 'iframe', 'style', '[onerror]', '[onload]']) {
+        await expect(preview.locator(active), active).toHaveCount(0);
+      }
+      await expect(preview.getByText('click me')).toBeVisible();
+      await expect(preview.getByText('click me')).not.toHaveAttribute('href', /javascript:/i);
+      await expect(page.getByRole('main')).toBeVisible();
+      await expect(page).not.toHaveTitle(/^(script|link|svg|img)$/);
+
+      // The harmless parts are kept: images, highlighted code, the maths markup
+      // with its inline styles and the source lines that double-click reads.
+      await expect(preview.getByRole('img', { name: 'dot' })).toHaveAttribute('src', /^data:image\/gif/);
+      await expect(preview.locator('pre.hljs code span[class^="hljs-"]').first()).toBeVisible();
+      await expect(preview.locator('.katex-mathml annotation')).toHaveText('E=mc^2');
+      await expect(preview.locator('.katex-html [style]').first()).toBeAttached();
+      await expect(preview.locator('h1[data-source-line="0"]')).toHaveCount(1);
+    });
+
     test('sizes the sheet to the page setup and has nothing to export when empty', async ({ page }) => {
       await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
       await expect(page.getByText('Margins: 16 mm')).toBeVisible();
@@ -442,10 +490,6 @@ test.describe('Document tools', () => {
     ['markdown-to-docx', 'Markdown to DOCX Converter'],
   ]) {
     test(`${name} does not run scripts that come with the Markdown`, async ({ page }) => {
-      test.fixme(
-        true,
-        'Raw HTML passes through the shared parser (html: true) into the preview unsanitised, so <img onerror> in pasted Markdown runs in the app origin. src/lib/markdown is read-only here and the fix (a sanitiser or a sandboxed preview) is a product decision.'
-      );
       await openTool(page, slug, name);
       await page
         .getByRole('textbox', { name: 'Markdown input' })

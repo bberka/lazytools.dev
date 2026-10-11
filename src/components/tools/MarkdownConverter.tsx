@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, useRef, useState } from 'react';
+import { type CSSProperties, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +28,7 @@ import {
   type MarkdownTheme,
 } from '@/lib/markdown';
 import { firstHeadingText, scrollTextareaToOffset, sourceLineAt } from '@/lib/markdown/dom';
+import { sanitizePreviewHtml } from '@/lib/markdown/sanitize';
 import {
   PAGE_FORMATS_MM,
   escapeHtml,
@@ -85,9 +86,12 @@ function greet(name) {
 | Data 3   | Data 4   |
 `;
 
+// The sample the tool opens with is shipped by the app, so the preview shows it as rendered.
+const SAMPLE_HTML = previewMarkdown.render(defaultMarkdown);
+
 export function MarkdownConverter() {
   const [input, setInput] = useState(defaultMarkdown);
-  const [html, setHtml] = useState(() => previewMarkdown.render(defaultMarkdown));
+  const [html, setHtml] = useState(SAMPLE_HTML);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
   const [pageSize, setPageSize] = useState<PageSize>('A4');
   const [orientation, setOrientation] = useState<Orientation>('portrait');
@@ -137,6 +141,8 @@ export function MarkdownConverter() {
 
   // Markdown such as a lone link definition renders to nothing at all.
   const hasPreview = html.trim() !== '';
+  // Only the preview is cleaned: the exports are the user's own content.
+  const previewHtml = useMemo(() => sanitizePreviewHtml(html, SAMPLE_HTML), [html]);
 
   // The element a picture of the preview is taken from, or null (after
   // telling the user) when the preview has nothing in it to capture.
@@ -405,7 +411,7 @@ export function MarkdownConverter() {
                       {showPdfOptions ? `${margin} mm` : `${scale}x`}
                     </label>
                     {showPdfOptions ? (
-                      <Slider
+                      <Slider aria-labelledby="markdown-export-measure"
                         value={margin}
                         onChange={setMargin}
                         min={0}
@@ -414,7 +420,7 @@ export function MarkdownConverter() {
                         disabled={exporting}
                       />
                     ) : (
-                      <Slider
+                      <Slider aria-labelledby="markdown-export-measure"
                         value={scale}
                         onChange={setScale}
                         min={1}
@@ -435,6 +441,7 @@ export function MarkdownConverter() {
                     Background
                   </label>
                   <ColorPicker
+                    label="Background"
                     value={backgroundColor}
                     onChange={setBackgroundColor}
                     disabled={exporting}
@@ -512,7 +519,7 @@ export function MarkdownConverter() {
                 !hasPreview && 'hidden'
               )}
               style={previewPageStyle}
-              dangerouslySetInnerHTML={{ __html: html }}
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
               onDoubleClick={handlePreviewDoubleClick}
             />
           </div>
