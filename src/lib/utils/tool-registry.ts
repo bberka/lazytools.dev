@@ -1127,4 +1127,18 @@ export const TOOL_REGISTRY = {
         (module) => module.HmacGenerator
       ),
   },
+  'jwt-signer': {
+    name: 'JWT Creator & Signer',
+    description: 'Create, sign and verify HMAC-signed JWTs for testing auth.',
+    tags: ['security', 'encoders-decoders'],
+    icon: 'FileKey',
+    keywords: [
+      'jwt', 'json web token', 'jws', 'sign', 'signer', 'hs256', 'hs384',
+      'hs512', 'hmac', 'token', 'verify', 'auth',
+    ],
+    component: () =>
+      import('@/components/tools/JwtSigner').then(
+        (module) => module.JwtSigner
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
