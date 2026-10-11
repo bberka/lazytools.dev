@@ -6,130 +6,16 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
-import { TAGS } from '@/lib/utils/tools-config';
+import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
 import { cn } from '@/lib/utils/cn';
 import {
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image as ImageIcon,
   Home,
   ArrowLeft,
   Search,
   HelpCircle,
   Compass,
 } from 'lucide-react';
-
-const TAG_ICONS: Record<string, typeof RefreshCw> = {
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image: ImageIcon,
-};
-
-const TAG_STYLES: Record<string, { border: string; bg: string; hover: string; text: string; glow: string }> = {
-  converters: {
-    border: 'border-blue-500/20 dark:border-blue-400/20',
-    bg: 'bg-blue-500/5',
-    hover: 'hover:border-blue-500/50 hover:bg-blue-500/10 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10',
-    text: 'text-blue-600 dark:text-blue-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]',
-  },
-  'encoders-decoders': {
-    border: 'border-purple-500/20 dark:border-purple-400/20',
-    bg: 'bg-purple-500/5',
-    hover: 'hover:border-purple-500/50 hover:bg-purple-500/10 dark:hover:border-purple-400/50 dark:hover:bg-purple-500/10',
-    text: 'text-purple-600 dark:text-purple-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]',
-  },
-  generators: {
-    border: 'border-green-500/20 dark:border-green-400/20',
-    bg: 'bg-green-500/5',
-    hover: 'hover:border-green-500/50 hover:bg-green-500/10 dark:hover:border-green-400/50 dark:hover:bg-green-500/10',
-    text: 'text-green-600 dark:text-green-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]',
-  },
-  'formatters-validators': {
-    border: 'border-orange-500/20 dark:border-orange-400/20',
-    bg: 'bg-orange-500/5',
-    hover: 'hover:border-orange-500/50 hover:bg-orange-500/10 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10',
-    text: 'text-orange-600 dark:text-orange-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]',
-  },
-  'text-tools': {
-    border: 'border-pink-500/20 dark:border-pink-400/20',
-    bg: 'bg-pink-500/5',
-    hover: 'hover:border-pink-500/50 hover:bg-pink-500/10 dark:hover:border-pink-400/50 dark:hover:bg-pink-500/10',
-    text: 'text-pink-600 dark:text-pink-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(236,72,153,0.2)]',
-  },
-  utilities: {
-    border: 'border-cyan-500/20 dark:border-cyan-400/20',
-    bg: 'bg-cyan-500/5',
-    hover: 'hover:border-cyan-500/50 hover:bg-cyan-500/10 dark:hover:border-cyan-400/50 dark:hover:bg-cyan-500/10',
-    text: 'text-cyan-600 dark:text-cyan-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]',
-  },
-  security: {
-    border: 'border-red-500/20 dark:border-red-400/20',
-    bg: 'bg-red-500/5',
-    hover: 'hover:border-red-500/50 hover:bg-red-500/10 dark:hover:border-red-400/50 dark:hover:bg-red-500/10',
-    text: 'text-red-600 dark:text-red-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]',
-  },
-  networking: {
-    border: 'border-indigo-500/20 dark:border-indigo-400/20',
-    bg: 'bg-indigo-500/5',
-    hover: 'hover:border-indigo-500/50 hover:bg-indigo-500/10 dark:hover:border-indigo-400/50 dark:hover:bg-indigo-500/10',
-    text: 'text-indigo-600 dark:text-indigo-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]',
-  },
-  design: {
-    border: 'border-violet-500/20 dark:border-violet-400/20',
-    bg: 'bg-violet-500/5',
-    hover: 'hover:border-violet-500/50 hover:bg-violet-500/10 dark:hover:border-violet-400/50 dark:hover:bg-violet-500/10',
-    text: 'text-violet-600 dark:text-violet-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]',
-  },
-  calculators: {
-    border: 'border-emerald-500/20 dark:border-emerald-400/20',
-    bg: 'bg-emerald-500/5',
-    hover: 'hover:border-emerald-500/50 hover:bg-emerald-500/10 dark:hover:border-emerald-400/50 dark:hover:bg-emerald-500/10',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]',
-  },
-  'pdf-tools': {
-    border: 'border-red-600/20 dark:border-red-500/20',
-    bg: 'bg-red-600/5',
-    hover: 'hover:border-red-600/50 hover:bg-red-600/10 dark:hover:border-red-500/50 dark:hover:bg-red-600/10',
-    text: 'text-red-700 dark:text-red-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]',
-  },
-  'image-tools': {
-    border: 'border-orange-600/20 dark:border-orange-500/20',
-    bg: 'bg-orange-600/5',
-    hover: 'hover:border-orange-600/50 hover:bg-orange-600/10 dark:hover:border-orange-500/50 dark:hover:bg-orange-600/10',
-    text: 'text-orange-700 dark:text-orange-400',
-    glow: 'group-hover:shadow-[0_0_15px_rgba(234,88,12,0.2)]',
-  },
-};
 
 export default function NotFound() {
   const router = useRouter();
@@ -213,15 +99,9 @@ export default function NotFound() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {Object.values(TAGS).map((tag) => {
-              const Icon = TAG_ICONS[tag.icon] || HelpCircle;
-              const styles = TAG_STYLES[tag.id] || {
-                border: 'border-border',
-                bg: 'bg-card',
-                hover: 'hover:border-primary',
-                text: 'text-foreground',
-                glow: '',
-              };
+            {TAGS_IN_ORDER.map((tag) => {
+              const Icon = tag.icon;
+              const styles = tag.tile;
 
               return (
                 <button

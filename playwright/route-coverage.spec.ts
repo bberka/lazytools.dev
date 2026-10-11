@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { TOOLS } from '../src/lib/utils/tools-config';
+import { toolCatalog } from '../src/lib/catalog';
 
 test.describe('Route Coverage Tests', () => {
-  for (const tool of TOOLS) {
+  // Every registry entry gets a route, hidden ones included
+  for (const tool of toolCatalog.all()) {
     test(`should render tool page: ${tool.name} (${tool.id})`, async ({ page }, testInfo) => {
       // Skip on non-chromium browsers to keep tests fast
       test.skip(

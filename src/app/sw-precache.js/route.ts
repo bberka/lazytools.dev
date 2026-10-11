@@ -1,4 +1,4 @@
-import { TOOLS } from '@/lib/utils/tools-config';
+import { toolCatalog } from '@/lib/catalog';
 
 export const dynamic = 'force-static';
 
@@ -6,7 +6,10 @@ export const dynamic = 'force-static';
 // through importScripts, so the precache list always comes from the same
 // registry, and the same build, as the tool routes themselves.
 export function GET() {
-  const routes = TOOLS.map((tool) => `/tools/${tool.id}`).sort();
+  const routes = toolCatalog
+    .all()
+    .map((tool) => `/tools/${tool.id}`)
+    .sort();
   const body = `// Generated at build time from the tool registry. Do not edit.
 self.__precacheRoutes = ${JSON.stringify(routes, null, 2)};
 `;

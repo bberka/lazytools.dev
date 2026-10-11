@@ -1,13 +1,9 @@
-import type { ComponentType } from 'react';
-import type { Tool } from '../types';
+import type { ToolComponentLoader, ToolRegistryEntry } from '../types';
 
-type ToolComponent = ComponentType;
-type ToolComponentLoader = () => Promise<ToolComponent>;
-type ToolMetadata = Omit<Tool, 'id'>;
-
-type ToolRegistryEntry = ToolMetadata & {
-  component: ToolComponentLoader;
-};
+// Registry data only. Each key is the route slug. The tool catalog in
+// `lib/catalog` is built from this value: it validates the entries (including
+// the description length limit) and answers every question about them, so
+// nothing else should read this object directly.
 
 // ---------------------------------------------------------------------------
 // Shared loaders for PDF tools (kept as 2 standalone pages)
@@ -1118,23 +1114,3 @@ export const TOOL_REGISTRY = {
       ),
   },
 } as const satisfies Record<string, ToolRegistryEntry>;
-
-// Enforce strict limits on tool description lengths to ensure visual consistency in the UI
-const MIN_DESC_LIMIT = 40;
-const MAX_DESC_LIMIT = 65;
-
-for (const [id, tool] of Object.entries(TOOL_REGISTRY)) {
-  const length = tool.description.length;
-  if (length < MIN_DESC_LIMIT || length > MAX_DESC_LIMIT) {
-    throw new Error(
-      `Tool Description Limit Error: Description for tool "${id}" is ${length} characters. ` +
-      `It must be between ${MIN_DESC_LIMIT} and ${MAX_DESC_LIMIT} characters (inclusive).`
-    );
-  }
-}
-
-export type ToolId = keyof typeof TOOL_REGISTRY;
-
-export function getToolComponentLoader(id: string): ToolComponentLoader | undefined {
-  return TOOL_REGISTRY[id as ToolId]?.component;
-}

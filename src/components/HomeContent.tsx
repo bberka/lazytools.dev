@@ -5,48 +5,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image as ImageIcon,
-  Star,
-  type LucideIcon,
-} from 'lucide-react';
+import { Star } from 'lucide-react';
 
 import { TagFilter } from './TagFilter';
 import { FavoriteButton } from './FavoriteButton';
 import { SearchBar } from './SearchBar';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { TAGS, filterTools, TOOLS } from '@/lib/utils/tools-config';
+import { toolCatalog } from '@/lib/catalog';
+import { TAGS } from '@/lib/tags';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { cn } from '@/lib/utils/cn';
 import type { Tool, ToolTag } from '@/lib/types';
-
-const TAG_ICONS: Record<string, LucideIcon> = {
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image: ImageIcon,
-};
 
 export function HomeContent() {
   const router = useRouter();
@@ -61,6 +32,26 @@ export function HomeContent() {
   useEffect(() => {
     setSelectedSearchIndex(-1);
   }, [searchQuery, selectedTag, showFavoritesOnly]);
+
+  const filteredTools = useMemo(
+    () =>
+      toolCatalog.filter({
+        query: searchQuery,
+        tag: selectedTag,
+        onlyFavorites: showFavoritesOnly ? favorites : null,
+      }),
+    [favorites, searchQuery, selectedTag, showFavoritesOnly]
+  );
+
+  const groupedTools = useMemo(
+    () => toolCatalog.groupByTag(filteredTools),
+    [filteredTools]
+  );
+
+  const favoriteTools = useMemo(
+    () => toolCatalog.byIds(favorites, { order: 'catalog' }),
+    [favorites]
+  );
 
   const getGridColumns = () => {
     if (typeof window === 'undefined') return 1;
@@ -142,44 +133,6 @@ export function HomeContent() {
       setSearchQuery('');
     }
   };
-
-  const filteredTools = useMemo(
-    () =>
-      filterTools(searchQuery, selectedTag, showFavoritesOnly, favorites),
-    [favorites, searchQuery, selectedTag, showFavoritesOnly]
-  );
-
-  const groupedTools = useMemo(() => {
-    const groups: Record<ToolTag, Tool[]> = {
-      converters: [],
-      'encoders-decoders': [],
-      generators: [],
-      'formatters-validators': [],
-      'text-tools': [],
-      utilities: [],
-      security: [],
-      networking: [],
-      design: [],
-      calculators: [],
-      'pdf-tools': [],
-      'image-tools': [],
-    };
-
-    filteredTools.forEach((tool) => {
-      tool.tags.forEach((tag) => {
-        if (groups[tag]) {
-          groups[tag].push(tool);
-        }
-      });
-    });
-
-    return groups;
-  }, [filteredTools]);
-
-  const favoriteTools = useMemo(
-    () => TOOLS.filter((tool) => favorites.includes(tool.id)),
-    [favorites]
-  );
 
   const isInitializedRef = useRef(false);
   const hasRestoredScrollRef = useRef(false);
@@ -399,12 +352,10 @@ export function HomeContent() {
 
       {!showFavoritesOnly && !searchQuery && (
         <div className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}>
-          {(Object.entries(groupedTools) as Array<[ToolTag, Tool[]]>).map(
-            ([tagId, tagTools]) => {
-              if (tagTools.length === 0) return null;
-
+          {groupedTools.map(
+            ({ tag: tagId, tools: tagTools }) => {
               const tag = TAGS[tagId];
-              const Icon = TAG_ICONS[tag.icon];
+              const Icon = tag.icon;
 
               return (
                 <section key={tagId}>
@@ -415,7 +366,7 @@ export function HomeContent() {
                       tag.color
                     )}
                   >
-                    {Icon && <Icon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />}
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                     <span>{tag.name}</span>
                   </h2>
                   <ToolGrid compactMode={compactMode}>
@@ -501,9 +452,8 @@ function ToolCard({
   compactMode: boolean;
   isActive?: boolean;
 }) {
-  const toolTags = tool.tags.map((tagId) => TAGS[tagId]).filter(Boolean);
-  const primaryTag = toolTags[0];
-  const IconComponent = primaryTag ? TAG_ICONS[primaryTag.icon] : null;
+  const primaryTag = TAGS[tool.tags[0]];
+  const IconComponent = primaryTag.icon;
 
   return (
     <motion.div
@@ -526,16 +476,14 @@ function ToolCard({
           >
             <div className={cn("flex justify-between gap-3", compactMode ? "items-center" : "items-start")}>
               <div className={cn("flex min-w-0 flex-1", compactMode ? "items-center gap-2" : "items-start gap-3")}>
-                {IconComponent && (
-                  <div className={cn(
-                    "flex shrink-0 items-center justify-center bg-secondary/80 transition-all duration-300 group-hover:scale-110",
-                    compactMode ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl",
-                    isActive && "scale-110",
-                    primaryTag.color
-                  )}>
-                    <IconComponent className={cn(compactMode ? "h-4 w-4" : "h-5 w-5")} />
-                  </div>
-                )}
+                <div className={cn(
+                  "flex shrink-0 items-center justify-center bg-secondary/80 transition-all duration-300 group-hover:scale-110",
+                  compactMode ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl",
+                  isActive && "scale-110",
+                  primaryTag.color
+                )}>
+                  <IconComponent className={cn(compactMode ? "h-4 w-4" : "h-5 w-5")} />
+                </div>
                 <div className="space-y-1 min-w-0 flex-1">
                   <CardTitle
                     className={cn(

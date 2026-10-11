@@ -8,28 +8,16 @@ import {
   Clock,
   Star,
   ArrowRight,
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image as ImageIcon,
   Settings,
   Moon,
   Sun,
   Layers,
   Maximize2,
   Trash2,
-  type LucideIcon,
 } from 'lucide-react';
-import { TOOLS, TAGS, searchTools } from '@/lib/utils/tools-config';
-import type { Tool, ToolTag } from '@/lib/types';
+import { toolCatalog } from '@/lib/catalog';
+import { TAGS } from '@/lib/tags';
+import type { ToolTag } from '@/lib/types';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
@@ -41,99 +29,10 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dial
 import { cn } from '@/lib/utils/cn';
 import { TooltipSimple } from './ui/tooltip';
 
-const TAG_ICONS: Record<string, LucideIcon> = {
-  RefreshCw,
-  Lock,
-  Sparkles,
-  FileCheck,
-  Type,
-  Wrench,
-  ShieldCheck,
-  Globe,
-  Palette,
-  Calculator,
-  FileText,
-  Image: ImageIcon,
-};
-
-interface TagStyle {
-  bg: string;
-  text: string;
-  border: string;
-}
-
-const TAG_STYLES: Record<string, TagStyle> = {
-  converters: {
-    bg: 'bg-blue-500/10 dark:bg-blue-500/20',
-    text: 'text-blue-600 dark:text-blue-400',
-    border: 'border-blue-500/20 dark:border-blue-500/30',
-  },
-  'encoders-decoders': {
-    bg: 'bg-purple-500/10 dark:bg-purple-500/20',
-    text: 'text-purple-600 dark:text-purple-400',
-    border: 'border-purple-500/20 dark:border-purple-500/30',
-  },
-  generators: {
-    bg: 'bg-green-500/10 dark:bg-green-500/20',
-    text: 'text-green-600 dark:text-green-400',
-    border: 'border-green-500/20 dark:border-green-500/30',
-  },
-  'formatters-validators': {
-    bg: 'bg-orange-500/10 dark:bg-orange-500/20',
-    text: 'text-orange-600 dark:text-orange-400',
-    border: 'border-orange-500/20 dark:border-orange-500/30',
-  },
-  'text-tools': {
-    bg: 'bg-pink-500/10 dark:bg-pink-500/20',
-    text: 'text-pink-600 dark:text-pink-400',
-    border: 'border-pink-500/20 dark:border-pink-500/30',
-  },
-  utilities: {
-    bg: 'bg-cyan-500/10 dark:bg-cyan-500/20',
-    text: 'text-cyan-600 dark:text-cyan-400',
-    border: 'border-cyan-500/20 dark:border-cyan-500/30',
-  },
-  security: {
-    bg: 'bg-red-500/10 dark:bg-red-500/20',
-    text: 'text-red-600 dark:text-red-400',
-    border: 'border-red-500/20 dark:border-red-500/30',
-  },
-  networking: {
-    bg: 'bg-indigo-500/10 dark:bg-indigo-500/20',
-    text: 'text-indigo-600 dark:text-indigo-400',
-    border: 'border-indigo-500/20 dark:border-indigo-500/30',
-  },
-  design: {
-    bg: 'bg-violet-500/10 dark:bg-violet-500/20',
-    text: 'text-violet-600 dark:text-violet-400',
-    border: 'border-violet-500/20 dark:border-violet-500/30',
-  },
-  calculators: {
-    bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-    text: 'text-emerald-600 dark:text-emerald-400',
-    border: 'border-emerald-500/20 dark:border-emerald-500/30',
-  },
-  'pdf-tools': {
-    bg: 'bg-red-600/10 dark:bg-red-600/20',
-    text: 'text-red-700 dark:text-red-400',
-    border: 'border-red-600/20 dark:border-red-600/30',
-  },
-  'image-tools': {
-    bg: 'bg-orange-600/10 dark:bg-orange-600/20',
-    text: 'text-orange-700 dark:text-orange-400',
-    border: 'border-orange-600/20 dark:border-orange-600/30',
-  },
-};
-
 function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   const tag = TAGS[tagId];
-  if (!tag) return null;
-  const styles = TAG_STYLES[tagId] || {
-    bg: 'bg-muted',
-    text: 'text-muted-foreground',
-    border: 'border-transparent',
-  };
-  const TagIcon = TAG_ICONS[tag.icon];
+  const styles = tag.badge;
+  const TagIcon = tag.icon;
 
   return (
     <TooltipSimple content={tag.name}>
@@ -145,11 +44,7 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
           styles.border
         )}
       >
-        {TagIcon ? (
-          <TagIcon className="h-3.5 w-3.5" />
-        ) : (
-          <span className="text-[9px] font-semibold">{tag.name.substring(0, 2)}</span>
-        )}
+        <TagIcon className="h-3.5 w-3.5" />
       </span>
     </TooltipSimple>
   );
@@ -360,57 +255,31 @@ export function CommandPalette() {
   ]);
 
   // Get tool data for recent tools
-  const recentToolsData = useMemo(() => {
-    return recentTools
-      .map((id) => TOOLS.find((t) => t.id === id))
-      .filter((tool): tool is Tool => Boolean(tool));
-  }, [recentTools]);
+  const recentToolsData = useMemo(
+    () => toolCatalog.byIds(recentTools),
+    [recentTools]
+  );
 
   // Get tool data for favorites
-  const favoriteToolsData = useMemo(() => {
-    return favorites
-      .map((id) => TOOLS.find((t) => t.id === id))
-      .filter((tool): tool is Tool => Boolean(tool));
-  }, [favorites]);
+  const favoriteToolsData = useMemo(
+    () => toolCatalog.byIds(favorites),
+    [favorites]
+  );
 
   // Group remaining tools by tag
   const groupedTools = useMemo(() => {
-    const groups: Record<ToolTag, Tool[]> = {
-      converters: [],
-      'encoders-decoders': [],
-      generators: [],
-      'formatters-validators': [],
-      'text-tools': [],
-      utilities: [],
-      security: [],
-      networking: [],
-      design: [],
-      calculators: [],
-      'pdf-tools': [],
-      'image-tools': [],
-    };
-
     // Get all tool IDs that are already in recent or favorites
     const displayedIds = new Set([...recentTools, ...favorites]);
 
-    // Add remaining tools to groups based on all their tags
-    TOOLS.forEach((tool) => {
-      if (!displayedIds.has(tool.id)) {
-        tool.tags.forEach((tag) => {
-          if (groups[tag]) {
-            groups[tag].push(tool);
-          }
-        });
-      }
-    });
-
-    return groups;
+    return toolCatalog.groupByTag(
+      toolCatalog.discoverable().filter((tool) => !displayedIds.has(tool.id))
+    );
   }, [recentTools, favorites]);
 
   // Get search results sorted by score
   const searchedTools = useMemo(() => {
     if (!search) return [];
-    return searchTools(search);
+    return toolCatalog.search(search);
   }, [search]);
 
   // Handle navigation to tool
@@ -506,9 +375,8 @@ export function CommandPalette() {
               {search && searchedTools.length > 0 && (
                 <Command.Group heading={searchHeading}>
                   {searchedTools.map((tool) => {
-                    const firstTag = tool.tags[0];
-                    const mainTagInfo = TAGS[firstTag];
-                    const Icon = TAG_ICONS[mainTagInfo?.icon];
+                    const mainTag = TAGS[tool.tags[0]];
+                    const Icon = mainTag.icon;
                     return (
                       <Command.Item
                         key={tool.id}
@@ -516,9 +384,7 @@ export function CommandPalette() {
                         onSelect={() => handleNavigate(tool.id)}
                         className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                       >
-                        {Icon && (
-                          <Icon className={cn("mr-2 h-4 w-4 shrink-0", mainTagInfo.color)} />
-                        )}
+                        <Icon className={cn("mr-2 h-4 w-4 shrink-0", mainTag.color)} />
                         <span className="flex-1">{tool.name}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           {tool.tags.map((tagId) => (
@@ -613,17 +479,13 @@ export function CommandPalette() {
               )}
 
               {/* All Tools Grouped by Tag */}
-              {!search && (Object.entries(groupedTools) as Array<[ToolTag, Tool[]]>).map(
-                ([tagId, tagTools]) => {
-                  if (tagTools.length === 0) return null;
-
+              {!search && groupedTools.map(
+                ({ tag: tagId, tools: tagTools }) => {
                   const tag = TAGS[tagId];
-                  const TagIcon = TAG_ICONS[tag.icon];
+                  const TagIcon = tag.icon;
                   const heading = (
                     <span className="flex items-center gap-1.5">
-                      {TagIcon && (
-                        <TagIcon className={cn("h-3.5 w-3.5 shrink-0", tag.color)} />
-                      )}
+                      <TagIcon className={cn("h-3.5 w-3.5 shrink-0", tag.color)} />
                       <span>{tag.name}</span>
                     </span>
                   );
@@ -631,7 +493,7 @@ export function CommandPalette() {
                   return (
                     <Command.Group key={tagId} heading={heading}>
                       {tagTools.map((tool) => {
-                        const Icon = TAG_ICONS[tag.icon];
+                        const Icon = tag.icon;
                         return (
                           <Command.Item
                             key={`${tagId}-${tool.id}`}
@@ -639,9 +501,7 @@ export function CommandPalette() {
                             onSelect={() => handleNavigate(tool.id)}
                             className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                           >
-                            {Icon && (
-                              <Icon className={cn("mr-2 h-4 w-4 shrink-0", tag.color)} />
-                            )}
+                            <Icon className={cn("mr-2 h-4 w-4 shrink-0", tag.color)} />
                             <span className="flex-1">{tool.name}</span>
                             <div className="flex items-center gap-1 shrink-0">
                               {tool.tags.map((tId) => (
