@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
@@ -18,85 +18,10 @@ import {
 } from '../ui/select';
 import { Copy, Check, Shield, Loader2, CheckCircle, XCircle, Info, RefreshCw } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
+import { hashPassword, verifyPassword, type PasswordHashAlgorithm } from '@/lib/tools/password-hasher';
 
-type Algorithm = 'bcrypt' | 'argon2id' | 'argon2i' | 'argon2d';
+type Algorithm = PasswordHashAlgorithm;
 type Mode = 'hash' | 'verify';
-
-// Helper to convert base64 to Uint8Array (handling padding and base64url characters)
-function base64ToUint8Array(base64String: string): Uint8Array {
-  let padded = base64String;
-  while (padded.length % 4 !== 0) {
-    padded += '=';
-  }
-  padded = padded.replace(/-/g, '+').replace(/_/g, '/');
-  
-  const binaryString = window.atob(padded);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-interface ParsedArgon2 {
-  algorithm: 'argon2id' | 'argon2i' | 'argon2d';
-  version: number;
-  memorySize: number;
-  iterations: number;
-  parallelism: number;
-  salt: Uint8Array;
-  hashLength: number;
-}
-
-function parseArgon2Hash(hash: string): ParsedArgon2 {
-  const parts = hash.trim().split('$');
-  // Expected parts: ['', algorithm, version, params, salt, hash]
-  if (parts.length < 6) {
-    throw new Error('Invalid Argon2 hash format. Expected: $argon2id$v=19$m=...,t=...,p=...$salt$hash');
-  }
-
-  const algorithm = parts[1];
-  if (algorithm !== 'argon2id' && algorithm !== 'argon2i' && algorithm !== 'argon2d') {
-    throw new Error(`Unsupported Argon2 variant: ${algorithm}`);
-  }
-
-  const versionPart = parts[2];
-  if (!versionPart.startsWith('v=')) {
-    throw new Error('Invalid Argon2 version format.');
-  }
-  const version = parseInt(versionPart.split('=')[1], 10);
-
-  const paramsPart = parts[3];
-  const params: Record<string, number> = {};
-  paramsPart.split(',').forEach((param) => {
-    const [key, val] = param.split('=');
-    if (key && val) {
-      params[key] = parseInt(val, 10);
-    }
-  });
-
-  if (typeof params.m === 'undefined' || typeof params.t === 'undefined' || typeof params.p === 'undefined') {
-    throw new Error('Missing Argon2 parameters (m, t, or p).');
-  }
-
-  const saltBase64 = parts[4];
-  const hashBase64 = parts[5];
-
-  const salt = base64ToUint8Array(saltBase64);
-  const hashBytes = base64ToUint8Array(hashBase64);
-  const hashLength = hashBytes.length;
-
-  return {
-    algorithm,
-    version,
-    memorySize: params.m,
-    iterations: params.t,
-    parallelism: params.p,
-    salt,
-    hashLength,
-  };
-}
 
 export function PasswordHasher() {
   const [mode, setMode] = useState<Mode>('hash');
@@ -124,6 +49,12 @@ export function PasswordHasher() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Hashing takes a while. Every run takes a new number, and anything that
+  // makes its result outdated (new input, new settings, another mode, Clear)
+  // moves the number on, so a finished run only shows its result while it is
+  // still the latest.
+  const latestRun = useRef(0);
+
   // Client-side redirect if accessed via /tools/bcrypt-hasher
   useEffect(() => {
     if (pathname && pathname.endsWith('/bcrypt-hasher')) {
@@ -133,6 +64,7 @@ export function PasswordHasher() {
 
   // Clean state when changing modes or algorithms
   const handleModeChange = (newMode: Mode) => {
+    latestRun.current += 1;
     setMode(newMode);
     setVerifyResult(null);
     setDetectedAlgorithm(null);
@@ -144,60 +76,64 @@ export function PasswordHasher() {
     }
   };
 
-  const generateHash = async () => {
+  // The hash on screen belongs to the password and settings it was made from.
+  const discardHashOutput = () => {
+    latestRun.current += 1;
+    setHash('');
     setError('');
-    if (!input.trim()) {
+  };
+
+  const handleInputChange = (value: string) => {
+    latestRun.current += 1;
+    setInput(value);
+    setVerifyResult(null);
+    setDetectedAlgorithm(null);
+    setError('');
+    if (mode === 'hash') setHash('');
+  };
+
+  const handleTargetHashChange = (value: string) => {
+    latestRun.current += 1;
+    setHash(value);
+    setVerifyResult(null);
+    setDetectedAlgorithm(null);
+    setError('');
+  };
+
+  const generateHash = async () => {
+    const run = ++latestRun.current;
+    setError('');
+    // Whitespace is a valid part of a password, so only a truly empty one is refused.
+    if (!input) {
       setError('Please enter text to hash');
       setHash('');
       return;
     }
 
     try {
-      if (algorithm === 'bcrypt') {
-        const { default: bcrypt } = await import('bcryptjs');
-        const salt = await bcrypt.genSalt(rounds);
-        const hashedPassword = await bcrypt.hash(input, salt);
-        setHash(hashedPassword);
-      } else {
-        const { argon2id, argon2i, argon2d } = await import('hash-wasm');
-        
-        // Generate a cryptographically secure random 16-byte salt
-        const salt = window.crypto.getRandomValues(new Uint8Array(16));
-        
-        const options = {
-          password: input,
-          salt,
-          iterations,
-          memorySize,
-          parallelism,
-          hashLength,
-          outputType: 'encoded' as const,
-        };
-
-        let hashedPassword = '';
-        if (algorithm === 'argon2id') {
-          hashedPassword = await argon2id(options);
-        } else if (algorithm === 'argon2i') {
-          hashedPassword = await argon2i(options);
-        } else if (algorithm === 'argon2d') {
-          hashedPassword = await argon2d(options);
-        }
-        
-        setHash(hashedPassword);
-      }
+      const hashedPassword = await hashPassword(
+        input,
+        algorithm === 'bcrypt'
+          ? { algorithm, rounds }
+          : { algorithm, iterations, memorySize, parallelism, hashLength }
+      );
+      if (run !== latestRun.current) return;
+      setHash(hashedPassword);
       setVerifyResult(null);
     } catch (err) {
+      if (run !== latestRun.current) return;
       setError(err instanceof Error ? err.message : 'Hashing failed');
       setHash('');
     }
   };
 
   const verifyHash = async () => {
+    const run = ++latestRun.current;
     setError('');
     setVerifyResult(null);
     setDetectedAlgorithm(null);
 
-    if (!input.trim()) {
+    if (!input) {
       setError('Please enter password to verify');
       return;
     }
@@ -206,49 +142,13 @@ export function PasswordHasher() {
       return;
     }
 
-    const cleanHash = hash.trim();
-
     try {
-      if (cleanHash.startsWith('$argon2')) {
-        const parsed = parseArgon2Hash(cleanHash);
-        setDetectedAlgorithm(`Argon2 (${parsed.algorithm})`);
-
-        const options = {
-          password: input,
-          salt: parsed.salt,
-          iterations: parsed.iterations,
-          memorySize: parsed.memorySize,
-          parallelism: parsed.parallelism,
-          hashLength: parsed.hashLength,
-          outputType: 'encoded' as const,
-        };
-
-        let recomputed = '';
-        if (parsed.algorithm === 'argon2id') {
-          const { argon2id } = await import('hash-wasm');
-          recomputed = await argon2id(options);
-        } else if (parsed.algorithm === 'argon2i') {
-          const { argon2i } = await import('hash-wasm');
-          recomputed = await argon2i(options);
-        } else if (parsed.algorithm === 'argon2d') {
-          const { argon2d } = await import('hash-wasm');
-          recomputed = await argon2d(options);
-        }
-
-        setVerifyResult(recomputed === cleanHash);
-      } else if (
-        cleanHash.startsWith('$2a$') ||
-        cleanHash.startsWith('$2b$') ||
-        cleanHash.startsWith('$2y$')
-      ) {
-        setDetectedAlgorithm('Bcrypt');
-        const { default: bcrypt } = await import('bcryptjs');
-        const isValid = await bcrypt.compare(input, cleanHash);
-        setVerifyResult(isValid);
-      } else {
-        setError('Unknown hash format. Please provide a valid Bcrypt or Argon2 hash string.');
-      }
+      const result = await verifyPassword(input, hash);
+      if (run !== latestRun.current) return;
+      setDetectedAlgorithm(result.algorithm);
+      setVerifyResult(result.matches);
     } catch (err) {
+      if (run !== latestRun.current) return;
       setError(err instanceof Error ? err.message : 'Invalid hash format or verification failed');
     }
   };
@@ -266,6 +166,7 @@ export function PasswordHasher() {
   };
 
   const handleClear = () => {
+    latestRun.current += 1;
     setInput('');
     setHash('');
     setVerifyResult(null);
@@ -309,11 +210,10 @@ export function PasswordHasher() {
                   value={algorithm}
                   onValueChange={(val) => {
                     setAlgorithm(val as Algorithm);
-                    setHash('');
-                    setError('');
+                    discardHashOutput();
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" aria-label="Hashing Algorithm">
                     <SelectValue placeholder="Select Algorithm" />
                   </SelectTrigger>
                   <SelectContent>
@@ -334,7 +234,10 @@ export function PasswordHasher() {
                   <div className="pt-2">
                     <Slider
                       value={rounds}
-                      onChange={(value) => setRounds(value)}
+                      onChange={(value) => {
+                        setRounds(value);
+                        discardHashOutput();
+                      }}
                       min={4}
                       max={15}
                       step={1}
@@ -350,7 +253,10 @@ export function PasswordHasher() {
                   <div className="pt-2">
                     <Slider
                       value={iterations}
-                      onChange={(value) => setIterations(value)}
+                      onChange={(value) => {
+                        setIterations(value);
+                        discardHashOutput();
+                      }}
                       min={1}
                       max={10}
                       step={1}
@@ -366,9 +272,12 @@ export function PasswordHasher() {
                   <label className="text-sm font-medium">Memory Size</label>
                   <Select
                     value={memorySize.toString()}
-                    onValueChange={(val) => setMemorySize(Number(val))}
+                    onValueChange={(val) => {
+                      setMemorySize(Number(val));
+                      discardHashOutput();
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Memory Size">
                       <SelectValue placeholder="Memory" />
                     </SelectTrigger>
                     <SelectContent>
@@ -387,9 +296,12 @@ export function PasswordHasher() {
                   <label className="text-sm font-medium">Parallelism (Threads)</label>
                   <Select
                     value={parallelism.toString()}
-                    onValueChange={(val) => setParallelism(Number(val))}
+                    onValueChange={(val) => {
+                      setParallelism(Number(val));
+                      discardHashOutput();
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Parallelism (Threads)">
                       <SelectValue placeholder="Threads" />
                     </SelectTrigger>
                     <SelectContent>
@@ -408,9 +320,12 @@ export function PasswordHasher() {
                   <label className="text-sm font-medium">Hash Output Length</label>
                   <Select
                     value={hashLength.toString()}
-                    onValueChange={(val) => setHashLength(Number(val))}
+                    onValueChange={(val) => {
+                      setHashLength(Number(val));
+                      discardHashOutput();
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Hash Output Length">
                       <SelectValue placeholder="Length" />
                     </SelectTrigger>
                     <SelectContent>
@@ -445,8 +360,9 @@ export function PasswordHasher() {
           <Input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Enter password..."
+            aria-label={mode === 'hash' ? 'Plaintext password' : 'Password to verify'}
             className="font-mono text-sm tracking-wide bg-background border border-input focus-visible:ring-1 focus-visible:ring-primary"
           />
         </CardContent>
@@ -464,8 +380,9 @@ export function PasswordHasher() {
           <CardContent>
             <Textarea
               value={hash}
-              onChange={(e) => setHash(e.target.value)}
+              onChange={(e) => handleTargetHashChange(e.target.value)}
               placeholder="Paste Bcrypt or Argon2 hash here..."
+              aria-label="Target hash string"
               rows={3}
               className="font-mono text-sm leading-relaxed bg-background border border-input focus-visible:ring-1 focus-visible:ring-primary resize-none"
             />
@@ -511,7 +428,7 @@ export function PasswordHasher() {
 
       {/* Error Output */}
       {error && (
-        <div className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-sm font-medium flex items-center gap-2">
+        <div role="alert" className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-sm font-medium flex items-center gap-2">
           <XCircle className="h-5 w-5 shrink-0" />
           <span>{error}</span>
         </div>

@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { TooltipSimple } from '../ui/tooltip';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Input } from '../ui/input';
-import { Copy, Check, Lock, Unlock, ArrowLeftRight, Trash2, KeyRound, Loader2 } from 'lucide-react';
+import { Copy, Check, Lock, Unlock, ArrowLeftRight, Trash2, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
+import { decryptText, encryptText, generatePassword } from '@/lib/tools/aes-encryption';
 
 type Mode = 'encrypt' | 'decrypt';
 
@@ -18,63 +19,30 @@ export function AesEncryption() {
   const [password, setPassword] = useState('');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const { copyToClipboard, isCopied } = useCopyToClipboard();
   const { executeAction: executeEncrypt, isLoading: isEncrypting } = useActionButton();
   const { executeAction: executeDecrypt, isLoading: isDecrypting } = useActionButton();
 
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+  // Key derivation takes a moment. Every run takes a new number, and anything
+  // that makes its result outdated (edited input or password, another mode,
+  // Clear) moves the number on, so a finished run only shows its result while
+  // it is still the latest.
+  const latestRun = useRef(0);
+
+  // The output and the error belong to the input and password they came from.
+  const discardResult = () => {
+    latestRun.current += 1;
+    setOutput('');
+    setError('');
   };
 
-  const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes.buffer;
-  };
-
-  const toArrayBuffer = (view: Uint8Array): ArrayBuffer => {
-    const copy = new Uint8Array(view.byteLength);
-    copy.set(view);
-    return copy.buffer;
-  };
-
-  const deriveKey = async (password: string, salt: Uint8Array): Promise<CryptoKey> => {
-    const encoder = new TextEncoder();
-    const passwordKey = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(password),
-      'PBKDF2',
-      false,
-      ['deriveBits', 'deriveKey']
-    );
-
-    return crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: toArrayBuffer(salt),
-        iterations: 100000,
-        hash: 'SHA-256',
-      },
-      passwordKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  };
-
-  const encryptText = async () => {
+  const runCipher = async (cipher: (text: string, password: string) => Promise<string>, emptyInput: string) => {
+    const run = ++latestRun.current;
     setError('');
     if (!input.trim()) {
-      setError('Please enter text to encrypt');
+      setError(emptyInput);
       setOutput('');
       return;
     }
@@ -85,93 +53,25 @@ export function AesEncryption() {
     }
 
     try {
-      // Generate random salt and IV
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-
-      // Derive key from password
-      const key = await deriveKey(password, salt);
-
-      // Encrypt the text
-      const encoder = new TextEncoder();
-      const data = encoder.encode(input);
-      const encrypted = await crypto.subtle.encrypt(
-        {
-          name: 'AES-GCM',
-          iv: toArrayBuffer(iv),
-        },
-        key,
-        data
-      );
-
-      // Combine salt, IV, and encrypted data
-      const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-      combined.set(salt, 0);
-      combined.set(iv, salt.length);
-      combined.set(new Uint8Array(encrypted), salt.length + iv.length);
-
-      // Convert to base64
-      const result = arrayBufferToBase64(combined.buffer);
-      setOutput(result);
+      const result = await cipher(input, password);
+      if (run === latestRun.current) setOutput(result);
     } catch (err) {
+      if (run !== latestRun.current) return;
       setError(err instanceof Error ? err.message : 'Encryption failed');
       setOutput('');
     }
   };
 
-  const decryptText = async () => {
-    setError('');
-    if (!input.trim()) {
-      setError('Please enter text to decrypt');
-      setOutput('');
-      return;
-    }
-    if (!password.trim()) {
-      setError('Please enter a password');
-      setOutput('');
-      return;
-    }
+  const encrypt = () => runCipher(encryptText, 'Please enter text to encrypt');
 
-    try {
-      // Decode base64
-      const combined = new Uint8Array(base64ToArrayBuffer(input));
-
-      // Extract salt, IV, and encrypted data
-      const salt = combined.slice(0, 16);
-      const iv = combined.slice(16, 28);
-      const encrypted = combined.slice(28);
-
-      // Derive key from password
-      const key = await deriveKey(password, salt);
-
-      // Decrypt the data
-      const decrypted = await crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv: toArrayBuffer(iv),
-        },
-        key,
-        toArrayBuffer(encrypted)
-      );
-
-      // Convert to text
-      const decoder = new TextDecoder();
-      const result = decoder.decode(decrypted);
-      setOutput(result);
-    } catch (err) {
-      setError(
-        'Decryption failed. Please check your password and encrypted text.'
-      );
-      setOutput('');
-    }
-  };
+  const decrypt = () => runCipher(decryptText, 'Please enter text to decrypt');
 
   const handleEncrypt = async () => {
-    await executeEncrypt(encryptText);
+    await executeEncrypt(encrypt);
   };
 
   const handleDecrypt = async () => {
-    await executeDecrypt(decryptText);
+    await executeDecrypt(decrypt);
   };
 
   const handleProcess = async () => {
@@ -183,6 +83,7 @@ export function AesEncryption() {
   };
 
   const handleSwapMode = () => {
+    latestRun.current += 1;
     setMode(mode === 'encrypt' ? 'decrypt' : 'encrypt');
     setInput(output);
     setOutput('');
@@ -194,20 +95,20 @@ export function AesEncryption() {
   };
 
   const handleClear = () => {
+    latestRun.current += 1;
     setInput('');
     setPassword('');
+    setShowPassword(false);
     setOutput('');
     setError('');
   };
 
   const handleGeneratePassword = () => {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    const randomPassword = Array.from(array)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-      .substring(0, 32);
-    setPassword(randomPassword);
+    setPassword(generatePassword());
+    // A generated password nobody has seen cannot be written down, and text
+    // encrypted with it could never be decrypted again. Show it.
+    setShowPassword(true);
+    discardResult();
   };
 
   const isLoading = isEncrypting || isDecrypting;
@@ -220,8 +121,7 @@ export function AesEncryption() {
           value={mode}
           onValueChange={(val) => {
             setMode(val as Mode);
-            setOutput('');
-            setError('');
+            discardResult();
           }}
           className="flex-1 w-full"
         >
@@ -259,12 +159,26 @@ export function AesEncryption() {
         <CardContent className="space-y-3">
           <div className="flex gap-2">
             <Input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+              onChange={(e) => {
+                setPassword((e.target as HTMLInputElement).value);
+                discardResult();
+              }}
               placeholder="Enter password..."
-              className="flex-1"
+              aria-label="Password"
+              className={showPassword ? 'flex-1 font-mono' : 'flex-1'}
             />
+            <TooltipSimple content={showPassword ? 'Hide password' : 'Show password'}>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowPassword((shown) => !shown)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </TooltipSimple>
             <TooltipSimple content="Generate random password">
               <Button
                 variant="outline"
@@ -295,12 +209,16 @@ export function AesEncryption() {
         <CardContent>
           <Textarea
             value={input}
-            onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
+            onChange={(e) => {
+              setInput((e.target as HTMLTextAreaElement).value);
+              discardResult();
+            }}
             placeholder={
               mode === 'encrypt'
                 ? 'Enter text here...'
                 : 'Paste encrypted text here...'
             }
+            aria-label={mode === 'encrypt' ? 'Text to encrypt' : 'Encrypted text to decrypt'}
             rows={6}
             className="font-mono text-sm"
           />
@@ -334,7 +252,7 @@ export function AesEncryption() {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
