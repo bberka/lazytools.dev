@@ -793,7 +793,6 @@ test.describe('Text tools', () => {
     });
 
     test('exposes the recipe choices as a listbox', async ({ page }) => {
-      test.fixme(true, 'Select options sit in a role="dialog" popover with no listbox around them');
       await page.getByRole('combobox', { name: 'Guided recipe' }).click();
       await expect(page.getByRole('option')).toHaveCount(6);
 
