@@ -14,6 +14,7 @@ import {
 } from '../ui/select';
 import { Copy, Check, KeyRound, Download, Loader2 } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
+import { downloadText } from '@/lib/files';
 
 type KeySize = 2048 | 3072 | 4096;
 type KeyFormat = 'PEM' | 'PKCS8' | 'JWK';
@@ -121,29 +122,17 @@ export function RsaKeyGenerator() {
     }
   };
 
-  const downloadKey = (key: string, filename: string) => {
-    const blob = new Blob([key], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleDownloadPublic = () => {
     if (keyPair?.publicKey) {
       const ext = keyFormat === 'JWK' ? 'json' : 'pem';
-      downloadKey(keyPair.publicKey, `public_key.${ext}`);
+      downloadText(keyPair.publicKey, `public_key.${ext}`);
     }
   };
 
   const handleDownloadPrivate = () => {
     if (keyPair?.privateKey) {
       const ext = keyFormat === 'JWK' ? 'json' : 'pem';
-      downloadKey(keyPair.privateKey, `private_key.${ext}`);
+      downloadText(keyPair.privateKey, `private_key.${ext}`);
     }
   };
 

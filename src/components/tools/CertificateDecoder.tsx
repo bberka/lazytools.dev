@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, type ChangeEvent } from 'react';
+import { useState, useCallback } from 'react';
 import {
   Shield, Upload, Trash2, AlertTriangle, CheckCircle,
   Clock, KeyRound, Lock, FileCode, Copy, Check,
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { readFileAsArrayBuffer } from '@/lib/files';
 
 // ─── ASN.1 DER parser ────────────────────────────────────────────────────────
 
@@ -444,7 +446,6 @@ export function CertificateDecoder() {
   const [cert, setCert] = useState<CertInfo | null>(null);
   const [fps, setFps] = useState<{ sha1: string; sha256: string } | null>(null);
   const [error, setError] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
   const copyFp1 = useCopyToClipboard();
   const copyFp256 = useCopyToClipboard();
   const copySn = useCopyToClipboard();
@@ -474,28 +475,31 @@ export function CertificateDecoder() {
     parseText(text);
   };
 
-  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const buf = ev.target?.result;
-      if (!(buf instanceof ArrayBuffer)) return;
-      const bytes = new Uint8Array(buf);
-      const head = new TextDecoder('ascii', { fatal: false }).decode(bytes.slice(0, 27));
-      if (head.startsWith('-----BEGIN')) {
-        const pem = new TextDecoder().decode(bytes);
-        setPemText(pem); setFileHint('');
-        parseText(pem);
-      } else {
-        setPemText(''); setFileHint(`${file.name} (${file.size} bytes)`);
-        try { processDer(bytes); }
-        catch (err) { setError(err instanceof Error ? err.message : 'Parse failed'); setCert(null); }
-      }
-    };
-    reader.readAsArrayBuffer(file);
+  const handleFile = async (file: File) => {
+    let buf: ArrayBuffer;
+    try {
+      buf = await readFileAsArrayBuffer(file);
+    } catch {
+      setError('Failed to read file');
+      return;
+    }
+
+    const bytes = new Uint8Array(buf);
+    const head = new TextDecoder('ascii', { fatal: false }).decode(bytes.slice(0, 27));
+    if (head.startsWith('-----BEGIN')) {
+      const pem = new TextDecoder().decode(bytes);
+      setPemText(pem); setFileHint('');
+      parseText(pem);
+    } else {
+      setPemText(''); setFileHint(`${file.name} (${file.size} bytes)`);
+      try { processDer(bytes); }
+      catch (err) { setError(err instanceof Error ? err.message : 'Parse failed'); setCert(null); }
+    }
   };
+
+  // The picker suggests the usual certificate extensions (set on the input
+  // below) but any file is taken: its content decides whether it parses.
+  const intake = useFileIntake({ onFiles: ([file]) => handleFile(file) });
 
   const handleClear = () => {
     setPemText(''); setFileHint(''); setCert(null); setError(''); setFps(null);
@@ -534,19 +538,16 @@ export function CertificateDecoder() {
             />
           )}
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+            <Button variant="outline" size="sm" onClick={intake.open}>
               <Upload className="h-4 w-4 mr-2" /> Upload File
             </Button>
             <Button variant="outline" size="sm" onClick={handleClear}>
               <Trash2 className="h-4 w-4 mr-2" /> Clear
             </Button>
             <input
-              ref={fileRef}
-              type="file"
+              {...intake.inputProps}
               accept=".pem,.crt,.cer,.der,.p7b"
-              className="hidden"
               aria-label="Upload certificate file"
-              onChange={handleFile}
             />
           </div>
           {error && (

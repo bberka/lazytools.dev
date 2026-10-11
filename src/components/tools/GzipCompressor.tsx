@@ -7,6 +7,7 @@ import { Textarea } from '../ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Copy, Check, Trash2, ArrowLeftRight, FolderArchive, FolderOpen } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { formatBytes, type FormatBytesOptions } from '@/lib/files';
 
 async function compress(text: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -57,11 +58,7 @@ async function decompress(base64: string): Promise<string> {
   return new TextDecoder().decode(result);
 }
 
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(2)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
-}
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
 export function GzipCompressor() {
   const [input, setInput] = useState('');
@@ -173,8 +170,8 @@ export function GzipCompressor() {
 
       {stats && (
         <div className="bg-muted rounded-md px-4 py-3 text-sm flex flex-wrap gap-4">
-          <span>Input: <strong>{formatBytes(stats.inputSize)}</strong></span>
-          <span>Output: <strong>{formatBytes(stats.outputSize)}</strong></span>
+          <span>Input: <strong>{formatBytes(stats.inputSize, SIZE_FORMAT)}</strong></span>
+          <span>Output: <strong>{formatBytes(stats.outputSize, SIZE_FORMAT)}</strong></span>
           {compressionRatio !== null && (
             <span>Ratio: <strong>{compressionRatio}% smaller</strong></span>
           )}

@@ -16,6 +16,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { useActionButton, useCopyToClipboard } from '@/hooks';
+import { downloadDataUrl, downloadText } from '@/lib/files';
 
 type ErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
 
@@ -38,15 +39,6 @@ const ERROR_CORRECTION_OPTIONS: Array<{
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(value);
-}
-
-function downloadBlob(filename: string, blob: Blob) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function getSafeFilename(value: string): string {
@@ -150,10 +142,7 @@ export function QrCodeGenerator() {
       return;
     }
 
-    const link = document.createElement('a');
-    link.href = generated.pngDataUrl;
-    link.download = `${getSafeFilename(content)}.png`;
-    link.click();
+    downloadDataUrl(generated.pngDataUrl, `${getSafeFilename(content)}.png`);
   };
 
   const handleDownloadSvg = () => {
@@ -161,10 +150,7 @@ export function QrCodeGenerator() {
       return;
     }
 
-    downloadBlob(
-      `${getSafeFilename(content)}.svg`,
-      new Blob([generated.svgMarkup], { type: 'image/svg+xml' })
-    );
+    downloadText(generated.svgMarkup, `${getSafeFilename(content)}.svg`, 'image/svg+xml');
   };
 
   return (

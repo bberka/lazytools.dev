@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, type ChangeEvent } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,9 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Image as ImageIcon, Upload, Download, Trash2, Loader2, Crop as CropIcon } from 'lucide-react';
+import { Image as ImageIcon, Download, Trash2, Loader2, Crop as CropIcon } from 'lucide-react';
 import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
+import { downloadBlob, downloadDataUrl, formatBytes, readFileAsDataUrl } from '@/lib/files';
 
 type OutputFormat = 'png' | 'jpeg' | 'webp' | 'ico';
 
@@ -47,7 +52,8 @@ const createIcoBlob = async (pngBlob: Blob, width: number, height: number) => {
 
 export function ImageConverter() {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
+  const processedImage = useObjectUrl(processedBlob);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [quality, setQuality] = useState(90);
@@ -64,13 +70,13 @@ export function ImageConverter() {
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
   const [processing, setProcessing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropImgRef = useRef<HTMLImageElement>(null);
 
-  const [dragging, setDragging] = useState(false);
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  // Size of the completed crop in the image's own pixels, for the label under the crop area.
+  const [cropSize, setCropSize] = useState<{ width: number; height: number } | null>(null);
   const [cropAspect, setCropAspect] = useState<number | undefined>(undefined);
 
   const onCropImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -79,6 +85,19 @@ export function ImageConverter() {
       setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, cropAspect, width, height), width, height));
     }
   }, [cropAspect]);
+
+  const handleCropComplete = (pixelCrop: PixelCrop) => {
+    setCompletedCrop(pixelCrop);
+    const image = cropImgRef.current;
+    setCropSize(
+      image
+        ? {
+            width: Math.round(pixelCrop.width * (image.naturalWidth / image.width)),
+            height: Math.round(pixelCrop.height * (image.naturalHeight / image.height)),
+          }
+        : null
+    );
+  };
 
   const handleDownloadCropped = useCallback(() => {
     const image = cropImgRef.current;
@@ -105,57 +124,8 @@ export function ImageConverter() {
     );
     const mimeType = originalFile?.type || 'image/png';
     const ext = mimeType.split('/')[1] || 'png';
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL(mimeType);
-    link.download = `cropped-${originalFile?.name || `image.${ext}`}`;
-    link.click();
+    downloadDataUrl(canvas.toDataURL(mimeType), `cropped-${originalFile?.name || `image.${ext}`}`);
   }, [completedCrop, originalFile]);
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const loadImageFile = (file: File) => {
-    if (!file) return;
-
-    setOriginalFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setOriginalImage(result);
-      processImage(result, file);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      loadImageFile(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      loadImageFile(file);
-    }
-  };
 
   const processImage = async (imageSrc: string, file: File) => {
     setProcessing(true);
@@ -231,8 +201,7 @@ export function ImageConverter() {
             try {
               if (outputFormat === 'ico') {
                 const icoBlob = await createIcoBlob(blob, canvas.width, canvas.height);
-                const url = URL.createObjectURL(icoBlob);
-                setProcessedImage(url);
+                setProcessedBlob(icoBlob);
                 setProcessing(false);
                 return;
               }
@@ -250,8 +219,7 @@ export function ImageConverter() {
                 new File([blob], file.name, { type: mimeType }),
                 options
               );
-              const url = URL.createObjectURL(compressedFile);
-              setProcessedImage(url);
+              setProcessedBlob(compressedFile);
             } catch (error) {
               if (outputFormat === 'ico') {
                 console.error('Error creating ICO:', error);
@@ -259,8 +227,7 @@ export function ImageConverter() {
                 return;
               }
 
-              const url = URL.createObjectURL(blob);
-              setProcessedImage(url);
+              setProcessedBlob(blob);
             }
 
             setProcessing(false);
@@ -277,6 +244,23 @@ export function ImageConverter() {
     }
   };
 
+  const loadImageFile = async (file: File) => {
+    setOriginalFile(file);
+
+    let result: string;
+    try {
+      result = await readFileAsDataUrl(file);
+    } catch {
+      toast.error('Failed to read file');
+      return;
+    }
+
+    setOriginalImage(result);
+    processImage(result, file);
+  };
+
+  const intake = useFileIntake({ accept: 'image/*', onFiles: ([file]) => loadImageFile(file) });
+
   const handleConvert = () => {
     if (originalImage && originalFile) {
       processImage(originalImage, originalFile);
@@ -284,17 +268,13 @@ export function ImageConverter() {
   };
 
   const handleDownload = () => {
-    if (!processedImage) return;
-
-    const link = document.createElement('a');
-    link.href = processedImage;
-    link.download = `converted.${outputFormat}`;
-    link.click();
+    if (!processedBlob) return;
+    downloadBlob(processedBlob, `converted.${outputFormat}`);
   };
 
   const handleClear = () => {
     setOriginalImage(null);
-    setProcessedImage(null);
+    setProcessedBlob(null);
     setOriginalFile(null);
     setWidth('');
     setHeight('');
@@ -309,9 +289,7 @@ export function ImageConverter() {
     setSaturation(100);
     setCrop(undefined);
     setCompletedCrop(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    intake.reset();
   };
 
   return (
@@ -327,34 +305,19 @@ export function ImageConverter() {
           <CardDescription>Convert, resize, rotate, flip, and apply filters to images</CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-muted/50'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Drag & drop an image here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-            {originalFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
-                <ImageIcon className="h-3.5 w-3.5" />
-                {originalFile.name} ({formatSize(originalFile.size)})
-              </div>
-            )}
-          </div>
+          <FileDropzone
+            intake={intake}
+            label="Drag & drop an image here or click to browse"
+            hint="Files remain local on your machine"
+            selected={
+              originalFile && (
+                <>
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  {originalFile.name} ({formatBytes(originalFile.size)})
+                </>
+              )
+            }
+          />
         </CardContent>
       </Card>
 
@@ -382,15 +345,15 @@ export function ImageConverter() {
                 <ReactCrop
                   crop={crop}
                   onChange={(c) => setCrop(c)}
-                  onComplete={(c) => setCompletedCrop(c)}
+                  onComplete={handleCropComplete}
                   aspect={cropAspect}
                 >
                   <img ref={cropImgRef} alt="Crop" src={originalImage} onLoad={onCropImageLoad} style={{ maxHeight: '500px', minWidth: '200px', width: 'auto', maxWidth: '100%' }} />
                 </ReactCrop>
               </div>
-              {completedCrop && cropImgRef.current && (
+              {completedCrop && cropSize && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Crop: {Math.round(completedCrop.width * (cropImgRef.current.naturalWidth / cropImgRef.current.width))}×{Math.round(completedCrop.height * (cropImgRef.current.naturalHeight / cropImgRef.current.height))}px
+                  Crop: {cropSize.width}×{cropSize.height}px
                 </p>
               )}
               <div className="flex flex-col gap-2 sm:flex-row">

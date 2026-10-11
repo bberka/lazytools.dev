@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
+import { downloadText } from '@/lib/files';
 import {
   Copy,
   Check,
@@ -246,16 +247,6 @@ export function MockDataGenerator() {
     }
   };
 
-  const downloadFile = (content: string, filename: string, contentType: string) => {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const previewData = generatedData.slice(0, 10);
 
   return (
@@ -449,9 +440,9 @@ export function MockDataGenerator() {
                   <Button
                     onClick={() => {
                       if (activeTab === 'json') {
-                        downloadFile(jsonString, 'mock-data.json', 'application/json');
+                        downloadText(jsonString, 'mock-data.json', 'application/json');
                       } else {
-                        downloadFile(csvString, 'mock-data.csv', 'text/csv');
+                        downloadText(csvString, 'mock-data.csv', 'text/csv');
                       }
                     }}
                     variant="outline"

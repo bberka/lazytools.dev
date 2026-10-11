@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
+import { downloadText } from '@/lib/files';
 
 // Language definition type
 interface LanguageOption {
@@ -324,13 +325,7 @@ export function SpeechToText() {
   // Export File Options
   const handleDownloadFile = (format: 'txt' | 'md') => {
     if (!transcript) return;
-    const element = document.createElement('a');
-    const file = new Blob([transcript], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `transcript-${new Date().toISOString().slice(0, 10)}.${format}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    downloadText(transcript, `transcript-${new Date().toISOString().slice(0, 10)}.${format}`);
   };
 
   // Handle auto-scrolling transcript when text changes

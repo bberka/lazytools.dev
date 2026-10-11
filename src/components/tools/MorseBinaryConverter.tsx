@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -209,9 +210,11 @@ export function MorseBinaryConverter() {
     const morseCode = mode === 'encode' ? output : input;
     if (!morseCode.trim()) return;
 
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
+    const AudioContextClass = window.AudioContext || win.webkitAudioContext;
     if (!AudioContextClass) {
-      alert('Web Audio API is not supported in this browser.');
+      // The error box below is labelled for conversion mistakes, so this goes to a toast.
+      toast.error('Web Audio API is not supported in this browser.');
       return;
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, type ChangeEvent } from 'react';
+import { useRef, useState } from 'react';
 import { Check, Copy, Download, Eye, Image as ImageIcon, Loader2, Shield, Trash2, Upload, X, Archive, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,8 +13,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { FileDropzone } from '@/components/FileDropzone';
+import {
+  downloadBlob,
+  formatBytes,
+  loadImage,
+  outputFileName,
+  readFileAsArrayBuffer,
+  type FormatBytesOptions,
+} from '@/lib/files';
 import JSZip from 'jszip';
 
 type OutputFormat = 'original' | 'jpeg' | 'png' | 'webp';
@@ -80,27 +91,13 @@ const TYPE_SIZES: Record<number, number> = {
   10: 8,
 };
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
+// Sizes on this page read "512 B", "845.3 KB", "2.41 MB".
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B', decimals: { KB: 1 } };
 
 function formatNumber(value: number, maximumFractionDigits = 6): string {
   return new Intl.NumberFormat('en-US', {
     maximumFractionDigits,
   }).format(value);
-}
-
-function getFileBaseName(filename: string): string {
-  const lastDotIndex = filename.lastIndexOf('.');
-  return lastDotIndex === -1 ? filename : filename.slice(0, lastDotIndex);
 }
 
 function clampText(value: string, maxLength = 140): string {
@@ -341,28 +338,18 @@ function parseExifSections(buffer: ArrayBuffer): ExifSection[] {
   return [];
 }
 
-async function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Unable to load the selected image.'));
-    image.src = url;
-  });
-}
-
 export function ExifViewerRemover() {
   const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [cleanUrl, setCleanUrl] = useState<string | null>(null);
   const [cleanFile, setCleanFile] = useState<File | null>(null);
+  // The previews follow the files: each URL is revoked when its file changes or the tool unmounts.
+  const previewUrl = useObjectUrl(file);
+  const cleanUrl = useObjectUrl(cleanFile);
   const [sections, setSections] = useState<ExifSection[]>([]);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('original');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [singleDragging, setSingleDragging] = useState(false);
   const copyResult = useCopyToClipboard();
 
   // Batch processing types
@@ -378,21 +365,9 @@ export function ExifViewerRemover() {
   };
 
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
-  const [batchDragging, setBatchDragging] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [batchOutputFormat, setBatchOutputFormat] = useState<OutputFormat>('original');
-  const [batchZipUrl, setBatchZipUrl] = useState<string | null>(null);
-  const [batchZipSize, setBatchZipSize] = useState<number | null>(null);
-  const batchFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Clean up Object URLs on unmount
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      if (cleanUrl) URL.revokeObjectURL(cleanUrl);
-      if (batchZipUrl) URL.revokeObjectURL(batchZipUrl);
-    };
-  }, [previewUrl, cleanUrl, batchZipUrl]);
+  const [batchZip, setBatchZip] = useState<Blob | null>(null);
 
   const getExtensionForFormat = (file: File, format: OutputFormat): string => {
     if (format !== 'original') {
@@ -409,99 +384,57 @@ export function ExifViewerRemover() {
         : 'png';
   };
 
+  // The intake only passes images on; anything else is reported under the drop area.
   const addBatchFiles = (files: File[]) => {
-    const newItems: BatchItem[] = [];
-    for (const f of files) {
-      if (!f.type.startsWith('image/')) {
-        continue;
-      }
-      newItems.push({
-        id: Math.random().toString(36).substring(2, 9),
-        file: f,
-        status: 'waiting',
-      });
-    }
-    if (newItems.length > 0) {
-      if (batchZipUrl) {
-        URL.revokeObjectURL(batchZipUrl);
-        setBatchZipUrl(null);
-        setBatchZipSize(null);
-      }
-      setBatchItems((prev) => [...prev, ...newItems]);
-    }
+    const newItems: BatchItem[] = files.map((f) => ({
+      id: Math.random().toString(36).substring(2, 9),
+      file: f,
+      status: 'waiting',
+    }));
+    setBatchZip(null);
+    setBatchItems((prev) => [...prev, ...newItems]);
   };
 
-  const handleBatchDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setBatchDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      addBatchFiles(files);
+  const batchIntake = useFileIntake({ accept: 'image/*', multiple: true, onFiles: addBatchFiles });
+
+  const processSingleBatchFile = async (file: File, format: OutputFormat): Promise<Blob> => {
+    const image = await loadImage(file);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas context not available');
     }
-  };
 
-  const handleBatchDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setBatchDragging(true);
-  };
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0);
 
-  const handleBatchDragLeave = () => {
-    setBatchDragging(false);
-  };
+    const selectedFormat = format === 'original'
+      ? (file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/jpeg'
+          ? file.type
+          : 'image/png')
+      : `image/${format}`;
 
-  const processSingleBatchFile = async (
-    file: File,
-    format: OutputFormat
-  ): Promise<{ blob: Blob; url: string }> => {
-    const tempUrl = URL.createObjectURL(file);
-    try {
-      const image = await loadImageFromUrl(tempUrl);
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      if (!context) {
-        throw new Error('Canvas context not available');
-      }
-
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0);
-
-      const selectedFormat = format === 'original'
-        ? (file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/jpeg'
-            ? file.type
-            : 'image/png')
-        : `image/${format}`;
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (result) => {
-            if (!result) {
-              reject(new Error('Unable to generate cleaned image.'));
-              return;
-            }
-            resolve(result);
-          },
-          selectedFormat,
-          selectedFormat === 'image/png' ? 1 : 0.92
-        );
-      });
-
-      return { blob, url: tempUrl };
-    } finally {
-      URL.revokeObjectURL(tempUrl);
-    }
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => {
+          if (!result) {
+            reject(new Error('Unable to generate cleaned image.'));
+            return;
+          }
+          resolve(result);
+        },
+        selectedFormat,
+        selectedFormat === 'image/png' ? 1 : 0.92
+      );
+    });
   };
 
   const handleProcessBatch = async () => {
     if (batchItems.length === 0) return;
     setBatchProcessing(true);
-
-    if (batchZipUrl) {
-      URL.revokeObjectURL(batchZipUrl);
-      setBatchZipUrl(null);
-      setBatchZipSize(null);
-    }
+    setBatchZip(null);
 
     // Reset status of all items to 'waiting'
     const resetItems: BatchItem[] = batchItems.map(item => ({
@@ -530,7 +463,7 @@ export function ExifViewerRemover() {
         );
 
         try {
-          const result = await processSingleBatchFile(item.file, batchOutputFormat);
+          const cleanedBlob = await processSingleBatchFile(item.file, batchOutputFormat);
 
           setBatchItems((prev) =>
             prev.map((prevItem) =>
@@ -538,8 +471,8 @@ export function ExifViewerRemover() {
                 ? {
                     ...prevItem,
                     status: 'done',
-                    cleanedBlob: result.blob,
-                    cleanedSize: result.blob.size,
+                    cleanedBlob,
+                    cleanedSize: cleanedBlob.size,
                   }
                 : prevItem
             )
@@ -547,8 +480,8 @@ export function ExifViewerRemover() {
           activeItems[currentIndex] = {
             ...item,
             status: 'done',
-            cleanedBlob: result.blob,
-            cleanedSize: result.blob.size,
+            cleanedBlob,
+            cleanedSize: cleanedBlob.size,
           };
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : 'Error cleaning image';
@@ -576,8 +509,7 @@ export function ExifViewerRemover() {
       for (const item of activeItems) {
         if (item.status === 'done' && item.cleanedBlob) {
           const extension = getExtensionForFormat(item.file, batchOutputFormat);
-          const baseName = getFileBaseName(item.file.name);
-          const zipFileName = `${baseName}-clean.${extension}`;
+          const zipFileName = outputFileName(item.file.name, { suffix: '-clean', extension });
           zip.file(zipFileName, item.cleanedBlob);
           hasCleanedFiles = true;
         }
@@ -585,14 +517,8 @@ export function ExifViewerRemover() {
 
       if (hasCleanedFiles) {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const zipUrl = URL.createObjectURL(zipBlob);
-        setBatchZipUrl(zipUrl);
-        setBatchZipSize(zipBlob.size);
-
-        const link = document.createElement('a');
-        link.href = zipUrl;
-        link.download = `cleaned_images_${Date.now()}.zip`;
-        link.click();
+        setBatchZip(zipBlob);
+        downloadBlob(zipBlob, `cleaned_images_${Date.now()}.zip`);
       }
     } catch (zipErr) {
       console.error('Failed to generate ZIP archive', zipErr);
@@ -603,25 +529,15 @@ export function ExifViewerRemover() {
 
   const handleRemoveBatchItem = (id: string) => {
     setBatchItems((prev) => prev.filter((item) => item.id !== id));
-    if (batchZipUrl) {
-      URL.revokeObjectURL(batchZipUrl);
-      setBatchZipUrl(null);
-      setBatchZipSize(null);
-    }
+    setBatchZip(null);
   };
 
   const handleClearBatch = () => {
     setBatchItems([]);
     setBatchProcessing(false);
     setBatchOutputFormat('original');
-    if (batchZipUrl) {
-      URL.revokeObjectURL(batchZipUrl);
-      setBatchZipUrl(null);
-      setBatchZipSize(null);
-    }
-    if (batchFileInputRef.current) {
-      batchFileInputRef.current.value = '';
-    }
+    setBatchZip(null);
+    batchIntake.reset();
   };
 
   const getStatusBadge = (status: BatchFileStatus, errorMsg?: string) => {
@@ -653,20 +569,8 @@ export function ExifViewerRemover() {
     setCleanFile(null);
     setSections([]);
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    if (cleanUrl) {
-      URL.revokeObjectURL(cleanUrl);
-      setCleanUrl(null);
-    }
-
-    const nextPreviewUrl = URL.createObjectURL(nextFile);
-    setPreviewUrl(nextPreviewUrl);
-
     try {
-      const buffer = await nextFile.arrayBuffer();
+      const buffer = await readFileAsArrayBuffer(nextFile);
       setSections(parseExifSections(buffer));
     } catch (readError) {
       setError(
@@ -677,33 +581,13 @@ export function ExifViewerRemover() {
     }
   };
 
-  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFile = event.target.files?.[0];
-    if (nextFile) {
-      await loadSingleImage(nextFile);
-    }
-  };
-
-  const handleSingleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setSingleDragging(true);
-  };
-
-  const handleSingleDragLeave = () => {
-    setSingleDragging(false);
-  };
-
-  const handleSingleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setSingleDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      await loadSingleImage(file);
-    }
-  };
+  const singleIntake = useFileIntake({
+    accept: 'image/*',
+    onFiles: ([nextFile]) => loadSingleImage(nextFile),
+  });
 
   const handleRemoveMetadata = async () => {
-    if (!file || !previewUrl) {
+    if (!file) {
       return;
     }
 
@@ -711,7 +595,7 @@ export function ExifViewerRemover() {
     setError('');
 
     try {
-      const image = await loadImageFromUrl(previewUrl);
+      const image = await loadImage(file);
       const canvas = canvasRef.current;
 
       if (!canvas) {
@@ -756,16 +640,11 @@ export function ExifViewerRemover() {
         );
       });
 
-      if (cleanUrl) {
-        URL.revokeObjectURL(cleanUrl);
-      }
-
-      const nextCleanFile = new File([blob], `${getFileBaseName(file.name)}-clean.${extension}`, {
+      const nextCleanFile = new File([blob], outputFileName(file.name, { suffix: '-clean', extension }), {
         type: selectedFormat,
       });
 
       setCleanFile(nextCleanFile);
-      setCleanUrl(URL.createObjectURL(nextCleanFile));
     } catch (removeError) {
       setError(
         removeError instanceof Error
@@ -778,37 +657,21 @@ export function ExifViewerRemover() {
   };
 
   const handleDownload = () => {
-    if (!cleanUrl || !cleanFile) {
+    if (!cleanFile) {
       return;
     }
 
-    const link = document.createElement('a');
-    link.href = cleanUrl;
-    link.download = cleanFile.name;
-    link.click();
+    downloadBlob(cleanFile, cleanFile.name);
   };
 
   const handleClear = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    if (cleanUrl) {
-      URL.revokeObjectURL(cleanUrl);
-    }
-
     setFile(null);
-    setPreviewUrl(null);
-    setCleanUrl(null);
     setCleanFile(null);
     setSections([]);
     setError('');
     setProcessing(false);
     setOutputFormat('original');
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    singleIntake.reset();
   };
 
   const completedItems = batchItems.filter((item) => item.status === 'done');
@@ -847,37 +710,19 @@ export function ExifViewerRemover() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div
-                className={
-                  singleDragging
-                    ? 'border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors border-primary bg-primary/5'
-                    : 'border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
+              <FileDropzone
+                intake={singleIntake}
+                label="Drag & drop an image here or click to browse"
+                hint="Files remain local on your machine"
+                selected={
+                  file && (
+                    <>
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      <span>{`${file.name} (${formatBytes(file.size, SIZE_FORMAT)})`}</span>
+                    </>
+                  )
                 }
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={handleSingleDragOver}
-                onDragLeave={handleSingleDragLeave}
-                onDrop={handleSingleDrop}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-                <p className="text-sm font-semibold">Drag & drop an image here or click to browse</p>
-                <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-                {file && (
-                  <div
-                    className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    <span>{`${file.name} (${formatBytes(file.size)})`}</span>
-                  </div>
-                )}
-              </div>
+              />
 
               {file && (
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -897,7 +742,7 @@ export function ExifViewerRemover() {
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">
                       Size
                     </div>
-                    <div className="mt-1 font-semibold">{formatBytes(file.size)}</div>
+                    <div className="mt-1 font-semibold">{formatBytes(file.size, SIZE_FORMAT)}</div>
                   </div>
                   <div className="rounded-md border bg-card p-4">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -959,7 +804,7 @@ export function ExifViewerRemover() {
                       </>
                     )}
                   </Button>
-                  <Button onClick={handleDownload} disabled={!cleanUrl || !cleanFile} variant="outline">
+                  <Button onClick={handleDownload} disabled={!cleanFile} variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     Download cleaned image
                   </Button>
@@ -971,7 +816,7 @@ export function ExifViewerRemover() {
 
                 {cleanFile && (
                   <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
-                    Cleaned image ready: {cleanFile.name} ({formatBytes(cleanFile.size)})
+                    Cleaned image ready: {cleanFile.name} ({formatBytes(cleanFile.size, SIZE_FORMAT)})
                   </div>
                 )}
               </CardContent>
@@ -1073,36 +918,26 @@ export function ExifViewerRemover() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div
-                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-10 cursor-pointer transition-colors ${
-                  batchDragging
+                {...batchIntake.dropzoneProps}
+                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-10 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  batchIntake.isDragging
                     ? 'border-primary bg-primary/5'
                     : 'border-muted-foreground/30 hover:border-primary/50'
                 }`}
-                onDrop={handleBatchDrop}
-                onDragOver={handleBatchDragOver}
-                onDragLeave={handleBatchDragLeave}
-                onClick={() => batchFileInputRef.current?.click()}
               >
                 <Upload className="h-10 w-10 text-muted-foreground" />
                 <div className="text-center">
                   <p className="font-semibold text-foreground">Drop images here or click to browse</p>
                   <p className="text-xs text-muted-foreground mt-1">Supports JPEG, PNG, and WebP formats</p>
                 </div>
-                <input
-                  ref={batchFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    if (files.length > 0) {
-                      addBatchFiles(files);
-                    }
-                  }}
-                  aria-label="Upload multiple images"
-                />
+                <input {...batchIntake.inputProps} aria-label="Upload multiple images" />
               </div>
+
+              {batchIntake.error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {batchIntake.error}
+                </p>
+              )}
 
               {batchItems.length > 0 && (
                 <div className="flex flex-col gap-4 p-4 rounded-lg border bg-card sm:flex-row sm:items-end sm:justify-between">
@@ -1140,15 +975,13 @@ export function ExifViewerRemover() {
                         </>
                       )}
                     </Button>
-                    {batchZipUrl && (
-                      <Button variant="outline" onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = batchZipUrl;
-                        link.download = `cleaned_images_${Date.now()}.zip`;
-                        link.click();
-                      }}>
+                    {batchZip && (
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadBlob(batchZip, `cleaned_images_${Date.now()}.zip`)}
+                      >
                         <Download className="mr-2 h-4 w-4" />
-                        Download ZIP Again {batchZipSize && `(${formatBytes(batchZipSize)})`}
+                        Download ZIP Again ({formatBytes(batchZip.size, SIZE_FORMAT)})
                       </Button>
                     )}
                     <Button
@@ -1183,12 +1016,12 @@ export function ExifViewerRemover() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 p-4 rounded-lg bg-green-500/5 dark:bg-green-500/10 border border-green-500/20 text-sm">
                     <div>
                       <div className="text-muted-foreground text-xs font-semibold uppercase">Total Original Size</div>
-                      <div className="font-bold text-base mt-0.5">{formatBytes(batchItems.reduce((acc, item) => acc + item.file.size, 0))}</div>
+                      <div className="font-bold text-base mt-0.5">{formatBytes(batchItems.reduce((acc, item) => acc + item.file.size, 0), SIZE_FORMAT)}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground text-xs font-semibold uppercase">Cleaned Size</div>
                       <div className="font-bold text-base mt-0.5">
-                        {totalCleanedSize > 0 ? formatBytes(totalCleanedSize) : 'Processing...'}
+                        {totalCleanedSize > 0 ? formatBytes(totalCleanedSize, SIZE_FORMAT) : 'Processing...'}
                       </div>
                     </div>
                     <div>
@@ -1196,7 +1029,7 @@ export function ExifViewerRemover() {
                       <div className="font-bold text-base mt-0.5 text-green-600 dark:text-green-400">
                         {totalSavedBytes > 0 ? (
                           <>
-                            {formatBytes(totalSavedBytes)} ({savingsPercent.toFixed(1)}%)
+                            {formatBytes(totalSavedBytes, SIZE_FORMAT)} ({savingsPercent.toFixed(1)}%)
                           </>
                         ) : (
                           '0 B (0%)'
@@ -1231,14 +1064,14 @@ export function ExifViewerRemover() {
                                 <span className="truncate">{item.file.name}</span>
                               </div>
                             </td>
-                            <td className="p-3 text-muted-foreground font-mono">{formatBytes(item.file.size)}</td>
+                            <td className="p-3 text-muted-foreground font-mono">{formatBytes(item.file.size, SIZE_FORMAT)}</td>
                             <td className="p-3 text-muted-foreground font-mono text-xs">{targetFormat}</td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
                                 {getStatusBadge(item.status, item.error)}
                                 {item.status === 'done' && item.cleanedSize && (
                                   <span className="text-xs text-muted-foreground font-mono">
-                                    {formatBytes(item.cleanedSize)}
+                                    {formatBytes(item.cleanedSize, SIZE_FORMAT)}
                                   </span>
                                 )}
                               </div>

@@ -1,21 +1,19 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Copy, Check, Trash2, ArrowLeftRight, Upload, FileText, X, Image as ImageIcon, Binary } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, formatBytes, readFileAsDataUrl, type FormatBytesOptions } from '@/lib/files';
 
 type Mode = 'encode' | 'decode';
 type Tab = 'text' | 'file';
 
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(2)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
-}
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
 function isImageType(mime: string) {
   return mime.startsWith('image/');
@@ -34,11 +32,9 @@ export function Base64Converter() {
   const [file, setFile] = useState<File | null>(null);
   const [fileBase64, setFileBase64] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
-  const [dragging, setDragging] = useState(false);
   const [fileError, setFileError] = useState('');
   const [copiedFile, setCopiedFile] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // ── Text mode ────────────────────────────────────────────────────────────────
@@ -81,36 +77,24 @@ export function Base64Converter() {
     setFileBase64('');
     setPreviewUrl('');
     setFileError('');
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      // dataUrl = "data:<mime>;base64,<b64>"
-      const b64 = dataUrl.split(',')[1];
-      setFileBase64(b64);
-      if (isImageType(f.type)) setPreviewUrl(dataUrl);
-    };
-    reader.onerror = () => setFileError('Failed to read file');
-    reader.readAsDataURL(f);
+    readFileAsDataUrl(f)
+      .then((dataUrl) => {
+        // dataUrl = "data:<mime>;base64,<b64>"
+        const b64 = dataUrl.split(',')[1];
+        setFileBase64(b64);
+        if (isImageType(f.type)) setPreviewUrl(dataUrl);
+      })
+      .catch(() => setFileError('Failed to read file'));
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) processFile(f);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) processFile(f);
-  };
+  const intake = useFileIntake({ onFiles: ([f]) => processFile(f) });
 
   const clearFile = () => {
     setFile(null);
     setFileBase64('');
     setPreviewUrl('');
     setFileError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    intake.reset();
   };
 
   const handleCopyFile = async () => {
@@ -121,10 +105,7 @@ export function Base64Converter() {
 
   const handleDownload = () => {
     if (!file || !fileBase64) return;
-    const link = document.createElement('a');
-    link.href = `data:${file.type};base64,${fileBase64}`;
-    link.download = file.name;
-    link.click();
+    downloadBlob(file, file.name);
   };
 
   const switchTab = (t: Tab) => {
@@ -225,21 +206,18 @@ export function Base64Converter() {
                     : <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">{file.type || 'unknown type'} · {formatBytes(file.size)}</p>
+                    <p className="text-sm text-muted-foreground">{file.type || 'unknown type'} · {formatBytes(file.size, SIZE_FORMAT)}</p>
                   </div>
                   <Button variant="ghost" size="icon" onClick={clearFile}><X className="h-4 w-4" /></Button>
                 </div>
               ) : (
                 <div
-                  className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-10 cursor-pointer transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
-                  onDrop={handleDrop}
-                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                  onDragLeave={() => setDragging(false)}
-                  onClick={() => fileInputRef.current?.click()}
+                  {...intake.dropzoneProps}
+                  className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-10 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${intake.isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
                 >
                   <Upload className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">Drop file here or click to browse</p>
-                  <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} aria-label="Select file to encode as Base64" />
+                  <input {...intake.inputProps} aria-label="Select file to encode as Base64" />
                 </div>
               )}
             </CardContent>

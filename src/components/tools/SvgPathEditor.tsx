@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import { ColorPicker } from '../ui/color-picker';
 import { Copy, Check, Pen, Download, Maximize2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { downloadText } from '@/lib/files';
 
 interface PathInfo {
   commandCount: number;
@@ -95,13 +96,7 @@ export function SvgPathEditor() {
   <path d="${pathData}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="${fillColor}"/>
 </svg>`;
 
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'path.svg';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadText(svg, 'path.svg', 'image/svg+xml');
   };
 
   const handleClear = () => {

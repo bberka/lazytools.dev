@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
@@ -8,6 +8,8 @@ import { Input } from '../ui/input';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Copy, Check, Upload, FileText, X, File, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { formatBytes, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
 
 type HashAlgorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512';
 
@@ -43,11 +45,7 @@ async function computeAll(data: ArrayBuffer | string): Promise<Record<HashAlgori
   return results;
 }
 
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(2)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
-}
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
 export function HashGenerator() {
   const [mode, setMode] = useState<'text' | 'file'>('text');
@@ -55,14 +53,12 @@ export function HashGenerator() {
   const [hashes, setHashes] = useState<Record<HashAlgorithm, string>>(EMPTY_HASHES);
   const [copiedHash, setCopiedHash] = useState<HashAlgorithm | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   // Hash comparison state
   const [compareHash, setCompareHash] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { copyToClipboard } = useCopyToClipboard();
 
   const handleCopy = async (algorithm: HashAlgorithm) => {
@@ -84,7 +80,7 @@ export function HashGenerator() {
     setError('');
     setLoading(true);
     try {
-      const buffer = await f.arrayBuffer();
+      const buffer = await readFileAsArrayBuffer(f);
       const results = await computeAll(buffer);
       setHashes(results);
     } catch (err) {
@@ -94,27 +90,14 @@ export function HashGenerator() {
     }
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) processFile(f);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) processFile(f);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragging(true); };
-  const handleDragLeave = () => setDragging(false);
+  const intake = useFileIntake({ onFiles: ([f]) => processFile(f) });
 
   const clearFile = () => {
     setFile(null);
     setHashes(EMPTY_HASHES);
     setCompareHash('');
     setError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    intake.reset();
   };
 
   const switchMode = (m: 'text' | 'file') => {
@@ -122,7 +105,7 @@ export function HashGenerator() {
     setHashes(EMPTY_HASHES);
     setCompareHash('');
     setError('');
-    if (m === 'text') { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }
+    if (m === 'text') { setFile(null); intake.reset(); }
     else { setInput(''); }
   };
 
@@ -183,7 +166,7 @@ export function HashGenerator() {
                 <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">{formatBytes(file.size)}</p>
+                  <p className="text-sm text-muted-foreground">{formatBytes(file.size, SIZE_FORMAT)}</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={clearFile}>
                   <X className="h-4 w-4" />
@@ -191,15 +174,12 @@ export function HashGenerator() {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-10 cursor-pointer transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={() => fileInputRef.current?.click()}
+                {...intake.dropzoneProps}
+                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-10 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${intake.isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Drop file here or click to browse</p>
-                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} aria-label="Select file to hash" />
+                <input {...intake.inputProps} aria-label="Select file to hash" />
               </div>
             )}
           </CardContent>

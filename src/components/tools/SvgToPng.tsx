@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Image as ImageIcon, Download, Trash2, Code, FileImage, Upload } from 'lucide-react';
+import { Download, Trash2, Code, FileImage } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadDataUrl, formatBytes, loadImage, readFileAsText } from '@/lib/files';
 
 export function SvgToPng() {
   const [svgCode, setSvgCode] = useState('');
@@ -13,99 +17,58 @@ export function SvgToPng() {
   const [pngDataUrl, setPngDataUrl] = useState<string | null>(null);
   const [scale, setScale] = useState(2);
   const [processing, setProcessing] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   const loadSvgFile = (file: File) => {
-    if (!file) return;
     setOriginalFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setSvgCode(event.target?.result as string);
-    };
-    reader.readAsText(file);
+    readFileAsText(file)
+      .then(setSvgCode)
+      .catch(() => toast.error('Failed to read file'));
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      loadSvgFile(file);
-    }
-  };
+  const intake = useFileIntake({
+    accept: '.svg,image/svg+xml',
+    onFiles: ([file]) => loadSvgFile(file),
+  });
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && (file.type === 'image/svg+xml' || file.name.endsWith('.svg'))) {
-      loadSvgFile(file);
-    }
-  };
-
-  const convertSvgToPng = () => {
+  const convertSvgToPng = async () => {
     if (!svgCode) return;
     setProcessing(true);
 
-    const svgBlob = new Blob([svgCode], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.onload = () => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      setPngDataUrl(canvas.toDataURL('image/png'));
-      setProcessing(false);
-      URL.revokeObjectURL(url);
-    };
-
-    img.onerror = () => {
+    let img: HTMLImageElement;
+    try {
+      img = await loadImage(new Blob([svgCode], { type: 'image/svg+xml;charset=utf-8' }));
+    } catch {
       console.error('Failed to load SVG');
       setProcessing(false);
-      URL.revokeObjectURL(url);
-    };
+      return;
+    }
 
-    img.src = url;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    setPngDataUrl(canvas.toDataURL('image/png'));
+    setProcessing(false);
   };
 
   const handleDownload = () => {
     if (!pngDataUrl) return;
-    const link = document.createElement('a');
-    link.href = pngDataUrl;
-    link.download = 'vector.png';
-    link.click();
+    downloadDataUrl(pngDataUrl, 'vector.png');
   };
 
   const handleClear = () => {
     setSvgCode('');
     setPngDataUrl(null);
+    intake.reset();
   };
 
   return (
@@ -122,34 +85,19 @@ export function SvgToPng() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Upload SVG File</label>
-            <div
-              className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-                dragging
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
-              }`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".svg"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-              <p className="text-sm font-semibold">Drag & drop an SVG file here or click to browse</p>
-              <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-              {originalFile && (
-                <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
-                  <Code className="h-3.5 w-3.5" />
-                  {originalFile.name} ({formatSize(originalFile.size)})
-                </div>
-              )}
-            </div>
+            <FileDropzone
+              intake={intake}
+              label="Drag & drop an SVG file here or click to browse"
+              hint="Files remain local on your machine"
+              selected={
+                originalFile && (
+                  <>
+                    <Code className="h-3.5 w-3.5" />
+                    {originalFile.name} ({formatBytes(originalFile.size)})
+                  </>
+                )
+              }
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Or Paste SVG Code</label>
