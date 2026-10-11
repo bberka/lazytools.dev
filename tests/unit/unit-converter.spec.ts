@@ -142,6 +142,22 @@ test.describe('convertUnits', () => {
     );
   });
 
+  // The detail line cut the typed value to eight decimals: 1.123456789 m was
+  // written as "1.12345679 m".
+  test('repeats a long typed value in full', () => {
+    expect(convert('length', '1.123456789', 'meter', 'millimeter')).toEqual({
+      value: '1,123.456789 mm',
+      detail: '1.123456789 m = 1,123.456789 mm',
+      error: '',
+    });
+    expect(convert('length', '0.1234567891234', 'meter', 'meter').detail).toBe(
+      '0.1234567891234 m = 0.12345679 m'
+    );
+    expect(convert('temperature', '36.123456789', 'celsius', 'kelvin').detail).toBe(
+      '36.123456789 °C = 309.27345679 K'
+    );
+  });
+
   // "-0" was echoed and converted as "-0".
   test('never shows a signed zero', () => {
     expect(convert('length', '-0', 'meter', 'foot')).toEqual({

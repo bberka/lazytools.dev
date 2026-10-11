@@ -9,7 +9,10 @@
 
 /** What a number field holds. */
 export type NumberField =
-  /** Blank, or only a sign or decimal separator typed so far. */
+  /**
+   * Blank, or a number still being typed: only a sign or decimal separator so
+   * far, or a number grouped in thousands that stops after a comma.
+   */
   | { kind: 'empty' }
   /** Text that is not a number. */
   | { kind: 'invalid' }
@@ -28,6 +31,12 @@ const COMMA_DECIMAL =
 
 // A sign or decimal separator on its own is a number still being typed.
 const UNFINISHED = /^[+-]?[.,]?$/;
+
+// A number grouped in thousands, cut off after a comma while it is typed key by
+// key: "1,000," or "1,000,0" on the way to 1,000,000. It is only meaningful
+// once the text has failed both readings above, which claim "1,", "1,0" and
+// "1,00" as decimal commas.
+const UNFINISHED_GROUPS = /^[+-]?[1-9]\d{0,2}(?:,\d{2,3})*,\d{0,2}$/;
 
 /**
  * Reads a number field. Surrounding whitespace is ignored.
@@ -50,6 +59,8 @@ export function readNumber(text: string): NumberField {
     plain = trimmed.replace(/,/g, '');
   } else if (COMMA_DECIMAL.test(trimmed)) {
     plain = trimmed.replace(/\./g, '').replace(',', '.');
+  } else if (UNFINISHED_GROUPS.test(trimmed)) {
+    return { kind: 'empty' };
   } else {
     return { kind: 'invalid' };
   }

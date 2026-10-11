@@ -205,6 +205,10 @@ const SCALED_STYLE: NumberStyle = { maxFractionDigits: 8, minSignificantDigits: 
 // tiny result here is rounded away rather than kept.
 const SHIFTED_STYLE: NumberStyle = { maxFractionDigits: 8 };
 
+// The typed value is repeated as it was typed, up to the most fraction digits
+// a number can be written with, so a long entry is not cut to eight decimals.
+const TYPED_STYLE: NumberStyle = { maxFractionDigits: 20, minSignificantDigits: 6 };
+
 const ABSOLUTE_ZERO_CELSIUS = -273.15;
 // Slack for the rounding in converting to Celsius.
 const ABSOLUTE_ZERO_TOLERANCE = 1e-9;
@@ -256,7 +260,7 @@ export function convertUnits(request: UnitConversionRequest): UnitConversion {
   return {
     value: result,
     // The typed value carries no noise, so it is always repeated in full.
-    detail: `${formatNumber(field.value, SCALED_STYLE)} ${fromUnit.symbol} = ${result}`,
+    detail: `${formatNumber(field.value, TYPED_STYLE)} ${fromUnit.symbol} = ${result}`,
     error: '',
   };
 }

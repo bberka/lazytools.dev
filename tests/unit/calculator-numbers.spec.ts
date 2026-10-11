@@ -59,7 +59,28 @@ test.describe('readNumber', () => {
   });
 
   test('refuses separators that fit neither reading', () => {
-    for (const text of [',,', '1,,000', '1,2,3', '1,250,5', '1,5,', '1.2.3', '1.234.567', '1.5,5.5']) {
+    for (const text of [',,', '1,,000', '1,2,3', '1,5,', '1.2.3', '1.234.567', '1.5,5.5']) {
+      expect(readNumber(text), text).toEqual(INVALID);
+    }
+  });
+
+  // Typing 1,000,000 a key at a time passes through "1,000," and "1,000,0",
+  // which are no number yet but are not a mistake either.
+  test('treats a number grouped in thousands and cut off after a comma as empty', () => {
+    for (const text of ['1,000,', '1,000,0', '1,000,00', '1,250,5', '12,34,', '1,00,0', '-1,000,0']) {
+      expect(readNumber(text), text).toEqual(EMPTY);
+    }
+
+    // Each step of the way to 1,000,000 is empty or a number, never invalid.
+    const typed = '1,000,000';
+    for (let length = 1; length <= typed.length; length++) {
+      expect(readNumber(typed.slice(0, length)).kind, typed.slice(0, length)).not.toBe('invalid');
+    }
+    expect(readNumber('1,000,000')).toEqual(number(1000000));
+  });
+
+  test('still refuses a grouped number that no further typing could complete', () => {
+    for (const text of ['01,000,', '1,0000,', '1234,000,', '1,000,000,0000', '1,000,.']) {
       expect(readNumber(text), text).toEqual(INVALID);
     }
   });

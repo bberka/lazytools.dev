@@ -23,12 +23,14 @@ export function RomanNumeralConverter() {
   const { copyToClipboard: copyDecimal, isCopied: isDecimalCopied } = useCopyToClipboard();
   const { copyToClipboard: copyRoman, isCopied: isRomanCopied } = useCopyToClipboard();
 
-  const handleDecimalChange = (val: string) => {
+  // `unreadable` is a number field holding text the browser cannot read as a
+  // number ("12-"): it reports its value as empty although it is not.
+  const handleDecimalChange = (val: string, unreadable: boolean) => {
     setDecimal(val);
     setDecimalError(null);
     setRomanError(null);
 
-    if (!val) {
+    if (!val && !unreadable) {
       setRoman('');
       return;
     }
@@ -101,7 +103,9 @@ export function RomanNumeralConverter() {
                     min={1}
                     max={3999}
                     value={decimal}
-                    onChange={(e) => handleDecimalChange(e.target.value)}
+                    onChange={(e) =>
+                      handleDecimalChange(e.target.value, e.target.validity.badInput)
+                    }
                     placeholder="e.g. 1994"
                     aria-invalid={decimalError ? true : undefined}
                     className={cn(
