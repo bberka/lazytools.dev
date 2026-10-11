@@ -1155,4 +1155,19 @@ export const TOOL_REGISTRY = {
         (module) => module.TotpGenerator
       ),
   },
+  'ulid-generator': {
+    name: 'ULID Generator & Decoder',
+    description: 'Generate and decode sortable ULIDs, or convert them to UUIDs',
+    tags: ['generators'],
+    icon: 'CalendarClock',
+    keywords: [
+      'ulid', 'ulid generator', 'ulid decoder', 'sortable id', 'unique id',
+      'crockford base32', 'monotonic', 'ulid to uuid', 'uuid to ulid',
+      'timestamp id',
+    ],
+    component: () =>
+      import('@/components/tools/UlidGenerator').then(
+        (module) => module.UlidGenerator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
