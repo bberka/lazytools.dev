@@ -23,6 +23,7 @@ This guide is for coding agents working in this repository. It is grounded in th
 - Format: `npm run format`
 - Unit tests: `npm run test:unit`
 - E2E tests: `npm run test:e2e`
+- E2E tests against the static export: `npm run build && npm run test:e2e:export`
 - E2E UI runner: `npm run test:e2e:ui`
 - Install Playwright browsers: `npm run test:e2e:install`
 - Bundle analysis: `npm run analyze`
@@ -138,10 +139,12 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `npm run test:unit` (`playwright.unit.config.ts`). They use the Playwright test runner but need no browser and no dev server; import the module under test with the `@/` alias.
 - Put tool logic that can be a plain function in `src/lib/` and cover it with a unit test rather than an e2e test.
 - Playwright e2e config is in `playwright.config.ts`.
-- Tests run against `http://localhost:3000` and start `npm run dev` automatically.
+- `npm run test:e2e` runs against `http://localhost:3000` and starts `npm run dev` automatically.
+- `npm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
 - Projects cover Chromium, Firefox, and WebKit; route coverage skips non-Chromium for speed.
 - `playwright/route-coverage.spec.ts` iterates every catalog entry and verifies each tool page renders.
 - `playwright/smoke.spec.ts` covers search, favorites, command palette navigation, and JSON Formatter behavior.
+- `playwright/tools/*.spec.ts` drive every tool through its main flow and an edge case, one spec per tool group, on Chromium only. A test marked `test.fixme` documents a known open defect; remove the marker when you fix it.
 - For UI changes, manually verify mobile and desktop widths, light/dark mode, compact mode, and full-width mode when affected.
 
 ## Code Style

@@ -229,7 +229,13 @@ npm run test:e2e
 
 # Run tests with the Playwright UI runner
 npm run test:e2e:ui
+
+# Run the suite on Chromium against the static export (faster, tests what ships)
+npm run build
+npm run test:e2e:export
 ```
+
+`playwright/tools/` holds one spec per tool group that drives each tool through its main flow. When you change a tool, run its spec: `npm run test:e2e:export -- playwright/tools/<group>.spec.ts`. Set `E2E_PORT=3100` if port 3000 is taken by a dev server.
 
 If you are modifying core features (like Search, Favorites, Command Palette) or adding new tools, make sure to add/run the appropriate tests and verify that the suite passes.
 
