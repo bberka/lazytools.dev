@@ -1184,4 +1184,18 @@ export const TOOL_REGISTRY = {
         (module) => module.ChmodCalculator
       ),
   },
+  'json-diff': {
+    name: 'JSON Diff',
+    description: 'Compare two JSON documents and export an RFC 6902 patch.',
+    tags: ['text-tools', 'formatters-validators'],
+    icon: 'FileDiff',
+    keywords: [
+      'json', 'diff', 'compare', 'difference', 'patch', 'rfc 6902',
+      'json pointer', 'structural', 'validate', 'changes',
+    ],
+    component: () =>
+      import('@/components/tools/JsonDiff').then(
+        (module) => module.JsonDiff
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
