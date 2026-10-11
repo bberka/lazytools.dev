@@ -37,9 +37,6 @@ tsconfig.tsbuildinfo
 playwright-report/
 test-results/
 
-# PWA generated files
-/public/sw-precache.js
-
 # Local test / scratch files
 test.docx
 test.md
