@@ -254,7 +254,7 @@ export function verifySignature(digest: Uint8Array, expected: string): VerifyRes
     return {
       status: 'mismatch',
       encoding: first.encoding,
-      detail: `Decoded to ${first.bytes.length} bytes, but this HMAC is ${digest.length} bytes.`,
+      detail: `Decoded to ${first.bytes.length} ${first.bytes.length === 1 ? 'byte' : 'bytes'}, but this HMAC is ${digest.length} bytes.`,
     };
   }
   return timingSafeEqual(sameSize.bytes, digest)

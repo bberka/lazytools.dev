@@ -317,6 +317,28 @@ test.describe('JSON helpers', () => {
     expect(replaced.ok && Object.keys(JSON.parse(replaced.value))).toEqual(['iat', 'sub']);
   });
 
+  test('setJsonMember leaves the other members exactly as written', () => {
+    // 12345678901234567890 is past 2^53, so a parse and stringify would turn it into ...567000.
+    const added = setJsonMember(
+      '{"order_id": 12345678901234567890, "note": "a, {b} \\"c\\"", "tags": [1, 2.50, {"x": 1e3}]}',
+      'iat',
+      100
+    );
+    expect(added).toEqual({
+      ok: true,
+      value:
+        '{\n  "order_id": 12345678901234567890,\n  "note": "a, {b} \\"c\\"",\n  "tags": [1, 2.50, {"x": 1e3}],\n  "iat": 100\n}',
+    });
+
+    const replaced = setJsonMember('{ "id" : 12345678901234567890 , "iat" : 1 }', 'iat', 2);
+    expect(replaced).toEqual({ ok: true, value: '{\n  "id": 12345678901234567890,\n  "iat": 2\n}' });
+  });
+
+  test('setJsonMember matches a key that was written with an escape', () => {
+    const replaced = setJsonMember('{"\\u0069at": 1, "sub": "1"}', 'iat', 2);
+    expect(replaced).toEqual({ ok: true, value: '{\n  "\\u0069at": 2,\n  "sub": "1"\n}' });
+  });
+
   test('setJsonMember pretty-prints and refuses a document it cannot edit', () => {
     const ok = setJsonMember('{}', 'a', 1);
     expect(ok).toEqual({ ok: true, value: '{\n  "a": 1\n}' });

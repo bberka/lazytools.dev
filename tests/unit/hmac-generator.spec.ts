@@ -467,6 +467,15 @@ test.describe('verifySignature', () => {
     expect(result.detail).toMatch(/32 bytes/);
   });
 
+  test('a one-byte signature is described in the singular', () => {
+    const result = verifySignature(digest, 'ab');
+    expect(result).toEqual({
+      status: 'mismatch',
+      encoding: 'hex',
+      detail: 'Decoded to 1 byte, but this HMAC is 32 bytes.',
+    });
+  });
+
   test('a truncated signature is a mismatch, not a match', () => {
     const hex = encodeDigest(digest, 'hex');
     expect(verifySignature(digest, hex.slice(0, 32)).status).toBe('mismatch');

@@ -53,6 +53,7 @@ import {
   type JwtParts,
   type SecretEncoding,
   type SignField,
+  type VerifyResult,
   type VerifyStatus,
 } from '@/lib/tools/jwt-signer';
 
@@ -111,23 +112,40 @@ const PART_STYLE_LIST: Array<[keyof JwtParts, (typeof PART_STYLES)[keyof JwtPart
 
 const SECTION_LABEL_CLASS = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground';
 
+const alwaysChanged = () => false;
+const sameStatus = (previous: VerifyResult, next: VerifyResult) => previous.status === next.status;
+
 /**
  * Runs an async computation whenever `inputs` changes and returns its result,
  * or null while the answer for the current inputs is still pending. `inputs`
  * must be a memoised object and `compute` a stable function.
+ *
+ * A change of `refresh` runs it again for the same inputs. The result on screen
+ * stays until the new one differs from it, as told by `isSame` (a stable
+ * function), so there is no flicker and no new wording for the same answer.
  */
-function useAsyncResult<I, R>(inputs: I, compute: (inputs: I) => Promise<R>): R | null {
+function useAsyncResult<I, R>(
+  inputs: I,
+  compute: (inputs: I) => Promise<R>,
+  refresh = 0,
+  isSame: (previous: R, next: R) => boolean = alwaysChanged
+): R | null {
   const [state, setState] = useState<{ inputs: I; result: R } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void compute(inputs).then((result) => {
-      if (!cancelled) setState({ inputs, result });
+      if (cancelled) return;
+      setState((current) =>
+        current !== null && current.inputs === inputs && isSame(current.result, result)
+          ? current
+          : { inputs, result }
+      );
     });
     return () => {
       cancelled = true;
     };
-  }, [inputs, compute]);
+  }, [inputs, compute, refresh, isSame]);
 
   return state !== null && state.inputs === inputs ? state.result : null;
 }
@@ -180,6 +198,7 @@ export function JwtSigner() {
   const [secretEncoding, setSecretEncoding] = useState<SecretEncoding>('utf8');
   const [expiry, setExpiry] = useState(DEFAULT_EXPIRY);
   const [verifyToken, setVerifyToken] = useState('');
+  const [clockTick, setClockTick] = useState(0);
 
   const copyToken = useCopyToClipboard();
 
@@ -200,7 +219,17 @@ export function JwtSigner() {
     [verifyToken, secret, secretEncoding]
   );
   const signed = useAsyncResult(signInputs, signJwt);
-  const verified = useAsyncResult(verifyInputs, verifyJwt);
+  const verified = useAsyncResult(verifyInputs, verifyJwt, clockTick, sameStatus);
+
+  // exp and nbf are judged against the clock, so a token that is valid, or not
+  // valid yet, on screen is checked again every second and the verdict swaps
+  // when its status changes. Other verdicts do not depend on the time.
+  const verdictUsesClock = verified?.status === 'valid' || verified?.status === 'not-yet-valid';
+  useEffect(() => {
+    if (!verdictUsesClock) return;
+    const timer = window.setInterval(() => setClockTick((tick) => tick + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [verdictUsesClock]);
 
   const signedToken = signed?.ok ? signed.token : '';
 

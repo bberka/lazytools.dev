@@ -190,14 +190,80 @@ export function minifyJson(text: string): string {
   return out;
 }
 
+interface JsonMember {
+  key: string;
+  /** The key as written, quotes included. */
+  keyText: string;
+  /** The value as written. */
+  valueText: string;
+}
+
+/** Splits the text of a valid JSON object into its members, each kept as written. */
+function splitMembers(text: string): JsonMember[] {
+  const members: JsonMember[] = [];
+  let i = text.indexOf('{') + 1;
+  const skipSpace = () => {
+    while (i < text.length && ' \t\n\r'.includes(text[i])) i++;
+  };
+  const skipString = () => {
+    i++;
+    while (i < text.length && text[i] !== '"') i += text[i] === '\\' ? 2 : 1;
+    i++;
+  };
+
+  for (;;) {
+    skipSpace();
+    if (i >= text.length || text[i] === '}') return members;
+    const keyStart = i;
+    skipString();
+    const keyText = text.slice(keyStart, i);
+    skipSpace();
+    i++; // the colon
+    skipSpace();
+    const valueStart = i;
+    let depth = 0;
+    while (i < text.length) {
+      const char = text[i];
+      if (char === '"') {
+        skipString();
+        continue;
+      }
+      if (char === '{' || char === '[') depth++;
+      else if (char === '}' || char === ']') {
+        if (depth === 0) break;
+        depth--;
+      } else if (char === ',' && depth === 0) break;
+      i++;
+    }
+    members.push({
+      key: JSON.parse(keyText) as string,
+      keyText,
+      valueText: text.slice(valueStart, i).trimEnd(),
+    });
+    if (text[i] === ',') i++;
+  }
+}
+
 /**
- * Sets one member of a JSON object document and returns it pretty-printed.
- * An existing member keeps its position; a new one goes last.
+ * Sets one member of a JSON object document and returns the document with one
+ * member per line. The other members are kept as written, so a number too large
+ * for a double does not change. An existing member keeps its position; a new
+ * one goes last.
  */
 export function setJsonMember(text: string, key: string, value: unknown): Result<string> {
   const parsed = parseJsonObject(text);
   if (!parsed.ok) return parsed;
-  return ok(JSON.stringify({ ...parsed.value, [key]: value }, null, 2));
+  const valueText = (JSON.stringify(value, null, 2) ?? 'null').replace(/\n/g, '\n  ');
+  const members = splitMembers(text);
+  let found = false;
+  for (const member of members) {
+    if (member.key !== key) continue;
+    member.valueText = valueText;
+    found = true;
+  }
+  if (!found) members.push({ key, keyText: JSON.stringify(key), valueText });
+  const lines = members.map((member) => `  ${member.keyText}: ${member.valueText}`);
+  return ok(`{\n${lines.join(',\n')}\n}`);
 }
 
 /** Null when the header is a JSON object whose `alg` is the selected algorithm, else the problem. */
