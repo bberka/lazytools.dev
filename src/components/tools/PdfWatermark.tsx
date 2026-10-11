@@ -578,6 +578,7 @@ export function PdfWatermark() {
                           ))}
                           {/* The picker can also hand back "none", which neither the preview nor a PDF can draw. */}
                           <ColorPicker
+                            label="Custom text color"
                             value={textColor}
                             onChange={(value) => {
                               if (parseHexColor(value)) setTextColor(value);
@@ -594,7 +595,7 @@ export function PdfWatermark() {
                         <span>Font Size</span>
                         <span>{fontSize}px</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Font Size"
                         value={fontSize}
                         onChange={(val) => setFontSize(val)}
                         min={12}
@@ -609,7 +610,7 @@ export function PdfWatermark() {
                         <span>Angle (Degrees)</span>
                         <span>{textAngle}°</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Angle (Degrees)"
                         value={textAngle}
                         onChange={(val) => setTextAngle(val)}
                         min={-90}
@@ -660,7 +661,7 @@ export function PdfWatermark() {
                           <span>Scale</span>
                           <span>{imageScale}%</span>
                         </div>
-                        <Slider
+                        <Slider aria-label="Scale"
                           value={imageScale}
                           onChange={(val) => setImageScale(val)}
                           min={10}
@@ -680,7 +681,7 @@ export function PdfWatermark() {
                       <span>Opacity (Transparency)</span>
                       <span>{opacity}%</span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Opacity (Transparency)"
                       value={opacity}
                       onChange={(val) => setOpacity(val)}
                       min={5}

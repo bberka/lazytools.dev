@@ -233,7 +233,7 @@ export function PasswordHasher() {
                     <span className="text-xs text-muted-foreground">2^{rounds} iterations</span>
                   </div>
                   <div className="pt-2">
-                    <Slider
+                    <Slider aria-label="Cost Factor (Rounds)"
                       value={rounds}
                       onChange={(value) => {
                         setRounds(value);
@@ -252,7 +252,7 @@ export function PasswordHasher() {
                     <span className="text-xs text-muted-foreground">Recommended: 3+</span>
                   </div>
                   <div className="pt-2">
-                    <Slider
+                    <Slider aria-label="Iterations (Time Cost)"
                       value={iterations}
                       onChange={(value) => {
                         setIterations(value);

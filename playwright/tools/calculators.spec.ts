@@ -531,8 +531,8 @@ test.describe('Calculator and number tools', () => {
     }
 
     const convertButton = (page: Page) => page.getByRole('button', { name: 'Convert', exact: true });
-    // The text field of the date picker has no label of its own; see the
-    // fixme test at the end of this group.
+    // The text field of the date picker is named after its group ("Reference date"),
+    // but the placeholder is the shortest way to it.
     const dateField = (page: Page) => page.getByPlaceholder('YYYY-MM-DD');
 
     const openConverter = (page: Page) =>
@@ -846,11 +846,6 @@ test.describe('Calculator and number tools', () => {
       });
 
       test('names the reference date field and its calendar button', async ({ page }) => {
-        test.fixme(
-          true,
-          'Reference date: the text field has no label of its own (only the YYYY-MM-DD placeholder) and the calendar button has no accessible name'
-        );
-
         await stubRateService(page, (route) => route.abort());
         await openConverter(page);
 

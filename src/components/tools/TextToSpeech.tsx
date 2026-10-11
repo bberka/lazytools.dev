@@ -401,7 +401,7 @@ export function TextToSpeech() {
                 <span id="tts-rate-label" className="font-medium">Speed (Rate)</span>
                 <span className="font-mono text-xs text-muted-foreground">{rate.toFixed(2)}x</span>
               </div>
-              <Slider
+              <Slider aria-labelledby="tts-rate-label"
                 value={rate}
                 onChange={setRate}
                 min={0.5}
@@ -418,7 +418,7 @@ export function TextToSpeech() {
                 <span id="tts-pitch-label" className="font-medium">Pitch</span>
                 <span className="font-mono text-xs text-muted-foreground">{pitch.toFixed(2)}</span>
               </div>
-              <Slider
+              <Slider aria-labelledby="tts-pitch-label"
                 value={pitch}
                 onChange={setPitch}
                 min={0.5}
@@ -435,7 +435,7 @@ export function TextToSpeech() {
                 <span id="tts-volume-label" className="font-medium">Volume</span>
                 <span className="font-mono text-xs text-muted-foreground">{Math.round(volume * 100)}%</span>
               </div>
-              <Slider
+              <Slider aria-labelledby="tts-volume-label"
                 value={volume}
                 onChange={setVolume}
                 min={0.0}

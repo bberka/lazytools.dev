@@ -285,7 +285,12 @@ function Converter({ defaults }: { defaults: Defaults }) {
               Date and time
             </span>
             <div className="flex flex-wrap gap-2 items-center">
-              <DatePicker value={date} onChange={setDate} className="w-40" />
+              <DatePicker
+                aria-labelledby={`${id}-datetime`}
+                value={date}
+                onChange={setDate}
+                className="w-40"
+              />
               <div className="flex items-center gap-1">
                 <Select
                   value={hour}

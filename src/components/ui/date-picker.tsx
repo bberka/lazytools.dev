@@ -15,6 +15,12 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   error?: boolean;
+  /** Id of the text field, so an outside <label htmlFor> can name it. */
+  id?: string;
+  /** Accessible name of the text field. */
+  'aria-label'?: string;
+  /** Id of the element that names the text field. */
+  'aria-labelledby'?: string;
 }
 
 export function DatePicker({
@@ -24,8 +30,13 @@ export function DatePicker({
   placeholder = 'YYYY-MM-DD',
   className,
   error,
+  id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
+  // The month on show. It is reset each time the calendar opens and is then free to be paged.
+  const [month, setMonth] = React.useState<Date>(() => new Date());
 
   // Parse YYYY-MM-DD to a local Date object for the Calendar component
   const selectedDate = React.useMemo(() => {
@@ -42,6 +53,11 @@ export function DatePicker({
     return date;
   }, [value]);
 
+  const handleOpenChange = (next: boolean) => {
+    if (next) setMonth(selectedDate ?? new Date());
+    setOpen(next);
+  };
+
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
     const y = date.getFullYear();
@@ -53,11 +69,12 @@ export function DatePicker({
 
   return (
     <div className={cn('relative flex items-center w-full', className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Open calendar"
             className="absolute left-1.5 h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
           >
             <CalendarIcon className="h-4 w-4" />
@@ -67,6 +84,8 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={selectedDate}
+            month={month}
+            onMonthChange={setMonth}
             onSelect={handleSelect}
             disabled={disabled}
             className='w-72'
@@ -74,6 +93,9 @@ export function DatePicker({
         </PopoverContent>
       </Popover>
       <IMaskInput
+        id={id}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         mask="0000-00-00"
         value={value}
         onAccept={(val) => onChange(val)}

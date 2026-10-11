@@ -555,6 +555,7 @@ export function GlassmorphismGenerator() {
                 
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
                   <ColorPicker
+                    label="Background overlay color"
                     value={bgColor}
                     onChange={setColor('bgColor')}
                     showText={false}
@@ -577,7 +578,7 @@ export function GlassmorphismGenerator() {
                     <span>OPACITY</span>
                     <span className="font-mono text-foreground">{bgOpacity}%</span>
                   </div>
-                  <Slider
+                  <Slider aria-label="Overlay opacity"
                     value={bgOpacity}
                     min={0}
                     max={100}
@@ -599,7 +600,7 @@ export function GlassmorphismGenerator() {
                       <span>BACKDROP BLUR</span>
                       <span className="font-mono text-foreground">{blur}px</span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Backdrop blur"
                       value={blur}
                       min={0}
                       max={40}
@@ -613,7 +614,7 @@ export function GlassmorphismGenerator() {
                       <span>SATURATION</span>
                       <span className="font-mono text-foreground">{saturate}%</span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Saturation"
                       value={saturate}
                       min={50}
                       max={200}
@@ -644,6 +645,7 @@ export function GlassmorphismGenerator() {
                   <div className="space-y-4 rounded-xl border border-border bg-muted/10 p-4">
                     <div className="flex items-center gap-3">
                       <ColorPicker
+                        label="Border color"
                         value={borderColor}
                         onChange={setColor('borderColor')}
                         showText={false}
@@ -665,7 +667,7 @@ export function GlassmorphismGenerator() {
                         <span>BORDER WIDTH</span>
                         <span className="font-mono text-foreground">{borderWidth}px</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Border width"
                         value={borderWidth}
                         min={1}
                         max={5}
@@ -679,7 +681,7 @@ export function GlassmorphismGenerator() {
                         <span>BORDER OPACITY</span>
                         <span className="font-mono text-foreground">{borderOpacity}%</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Border opacity"
                         value={borderOpacity}
                         min={0}
                         max={100}
@@ -710,7 +712,7 @@ export function GlassmorphismGenerator() {
                       <span>BORDER RADIUS</span>
                       <span className="font-mono text-foreground">{borderRadius}px</span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Border radius"
                       value={borderRadius}
                       min={0}
                       max={60}
@@ -756,6 +758,7 @@ export function GlassmorphismGenerator() {
                   <div className="space-y-4 rounded-xl border border-border bg-muted/10 p-4">
                     <div className="flex items-center gap-3">
                       <ColorPicker
+                        label="Shadow color"
                         value={shadowColor}
                         onChange={setColor('shadowColor')}
                         showText={false}
@@ -777,7 +780,7 @@ export function GlassmorphismGenerator() {
                         <span>BLUR RADIUS</span>
                         <span className="font-mono text-foreground">{shadowBlur}px</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Shadow blur radius"
                         value={shadowBlur}
                         min={0}
                         max={100}
@@ -791,7 +794,7 @@ export function GlassmorphismGenerator() {
                         <span>SPREAD RADIUS</span>
                         <span className="font-mono text-foreground">{shadowSpread}px</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Shadow spread radius"
                         value={shadowSpread}
                         min={0}
                         max={20}
@@ -805,7 +808,7 @@ export function GlassmorphismGenerator() {
                         <span>OPACITY</span>
                         <span className="font-mono text-foreground">{shadowOpacity}%</span>
                       </div>
-                      <Slider
+                      <Slider aria-label="Shadow opacity"
                         value={shadowOpacity}
                         min={0}
                         max={100}

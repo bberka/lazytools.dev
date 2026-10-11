@@ -190,6 +190,7 @@ export function CurrencyConverter() {
               Reference date
             </span>
             <DatePicker
+              aria-labelledby="currency-date-label"
               value={date}
               onChange={setDate}
               disabled={(day) => localIsoDate(day) > getToday()}

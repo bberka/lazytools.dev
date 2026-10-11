@@ -640,7 +640,7 @@ export function HtmlConverter() {
                   <label id="html-export-margins" className="text-sm font-medium">
                     Margins: {margin} mm
                   </label>
-                  <Slider
+                  <Slider aria-labelledby="html-export-margins"
                     value={margin}
                     onChange={setMargin}
                     min={0}
@@ -654,7 +654,7 @@ export function HtmlConverter() {
                   <label id="html-export-scale" className="text-sm font-medium">
                     Render scale: {scale}x
                   </label>
-                  <Slider
+                  <Slider aria-labelledby="html-export-scale"
                     value={scale}
                     onChange={setScale}
                     min={1}
@@ -699,6 +699,7 @@ export function HtmlConverter() {
                       PDF background
                     </label>
                     <ColorPicker
+                      label="PDF background"
                       value={backgroundColor}
                       onChange={setBackgroundColor}
                       disabled={exporting}

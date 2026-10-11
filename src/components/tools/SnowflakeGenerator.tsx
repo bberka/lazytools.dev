@@ -497,7 +497,7 @@ export function SnowflakeGenerator() {
                           <span>Timestamp Width:</span>
                           <span className="font-mono text-primary font-bold">{timestampBits} bits</span>
                         </label>
-                        <Slider value={timestampBits} min={20} max={50} step={1} onChange={(bits) => handleWidthChange('timestampBits', bits)} />
+                        <Slider aria-label="Timestamp Width" value={timestampBits} min={20} max={50} step={1} onChange={(bits) => handleWidthChange('timestampBits', bits)} />
                       </div>
 
                       <div>
@@ -505,7 +505,7 @@ export function SnowflakeGenerator() {
                           <span>Node A Width (e.g. Datacenter):</span>
                           <span className="font-mono text-primary font-bold">{datacenterBits} bits</span>
                         </label>
-                        <Slider value={datacenterBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('datacenterBits', bits)} />
+                        <Slider aria-label="Node A Width" value={datacenterBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('datacenterBits', bits)} />
                       </div>
 
                       <div>
@@ -513,7 +513,7 @@ export function SnowflakeGenerator() {
                           <span>Node B Width (e.g. Worker):</span>
                           <span className="font-mono text-primary font-bold">{workerBits} bits</span>
                         </label>
-                        <Slider value={workerBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('workerBits', bits)} />
+                        <Slider aria-label="Node B Width" value={workerBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('workerBits', bits)} />
                       </div>
 
                       <div>
@@ -521,7 +521,7 @@ export function SnowflakeGenerator() {
                           <span>Node C Width (e.g. Process):</span>
                           <span className="font-mono text-primary font-bold">{processBits} bits</span>
                         </label>
-                        <Slider value={processBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('processBits', bits)} />
+                        <Slider aria-label="Node C Width" value={processBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('processBits', bits)} />
                       </div>
 
                       <div>
@@ -529,7 +529,7 @@ export function SnowflakeGenerator() {
                           <span>Sequence Width:</span>
                           <span className="font-mono text-primary font-bold">{sequenceBits} bits</span>
                         </label>
-                        <Slider value={sequenceBits} min={6} max={20} step={1} onChange={(bits) => handleWidthChange('sequenceBits', bits)} />
+                        <Slider aria-label="Sequence Width" value={sequenceBits} min={6} max={20} step={1} onChange={(bits) => handleWidthChange('sequenceBits', bits)} />
                       </div>
                     </div>
 
@@ -653,7 +653,7 @@ export function SnowflakeGenerator() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Count to Generate: {count}</label>
-                    <Slider value={count} min={1} max={100} step={1} onChange={setCount} />
+                    <Slider aria-label="Count to Generate" value={count} min={1} max={100} step={1} onChange={setCount} />
                   </div>
                 </div>
 

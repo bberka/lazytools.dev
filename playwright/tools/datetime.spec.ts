@@ -56,8 +56,7 @@ async function setDate(page: Page, group: string, value: string) {
 
 /**
  * The button that opens the calendar of a date field. It is the only button
- * in the group and has no accessible name of its own, which is one of the
- * defects recorded in the "shared by the tools" block of this file.
+ * in the group; it is named "Open calendar".
  */
 function calendarButton(page: Page, group: string): Locator {
   return page.getByRole('group', { name: group }).getByRole('button');
@@ -662,8 +661,11 @@ test.describe('Date and time tools', () => {
           'Next birthday June 15, 2025 Turns 35 in 97 days'
       );
 
-      // Nobody is born after the day the age is asked for.
+      // Nobody is born after the day the age is asked for. The calendar opens on the
+      // month of the date in the field, so the field is first moved into March 2025.
+      await setDate(page, 'Birth date', '2025-03-01');
       await calendarButton(page, 'Birth date').click();
+      await expect(calendar.getByRole('grid', { name: 'March 2025' })).toBeVisible();
       await expect(
         calendar.getByRole('button', { name: 'Tuesday, March 11th, 2025' })
       ).toBeDisabled();
@@ -845,11 +847,6 @@ test.describe('Date and time tools', () => {
     });
 
     test('the calendar opens on the month of the date in the field', async ({ page }) => {
-      test.fixme(
-        true,
-        'The calendar always opens on the current month: with 1990-06-15 in the field it shows March 2025, 417 clicks of "previous month" away'
-      );
-
       await page.goto('/tools/age-calculator');
       await expect(dateField(page, 'Age at')).toHaveValue('2025-03-15');
       await expect(dateField(page, 'Birth date')).toHaveValue('1990-06-15');
@@ -863,11 +860,6 @@ test.describe('Date and time tools', () => {
     });
 
     test('the button that opens the calendar has an accessible name', async ({ page }) => {
-      test.fixme(
-        true,
-        'The calendar button of every date field is an icon with no accessible name'
-      );
-
       await page.goto('/tools/date-difference-calculator');
       await expect(dateField(page, 'End date')).toHaveValue('2025-03-15');
 

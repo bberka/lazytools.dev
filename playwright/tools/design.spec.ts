@@ -26,9 +26,9 @@ async function openTool(page: Page, slug: string, heading: string, control: Loca
 }
 
 /**
- * The shared Slider primitive gives its thumb no accessible name, so a slider
- * cannot be found by role and name. It is found through the caption shown
- * beside it instead: the innermost block that holds both.
+ * A slider found through the caption shown beside it rather than through its
+ * accessible name: the innermost block that holds both. Several captions are
+ * upper-cased or carry a value, which a name match would have to allow for.
  */
 function sliderBeside(page: Page, caption: string, within: Locator = page.locator('main')): Locator {
   return within
@@ -223,7 +223,7 @@ test.describe('Design tools', () => {
       await dragPastCorner(page, square, 'top-right');
       await expect(hex).toHaveValue('#00FFFF');
 
-      // The channel sliders have no accessible name; they are found by their captions.
+      // The channel sliders are found by their captions.
       await pressOn(sliderBeside(page, 'Green'), 'Home');
       await expect(hex).toHaveValue('#0000FF');
       await expect(page.getByText('rgb(0, 0, 255)', { exact: true })).toBeVisible();
@@ -535,10 +535,6 @@ test.describe('Design tools', () => {
     });
 
     test('the colour popover picks the colour under the pointer', async ({ page }) => {
-      test.fixme(
-        true,
-        'ui/color-picker.tsx paints a saturation/brightness (HSV) square but reads the pointer as HSL saturation/lightness: the pure-red corner picks #FFFFFF'
-      );
       await page.getByRole('button', { name: '#000000' }).click();
       const popover = page.getByRole('dialog');
 
@@ -1167,7 +1163,7 @@ test.describe('Design tools', () => {
       page.getByRole('button', { name: `Copy ${label}`, exact: true }).locator('xpath=../following-sibling::div');
     const graph = (page: Page) =>
       page.getByRole('img', { name: 'Graph of the computed size across viewport widths' });
-    // The simulator slider has no accessible name; it is the only slider on the page.
+    // The simulator slider is the only slider on the page.
     const simulator = (page: Page) => page.getByRole('slider');
 
     interface Outputs {
@@ -1382,10 +1378,6 @@ test.describe('Design tools', () => {
   // ── Shared controls ─────────────────────────────────────────────────────────
 
   test('every slider in the design tools has an accessible name', async ({ page }) => {
-    test.fixme(
-      true,
-      'ui/slider.tsx puts no aria-label or aria-labelledby on the Radix thumb, so every slider in these tools is announced as just "slider"'
-    );
     const tools: Array<[slug: string, heading: string]> = [
       ['color-picker', 'Color Picker'],
       ['glassmorphism-generator', 'Glassmorphism Generator'],

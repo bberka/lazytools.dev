@@ -66,6 +66,7 @@ export function ColorContrastChecker() {
               <label className="text-sm font-medium">Foreground Color (Text)</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Foreground color"
                   value={contrast.foreground ?? foreground}
                   onChange={setForeground}
                   showText={false}
@@ -87,6 +88,7 @@ export function ColorContrastChecker() {
               <label className="text-sm font-medium">Background Color</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Background color"
                   value={contrast.background ?? background}
                   onChange={setBackground}
                   showText={false}

@@ -161,6 +161,7 @@ export function TimestampConverter() {
               </span>
               <div className="flex flex-wrap gap-2 items-center">
                 <DatePicker
+                  aria-labelledby={`${id}-datetime`}
                   value={state.date}
                   onChange={(date) => apply((current) => editDateTime(current, { date }))}
                   className="w-40"

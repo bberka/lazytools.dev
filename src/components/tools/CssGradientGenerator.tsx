@@ -86,7 +86,7 @@ function SliderField({ label, valueLabel, value, min, max, onChange }: SliderFie
           {valueLabel}
         </span>
       </div>
-      <Slider value={value} min={min} max={max} onChange={onChange} />
+      <Slider aria-labelledby={labelId} value={value} min={min} max={max} onChange={onChange} />
     </div>
   );
 }
@@ -148,7 +148,7 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
           aria-label={`${name} colour`}
           className="min-w-0 flex-1 basis-32 sm:w-36 sm:flex-none"
         >
-          <ColorPicker value={stop.color} onChange={onColor} className="h-9" />
+          <ColorPicker label={`${name} colour`} value={stop.color} onChange={onColor} className="h-9" />
         </div>
         <PercentInput label={`${name} position in percent`} value={stop.position} onChange={onPosition} />
         <div className="ml-auto flex items-center gap-0.5">
@@ -190,7 +190,7 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
           </TooltipSimple>
         </div>
       </div>
-      <Slider value={stop.position} min={0} max={100} step={1} onChange={onPosition} />
+      <Slider aria-label={`${name} position`} value={stop.position} min={0} max={100} step={1} onChange={onPosition} />
     </li>
   );
 }

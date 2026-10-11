@@ -569,16 +569,17 @@ function ChannelSlider({
   suffix?: string;
   onChange: (value: number) => void;
 }) {
+  const labelId = useId();
   return (
     <div className="space-y-3 rounded-[22px] border border-border/60 bg-muted/[0.18] px-4 py-4">
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium">{label}</label>
+        <label id={labelId} className="text-sm font-medium">{label}</label>
         <span className="font-mono text-sm text-muted-foreground">
           {value}
           {suffix}
         </span>
       </div>
-      <Slider value={value} min={0} max={max} onChange={onChange} />
+      <Slider aria-labelledby={labelId} value={value} min={0} max={max} onChange={onChange} />
     </div>
   );
 }

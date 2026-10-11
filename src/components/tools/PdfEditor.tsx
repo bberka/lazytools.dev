@@ -810,7 +810,7 @@ export function PdfEditor() {
                       </div>
                       <div className="flex items-center gap-1.5 border-l pl-3">
                         <span>Size:</span>
-                        <Slider
+                        <Slider aria-label="Brush size"
                           min={1}
                           max={15}
                           value={brushSize}
@@ -858,7 +858,7 @@ export function PdfEditor() {
                         ))}
                       </div>
                       <div className="flex items-center gap-1 border-l pl-2">
-                        <Slider
+                        <Slider aria-label="Text size"
                           min={10}
                           max={36}
                           value={textSize}

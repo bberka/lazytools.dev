@@ -440,7 +440,7 @@ export function ImageConverter() {
                 {outputFormat !== 'png' && outputFormat !== 'ico' && (
                   <div className="space-y-2" role="group" aria-labelledby={`${id}-quality`}>
                     <label id={`${id}-quality`} className="text-sm font-medium">Quality: {quality}%</label>
-                    <Slider
+                    <Slider aria-labelledby={`${id}-quality`}
                       min={1}
                       max={100}
                       value={quality}
@@ -488,7 +488,7 @@ export function ImageConverter() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2" role="group" aria-labelledby={`${id}-rotate`}>
                     <label id={`${id}-rotate`} className="text-xs text-muted-foreground">Rotate: {rotation}°</label>
-                    <Slider
+                    <Slider aria-labelledby={`${id}-rotate`}
                       min={0}
                       max={270}
                       step={90}
@@ -529,7 +529,7 @@ export function ImageConverter() {
 
               <div className="space-y-2" role="group" aria-labelledby={`${id}-blur`}>
                 <label id={`${id}-blur`} className="text-sm font-medium">Blur: {blur}px</label>
-                <Slider
+                <Slider aria-labelledby={`${id}-blur`}
                   min={0}
                   max={20}
                   value={blur}
@@ -539,7 +539,7 @@ export function ImageConverter() {
 
               <div className="space-y-2" role="group" aria-labelledby={`${id}-brightness`}>
                 <label id={`${id}-brightness`} className="text-sm font-medium">Brightness: {brightness}%</label>
-                <Slider
+                <Slider aria-labelledby={`${id}-brightness`}
                   min={0}
                   max={200}
                   value={brightness}
@@ -549,7 +549,7 @@ export function ImageConverter() {
 
               <div className="space-y-2" role="group" aria-labelledby={`${id}-contrast`}>
                 <label id={`${id}-contrast`} className="text-sm font-medium">Contrast: {contrast}%</label>
-                <Slider
+                <Slider aria-labelledby={`${id}-contrast`}
                   min={0}
                   max={200}
                   value={contrast}
@@ -559,7 +559,7 @@ export function ImageConverter() {
 
               <div className="space-y-2" role="group" aria-labelledby={`${id}-saturation`}>
                 <label id={`${id}-saturation`} className="text-sm font-medium">Saturation: {saturation}%</label>
-                <Slider
+                <Slider aria-labelledby={`${id}-saturation`}
                   min={0}
                   max={200}
                   value={saturation}

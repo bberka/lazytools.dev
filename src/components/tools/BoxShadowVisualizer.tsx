@@ -603,7 +603,7 @@ export function BoxShadowVisualizer() {
                         {activeLayer.offsetX}px
                       </span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Offset X"
                       value={activeLayer.offsetX}
                       min={-100}
                       max={100}
@@ -619,7 +619,7 @@ export function BoxShadowVisualizer() {
                         {activeLayer.offsetY}px
                       </span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Offset Y"
                       value={activeLayer.offsetY}
                       min={-100}
                       max={100}
@@ -635,7 +635,7 @@ export function BoxShadowVisualizer() {
                         {activeLayer.blur}px
                       </span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Blur Radius"
                       value={activeLayer.blur}
                       min={0}
                       max={100}
@@ -651,7 +651,7 @@ export function BoxShadowVisualizer() {
                         {activeLayer.spread}px
                       </span>
                     </div>
-                    <Slider
+                    <Slider aria-label="Spread Radius"
                       value={activeLayer.spread}
                       min={-50}
                       max={100}
@@ -669,6 +669,7 @@ export function BoxShadowVisualizer() {
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shadow Color</label>
                     <div className="flex gap-2">
                       <ColorPicker
+                        label="Shadow color"
                         value={activeLayer.color}
                         onChange={setSelectedLayerColor}
                         showText={false}
@@ -692,7 +693,7 @@ export function BoxShadowVisualizer() {
                       </span>
                     </div>
                     <div className="pb-2">
-                      <Slider
+                      <Slider aria-label="Opacity"
                         value={Math.round(activeLayer.opacity * 100)}
                         min={0}
                         max={100}
@@ -747,7 +748,7 @@ export function BoxShadowVisualizer() {
                     <span className="text-xs font-semibold text-muted-foreground">Width</span>
                     <span className="font-mono text-xs">{boxWidth}px</span>
                   </div>
-                  <Slider value={boxWidth} min={50} max={400} onChange={setBoxWidth} />
+                  <Slider aria-label="Box width" value={boxWidth} min={50} max={400} onChange={setBoxWidth} />
                 </div>
 
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
@@ -755,7 +756,7 @@ export function BoxShadowVisualizer() {
                     <span className="text-xs font-semibold text-muted-foreground">Height</span>
                     <span className="font-mono text-xs">{boxHeight}px</span>
                   </div>
-                  <Slider value={boxHeight} min={50} max={400} onChange={setBoxHeight} />
+                  <Slider aria-label="Box height" value={boxHeight} min={50} max={400} onChange={setBoxHeight} />
                 </div>
               </div>
 
@@ -766,6 +767,7 @@ export function BoxShadowVisualizer() {
                   <label className="text-xs font-semibold text-muted-foreground">Box BG Color</label>
                   <div className="flex gap-2">
                     <ColorPicker
+                      label="Box background color"
                       value={boxBgColor}
                       onChange={setBoxBgColor}
                       showText={false}
@@ -789,7 +791,7 @@ export function BoxShadowVisualizer() {
                     <span className="font-mono text-xs">{borderRadius}px</span>
                   </div>
                   <div className="pb-1">
-                    <Slider value={borderRadius} min={0} max={150} onChange={setBorderRadius} />
+                    <Slider aria-label="Border Radius" value={borderRadius} min={0} max={150} onChange={setBorderRadius} />
                   </div>
                 </div>
               </div>
@@ -802,7 +804,7 @@ export function BoxShadowVisualizer() {
                     <span className="text-xs font-semibold text-muted-foreground">Border Width</span>
                     <span className="text-xs font-mono">{borderWidth}px</span>
                   </div>
-                  <Slider value={borderWidth} min={0} max={20} onChange={setBorderWidth} />
+                  <Slider aria-label="Border Width" value={borderWidth} min={0} max={20} onChange={setBorderWidth} />
                 </div>
 
                 {/* Border Style */}
@@ -832,6 +834,7 @@ export function BoxShadowVisualizer() {
                   <span className="text-xs font-semibold text-muted-foreground">Border Color</span>
                   <div className="flex gap-2">
                     <ColorPicker
+                      label="Border color"
                       value={borderColor}
                       onChange={setBorderColor}
                       showText={false}
@@ -992,6 +995,7 @@ export function BoxShadowVisualizer() {
                 <div className="flex items-center gap-1">
                   <TooltipSimple content="Custom Canvas Color">
                     <ColorPicker
+                      label="Custom canvas color"
                       value={canvasCustomBg}
                       onChange={(val) => {
                         setCanvasCustomBg(val);

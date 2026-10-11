@@ -820,7 +820,7 @@ export function ClampCalculator() {
                     {simulatedViewportWidth}px
                   </Badge>
                 </div>
-                <Slider
+                <Slider aria-label="Simulated Screen Width"
                   value={simulatedViewportWidth}
                   min={200}
                   max={2000}

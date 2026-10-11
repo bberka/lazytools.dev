@@ -767,7 +767,7 @@ test.describe('Generator tools', () => {
       await page.getByRole('spinbutton', { name: 'Node ID A' }).fill('31');
       await expect(main).toContainText('Range: 0 - 31 (5 bits)');
 
-      // The width sliders have no accessible names, so they are addressed by position:
+      // The width sliders are addressed by position (they are named in a test below):
       // timestamp, node A, node B, node C, sequence, and last the count.
       const sliders = page.getByRole('slider');
       await expect(sliders).toHaveCount(6);
@@ -892,7 +892,6 @@ test.describe('Generator tools', () => {
     });
 
     test('names its sliders for assistive technology', async ({ page }) => {
-      test.fixme(true, 'The count slider and the five custom bit-width sliders have no accessible name.');
       await openTool(page, SLUG, TITLE);
       await expect(page.getByRole('slider', { name: /count/i })).toBeVisible();
 
@@ -1145,13 +1144,18 @@ test.describe('Generator tools', () => {
     const generate = (page: Page) => page.getByRole('button', { name: 'Generate', exact: true });
     const preview = (page: Page) => page.getByRole('img', { name: 'Generated QR code' });
 
-    /** One of the two colour buttons. Nothing names them but the value they show. */
-    const colourButton = (page: Page, value: string) =>
-      page.getByRole('main').getByRole('button', { name: value, exact: true });
+    /** One of the two colour buttons, named after what it colours and the value it shows ("Foreground: #111827"). */
+    const colourButton = (page: Page, label: 'Foreground' | 'Background', value: string) =>
+      page.getByRole('main').getByRole('button', { name: `${label}: ${value}`, exact: true });
 
     /** Opens the colour picker that shows `current`, runs `pick` in it and closes it again. */
-    async function withColourPicker(page: Page, current: string, pick: () => Promise<void>): Promise<void> {
-      await colourButton(page, current).click();
+    async function withColourPicker(
+      page: Page,
+      label: 'Foreground' | 'Background',
+      current: string,
+      pick: () => Promise<void>
+    ): Promise<void> {
+      await colourButton(page, label, current).click();
       const hex = page.getByPlaceholder('#FFFFFF');
       await expect(hex).toBeVisible();
       await pick();
@@ -1211,8 +1215,8 @@ test.describe('Generator tools', () => {
       await choose(page, page.getByRole('combobox', { name: 'Error correction' }), 'High (H)');
       await expect(page.getByText('~30% recovery')).toBeVisible();
 
-      await withColourPicker(page, '#111827', () => page.getByPlaceholder('#FFFFFF').fill('#1D4ED8'));
-      await expect(colourButton(page, '#1D4ED8')).toBeVisible();
+      await withColourPicker(page, 'Foreground', '#111827', () => page.getByPlaceholder('#FFFFFF').fill('#1D4ED8'));
+      await expect(colourButton(page, 'Foreground', '#1D4ED8')).toBeVisible();
 
       await generate(page).click();
       await expect(page.getByText('Ready at 256 × 256 pixels')).toBeVisible();
@@ -1253,7 +1257,7 @@ test.describe('Generator tools', () => {
       await expect(page.getByRole('spinbutton', { name: 'Size (px)' })).toHaveValue('320');
       await expect(page.getByRole('spinbutton', { name: 'Margin' })).toHaveValue('2');
       await expect(page.getByRole('combobox', { name: 'Error correction' })).toHaveText('Medium (M)');
-      await expect(colourButton(page, '#111827')).toBeVisible();
+      await expect(colourButton(page, 'Foreground', '#111827')).toBeVisible();
       await expect(page.getByText('No QR code generated yet.')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy content' })).toBeDisabled();
     });
@@ -1291,13 +1295,13 @@ test.describe('Generator tools', () => {
       await margin.fill('10');
 
       // White on white, picked from the swatches.
-      await withColourPicker(page, '#111827', () => page.getByTitle('#ffffff').click());
+      await withColourPicker(page, 'Foreground', '#111827', () => page.getByTitle('#ffffff').click());
       await generate(page).click();
       await expect(alert).toHaveText('Foreground and background colors must be different.');
       await expect(preview(page)).toHaveCount(0);
 
       // The limits themselves are accepted: 128 px with a margin of 10.
-      await withColourPicker(page, '#ffffff', () => page.getByTitle('#000000').click());
+      await withColourPicker(page, 'Foreground', '#ffffff', () => page.getByTitle('#000000').click());
       await generate(page).click();
       await expect(alert).toHaveCount(0);
       await expect(page.getByText('Ready at 128 × 128 pixels')).toBeVisible();
@@ -1346,8 +1350,8 @@ test.describe('Generator tools', () => {
       const transparent: Rgba = [0, 0, 0, 0];
 
       // The picker's HEX field takes "none" for no colour at all.
-      await withColourPicker(page, '#FFFFFF', () => page.getByPlaceholder('#FFFFFF').fill('none'));
-      await expect(colourButton(page, 'none')).toBeVisible();
+      await withColourPicker(page, 'Background', '#FFFFFF', () => page.getByPlaceholder('#FFFFFF').fill('none'));
+      await expect(colourButton(page, 'Background', 'none')).toBeVisible();
       await generate(page).click();
       await expect(page.getByText('Ready at 320 × 320 pixels')).toBeVisible();
 
@@ -1364,7 +1368,7 @@ test.describe('Generator tools', () => {
       expect(markup).not.toContain('fill=');
 
       // Nothing to scan without a foreground.
-      await withColourPicker(page, '#111827', () => page.getByPlaceholder('#FFFFFF').fill('none'));
+      await withColourPicker(page, 'Foreground', '#111827', () => page.getByPlaceholder('#FFFFFF').fill('none'));
       await generate(page).click();
       await expect(page.getByRole('main').getByRole('alert')).toHaveText('Choose a foreground color.');
       await expect(preview(page)).toHaveCount(0);
@@ -1400,7 +1404,6 @@ test.describe('Generator tools', () => {
     });
 
     test('names its colour pickers after what they colour', async ({ page }) => {
-      test.fixme(true, 'The two colour buttons are named only by their value ("#111827"), not "Foreground"/"Background".');
       await openTool(page, SLUG, TITLE);
       await expect(page.getByRole('button', { name: /foreground/i })).toBeVisible();
       await expect(page.getByRole('button', { name: /background/i })).toBeVisible();

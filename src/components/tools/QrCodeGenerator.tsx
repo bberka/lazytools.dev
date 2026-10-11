@@ -267,6 +267,7 @@ export function QrCodeGenerator() {
                 <div className="space-y-1">
                   <span className="text-[10px] text-muted-foreground uppercase font-semibold">Foreground</span>
                   <ColorPicker
+                    label="Foreground"
                     value={foregroundColor}
                     onChange={setForegroundColor}
                   />
@@ -274,6 +275,7 @@ export function QrCodeGenerator() {
                 <div className="space-y-1">
                   <span className="text-[10px] text-muted-foreground uppercase font-semibold">Background</span>
                   <ColorPicker
+                    label="Background"
                     value={backgroundColor}
                     onChange={setBackgroundColor}
                   />

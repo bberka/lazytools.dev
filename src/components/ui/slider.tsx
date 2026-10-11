@@ -14,12 +14,16 @@ export interface SliderProps {
   max?: number;
   step?: number;
   disabled?: boolean;
+  /** Accessible name for the thumb(s). Radix puts role="slider" on the thumb, not on the root. */
+  'aria-label'?: string;
+  /** Id of the element that names the thumb(s). */
+  'aria-labelledby'?: string;
 }
 
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   SliderProps
->(({ className, value, defaultValue, onChange, onValueChange, min = 0, max = 100, step = 1, disabled, ...props }, ref) => {
+>(({ className, value, defaultValue, onChange, onValueChange, min = 0, max = 100, step = 1, disabled, 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, ...props }, ref) => {
   const radixValue = React.useMemo(() => {
     if (value === undefined) return undefined;
     return Array.isArray(value) ? value : [value];
@@ -66,6 +70,8 @@ const Slider = React.forwardRef<
       {Array.from({ length: thumbsCount }).map((_, i) => (
         <SliderPrimitive.Thumb
           key={i}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
           className="block h-4 w-4 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 transition-transform"
         />
       ))}

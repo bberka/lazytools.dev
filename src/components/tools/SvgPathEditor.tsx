@@ -107,6 +107,7 @@ export function SvgPathEditor() {
               <label htmlFor={`${fieldId}-stroke`} className="text-sm font-medium">Stroke Color</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Stroke color"
                   value={strokeColor}
                   onChange={setStrokeColor}
                   showText={false}
@@ -126,6 +127,7 @@ export function SvgPathEditor() {
               <label htmlFor={`${fieldId}-fill`} className="text-sm font-medium">Fill Color</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Fill color"
                   value={fillColor === 'none' ? '#ffffff' : fillColor}
                   onChange={setFillColor}
                   disabled={fillColor === 'none'}

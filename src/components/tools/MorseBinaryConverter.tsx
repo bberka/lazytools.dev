@@ -234,7 +234,7 @@ export function MorseBinaryConverter() {
                     Beep Frequency (Pitch): {frequency} Hz
                   </label>
                 </div>
-                <Slider
+                <Slider aria-label="Beep Frequency (Pitch)"
                   value={frequency}
                   min={300}
                   max={900}
@@ -250,7 +250,7 @@ export function MorseBinaryConverter() {
                     Speed (Words per Minute): {wpm} WPM
                   </label>
                 </div>
-                <Slider
+                <Slider aria-label="Speed (Words per Minute)"
                   value={wpm}
                   min={10}
                   max={35}

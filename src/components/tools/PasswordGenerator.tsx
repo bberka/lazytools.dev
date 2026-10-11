@@ -306,7 +306,7 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Length: {length}</label>
-                <Slider value={length} onChange={setLength} min={4} max={256} step={1} />
+                <Slider aria-label="Length" value={length} onChange={setLength} min={4} max={256} step={1} />
               </div>
 
               <div className="space-y-3">
@@ -384,11 +384,11 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">PIN length: {pinLength}</label>
-                <Slider value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
+                <Slider aria-label="PIN length" value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
               </div>
               <div>
                 <label className="mb-3 block text-sm font-medium">Digits per group: {pinGrouping}</label>
-                <Slider
+                <Slider aria-label="Digits per group"
                   value={pinGrouping}
                   onChange={(value) => setPinGrouping(clampInteger(value, 2, 6))}
                   min={2}
@@ -403,7 +403,7 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Word count: {wordCount}</label>
-                <Slider value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
+                <Slider aria-label="Word count" value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

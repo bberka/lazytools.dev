@@ -97,6 +97,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 Birth date
               </span>
               <DatePicker
+                aria-labelledby={`${id}-birth`}
                 value={birthDate}
                 onChange={setBirthDate}
                 disabled={(date) => {
@@ -112,6 +113,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 Age at
               </span>
               <DatePicker
+                aria-labelledby={`${id}-target`}
                 value={targetDate}
                 onChange={setTargetDate}
                 disabled={(date) => {

@@ -97,6 +97,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 Start date
               </span>
               <DatePicker
+                aria-labelledby={`${id}-start`}
                 value={startDate}
                 onChange={setStartDate}
                 disabled={(date) => {
@@ -112,6 +113,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 End date
               </span>
               <DatePicker
+                aria-labelledby={`${id}-end`}
                 value={endDate}
                 onChange={setEndDate}
                 disabled={(date) => {

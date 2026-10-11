@@ -817,10 +817,6 @@ test.describe('Image tools', () => {
     });
 
     test('each slider has an accessible name of its own', async ({ page }) => {
-      test.fixme(
-        true,
-        'The Slider primitive (src/components/ui/slider.tsx) cannot name its thumb: it takes no aria-label or aria-labelledby and a single Radix thumb has no label of its own, so every role=slider is nameless'
-      );
       await open(page, twoTone());
       await selectOption(page, format(page), 'JPEG');
 
@@ -1571,10 +1567,6 @@ test.describe('Image tools', () => {
     });
 
     test('switches type with the mouse and the keyboard and leaves transparency alone', async ({ page }) => {
-      test.fixme(
-        true,
-        'The Select primitive (src/components/ui/select.tsx) leaves focus on the trigger when it opens near the bottom of the viewport: the selected option is highlighted but focus stays on the trigger. Scrolling the trigger to the top of the viewport first makes this test pass'
-      );
       await openTool(page, 'color-blindness-simulator', 'Color Blindness Simulator');
       // Half-transparent red on the left, solid green on the right.
       await chooseFiles(

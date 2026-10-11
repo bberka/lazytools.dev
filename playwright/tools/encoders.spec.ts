@@ -1095,7 +1095,7 @@ test.describe('Encoder and decoder tools', () => {
       const play = page.getByRole('button', { name: 'Play Morse Code' });
       const stop = page.getByRole('button', { name: 'Stop Audio' });
 
-      // The two sliders have no accessible name (see the fixme test below), so they go by position.
+      // The two sliders are named (see the test below); here they go by position.
       const pitch = page.getByRole('slider').nth(0);
       const speed = page.getByRole('slider').nth(1);
       await expect(page.getByText('Beep Frequency (Pitch): 600 Hz')).toBeVisible();
@@ -1202,10 +1202,6 @@ test.describe('Encoder and decoder tools', () => {
     });
 
     test('the pitch and speed sliders have accessible names', async ({ page }) => {
-      test.fixme(
-        true,
-        'Morse: both sliders are exposed as a bare "slider" with no accessible name; the shared Slider (src/components/ui/slider.tsx) does not pass aria-label or aria-labelledby on to its thumb, so the tool cannot name them'
-      );
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
 
       await expect(page.getByRole('slider', { name: /Frequency|Pitch/ })).toHaveAttribute('aria-valuenow', '600');
