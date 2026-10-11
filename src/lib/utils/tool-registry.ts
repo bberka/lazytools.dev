@@ -1242,4 +1242,18 @@ export const TOOL_REGISTRY = {
         (module) => module.UnicodeInspector
       ),
   },
+  'http-status-codes': {
+    name: 'HTTP Status Codes',
+    description: 'Search HTTP status codes, meanings and common causes',
+    tags: ['networking', 'utilities'],
+    icon: 'ServerCrash',
+    keywords: [
+      'http', 'status', 'codes', 'response', 'error', '404', '500', 'redirect',
+      'rest', 'api', 'rfc', 'reference',
+    ],
+    component: () =>
+      import('@/components/tools/HttpStatusCodes').then(
+        (module) => module.HttpStatusCodes
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
