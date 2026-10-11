@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState, type ComponentProps } from 'react';
 import {
   Sparkles,
   Copy,
@@ -34,194 +34,81 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { useCopyToClipboard } from '@/hooks';
+import { normalizeHexColor } from '@/lib/tools/design-color';
+import {
+  DEFAULT_GLASS_PRESET,
+  GLASS_PRESETS,
+  buildGlassOutput,
+  findGlassPreset,
+  type GlassSettings,
+} from '@/lib/tools/glassmorphism-generator';
 
 // Type definitions
 type PreviewBgType = 'drifting-blobs' | 'sunset-gradient' | 'mesh-gradient' | 'space-grid' | 'solid-dark';
 type MockupType = 'credit-card' | 'login-form' | 'dashboard';
 type ExportTabType = 'css' | 'tailwind' | 'react';
 
-interface GlassPreset {
-  name: string;
-  bgColor: string;
-  bgOpacity: number;
-  blur: number;
-  saturate: number;
-  borderWidth: number;
-  borderColor: string;
-  borderOpacity: number;
-  borderRadius: number;
-  isIndividualCorners: boolean;
-  corners: [number, number, number, number]; // tl, tr, br, bl
-  enableShadow: boolean;
-  shadowColor: string;
-  shadowOpacity: number;
-  shadowBlur: number;
-  shadowSpread: number;
-  shadowX: number;
-  shadowY: number;
-}
+type GlassColor = 'bgColor' | 'borderColor' | 'shadowColor';
 
-const PRESETS: Record<string, GlassPreset> = {
-  frosted: {
-    name: 'Frosted Light',
-    bgColor: '#ffffff',
-    bgOpacity: 0.15,
-    blur: 16,
-    saturate: 100,
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    borderOpacity: 0.25,
-    borderRadius: 16,
-    isIndividualCorners: false,
-    corners: [16, 16, 16, 16],
-    enableShadow: true,
-    shadowColor: '#000000',
-    shadowOpacity: 0.1,
-    shadowBlur: 24,
-    shadowSpread: 0,
-    shadowX: 0,
-    shadowY: 8,
-  },
-  deepBlur: {
-    name: 'Deep Ice',
-    bgColor: '#ffffff',
-    bgOpacity: 0.08,
-    blur: 30,
-    saturate: 120,
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    borderOpacity: 0.2,
-    borderRadius: 24,
-    isIndividualCorners: false,
-    corners: [24, 24, 24, 24],
-    enableShadow: true,
-    shadowColor: '#000000',
-    shadowOpacity: 0.15,
-    shadowBlur: 35,
-    shadowSpread: 0,
-    shadowX: 0,
-    shadowY: 12,
-  },
-  midnight: {
-    name: 'Midnight Dark',
-    bgColor: '#111827',
-    bgOpacity: 0.35,
-    blur: 16,
-    saturate: 100,
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    borderOpacity: 0.08,
-    borderRadius: 16,
-    isIndividualCorners: false,
-    corners: [16, 16, 16, 16],
-    enableShadow: true,
-    shadowColor: '#000000',
-    shadowOpacity: 0.4,
-    shadowBlur: 30,
-    shadowSpread: 0,
-    shadowX: 0,
-    shadowY: 10,
-  },
-  neon: {
-    name: 'Neon Glow',
-    bgColor: '#ec4899',
-    bgOpacity: 0.1,
-    blur: 12,
-    saturate: 150,
-    borderWidth: 1.5,
-    borderColor: '#f43f5e',
-    borderOpacity: 0.4,
-    borderRadius: 24,
-    isIndividualCorners: false,
-    corners: [24, 24, 24, 24],
-    enableShadow: true,
-    shadowColor: '#ec4899',
-    shadowOpacity: 0.15,
-    shadowBlur: 25,
-    shadowSpread: 2,
-    shadowX: 0,
-    shadowY: 4,
-  },
-  hyperClear: {
-    name: 'Hyper Clear',
-    bgColor: '#ffffff',
-    bgOpacity: 0.03,
-    blur: 4,
-    saturate: 100,
-    borderWidth: 1,
-    borderColor: '#ffffff',
-    borderOpacity: 0.35,
-    borderRadius: 8,
-    isIndividualCorners: false,
-    corners: [8, 8, 8, 8],
-    enableShadow: false,
-    shadowColor: '#000000',
-    shadowOpacity: 0.05,
-    shadowBlur: 10,
-    shadowSpread: 0,
-    shadowX: 0,
-    shadowY: 2,
-  },
-  amethyst: {
-    name: 'Royal Amethyst',
-    bgColor: '#6366f1',
-    bgOpacity: 0.15,
-    blur: 20,
-    saturate: 130,
-    borderWidth: 1,
-    borderColor: '#a5b4fc',
-    borderOpacity: 0.3,
-    borderRadius: 20,
-    isIndividualCorners: true,
-    corners: [30, 8, 30, 8],
-    enableShadow: true,
-    shadowColor: '#4f46e5',
-    shadowOpacity: 0.2,
-    shadowBlur: 30,
-    shadowSpread: 0,
-    shadowX: 0,
-    shadowY: 10,
-  },
-};
+const CORNER_LABELS = ['Top Left', 'Top Right', 'Bottom Right', 'Bottom Left'];
 
-// Hex to RGB parser helper
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  let cleanHex = hex.trim().replace(/^#/, '');
-  if (cleanHex.length === 3) {
-    cleanHex = cleanHex.split('').map((char) => char + char).join('');
-  }
-  const num = parseInt(cleanHex, 16);
-  return {
-    r: (num >> 16) & 255,
-    g: (num >> 8) & 255,
-    b: num & 255,
-  };
+/**
+ * Text field for a hex colour. What is being typed stays in the field until it
+ * is a whole colour, so a half-typed value never reaches the preview or the
+ * generated code.
+ */
+function HexColorInput({
+  value,
+  onChange,
+  ...props
+}: Omit<ComponentProps<typeof Input>, 'value' | 'onChange'> & {
+  value: string;
+  onChange: (hex: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <Input
+      type="text"
+      maxLength={7}
+      {...props}
+      value={draft ?? value}
+      aria-invalid={draft !== null && normalizeHexColor(draft) === null}
+      onChange={(event) => {
+        const text = event.target.value;
+        const hex = normalizeHexColor(text);
+        setDraft(text);
+        if (hex) onChange(hex);
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
 }
 
 export function GlassmorphismGenerator() {
-  // Sliders and controls states initialized to "Frosted Light"
-  const [bgColor, setBgColor] = useState('#ffffff');
-  const [bgOpacity, setBgOpacity] = useState(15);
-  const [blur, setBlur] = useState(16);
-  const [saturate, setSaturate] = useState(100);
-  const [borderWidth, setBorderWidth] = useState(1);
-  const [borderColor, setBorderColor] = useState('#ffffff');
-  const [borderOpacity, setBorderOpacity] = useState(25);
-  const [borderRadius, setBorderRadius] = useState(16);
-  const [isIndividualCorners, setIsIndividualCorners] = useState(false);
-  const [cornerTl, setCornerTl] = useState(16);
-  const [cornerTr, setCornerTr] = useState(16);
-  const [cornerBr, setCornerBr] = useState(16);
-  const [cornerBl, setCornerBl] = useState(16);
-
-  // Box shadow states
-  const [enableShadow, setEnableShadow] = useState(true);
-  const [shadowColor, setShadowColor] = useState('#000000');
-  const [shadowOpacity, setShadowOpacity] = useState(10);
-  const [shadowBlur, setShadowBlur] = useState(24);
-  const [shadowSpread, setShadowSpread] = useState(0);
-  const [shadowX, setShadowX] = useState(0);
-  const [shadowY, setShadowY] = useState(8);
+  // Sliders and controls start on "Frosted Light"
+  const [settings, setSettings] = useState<GlassSettings>(
+    GLASS_PRESETS[DEFAULT_GLASS_PRESET].settings
+  );
+  const {
+    bgColor,
+    bgOpacity,
+    blur,
+    saturate,
+    borderWidth,
+    borderColor,
+    borderOpacity,
+    borderRadius,
+    isIndividualCorners,
+    corners,
+    enableShadow,
+    shadowColor,
+    shadowOpacity,
+    shadowBlur,
+    shadowSpread,
+    shadowX,
+    shadowY,
+  } = settings;
 
   // Preview options
   const [previewBg, setPreviewBg] = useState<PreviewBgType>('drifting-blobs');
@@ -230,206 +117,47 @@ export function GlassmorphismGenerator() {
 
   const copy = useCopyToClipboard();
 
-  // Handle Preset Selection
-  const applyPreset = (key: string) => {
-    const preset = PRESETS[key];
-    if (!preset) return;
-    setBgColor(preset.bgColor);
-    setBgOpacity(preset.bgOpacity * 100);
-    setBlur(preset.blur);
-    setSaturate(preset.saturate);
-    setBorderWidth(preset.borderWidth);
-    setBorderColor(preset.borderColor);
-    setBorderOpacity(preset.borderOpacity * 100);
-    setBorderRadius(preset.borderRadius);
-    setIsIndividualCorners(preset.isIndividualCorners);
-    setCornerTl(preset.corners[0]);
-    setCornerTr(preset.corners[1]);
-    setCornerBr(preset.corners[2]);
-    setCornerBl(preset.corners[3]);
-    setEnableShadow(preset.enableShadow);
-    setShadowColor(preset.shadowColor);
-    setShadowOpacity(preset.shadowOpacity * 100);
-    setShadowBlur(preset.shadowBlur);
-    setShadowSpread(preset.shadowSpread);
-    setShadowX(preset.shadowX);
-    setShadowY(preset.shadowY);
+  const update = <K extends keyof GlassSettings>(key: K, value: GlassSettings[K]) => {
+    setSettings((current) => ({ ...current, [key]: value }));
   };
 
-  // Check if current values match any preset using useMemo
-  const activePreset = useMemo(() => {
-    for (const [key, preset] of Object.entries(PRESETS)) {
-      const isBgMatch = preset.bgColor.toLowerCase() === bgColor.toLowerCase() && Math.round(preset.bgOpacity * 100) === bgOpacity;
-      const isFilterMatch = preset.blur === blur && preset.saturate === saturate;
-      const isBorderMatch = preset.borderWidth === borderWidth && preset.borderColor.toLowerCase() === borderColor.toLowerCase() && Math.round(preset.borderOpacity * 100) === borderOpacity;
-      const isCornerMatch = preset.isIndividualCorners === isIndividualCorners && 
-        (isIndividualCorners 
-          ? preset.corners[0] === cornerTl && preset.corners[1] === cornerTr && preset.corners[2] === cornerBr && preset.corners[3] === cornerBl
-          : preset.borderRadius === borderRadius);
-      const isShadowMatch = preset.enableShadow === enableShadow && 
-        (!enableShadow || (preset.shadowColor.toLowerCase() === shadowColor.toLowerCase() && Math.round(preset.shadowOpacity * 100) === shadowOpacity && preset.shadowBlur === shadowBlur && preset.shadowSpread === shadowSpread && preset.shadowX === shadowX && preset.shadowY === shadowY));
-      
-      if (isBgMatch && isFilterMatch && isBorderMatch && isCornerMatch && isShadowMatch) {
-        return key;
-      }
-    }
-    return '';
-  }, [
-    bgColor, bgOpacity, blur, saturate, borderWidth, borderColor, borderOpacity,
-    borderRadius, isIndividualCorners, cornerTl, cornerTr, cornerBr, cornerBl,
-    enableShadow, shadowColor, shadowOpacity, shadowBlur, shadowSpread, shadowX, shadowY
-  ]);
+  // A setter for one setting, in the shape the sliders and switches call.
+  const set =
+    <K extends keyof GlassSettings>(key: K) =>
+    (value: GlassSettings[K]) =>
+      update(key, value);
 
-  // Computed Values
-  const bgRgb = useMemo(() => hexToRgb(bgColor), [bgColor]);
-  const borderRgb = useMemo(() => hexToRgb(borderColor), [borderColor]);
-  const shadowRgb = useMemo(() => hexToRgb(shadowColor), [shadowColor]);
+  // The colour picker can also report "none"; the glass needs a real colour.
+  const setColor = (key: GlassColor) => (value: string) => {
+    const hex = normalizeHexColor(value);
+    if (hex) update(key, hex);
+  };
 
-  // CSS Styles Object
-  const generatedStyles = useMemo(() => {
-    const bgOpacityDecimal = bgOpacity / 100;
-    const borderOpacityDecimal = borderOpacity / 100;
-    const shadowOpacityDecimal = shadowOpacity / 100;
+  const setCorner = (index: number, value: number) => {
+    setSettings((current) => {
+      const next: GlassSettings['corners'] = [...current.corners];
+      next[index] = Math.max(0, Math.min(100, value));
+      return { ...current, corners: next };
+    });
+  };
 
-    const borderRadiusStyle = isIndividualCorners
-      ? `${cornerTl}px ${cornerTr}px ${cornerBr}px ${cornerBl}px`
-      : `${borderRadius}px`;
+  // Handle Preset Selection
+  const applyPreset = (key: string) => {
+    const preset = GLASS_PRESETS[key];
+    if (preset) setSettings(preset.settings);
+  };
 
-    const background = `rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, ${bgOpacityDecimal})`;
-    const backdropFilter = `blur(${blur}px) saturate(${saturate}%)`;
-    const border = borderWidth > 0 
-      ? `${borderWidth}px solid rgba(${borderRgb.r}, ${borderRgb.g}, ${borderRgb.b}, ${borderOpacityDecimal})`
-      : 'none';
-    
-    const boxShadow = enableShadow 
-      ? `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px rgba(${shadowRgb.r}, ${shadowRgb.g}, ${shadowRgb.b}, ${shadowOpacityDecimal})`
-      : 'none';
+  // The preset the current values match, if any
+  const activePreset = useMemo(() => findGlassPreset(settings), [settings]);
 
-    return {
-      background,
-      backdropFilter,
-      WebkitBackdropFilter: backdropFilter,
-      border,
-      borderRadius: borderRadiusStyle,
-      boxShadow,
-    };
-  }, [
-    bgRgb, bgOpacity, blur, saturate, borderWidth, borderRgb, borderOpacity,
-    borderRadius, isIndividualCorners, cornerTl, cornerTr, cornerBr, cornerBl,
-    enableShadow, shadowX, shadowY, shadowBlur, shadowSpread, shadowRgb, shadowOpacity
-  ]);
-
-  // Standard CSS Code Output
-  const cssCode = useMemo(() => {
-    const bgOpacityDecimal = bgOpacity / 100;
-    const borderOpacityDecimal = borderOpacity / 100;
-    const shadowOpacityDecimal = shadowOpacity / 100;
-
-    const borderRadiusValue = isIndividualCorners
-      ? `border-radius: ${cornerTl}px ${cornerTr}px ${cornerBr}px ${cornerBl}px;`
-      : `border-radius: ${borderRadius}px;`;
-
-    const shadowLine = enableShadow
-      ? `\n  box-shadow: ${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px rgba(${shadowRgb.r}, ${shadowRgb.g}, ${shadowRgb.b}, ${shadowOpacityDecimal});`
-      : '';
-
-    const borderLine = borderWidth > 0
-      ? `\n  border: ${borderWidth}px solid rgba(${borderRgb.r}, ${borderRgb.g}, ${borderRgb.b}, ${borderOpacityDecimal});`
-      : '';
-
-    return `.glass-card {
-  background: rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, ${bgOpacityDecimal});
-  backdrop-filter: blur(${blur}px) saturate(${saturate}%);
-  -webkit-backdrop-filter: blur(${blur}px) saturate(${saturate}%);${borderLine}
-  ${borderRadiusValue}${shadowLine}
-}`;
-  }, [
-    bgRgb, bgOpacity, blur, saturate, borderWidth, borderRgb, borderOpacity,
-    borderRadius, isIndividualCorners, cornerTl, cornerTr, cornerBr, cornerBl,
-    enableShadow, shadowX, shadowY, shadowBlur, shadowSpread, shadowRgb, shadowOpacity
-  ]);
-
-  // Tailwind CSS Output
-  const tailwindCode = useMemo(() => {
-    const bgOpacityDecimal = bgOpacity / 100;
-    const borderOpacityDecimal = borderOpacity / 100;
-    const shadowOpacityDecimal = shadowOpacity / 100;
-
-    // Background color class
-    let bgClass = '';
-    const hexLower = bgColor.toLowerCase();
-    if (hexLower === '#ffffff') {
-      bgClass = `bg-white/[${bgOpacityDecimal}]`;
-    } else if (hexLower === '#000000') {
-      bgClass = `bg-black/[${bgOpacityDecimal}]`;
-    } else {
-      bgClass = `bg-[rgba(${bgRgb.r},${bgRgb.g},${bgRgb.b},${bgOpacityDecimal})]`;
-    }
-
-    // Blur class
-    const blurClass = `backdrop-blur-[${blur}px]`;
-    
-    // Saturation class
-    const saturateClass = saturate !== 100 ? `saturate-[${saturate}%]` : '';
-
-    // Border classes
-    let borderClass = '';
-    if (borderWidth > 0) {
-      const bColorLower = borderColor.toLowerCase();
-      let borderColClass = '';
-      if (bColorLower === '#ffffff') {
-        borderColClass = `border-white/[${borderOpacityDecimal}]`;
-      } else if (bColorLower === '#000000') {
-        borderColClass = `border-black/[${borderOpacityDecimal}]`;
-      } else {
-        borderColClass = `border-[rgba(${borderRgb.r},${borderRgb.g},${borderRgb.b},${borderOpacityDecimal})]`;
-      }
-      borderClass = `border-[${borderWidth}px] ${borderColClass}`;
-    }
-
-    // Rounding class
-    let roundClass = '';
-    if (isIndividualCorners) {
-      roundClass = `rounded-tl-[${cornerTl}px] rounded-tr-[${cornerTr}px] rounded-br-[${cornerBr}px] rounded-bl-[${cornerBl}px]`;
-    } else {
-      roundClass = `rounded-[${borderRadius}px]`;
-    }
-
-    // Shadow class
-    let shadowClass = '';
-    if (enableShadow) {
-      shadowClass = `shadow-[${shadowX}px_${shadowY}px_${shadowBlur}px_${shadowSpread}px_rgba(${shadowRgb.r},${shadowRgb.g},${shadowRgb.b},${shadowOpacityDecimal})]`;
-    }
-
-    return `<div className="${bgClass} ${blurClass} ${saturateClass} ${borderClass} ${roundClass} ${shadowClass}`.replace(/\s+/g, ' ').trim() + `">\n  <!-- Card Content -->\n</div>`;
-  }, [
-    bgColor, bgRgb, bgOpacity, blur, saturate, borderWidth, borderColor, borderRgb, borderOpacity,
-    borderRadius, isIndividualCorners, cornerTl, cornerTr, cornerBr, cornerBl,
-    enableShadow, shadowX, shadowY, shadowBlur, shadowSpread, shadowRgb, shadowOpacity
-  ]);
-
-  // React Inline Style Output
-  const reactInlineCode = useMemo(() => {
-    return `const glassStyle = {
-  background: "${generatedStyles.background}",
-  backdropFilter: "${generatedStyles.backdropFilter}",
-  WebkitBackdropFilter: "${generatedStyles.backdropFilter}",
-  border: "${generatedStyles.border}",
-  borderRadius: "${generatedStyles.borderRadius}",
-  boxShadow: "${generatedStyles.boxShadow}"
-};
-
-// Usage:
-// <div style={glassStyle}>Card</div>`;
-  }, [generatedStyles]);
+  // Card style and the CSS, Tailwind and React snippets
+  const output = useMemo(() => buildGlassOutput(settings), [settings]);
 
   // Copy helper
   const handleCopyCode = () => {
-    const textToCopy = 
-      exportTab === 'css' ? cssCode :
-      exportTab === 'tailwind' ? tailwindCode :
-      reactInlineCode;
-    copy.copyToClipboard(textToCopy);
+    copy.copyToClipboard(
+      exportTab === 'css' ? output.css : exportTab === 'tailwind' ? output.tailwind : output.react
+    );
   };
 
   return (
@@ -458,7 +186,7 @@ export function GlassmorphismGenerator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-indigo-500" />
+            <Sparkles className="h-5 w-5 text-primary" />
             Glassmorphism Generator
           </CardTitle>
           <CardDescription>
@@ -469,14 +197,15 @@ export function GlassmorphismGenerator() {
           <div className="space-y-3">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quick Presets</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {Object.entries(PRESETS).map(([key, preset]) => (
+              {Object.entries(GLASS_PRESETS).map(([key, preset]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => applyPreset(key)}
+                  aria-pressed={activePreset === key}
                   className={`group relative flex flex-col items-center justify-center rounded-2xl border px-3 py-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     activePreset === key
-                      ? 'border-primary bg-primary/5 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)] ring-2 ring-primary/20'
+                      ? 'border-primary bg-primary/5 shadow-[0_0_12px_hsl(var(--primary)/0.15)] ring-2 ring-primary/20'
                       : 'border-border/70 bg-card hover:border-border hover:bg-muted/30'
                   }`}
                 >
@@ -484,10 +213,10 @@ export function GlassmorphismGenerator() {
                   <div
                     className="mt-2.5 h-6 w-12 rounded-lg border border-white/20 shadow-sm"
                     style={{
-                      background: preset.bgColor,
-                      opacity: preset.bgOpacity + 0.1,
-                      backdropFilter: `blur(${preset.blur}px)`,
-                      boxShadow: preset.enableShadow ? '0 4px 8px rgba(0,0,0,0.1)' : 'none',
+                      background: preset.settings.bgColor,
+                      opacity: preset.settings.bgOpacity / 100 + 0.1,
+                      backdropFilter: `blur(${preset.settings.blur}px)`,
+                      boxShadow: preset.settings.enableShadow ? '0 4px 8px rgba(0,0,0,0.1)' : 'none',
                     }}
                   />
                 </button>
@@ -498,12 +227,13 @@ export function GlassmorphismGenerator() {
       </Card>
 
       {/* Main Interactive Grid */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr,minmax(380px,440px)]">
+      {/* grid-cols-1 keeps the column as wide as the page: without it a long line of generated code widens the column instead of scrolling inside its box */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[1fr,minmax(380px,440px)]">
         
         {/* Left Side: Interactive Live Preview Playground */}
         <div className="flex flex-col gap-4 sm:gap-6">
           <Card className="flex flex-1 flex-col overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Maximize2 className="h-4 w-4" />
@@ -511,7 +241,7 @@ export function GlassmorphismGenerator() {
                 </CardTitle>
                 <CardDescription>Drag sliders on the right and watch the glass refract shapes in real-time.</CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground mr-1">Preview Card Content:</span>
                 <div className="flex rounded-lg border border-border/70 bg-muted/30 p-0.5">
                   <TooltipSimple content="Credit Card mockup">
@@ -521,6 +251,7 @@ export function GlassmorphismGenerator() {
                       className="h-7 px-2.5 text-xs rounded-md"
                       onClick={() => setMockup('credit-card')}
                       aria-label="Credit Card mockup"
+                      aria-pressed={mockup === 'credit-card'}
                     >
                       <CreditCard className="h-3.5 w-3.5 mr-1" />
                       Card
@@ -533,6 +264,7 @@ export function GlassmorphismGenerator() {
                       className="h-7 px-2.5 text-xs rounded-md"
                       onClick={() => setMockup('login-form')}
                       aria-label="Login form mockup"
+                      aria-pressed={mockup === 'login-form'}
                     >
                       <Lock className="h-3.5 w-3.5 mr-1" />
                       Login
@@ -545,6 +277,7 @@ export function GlassmorphismGenerator() {
                       className="h-7 px-2.5 text-xs rounded-md"
                       onClick={() => setMockup('dashboard')}
                       aria-label="Dashboard widget mockup"
+                      aria-pressed={mockup === 'dashboard'}
                     >
                       <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
                       Stats
@@ -553,7 +286,7 @@ export function GlassmorphismGenerator() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-1 items-center justify-center p-6 bg-muted/10 relative min-h-[420px] rounded-b-xl overflow-hidden">
+            <CardContent className="flex flex-1 items-center justify-center p-4 sm:p-6 bg-muted/10 relative min-h-[420px] rounded-b-xl overflow-hidden">
               
               {/* --- BACKGROUND PATTERNS --- */}
 
@@ -605,7 +338,7 @@ export function GlassmorphismGenerator() {
 
               {/* --- PREVIEW GLASS CARD --- */}
               <div 
-                style={generatedStyles}
+                style={output.style}
                 className="w-full max-w-sm relative z-10 transition-all duration-300 p-6 flex flex-col justify-between"
               >
                 
@@ -721,7 +454,7 @@ export function GlassmorphismGenerator() {
             {/* Preview Background Switcher */}
             <div className="border-t border-border/70 p-3 bg-muted/20 flex flex-wrap items-center justify-between gap-3">
               <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Palette className="h-3.5 w-3.5 text-indigo-500" />
+                <Palette className="h-3.5 w-3.5 text-primary" />
                 Change background under glass:
               </span>
               <div className="flex gap-1.5 flex-wrap">
@@ -730,6 +463,7 @@ export function GlassmorphismGenerator() {
                     key={bg}
                     type="button"
                     onClick={() => setPreviewBg(bg)}
+                    aria-pressed={previewBg === bg}
                     className={`h-7 px-2.5 text-[11px] rounded-lg border font-medium capitalize transition-all ${
                       previewBg === bg
                         ? 'bg-foreground text-background border-foreground'
@@ -773,9 +507,9 @@ export function GlassmorphismGenerator() {
             <CardContent className="space-y-4">
               <div className="relative group">
                 <pre className="overflow-x-auto scrollbar-thin rounded-xl border border-border bg-muted/40 p-4 font-mono text-xs text-foreground leading-relaxed min-h-36">
-                  {exportTab === 'css' && cssCode}
-                  {exportTab === 'tailwind' && tailwindCode}
-                  {exportTab === 'react' && reactInlineCode}
+                  {exportTab === 'css' && output.css}
+                  {exportTab === 'tailwind' && output.tailwind}
+                  {exportTab === 'react' && output.react}
                 </pre>
                 <TooltipSimple content="Copy code">
                   <Button
@@ -791,7 +525,7 @@ export function GlassmorphismGenerator() {
               </div>
 
               <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                <Info className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
+                <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="leading-normal">
                   {exportTab === 'css' && "Backdrop-filter is fully supported by all modern browsers. Make sure your parent container has a colorful background for the blur effect to be visible."}
                   {exportTab === 'tailwind' && "The inline arbitrary values syntax (e.g. backdrop-blur-[16px]) allows you to copy-paste exact CSS values directly without editing your tailwind.config.js."}
@@ -807,11 +541,11 @@ export function GlassmorphismGenerator() {
           <Card>
             <CardHeader className="pb-3 border-b border-border/70">
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Sliders className="h-4 w-4 text-indigo-500" />
+                <Sliders className="h-4 w-4 text-primary" />
                 Customize Effect
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-5 space-y-6">
+            <CardContent className="p-4 sm:p-5 space-y-6">
               
               {/* SECTION: Color & Transparency */}
               <div className="space-y-4">
@@ -822,23 +556,18 @@ export function GlassmorphismGenerator() {
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
                   <ColorPicker
                     value={bgColor}
-                    onChange={setBgColor}
+                    onChange={setColor('bgColor')}
                     showText={false}
                     className="relative h-10 w-10 shrink-0 rounded-lg border border-border/80"
                   />
                   <div className="min-w-0 flex-1">
                     <label className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">HEX Code</label>
-                    <Input
+                    <HexColorInput
                       value={bgColor}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^#[0-9A-F]{0,6}$/i.test(val)) {
-                          setBgColor(val);
-                        }
-                      }}
+                      onChange={setColor('bgColor')}
                       placeholder="#ffffff"
-                      maxLength={7}
                       className="h-8 border-none bg-transparent px-0 font-mono text-sm uppercase shadow-none focus-visible:ring-0"
+                      aria-label="Background overlay color HEX"
                     />
                   </div>
                 </div>
@@ -853,7 +582,7 @@ export function GlassmorphismGenerator() {
                     min={0}
                     max={100}
                     step={1}
-                    onChange={setBgOpacity}
+                    onChange={set('bgOpacity')}
                   />
                 </div>
               </div>
@@ -875,7 +604,7 @@ export function GlassmorphismGenerator() {
                       min={0}
                       max={40}
                       step={1}
-                      onChange={setBlur}
+                      onChange={set('blur')}
                     />
                   </div>
 
@@ -889,7 +618,7 @@ export function GlassmorphismGenerator() {
                       min={50}
                       max={200}
                       step={5}
-                      onChange={setSaturate}
+                      onChange={set('saturate')}
                     />
                   </div>
                 </div>
@@ -905,7 +634,8 @@ export function GlassmorphismGenerator() {
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase">Enable</span>
                     <Switch
                       checked={borderWidth > 0}
-                      onCheckedChange={(checked) => setBorderWidth(checked ? 1 : 0)}
+                      onCheckedChange={(checked) => update('borderWidth', checked ? 1 : 0)}
+                      aria-label="Enable glass border"
                     />
                   </div>
                 </div>
@@ -915,17 +645,17 @@ export function GlassmorphismGenerator() {
                     <div className="flex items-center gap-3">
                       <ColorPicker
                         value={borderColor}
-                        onChange={setBorderColor}
+                        onChange={setColor('borderColor')}
                         showText={false}
                         className="h-8 w-8 rounded-md border border-border"
                       />
                       <div className="flex-1">
-                        <Input
+                        <HexColorInput
                           value={borderColor}
-                          onChange={(e) => setBorderColor(e.target.value)}
+                          onChange={setColor('borderColor')}
                           placeholder="#ffffff"
-                          maxLength={7}
                           className="h-8 border-none bg-transparent px-0 font-mono text-xs uppercase shadow-none focus-visible:ring-0"
+                          aria-label="Border color HEX"
                         />
                       </div>
                     </div>
@@ -940,7 +670,7 @@ export function GlassmorphismGenerator() {
                         min={1}
                         max={5}
                         step={0.5}
-                        onChange={setBorderWidth}
+                        onChange={set('borderWidth')}
                       />
                     </div>
 
@@ -954,7 +684,7 @@ export function GlassmorphismGenerator() {
                         min={0}
                         max={100}
                         step={1}
-                        onChange={setBorderOpacity}
+                        onChange={set('borderOpacity')}
                       />
                     </div>
                   </div>
@@ -969,7 +699,7 @@ export function GlassmorphismGenerator() {
                   </h3>
                   <Checkbox
                     checked={isIndividualCorners}
-                    onChange={setIsIndividualCorners}
+                    onChange={set('isIndividualCorners')}
                     label="Split Corners"
                   />
                 </div>
@@ -985,47 +715,23 @@ export function GlassmorphismGenerator() {
                       min={0}
                       max={60}
                       step={1}
-                      onChange={setBorderRadius}
+                      onChange={set('borderRadius')}
                     />
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3.5 rounded-xl border border-border bg-muted/10 p-4">
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">Top Left</span>
-                      <Input
-                        type="number"
-                        value={cornerTl}
-                        onChange={(e) => setCornerTl(Math.max(0, Math.min(100, Number(e.target.value))))}
-                        className="h-8 font-mono text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">Top Right</span>
-                      <Input
-                        type="number"
-                        value={cornerTr}
-                        onChange={(e) => setCornerTr(Math.max(0, Math.min(100, Number(e.target.value))))}
-                        className="h-8 font-mono text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">Bottom Right</span>
-                      <Input
-                        type="number"
-                        value={cornerBr}
-                        onChange={(e) => setCornerBr(Math.max(0, Math.min(100, Number(e.target.value))))}
-                        className="h-8 font-mono text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">Bottom Left</span>
-                      <Input
-                        type="number"
-                        value={cornerBl}
-                        onChange={(e) => setCornerBl(Math.max(0, Math.min(100, Number(e.target.value))))}
-                        className="h-8 font-mono text-xs"
-                      />
-                    </div>
+                    {CORNER_LABELS.map((label, index) => (
+                      <div key={label} className="space-y-1.5">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</span>
+                        <Input
+                          type="number"
+                          value={corners[index]}
+                          onChange={(e) => setCorner(index, Number(e.target.value))}
+                          className="h-8 font-mono text-xs"
+                          aria-label={`${label} radius`}
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1040,7 +746,8 @@ export function GlassmorphismGenerator() {
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase">Enable</span>
                     <Switch
                       checked={enableShadow}
-                      onCheckedChange={setEnableShadow}
+                      onCheckedChange={set('enableShadow')}
+                      aria-label="Enable drop shadow"
                     />
                   </div>
                 </div>
@@ -1050,17 +757,17 @@ export function GlassmorphismGenerator() {
                     <div className="flex items-center gap-3">
                       <ColorPicker
                         value={shadowColor}
-                        onChange={setShadowColor}
+                        onChange={setColor('shadowColor')}
                         showText={false}
                         className="h-8 w-8 rounded-md border border-border"
                       />
                       <div className="flex-1">
-                        <Input
+                        <HexColorInput
                           value={shadowColor}
-                          onChange={(e) => setShadowColor(e.target.value)}
+                          onChange={setColor('shadowColor')}
                           placeholder="#000000"
-                          maxLength={7}
                           className="h-8 border-none bg-transparent px-0 font-mono text-xs uppercase shadow-none focus-visible:ring-0"
+                          aria-label="Shadow color HEX"
                         />
                       </div>
                     </div>
@@ -1075,7 +782,7 @@ export function GlassmorphismGenerator() {
                         min={0}
                         max={100}
                         step={1}
-                        onChange={setShadowBlur}
+                        onChange={set('shadowBlur')}
                       />
                     </div>
 
@@ -1089,7 +796,7 @@ export function GlassmorphismGenerator() {
                         min={0}
                         max={20}
                         step={1}
-                        onChange={setShadowSpread}
+                        onChange={set('shadowSpread')}
                       />
                     </div>
 
@@ -1103,7 +810,7 @@ export function GlassmorphismGenerator() {
                         min={0}
                         max={100}
                         step={1}
-                        onChange={setShadowOpacity}
+                        onChange={set('shadowOpacity')}
                       />
                     </div>
 
@@ -1113,8 +820,9 @@ export function GlassmorphismGenerator() {
                         <Input
                           type="number"
                           value={shadowX}
-                          onChange={(e) => setShadowX(Number(e.target.value))}
+                          onChange={(e) => update('shadowX', Number(e.target.value))}
                           className="h-8 font-mono text-xs"
+                          aria-label="Shadow offset X"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -1122,8 +830,9 @@ export function GlassmorphismGenerator() {
                         <Input
                           type="number"
                           value={shadowY}
-                          onChange={(e) => setShadowY(Number(e.target.value))}
+                          onChange={(e) => update('shadowY', Number(e.target.value))}
                           className="h-8 font-mono text-xs"
+                          aria-label="Shadow offset Y"
                         />
                       </div>
                     </div>
@@ -1134,7 +843,7 @@ export function GlassmorphismGenerator() {
               {/* Reset Controls Button */}
               <Button
                 variant="outline"
-                onClick={() => applyPreset('frosted')}
+                onClick={() => applyPreset(DEFAULT_GLASS_PRESET)}
                 className="w-full rounded-xl gap-2 mt-2 h-11 border-dashed"
               >
                 <RefreshCw className="h-4 w-4" />

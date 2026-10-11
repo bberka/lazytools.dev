@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect, type PointerEvent } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import {
   Layers,
   Plus,
@@ -37,19 +44,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ColorPicker } from '@/components/ui/color-picker';
-
-interface ShadowLayer {
-  id: string;
-  name: string;
-  visible: boolean;
-  inset: boolean;
-  offsetX: number;
-  offsetY: number;
-  blur: number;
-  spread: number;
-  color: string; // HEX format
-  opacity: number; // 0 to 1
-}
+import { buildBoxShadow, type ShadowLayer } from '@/lib/tools/box-shadow-visualizer';
+import { normalizeHexColor } from '@/lib/tools/design-color';
 
 interface Preset {
   name: string;
@@ -179,6 +175,38 @@ const DEFAULT_SHADOWS: ShadowLayer[] = [
   },
 ];
 
+/**
+ * Text field for a hex colour. What is being typed stays in the field until it
+ * is a whole colour, so a half-typed value never reaches the shadow.
+ */
+function HexColorInput({
+  value,
+  onChange,
+  ...props
+}: Omit<ComponentProps<typeof Input>, 'value' | 'onChange'> & {
+  value: string;
+  onChange: (hex: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <Input
+      type="text"
+      maxLength={7}
+      {...props}
+      value={draft ?? value}
+      aria-invalid={draft !== null && normalizeHexColor(draft) === null}
+      onChange={(event) => {
+        const text = event.target.value;
+        const hex = normalizeHexColor(text);
+        setDraft(text);
+        if (hex) onChange(hex);
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
+}
+
 export function BoxShadowVisualizer() {
   const [shadows, setShadows] = useState<ShadowLayer[]>(DEFAULT_SHADOWS);
   const [selectedId, setSelectedId] = useState<string>('layer-1');
@@ -204,24 +232,7 @@ export function BoxShadowVisualizer() {
   const cssCopy = useCopyToClipboard();
   const tailwindCopy = useCopyToClipboard();
 
-  // Color parsing helpers
-  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
-    const cleanHex = hex.replace('#', '');
-    const shorthand = cleanHex.length === 3;
-    const r = parseInt(shorthand ? cleanHex[0] + cleanHex[0] : cleanHex.substring(0, 2), 16);
-    const g = parseInt(shorthand ? cleanHex[1] + cleanHex[1] : cleanHex.substring(2, 4), 16);
-    const b = parseInt(shorthand ? cleanHex[2] + cleanHex[2] : cleanHex.substring(4, 6), 16);
-    return {
-      r: isNaN(r) ? 0 : r,
-      g: isNaN(g) ? 0 : g,
-      b: isNaN(b) ? 0 : b,
-    };
-  };
-
-  const getShadowColorString = (layer: ShadowLayer) => {
-    const { r, g, b } = hexToRgb(layer.color);
-    return `rgba(${r}, ${g}, ${b}, ${layer.opacity})`;
-  };
+  const shadowOutput = useMemo(() => buildBoxShadow(shadows), [shadows]);
 
   // Shadow list operations
   const addLayer = () => {
@@ -265,10 +276,34 @@ export function BoxShadowVisualizer() {
     setSelectedId(newId);
   };
 
+  const updateLayer = <K extends keyof ShadowLayer>(id: string, key: K, value: ShadowLayer[K]) => {
+    setShadows((prev) => prev.map((s) => (s.id === id ? { ...s, [key]: value } : s)));
+  };
+
   const updateSelectedLayer = <K extends keyof ShadowLayer>(key: K, value: ShadowLayer[K]) => {
-    setShadows((prev) =>
-      prev.map((s) => (s.id === selectedId ? { ...s, [key]: value } : s))
-    );
+    updateLayer(selectedId, key, value);
+  };
+
+  // The colour picker can also report "none"; a shadow needs a real colour.
+  const setSelectedLayerColor = (value: string) => {
+    const hex = normalizeHexColor(value);
+    if (hex) updateSelectedLayer('color', hex);
+  };
+
+  // Arrow keys walk the layer list, moving the selection and the focus together.
+  const handleLayerKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+
+    const nextIndex = index + (event.key === 'ArrowDown' ? 1 : -1);
+    const next = shadows[nextIndex];
+    if (!next) return;
+
+    setSelectedId(next.id);
+    const rows = event.currentTarget
+      .closest('[data-layer-list]')
+      ?.querySelectorAll<HTMLButtonElement>('[data-layer-row]');
+    rows?.[nextIndex]?.focus();
   };
 
   const moveLayer = (index: number, direction: 'up' | 'down') => {
@@ -278,32 +313,6 @@ export function BoxShadowVisualizer() {
     const [moved] = nextShadows.splice(index, 1);
     nextShadows.splice(nextIndex, 0, moved);
     setShadows(nextShadows);
-  };
-
-  // Compile full css shadow string
-  const activeShadows = shadows.filter((s) => s.visible);
-  const getBoxShadowValue = () => {
-    if (activeShadows.length === 0) return 'none';
-    return activeShadows
-      .map((s) => {
-        return `${s.inset ? 'inset ' : ''}${s.offsetX}px ${s.offsetY}px ${s.blur}px ${s.spread}px ${getShadowColorString(s)}`;
-      })
-      .join(',\n  ');
-  };
-
-  // Compile tailwind shadow class
-  const getTailwindValue = () => {
-    if (activeShadows.length === 0) return 'shadow-none';
-    const layersStr = activeShadows
-      .map((s) => {
-        const { r, g, b } = hexToRgb(s.color);
-        // Tailwind arbitrary shadow format: shadow-[offsetX_offsetY_blur_spread_rgba(r,g,b,alpha)]
-        const insetPrefix = s.inset ? 'inset_' : '';
-        const alphaClean = parseFloat(s.opacity.toFixed(3));
-        return `${insetPrefix}${s.offsetX}px_${s.offsetY}px_${s.blur}px_${s.spread}px_rgba(${r},${g},${b},${alphaClean})`;
-      })
-      .join(',');
-    return `shadow-[${layersStr}]`;
   };
 
   // Load Preset
@@ -326,8 +335,14 @@ export function BoxShadowVisualizer() {
 
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!activeLayer) return;
+    // Only the main button, a touch or a pen contact starts a drag.
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    // The colour popover opened from the canvas controls renders in a portal.
+    // Its events still bubble here through React, but it is not on the canvas.
+    if (!e.currentTarget.contains(target)) return;
     // Prevent dragging if clicking custom background selectors or code buttons
-    if ((e.target as HTMLElement).closest('.no-drag')) return;
+    if (target.closest('.no-drag')) return;
 
     e.preventDefault();
     setIsDragging(true);
@@ -357,10 +372,14 @@ export function BoxShadowVisualizer() {
     updateSelectedLayer('offsetY', nextY);
   };
 
+  // Ends a drag on release, on leaving the canvas, and when the browser takes
+  // the gesture over (a touch that turns into a page scroll).
   const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
     setIsDragging(false);
     dragStartRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   const resetAll = () => {
@@ -374,6 +393,7 @@ export function BoxShadowVisualizer() {
     setBorderColor('#CBD5E1');
     setBorderStyle('solid');
     setCanvasBgType('light');
+    setCanvasCustomBg('#E2E8F0');
     setShowGrid(false);
   };
 
@@ -411,10 +431,10 @@ export function BoxShadowVisualizer() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-violet-500" />
+                  <Layers className="h-5 w-5 text-primary" />
                   <CardTitle className="text-lg">Shadow Layers</CardTitle>
                 </div>
-                <Button onClick={addLayer} size="sm" className="h-9 gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white">
+                <Button onClick={addLayer} size="sm" className="h-9 gap-1.5 rounded-lg">
                   <Plus className="h-4 w-4" />
                   Add Layer
                 </Button>
@@ -425,7 +445,7 @@ export function BoxShadowVisualizer() {
             </CardHeader>
             <CardContent className="space-y-2">
               <ScrollArea className="h-[260px] pr-3">
-                <div className="space-y-2">
+                <div className="space-y-2" data-layer-list>
                   {shadows.map((layer, index) => {
                     const isSelected = layer.id === selectedId;
                     return (
@@ -434,29 +454,35 @@ export function BoxShadowVisualizer() {
                         onClick={() => setSelectedId(layer.id)}
                         className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-violet-500 bg-violet-500/5 shadow-sm'
+                            ? 'border-primary bg-primary/5 shadow-sm'
                             : 'border-border/60 hover:bg-muted/50 bg-card'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <button
+                          type="button"
+                          data-layer-row
+                          aria-pressed={isSelected}
+                          onKeyDown={(event) => handleLayerKeyDown(event, index)}
+                          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
                           {/* Layer Color Dot Swatch */}
-                          <div
-                            className="h-5 w-5 rounded-md border border-black/10 shrink-0"
+                          <span
+                            className="block h-5 w-5 rounded-md border border-black/10 shrink-0"
                             style={{
                               backgroundColor: layer.color,
                               opacity: layer.opacity,
                             }}
                           />
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold truncate">
+                          <span className="block min-w-0">
+                            <span className="block text-sm font-semibold truncate">
                               {layer.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-mono truncate">
+                            </span>
+                            <span className="block text-xs text-muted-foreground font-mono truncate">
                               {layer.inset ? 'inset ' : ''}
                               {layer.offsetX}px {layer.offsetY}px {layer.blur}px {layer.spread}px
-                            </p>
-                          </div>
-                        </div>
+                            </span>
+                          </span>
+                        </button>
 
                         {/* Operations */}
                         <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -465,7 +491,7 @@ export function BoxShadowVisualizer() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
-                              onClick={() => updateSelectedLayer('visible', !layer.visible)}
+                              onClick={() => updateLayer(layer.id, 'visible', !layer.visible)}
                               aria-label={layer.visible ? 'Hide Layer' : 'Show Layer'}
                             >
                               {layer.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 opacity-60" />}
@@ -510,7 +536,7 @@ export function BoxShadowVisualizer() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                               disabled={shadows.length <= 1}
                               onClick={() => deleteLayer(layer.id)}
                               aria-label="Delete Layer"
@@ -533,9 +559,9 @@ export function BoxShadowVisualizer() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sliders className="h-5 w-5 text-violet-500" />
+                    <Sliders className="h-5 w-5 text-primary" />
                     <CardTitle className="text-lg">
-                      Properties: <span className="text-violet-600 font-semibold">{activeLayer.name}</span>
+                      Properties: <span className="text-primary font-semibold">{activeLayer.name}</span>
                     </CardTitle>
                   </div>
                   
@@ -546,6 +572,7 @@ export function BoxShadowVisualizer() {
                       onChange={(e) => updateSelectedLayer('name', e.target.value)}
                       className="h-8 w-36 text-xs"
                       placeholder="Rename layer"
+                      aria-label="Layer name"
                     />
                   </div>
                 </div>
@@ -561,6 +588,7 @@ export function BoxShadowVisualizer() {
                   <Switch
                     checked={activeLayer.inset}
                     onCheckedChange={(checked) => updateSelectedLayer('inset', checked)}
+                    aria-label="Inset shadow"
                   />
                 </div>
 
@@ -642,16 +670,15 @@ export function BoxShadowVisualizer() {
                     <div className="flex gap-2">
                       <ColorPicker
                         value={activeLayer.color}
-                        onChange={(val) => updateSelectedLayer('color', val)}
+                        onChange={setSelectedLayerColor}
                         showText={false}
                         className="w-10 h-10 p-0 rounded-lg"
                       />
-                      <Input
-                        type="text"
+                      <HexColorInput
                         value={activeLayer.color}
-                        onChange={(e) => updateSelectedLayer('color', e.target.value)}
+                        onChange={setSelectedLayerColor}
                         className="font-mono text-sm uppercase flex-1 h-10"
-                        maxLength={7}
+                        aria-label="Shadow color HEX"
                       />
                     </div>
                   </div>
@@ -683,9 +710,10 @@ export function BoxShadowVisualizer() {
                     {COLOR_PRESETS.map((c) => (
                       <TooltipSimple key={c} content={c}>
                         <button
+                          type="button"
                           onClick={() => updateSelectedLayer('color', c)}
                           className={`w-6 h-6 rounded-md border border-black/10 transition-transform ${
-                            activeLayer.color.toUpperCase() === c.toUpperCase() ? 'scale-125 ring-2 ring-violet-500' : 'hover:scale-110'
+                            activeLayer.color.toUpperCase() === c.toUpperCase() ? 'scale-125 ring-2 ring-ring' : 'hover:scale-110'
                           }`}
                           style={{ backgroundColor: c }}
                           aria-label={`Select color ${c}`}
@@ -703,7 +731,7 @@ export function BoxShadowVisualizer() {
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Maximize className="h-5 w-5 text-violet-500" />
+                <Maximize className="h-5 w-5 text-primary" />
                 <CardTitle className="text-lg">Target Box Styling</CardTitle>
               </div>
               <CardDescription>
@@ -749,6 +777,7 @@ export function BoxShadowVisualizer() {
                       onChange={(e) => setBoxBgColor(e.target.value)}
                       className="font-mono text-xs uppercase flex-1 h-10"
                       maxLength={7}
+                      aria-label="Box background color"
                     />
                   </div>
                 </div>
@@ -783,7 +812,7 @@ export function BoxShadowVisualizer() {
                     value={borderStyle}
                     onValueChange={(val) => setBorderStyle(val as 'solid' | 'dashed' | 'dotted' | 'double' | 'none')}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-8 text-xs" aria-label="Border style">
                       <SelectValue placeholder="Select style" />
                     </SelectTrigger>
                     <SelectContent>
@@ -814,6 +843,7 @@ export function BoxShadowVisualizer() {
                       onChange={(e) => setBorderColor(e.target.value)}
                       className="font-mono text-xs uppercase flex-1 h-8 px-2"
                       maxLength={7}
+                      aria-label="Border color"
                     />
                   </div>
                 </div>
@@ -826,7 +856,7 @@ export function BoxShadowVisualizer() {
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-violet-500" />
+                <Sparkles className="h-5 w-5 text-primary" />
                 <CardTitle className="text-lg">Predefined Presets</CardTitle>
               </div>
               <CardDescription>
@@ -840,9 +870,9 @@ export function BoxShadowVisualizer() {
                     key={preset.name}
                     type="button"
                     onClick={() => applyPreset(preset)}
-                    className="flex flex-col text-left p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-violet-400 transition-all shadow-sm"
+                    className="flex flex-col text-left p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/60 transition-all shadow-sm"
                   >
-                    <span className="text-xs font-bold text-violet-600 dark:text-violet-400">
+                    <span className="text-xs font-bold text-primary">
                       {preset.name}
                     </span>
                     <span className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
@@ -864,7 +894,7 @@ export function BoxShadowVisualizer() {
             <CardHeader className="pb-2 shrink-0 border-b border-border/40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Move className="h-5 w-5 text-violet-500" />
+                  <Move className="h-5 w-5 text-primary" />
                   <CardTitle className="text-base font-semibold">Interactive Canvas</CardTitle>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/65 px-2.5 py-1 rounded-full">
@@ -880,6 +910,7 @@ export function BoxShadowVisualizer() {
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
+              onPointerCancel={handlePointerUp}
               style={getCanvasBackground()}
               className={`flex-1 relative flex items-center justify-center overflow-hidden transition-all ${
                 isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
@@ -900,13 +931,13 @@ export function BoxShadowVisualizer() {
                   borderStyle: borderWidth > 0 ? borderStyle : 'none',
                   borderWidth: `${borderWidth}px`,
                   borderColor: borderColor,
-                  boxShadow: getBoxShadowValue(),
+                  boxShadow: shadowOutput.value,
                 }}
-                className="relative flex items-center justify-center p-4 text-center transition-[width,height,border-radius] duration-200"
+                className="relative flex items-center justify-center p-4 text-center transition-[width,height,border-radius] duration-200 touch-none"
               >
                 {/* Pointer indicator showing interactive drag focus */}
                 {isDragging && activeLayer && (
-                  <div className="absolute -top-12 px-3 py-1 bg-violet-600 text-white rounded text-[10px] font-mono pointer-events-none shadow-md z-10 whitespace-nowrap animate-pulse">
+                  <div className="absolute -top-12 px-3 py-1 bg-primary text-primary-foreground rounded text-[10px] font-mono pointer-events-none shadow-md z-10 whitespace-nowrap animate-pulse">
                     d: {activeLayer.offsetX}px, {activeLayer.offsetY}px
                   </div>
                 )}
@@ -927,6 +958,7 @@ export function BoxShadowVisualizer() {
                     className={`h-7 w-7 rounded-lg ${canvasBgType === 'light' ? 'bg-muted' : ''}`}
                     onClick={() => setCanvasBgType('light')}
                     aria-label="Canvas: Light"
+                    aria-pressed={canvasBgType === 'light'}
                   >
                     <div className="h-4.5 w-4.5 rounded bg-slate-100 border border-slate-300" />
                   </Button>
@@ -938,6 +970,7 @@ export function BoxShadowVisualizer() {
                     className={`h-7 w-7 rounded-lg ${canvasBgType === 'dark' ? 'bg-muted' : ''}`}
                     onClick={() => setCanvasBgType('dark')}
                     aria-label="Canvas: Dark"
+                    aria-pressed={canvasBgType === 'dark'}
                   >
                     <div className="h-4.5 w-4.5 rounded bg-slate-900 border border-slate-700" />
                   </Button>
@@ -949,6 +982,7 @@ export function BoxShadowVisualizer() {
                     className={`h-7 w-7 rounded-lg ${canvasBgType === 'checkered' ? 'bg-muted' : ''}`}
                     onClick={() => setCanvasBgType('checkered')}
                     aria-label="Canvas: Checkered"
+                    aria-pressed={canvasBgType === 'checkered'}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
@@ -973,9 +1007,10 @@ export function BoxShadowVisualizer() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-7 w-7 rounded-lg ${showGrid ? 'bg-muted text-violet-600' : 'text-muted-foreground'}`}
+                    className={`h-7 w-7 rounded-lg ${showGrid ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
                     onClick={() => setShowGrid(!showGrid)}
                     aria-label="Grid Overlay"
+                    aria-pressed={showGrid}
                   >
                     <LayoutGrid className="h-4 w-4 rotate-45" />
                   </Button>
@@ -1012,14 +1047,14 @@ export function BoxShadowVisualizer() {
                     size="sm"
                     variant={cssCopy.isCopied ? 'default' : 'outline'}
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
-                    onClick={() => cssCopy.copyToClipboard(`box-shadow: ${getBoxShadowValue()};`)}
+                    onClick={() => cssCopy.copyToClipboard(shadowOutput.css)}
                   >
                     {cssCopy.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     {cssCopy.isCopied ? 'Copied' : 'Copy CSS'}
                   </Button>
                 </div>
                 <pre className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin whitespace-pre">
-                  {`box-shadow: ${getBoxShadowValue()};`}
+                  {shadowOutput.css}
                 </pre>
               </div>
 
@@ -1031,14 +1066,14 @@ export function BoxShadowVisualizer() {
                     size="sm"
                     variant={tailwindCopy.isCopied ? 'default' : 'outline'}
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
-                    onClick={() => tailwindCopy.copyToClipboard(getTailwindValue())}
+                    onClick={() => tailwindCopy.copyToClipboard(shadowOutput.tailwind)}
                   >
                     {tailwindCopy.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     {tailwindCopy.isCopied ? 'Copied' : 'Copy Class'}
                   </Button>
                 </div>
                 <div className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin break-all">
-                  {getTailwindValue()}
+                  {shadowOutput.tailwind}
                 </div>
               </div>
 

@@ -17,8 +17,15 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useCopyToClipboard } from '@/hooks';
 import { TooltipSimple } from '@/components/ui/tooltip';
+import {
+  calculateClamp,
+  clampChart,
+  roundTo,
+  sizeAtViewport,
+  type ClampUnit,
+} from '@/lib/tools/clamp-calculator';
 
-type Unit = 'px' | 'rem';
+type Unit = ClampUnit;
 type Property = 'font-size' | 'padding' | 'margin' | 'width' | 'height' | 'gap' | 'custom';
 
 interface ViewportPreset {
@@ -87,225 +94,46 @@ export function ClampCalculator() {
   const copyTailwind = useCopyToClipboard();
   const copyScss = useCopyToClipboard();
 
-  // Helper conversions
-  const toPx = (val: number, unit: Unit, base: number) => {
-    return unit === 'rem' ? val * base : val;
-  };
-
-  const round = (num: number, decimals: number = 4) => {
-    const factor = Math.pow(10, decimals);
-    return Math.round((num + Number.EPSILON) * factor) / factor;
-  };
-
   // Main CSS clamp calculations
-  const calculations = useMemo(() => {
-    const base = parseFloat(baseFontSize) || 16;
-    const minSVal = parseFloat(minSize);
-    const maxSVal = parseFloat(maxSize);
-    const minVVal = parseFloat(minViewport);
-    const maxVVal = parseFloat(maxViewport);
-
-    const activeProperty = cssProperty === 'custom' ? customProperty.trim() || '--fluid-prop' : cssProperty;
-
-    if (
-      isNaN(minSVal) ||
-      isNaN(maxSVal) ||
-      isNaN(minVVal) ||
-      isNaN(maxVVal) ||
-      base <= 0
-    ) {
-      return {
-        error: 'Please enter valid numbers in all fields to compute.',
-        clampRaw: '',
-        clampCss: '',
-        tailwindClass: '',
-        scssVariable: '',
-        minSizePx: 0,
-        maxSizePx: 0,
-        minViewportPx: 0,
-        maxViewportPx: 0,
-        activeProperty,
-      };
-    }
-
-    const minSPx = toPx(minSVal, minSizeUnit, base);
-    const maxSPx = toPx(maxSVal, maxSizeUnit, base);
-    const minVPx = toPx(minVVal, minViewportUnit, base);
-    const maxVPx = toPx(maxVVal, maxViewportUnit, base);
-
-    if (minVPx === maxVPx) {
-      return {
-        error: 'Min and Max viewports cannot be equal.',
-        clampRaw: '',
-        clampCss: '',
-        tailwindClass: '',
-        scssVariable: '',
-        minSizePx: minSPx,
-        maxSizePx: maxSPx,
-        minViewportPx: minVPx,
-        maxViewportPx: maxVPx,
-        activeProperty,
-      };
-    }
-
-    // Slope m
-    const m = (maxSPx - minSPx) / (maxVPx - minVPx);
-    // Viewport portion (vw)
-    const vSlope = m * 100;
-    // Intercept c (px)
-    const cPx = minSPx - m * minVPx;
-
-    // Format preferred part: constant + slope
-    const formatPreferredPart = (constantVal: number, slopeVal: number, constantUnit: string) => {
-      const roundedConstant = round(constantVal);
-      const roundedSlope = round(slopeVal);
-
-      if (roundedSlope === 0) {
-        return roundedConstant === 0 ? `0${constantUnit}` : `${roundedConstant}${constantUnit}`;
-      }
-
-      if (roundedConstant === 0) {
-        return `${roundedSlope}vw`;
-      }
-
-      if (roundedSlope < 0) {
-        return `${roundedConstant}${constantUnit} - ${Math.abs(roundedSlope)}vw`;
-      }
-
-      if (roundedConstant < 0) {
-        return `${roundedSlope}vw - ${Math.abs(roundedConstant)}${constantUnit}`;
-      }
-
-      return `${roundedConstant}${constantUnit} + ${roundedSlope}vw`;
-    };
-
-    let clampRaw = '';
-
-    if (outputUnit === 'rem') {
-      const minSRem = minSPx / base;
-      const maxSRem = maxSPx / base;
-      const cRem = cPx / base;
-
-      const preferred = formatPreferredPart(cRem, vSlope, 'rem');
-      const minVal = round(Math.min(minSRem, maxSRem));
-      const maxVal = round(Math.max(minSRem, maxSRem));
-
-      clampRaw = `clamp(${minVal}rem, ${preferred}, ${maxVal}rem)`;
-    } else {
-      const preferred = formatPreferredPart(cPx, vSlope, 'px');
-      const minVal = round(Math.min(minSPx, maxSPx));
-      const maxVal = round(Math.max(minSPx, maxSPx));
-
-      clampRaw = `clamp(${minVal}px, ${preferred}, ${maxVal}px)`;
-    }
-
-    const clampCss = `${activeProperty}: ${clampRaw};`;
-
-    // Tailwind utilities prefix matching
-    let tailwindPrefix = '';
-    switch (activeProperty) {
-      case 'font-size':
-        tailwindPrefix = 'text';
-        break;
-      case 'padding':
-        tailwindPrefix = 'p';
-        break;
-      case 'margin':
-        tailwindPrefix = 'm';
-        break;
-      case 'width':
-        tailwindPrefix = 'w';
-        break;
-      case 'height':
-        tailwindPrefix = 'h';
-        break;
-      case 'gap':
-        tailwindPrefix = 'gap';
-        break;
-      default:
-        tailwindPrefix = `[${activeProperty}]`;
-    }
-
-    const tailwindClampVal = clampRaw.replace(/\s+/g, '');
-    const tailwindClass = `${tailwindPrefix}-${tailwindClampVal.startsWith('[') ? tailwindClampVal : `[${tailwindClampVal}]`}`;
-
-    // SCSS format
-    const variableName = `$${activeProperty.replace(/[^a-zA-Z0-9-]/g, '')}-fluid`;
-    const scssVariable = `${variableName}: ${clampRaw};`;
-
-    return {
-      error: '',
-      clampRaw,
-      clampCss,
-      tailwindClass,
-      scssVariable,
-      minSizePx: minSPx,
-      maxSizePx: maxSPx,
-      minViewportPx: minVPx,
-      maxViewportPx: maxVPx,
-      activeProperty,
-    };
-  }, [
-    minSize,
-    minSizeUnit,
-    maxSize,
-    maxSizeUnit,
-    minViewport,
-    minViewportUnit,
-    maxViewport,
-    maxViewportUnit,
-    baseFontSize,
-    cssProperty,
-    customProperty,
-    outputUnit,
-  ]);
+  const calculations = useMemo(
+    () =>
+      calculateClamp({
+        minSize,
+        minSizeUnit,
+        maxSize,
+        maxSizeUnit,
+        minViewport,
+        minViewportUnit,
+        maxViewport,
+        maxViewportUnit,
+        baseFontSize,
+        property: cssProperty === 'custom' ? customProperty : cssProperty,
+        outputUnit,
+      }),
+    [
+      minSize,
+      minSizeUnit,
+      maxSize,
+      maxSizeUnit,
+      minViewport,
+      minViewportUnit,
+      maxViewport,
+      maxViewportUnit,
+      baseFontSize,
+      cssProperty,
+      customProperty,
+      outputUnit,
+    ]
+  );
 
   // Live simulated size computation
-  const simulatedSize = useMemo(() => {
-    const { minSizePx, maxSizePx, minViewportPx, maxViewportPx, error } = calculations;
-    if (error) return null;
-
-    const v = simulatedViewportWidth;
-    let computedPx = 0;
-
-    if (minViewportPx === maxViewportPx) {
-      computedPx = minSizePx;
-    } else {
-      const linearPx =
-        minSizePx +
-        ((v - minViewportPx) / (maxViewportPx - minViewportPx)) * (maxSizePx - minSizePx);
-      const lower = Math.min(minSizePx, maxSizePx);
-      const upper = Math.max(minSizePx, maxSizePx);
-      computedPx = Math.max(lower, Math.min(upper, linearPx));
-    }
-
-    const base = parseFloat(baseFontSize) || 16;
-    return {
-      px: round(computedPx, 2),
-      rem: round(computedPx / base, 3),
-    };
-  }, [calculations, simulatedViewportWidth, baseFontSize]);
+  const simulatedSize = useMemo(
+    () => sizeAtViewport(calculations, simulatedViewportWidth),
+    [calculations, simulatedViewportWidth]
+  );
 
   // SVG Chart Dimensions & Scale calculations
-  const graphData = useMemo(() => {
-    const { minViewportPx, maxViewportPx, minSizePx, maxSizePx, error } = calculations;
-    if (error) return null;
-
-    const vMin = minViewportPx;
-    const vMax = maxViewportPx;
-    const sMin = minSizePx;
-    const sMax = maxSizePx;
-
-    const vDiff = Math.abs(vMax - vMin);
-    const xMin = Math.max(0, Math.min(vMin, vMax) - vDiff * 0.25);
-    const xMax = Math.max(vMin, vMax) + vDiff * 0.25;
-
-    const sDiff = Math.abs(sMax - sMin) || 10;
-    const yMin = Math.max(0, Math.min(sMin, sMax) - sDiff * 0.25);
-    const yMax = Math.max(sMin, sMax) + sDiff * 0.25;
-
-    return { xMin, xMax, yMin, yMax, vMin, vMax, sMin, sMax };
-  }, [calculations]);
+  const graphData = useMemo(() => clampChart(calculations), [calculations]);
 
   const svgCoords = useMemo(() => {
     if (!graphData) return null;
@@ -324,7 +152,7 @@ export function ClampCalculator() {
     const mapCoords = (v: number, s: number) => {
       const x = paddingLeft + ((v - xMin) / (xMax - xMin)) * chartWidth;
       const y = paddingTop + (1 - (s - yMin) / (yMax - yMin)) * chartHeight;
-      return { x: round(x, 1), y: round(y, 1) };
+      return { x: roundTo(x, 1), y: roundTo(y, 1) };
     };
 
     return {
@@ -343,13 +171,13 @@ export function ClampCalculator() {
   // Get SVG Path points
   const chartPath = useMemo(() => {
     if (!graphData || !svgCoords) return '';
-    const { xMin, xMax, vMin, vMax, sMin, sMax } = graphData;
+    const { xMin, xMax, from, to } = graphData;
     const { mapCoords } = svgCoords;
 
-    const p1 = mapCoords(xMin, sMin);
-    const p2 = mapCoords(vMin, sMin);
-    const p3 = mapCoords(vMax, sMax);
-    const p4 = mapCoords(xMax, sMax);
+    const p1 = mapCoords(xMin, from.size);
+    const p2 = mapCoords(from.viewport, from.size);
+    const p3 = mapCoords(to.viewport, to.size);
+    const p4 = mapCoords(xMax, to.size);
 
     return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y} L ${p4.x} ${p4.y}`;
   }, [graphData, svgCoords]);
@@ -412,6 +240,7 @@ export function ClampCalculator() {
     setMaxViewportUnit('px');
     setBaseFontSize('16');
     setCssProperty('font-size');
+    setCustomProperty('');
     setOutputUnit('rem');
     setSimulatedViewportWidth(800);
   };
@@ -488,7 +317,7 @@ export function ClampCalculator() {
                         key={preset.name}
                         size="sm"
                         variant="secondary"
-                        className="text-[10px] h-6 px-2 hover:bg-emerald-500 hover:text-white"
+                        className="text-[10px] h-6 px-2 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => handleApplyViewportPreset(preset)}
                       >
                         {preset.minV}-{preset.maxV}
@@ -505,7 +334,7 @@ export function ClampCalculator() {
                         key={preset.name}
                         size="sm"
                         variant="secondary"
-                        className="text-[10px] h-6 px-2 hover:bg-emerald-500 hover:text-white"
+                        className="text-[10px] h-6 px-2 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => handleApplySizePreset(preset)}
                       >
                         {preset.name}
@@ -530,12 +359,16 @@ export function ClampCalculator() {
                       onChange={(e) => setMinSize(e.target.value)}
                       placeholder="e.g. 16"
                       className="rounded-r-none font-mono"
+                      aria-label="Min size"
                     />
                     <Select
                       value={minSizeUnit}
                       onValueChange={(val) => setMinSizeUnit(val as Unit)}
                     >
-                      <SelectTrigger className="w-[85px] rounded-l-none border-l-0 font-mono">
+                      <SelectTrigger
+                        className="w-[85px] rounded-l-none border-l-0 font-mono"
+                        aria-label="Min size unit"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -559,12 +392,16 @@ export function ClampCalculator() {
                       onChange={(e) => setMaxSize(e.target.value)}
                       placeholder="e.g. 32"
                       className="rounded-r-none font-mono"
+                      aria-label="Max size"
                     />
                     <Select
                       value={maxSizeUnit}
                       onValueChange={(val) => setMaxSizeUnit(val as Unit)}
                     >
-                      <SelectTrigger className="w-[85px] rounded-l-none border-l-0 font-mono">
+                      <SelectTrigger
+                        className="w-[85px] rounded-l-none border-l-0 font-mono"
+                        aria-label="Max size unit"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -591,12 +428,16 @@ export function ClampCalculator() {
                       onChange={(e) => setMinViewport(e.target.value)}
                       placeholder="e.g. 320"
                       className="rounded-r-none font-mono"
+                      aria-label="Min viewport width"
                     />
                     <Select
                       value={minViewportUnit}
                       onValueChange={(val) => setMinViewportUnit(val as Unit)}
                     >
-                      <SelectTrigger className="w-[85px] rounded-l-none border-l-0 font-mono">
+                      <SelectTrigger
+                        className="w-[85px] rounded-l-none border-l-0 font-mono"
+                        aria-label="Min viewport width unit"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -620,12 +461,16 @@ export function ClampCalculator() {
                       onChange={(e) => setMaxViewport(e.target.value)}
                       placeholder="e.g. 1200"
                       className="rounded-r-none font-mono"
+                      aria-label="Max viewport width"
                     />
                     <Select
                       value={maxViewportUnit}
                       onValueChange={(val) => setMaxViewportUnit(val as Unit)}
                     >
-                      <SelectTrigger className="w-[85px] rounded-l-none border-l-0 font-mono">
+                      <SelectTrigger
+                        className="w-[85px] rounded-l-none border-l-0 font-mono"
+                        aria-label="Max viewport width unit"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -654,6 +499,7 @@ export function ClampCalculator() {
                       onChange={(e) => setBaseFontSize(e.target.value)}
                       placeholder="16"
                       className="font-mono pr-8"
+                      aria-label="Base font size in px"
                     />
                     <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">px</span>
                   </div>
@@ -665,7 +511,7 @@ export function ClampCalculator() {
                     value={outputUnit}
                     onValueChange={(val) => setOutputUnit(val as Unit)}
                   >
-                    <SelectTrigger className="font-mono">
+                    <SelectTrigger className="font-mono" aria-label="Output unit">
                       <SelectValue placeholder="Select output unit" />
                     </SelectTrigger>
                     <SelectContent>
@@ -681,7 +527,7 @@ export function ClampCalculator() {
                     value={cssProperty}
                     onValueChange={(val) => setCssProperty(val as Property)}
                   >
-                    <SelectTrigger className="font-mono">
+                    <SelectTrigger className="font-mono" aria-label="CSS property">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -707,12 +553,16 @@ export function ClampCalculator() {
                     onChange={(e) => setCustomProperty(e.target.value)}
                     placeholder="e.g. border-radius, line-height, --my-fluid-size"
                     className="font-mono"
+                    aria-label="Custom property name"
                   />
                 </div>
               )}
 
               {calculations.error && (
-                <div className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-start gap-2">
+                <div
+                  role="status"
+                  className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-start gap-2"
+                >
                   <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>{calculations.error}</span>
                 </div>
@@ -736,10 +586,10 @@ export function ClampCalculator() {
               <CardDescription>Copy the generated responsive values into your styles.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {renderCopySection('Clamp Function', calculations.clampRaw, copyRaw)}
-              {renderCopySection('Full CSS Rule', calculations.clampCss, copyCss)}
-              {renderCopySection('Tailwind Class', calculations.tailwindClass, copyTailwind)}
-              {renderCopySection('SCSS / Sass', calculations.scssVariable, copyScss)}
+              {renderCopySection('Clamp Function', calculations.clamp, copyRaw)}
+              {renderCopySection('Full CSS Rule', calculations.css, copyCss)}
+              {renderCopySection('Tailwind Class', calculations.tailwind, copyTailwind)}
+              {renderCopySection('SCSS / Sass', calculations.scss, copyScss)}
             </CardContent>
           </Card>
         </div>
@@ -767,6 +617,8 @@ export function ClampCalculator() {
                   height="100%"
                   className="overflow-visible select-none cursor-pointer"
                   onClick={handleChartClick}
+                  role="img"
+                  aria-label="Graph of the computed size across viewport widths"
                 >
                   <defs>
                     <linearGradient id="clampGradient" x1="0" y1="0" x2="1" y2="0">
@@ -799,8 +651,8 @@ export function ClampCalculator() {
 
                   {/* Min/Max Viewport Boundary Dashed Lines */}
                   {(() => {
-                    const coordMinV = svgCoords.mapCoords(graphData.vMin, graphData.yMin);
-                    const coordMaxV = svgCoords.mapCoords(graphData.vMax, graphData.yMin);
+                    const coordMinV = svgCoords.mapCoords(graphData.from.viewport, graphData.yMin);
+                    const coordMaxV = svgCoords.mapCoords(graphData.to.viewport, graphData.yMin);
                     const topY = svgCoords.paddingTop;
                     const botY = svgCoords.height - svgCoords.paddingBottom;
 
@@ -822,7 +674,7 @@ export function ClampCalculator() {
                           textAnchor="middle"
                           className="text-[10px] font-mono fill-muted-foreground font-semibold"
                         >
-                          {Math.round(graphData.vMin)}px
+                          {Math.round(graphData.from.viewport)}px
                         </text>
 
                         {/* Max Viewport Limit */}
@@ -841,7 +693,7 @@ export function ClampCalculator() {
                           textAnchor="middle"
                           className="text-[10px] font-mono fill-muted-foreground font-semibold"
                         >
-                          {Math.round(graphData.vMax)}px
+                          {Math.round(graphData.to.viewport)}px
                         </text>
                       </>
                     );
@@ -849,8 +701,8 @@ export function ClampCalculator() {
 
                   {/* Y Axis Labels (Min Size / Max Size) */}
                   {(() => {
-                    const coordMinS = svgCoords.mapCoords(graphData.xMin, graphData.sMin);
-                    const coordMaxS = svgCoords.mapCoords(graphData.xMin, graphData.sMax);
+                    const coordMinS = svgCoords.mapCoords(graphData.xMin, graphData.from.size);
+                    const coordMaxS = svgCoords.mapCoords(graphData.xMin, graphData.to.size);
                     const labelX = svgCoords.paddingLeft - 8;
 
                     return (
@@ -861,7 +713,7 @@ export function ClampCalculator() {
                           textAnchor="end"
                           className="text-[10px] font-mono fill-muted-foreground font-semibold"
                         >
-                          {Math.round(graphData.sMin)}px
+                          {Math.round(graphData.from.size)}px
                         </text>
                         <text
                           x={labelX}
@@ -869,7 +721,7 @@ export function ClampCalculator() {
                           textAnchor="end"
                           className="text-[10px] font-mono fill-muted-foreground font-semibold"
                         >
-                          {Math.round(graphData.sMax)}px
+                          {Math.round(graphData.to.size)}px
                         </text>
                       </>
                     );
@@ -995,14 +847,14 @@ export function ClampCalculator() {
 
                 <div className="rounded-lg bg-card border shadow-sm p-4 overflow-hidden">
                   {/* Handle font-size typography scale */}
-                  {calculations.activeProperty === 'font-size' ? (
+                  {calculations.property === 'font-size' ? (
                     <div
                       style={{ fontSize: `${simulatedSize.px}px` }}
                       className="font-bold leading-tight text-foreground text-center break-words"
                     >
                       Fluid Typography
                     </div>
-                  ) : calculations.activeProperty === 'padding' ? (
+                  ) : calculations.property === 'padding' ? (
                     /* Handle padding block scale */
                     <div
                       style={{ padding: `${simulatedSize.px}px` }}
@@ -1012,7 +864,7 @@ export function ClampCalculator() {
                         Padding Box
                       </div>
                     </div>
-                  ) : calculations.activeProperty === 'margin' ? (
+                  ) : calculations.property === 'margin' ? (
                     /* Handle margin block scale */
                     <div className="bg-muted border rounded p-1">
                       <div
@@ -1022,7 +874,7 @@ export function ClampCalculator() {
                         Margin Box
                       </div>
                     </div>
-                  ) : calculations.activeProperty === 'gap' ? (
+                  ) : calculations.property === 'gap' ? (
                     /* Handle gap layout scale */
                     <div
                       style={{ gap: `${simulatedSize.px}px` }}
@@ -1041,17 +893,17 @@ export function ClampCalculator() {
                       <div
                         style={{
                           width:
-                            calculations.activeProperty === 'width'
+                            calculations.property === 'width'
                               ? `${simulatedSize.px}px`
                               : '100px',
                           height:
-                            calculations.activeProperty === 'height'
+                            calculations.property === 'height'
                               ? `${simulatedSize.px}px`
                               : '40px',
                         }}
                         className="bg-emerald-500 border border-emerald-600 text-white rounded shadow-sm text-center flex items-center justify-center font-mono text-xs font-bold"
                       >
-                        {calculations.activeProperty === 'width' ? 'Width' : 'Height'}
+                        {calculations.property === 'width' ? 'Width' : 'Height'}
                       </div>
                     </div>
                   )}
