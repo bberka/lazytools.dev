@@ -1,14 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { GitCompare, Trash2 } from 'lucide-react';
-import { diffLines, diffWords } from 'diff';
+import {
+  diffText,
+  hasChanges,
+  segmentsOf,
+  toSideBySideRows,
+  type DiffCell,
+  type DiffMode,
+  type DiffSegment,
+} from '@/lib/tools/text-diff';
 
-type DiffMode = 'lines' | 'words';
 type ViewMode = 'side-by-side' | 'inline';
+
+const CHANGE_CLASSES: Record<DiffCell['kind'], string> = {
+  added: 'bg-green-500/20 text-green-700 dark:text-green-400',
+  removed: 'bg-red-500/20 text-red-700 dark:text-red-400',
+  unchanged: '',
+  empty: 'bg-muted/50',
+};
+
+function Segments({ segments }: { segments: DiffSegment[] }) {
+  return segments.map((segment, index) => (
+    <span key={index} className={CHANGE_CLASSES[segment.change]}>
+      {segment.text}
+    </span>
+  ));
+}
+
+function Lines({ cells }: { cells: DiffCell[] }) {
+  return cells.map((cell, index) => (
+    <div
+      key={index}
+      className={`px-4 py-1 whitespace-pre-wrap break-words ${CHANGE_CLASSES[cell.kind]}`}
+    >
+      {/* A no-break space keeps a blank line as tall as the line beside it. */}
+      {cell.text || ' '}
+    </div>
+  ));
+}
 
 export function TextDiff() {
   const [leftText, setLeftText] = useState('');
@@ -16,125 +50,66 @@ export function TextDiff() {
   const [diffMode, setDiffMode] = useState<DiffMode>('lines');
   const [viewMode, setViewMode] = useState<ViewMode>('side-by-side');
 
-  const getDiff = () => {
-    if (!leftText && !rightText) return [];
-
-    if (diffMode === 'lines') {
-      return diffLines(leftText, rightText);
-    } else {
-      return diffWords(leftText, rightText);
-    }
-  };
+  const segments = useMemo(
+    () => diffText(leftText, rightText, diffMode),
+    [leftText, rightText, diffMode]
+  );
+  const rows = useMemo(
+    () => (diffMode === 'lines' ? toSideBySideRows(segments) : []),
+    [diffMode, segments]
+  );
 
   const handleClear = () => {
     setLeftText('');
     setRightText('');
   };
 
+  const getDescription = () => {
+    if (!leftText && !rightText) {
+      return 'Enter text in both fields to see the diff';
+    }
+    if (!hasChanges(segments)) {
+      return leftText === rightText
+        ? 'No differences found'
+        : 'No differences found (the word diff ignores whitespace)';
+    }
+    return viewMode === 'side-by-side' ? 'Side-by-side comparison' : 'Inline comparison';
+  };
+
   const renderInlineDiff = () => {
-    const diff = getDiff();
-
     return (
-      <div className="min-h-[320px] whitespace-pre-wrap rounded-md border p-3 font-mono text-sm sm:min-h-[400px] sm:p-4">
-        {diff.map((part, index) => {
-          const bgColor = part.added
-            ? 'bg-green-500/20'
-            : part.removed
-            ? 'bg-red-500/20'
-            : '';
-          const textColor = part.added
-            ? 'text-green-700 dark:text-green-400'
-            : part.removed
-            ? 'text-red-700 dark:text-red-400'
-            : '';
-
-          return (
-            <span key={index} className={`${bgColor} ${textColor}`}>
-              {part.value}
-            </span>
-          );
-        })}
+      <div className="min-h-[320px] whitespace-pre-wrap break-words rounded-md border p-3 font-mono text-sm sm:min-h-[400px] sm:p-4">
+        <Segments segments={segments} />
       </div>
     );
   };
 
   const renderSideBySideDiff = () => {
-    const diff = getDiff();
-    const leftLines: { text: string; type: 'removed' | 'unchanged' | 'added' | 'empty' }[] = [];
-    const rightLines: { text: string; type: 'removed' | 'unchanged' | 'added' | 'empty' }[] = [];
-
-    diff.forEach((part) => {
-      const lines = part.value.split('\n');
-
-      if (part.added) {
-        lines.forEach((line: string) => {
-          if (line || lines.length > 1) {
-            leftLines.push({ text: '', type: 'empty' });
-            rightLines.push({ text: line, type: 'added' });
-          }
-        });
-      } else if (part.removed) {
-        lines.forEach((line: string) => {
-          if (line || lines.length > 1) {
-            leftLines.push({ text: line, type: 'removed' });
-            rightLines.push({ text: '', type: 'empty' });
-          }
-        });
-      } else {
-        lines.forEach((line: string) => {
-          if (line || lines.length > 1) {
-            leftLines.push({ text: line, type: 'unchanged' });
-            rightLines.push({ text: line, type: 'unchanged' });
-          }
-        });
-      }
-    });
-
-    // Remove last empty line if it exists
-    if (leftLines.length > 0 && !leftLines[leftLines.length - 1].text) {
-      leftLines.pop();
-      rightLines.pop();
-    }
-
     return (
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="border rounded-md">
           <div className="bg-muted px-4 py-2 font-medium text-sm border-b">Original</div>
-          <div className="font-mono text-sm min-h-[400px]">
-            {leftLines.map((line, index) => (
-              <div
-                key={index}
-                className={`px-4 py-1 ${
-                  line.type === 'removed'
-                    ? 'bg-red-500/20 text-red-700 dark:text-red-400'
-                    : line.type === 'empty'
-                    ? 'bg-gray-500/10'
-                    : ''
-                }`}
-              >
-                {line.text || ' '}
+          <div className="font-mono text-sm min-h-[320px] sm:min-h-[400px]">
+            {diffMode === 'lines' ? (
+              <Lines cells={rows.map((row) => row.left)} />
+            ) : (
+              <div className="px-4 py-1 whitespace-pre-wrap break-words">
+                <Segments segments={segmentsOf(segments, 'original')} />
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         <div className="border rounded-md">
           <div className="bg-muted px-4 py-2 font-medium text-sm border-b">Modified</div>
-          <div className="font-mono text-sm min-h-[400px]">
-            {rightLines.map((line, index) => (
-              <div
-                key={index}
-                className={`px-4 py-1 ${
-                  line.type === 'added'
-                    ? 'bg-green-500/20 text-green-700 dark:text-green-400'
-                    : line.type === 'empty'
-                    ? 'bg-gray-500/10'
-                    : ''
-                }`}
-              >
-                {line.text || ' '}
+          <div className="font-mono text-sm min-h-[320px] sm:min-h-[400px]">
+            {diffMode === 'lines' ? (
+              <Lines cells={rows.map((row) => row.right)} />
+            ) : (
+              <div className="px-4 py-1 whitespace-pre-wrap break-words">
+                <Segments segments={segmentsOf(segments, 'modified')} />
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -146,11 +121,14 @@ export function TextDiff() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <label className="text-sm font-medium">Diff Mode:</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="text-diff-mode-label" className="text-sm font-medium">
+              Diff Mode:
+            </span>
+            <div role="group" aria-labelledby="text-diff-mode-label" className="flex flex-wrap gap-2">
               <Button
                 onClick={() => setDiffMode('lines')}
                 variant={diffMode === 'lines' ? 'default' : 'outline'}
+                aria-pressed={diffMode === 'lines'}
                 size="sm"
               >
                 Lines
@@ -158,6 +136,7 @@ export function TextDiff() {
               <Button
                 onClick={() => setDiffMode('words')}
                 variant={diffMode === 'words' ? 'default' : 'outline'}
+                aria-pressed={diffMode === 'words'}
                 size="sm"
               >
                 Words
@@ -166,11 +145,14 @@ export function TextDiff() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <label className="text-sm font-medium">View:</label>
-            <div className="flex flex-wrap gap-2">
+            <span id="text-diff-view-label" className="text-sm font-medium">
+              View:
+            </span>
+            <div role="group" aria-labelledby="text-diff-view-label" className="flex flex-wrap gap-2">
               <Button
                 onClick={() => setViewMode('side-by-side')}
                 variant={viewMode === 'side-by-side' ? 'default' : 'outline'}
+                aria-pressed={viewMode === 'side-by-side'}
                 size="sm"
               >
                 Side by Side
@@ -178,6 +160,7 @@ export function TextDiff() {
               <Button
                 onClick={() => setViewMode('inline')}
                 variant={viewMode === 'inline' ? 'default' : 'outline'}
+                aria-pressed={viewMode === 'inline'}
                 size="sm"
               >
                 Inline
@@ -203,6 +186,7 @@ export function TextDiff() {
               value={leftText}
               onChange={(e) => setLeftText(e.target.value)}
               placeholder="Enter original text..."
+              aria-label="Original text"
               rows={12}
               className="font-mono"
             />
@@ -219,6 +203,7 @@ export function TextDiff() {
               value={rightText}
               onChange={(e) => setRightText(e.target.value)}
               placeholder="Enter modified text..."
+              aria-label="Modified text"
               rows={12}
               className="font-mono"
             />
@@ -232,13 +217,7 @@ export function TextDiff() {
             <GitCompare className="h-5 w-5" />
             Difference Visualization
           </CardTitle>
-          <CardDescription>
-            {leftText || rightText
-              ? viewMode === 'side-by-side'
-                ? 'Side-by-side comparison'
-                : 'Inline comparison'
-              : 'Enter text in both fields to see the diff'}
-          </CardDescription>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           {viewMode === 'side-by-side' ? renderSideBySideDiff() : renderInlineDiff()}

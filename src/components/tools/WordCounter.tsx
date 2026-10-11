@@ -8,80 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-
-const AVERAGE_READING_WPM = 200;
-const AVERAGE_SPEAKING_WPM = 130;
-
-type CounterStats = {
-  words: number;
-  characters: number;
-  charactersNoSpaces: number;
-  sentences: number;
-  paragraphs: number;
-  lines: number;
-  readingMinutes: number;
-  speakingMinutes: number;
-  longestWord: string;
-  averageWordLength: number;
-};
-
-function getStats(text: string, includeNumbers: boolean): CounterStats {
-  const normalized = text.replace(/\r\n/g, '\n');
-  const words = normalized.match(includeNumbers ? /[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu : /[\p{L}]+(?:['’-][\p{L}]+)*/gu) ?? [];
-  const nonEmptyParagraphs = normalized
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-  const nonEmptyLines = normalized
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const sentenceMatches =
-    normalized.match(/[^\s].*?[.!?]+(?=\s|$)|[^\s].+$/gm)?.map((match) => match.trim()) ?? [];
-  const totalWordLength = words.reduce((sum, word) => sum + word.length, 0);
-  const longestWord =
-    words.reduce((longest, word) => (word.length > longest.length ? word : longest), '') || '—';
-
-  return {
-    words: words.length,
-    characters: text.length,
-    charactersNoSpaces: text.replace(/\s/g, '').length,
-    sentences: sentenceMatches.length,
-    paragraphs: nonEmptyParagraphs.length,
-    lines: normalized ? normalized.split('\n').length : 0,
-    readingMinutes: words.length / AVERAGE_READING_WPM,
-    speakingMinutes: words.length / AVERAGE_SPEAKING_WPM,
-    longestWord,
-    averageWordLength: words.length > 0 ? totalWordLength / words.length : 0,
-  };
-}
-
-function formatDuration(minutes: number): string {
-  if (minutes <= 0) {
-    return '0 sec';
-  }
-
-  const totalSeconds = Math.max(1, Math.round(minutes * 60));
-  if (totalSeconds < 60) {
-    return `${totalSeconds} sec`;
-  }
-
-  const wholeMinutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  if (seconds === 0) {
-    return `${wholeMinutes} min`;
-  }
-
-  return `${wholeMinutes} min ${seconds} sec`;
-}
+import { analyzeText, formatDuration } from '@/lib/tools/word-counter';
 
 export function WordCounter() {
   const [text, setText] = useState('');
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const stats = useMemo(() => getStats(text, includeNumbers), [includeNumbers, text]);
+  const stats = useMemo(() => analyzeText(text, { includeNumbers }), [includeNumbers, text]);
 
   const statCards = [
     { label: 'Words', value: stats.words, icon: Type },
@@ -99,7 +33,7 @@ export function WordCounter() {
       label: 'Avg Word Length',
       value: stats.words > 0 ? `${stats.averageWordLength.toFixed(1)} chars` : '0.0 chars',
     },
-    { label: 'Longest Word', value: stats.longestWord },
+    { label: 'Longest Word', value: stats.longestWord || '—' },
   ];
 
   const handleClear = () => {
@@ -127,6 +61,7 @@ export function WordCounter() {
             value={text}
             onChange={(event) => setText((event.target as HTMLTextAreaElement).value)}
             placeholder="Paste text here..."
+            aria-label="Text to count"
             rows={12}
             className="font-mono text-sm"
           />

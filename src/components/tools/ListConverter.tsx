@@ -14,11 +14,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
+import {
+  convertList,
+  type ListCaseConversion,
+  type ListDelimiter,
+  type ListSortOrder,
+} from '@/lib/tools/list-converter';
 import { Copy, Check, Trash2, ListCollapse, Settings2 } from 'lucide-react';
 
 export function ListConverter() {
   const [input, setInput] = useState('');
-  const [inputDelimiter, setInputDelimiter] = useState('newline');
+  const [inputDelimiter, setInputDelimiter] = useState<ListDelimiter>('newline');
   const [customInputDelimiter, setCustomInputDelimiter] = useState('');
   const [outputDelimiter, setOutputDelimiter] = useState('|');
   
@@ -26,8 +32,8 @@ export function ListConverter() {
   const [trimItems, setTrimItems] = useState(true);
   const [removeEmpty, setRemoveEmpty] = useState(true);
   const [deduplicate, setDeduplicate] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
-  const [caseConversion, setCaseConversion] = useState<'none' | 'upper' | 'lower'>('none');
+  const [sortOrder, setSortOrder] = useState<ListSortOrder>('none');
+  const [caseConversion, setCaseConversion] = useState<ListCaseConversion>('none');
 
   // Copy status hooks for all outputs
   const copyCsv = useCopyToClipboard();
@@ -37,75 +43,31 @@ export function ListConverter() {
   const copySql = useCopyToClipboard();
   const copyCustom = useCopyToClipboard();
 
-  // Process list
-  const processedItems = useMemo(() => {
-    if (!input) return [];
-
-    let delimiter: string = '\n';
-    if (inputDelimiter === 'comma') delimiter = ',';
-    else if (inputDelimiter === 'semicolon') delimiter = ';';
-    else if (inputDelimiter === 'tab') delimiter = '\t';
-    else if (inputDelimiter === 'custom') delimiter = customInputDelimiter;
-
-    let items: string[] = [];
-    if (delimiter === '\n') {
-      items = input.split(/\r?\n/);
-    } else if (delimiter) {
-      items = input.split(delimiter);
-    } else {
-      items = [input];
-    }
-
-    if (trimItems) {
-      items = items.map((item) => item.trim());
-    }
-
-    if (removeEmpty) {
-      items = items.filter((item) => item !== '');
-    }
-
-    if (deduplicate) {
-      items = Array.from(new Set(items));
-    }
-
-    if (caseConversion === 'upper') {
-      items = items.map((item) => item.toUpperCase());
-    } else if (caseConversion === 'lower') {
-      items = items.map((item) => item.toLowerCase());
-    }
-
-    if (sortOrder === 'asc') {
-      items.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    } else if (sortOrder === 'desc') {
-      items.sort((a, b) => b.localeCompare(a, undefined, { sensitivity: 'base' }));
-    }
-
-    return items;
-  }, [input, inputDelimiter, customInputDelimiter, trimItems, removeEmpty, deduplicate, sortOrder, caseConversion]);
-
-  // Derived outputs
-  const outputs = useMemo(() => {
-    const items = processedItems;
-    if (items.length === 0) {
-      return {
-        csv: '',
-        singleQuoted: '',
-        doubleQuoted: '',
-        json: '',
-        sql: '',
-        custom: '',
-      };
-    }
-
-    return {
-      csv: items.join(', '),
-      singleQuoted: items.map((item) => `'${item.replace(/'/g, "\\'")}'`).join(', '),
-      doubleQuoted: items.map((item) => `"${item.replace(/"/g, '\\"')}"`).join(', '),
-      json: JSON.stringify(items, null, 2),
-      sql: `IN (${items.map((item) => `'${item.replace(/'/g, "''")}'`).join(', ')})`,
-      custom: items.join(outputDelimiter),
-    };
-  }, [processedItems, outputDelimiter]);
+  // Split, clean up and format the list
+  const { items: processedItems, outputs } = useMemo(
+    () =>
+      convertList(input, {
+        inputDelimiter,
+        customInputDelimiter,
+        outputDelimiter,
+        trimItems,
+        removeEmpty,
+        deduplicate,
+        sortOrder,
+        caseConversion,
+      }),
+    [
+      input,
+      inputDelimiter,
+      customInputDelimiter,
+      outputDelimiter,
+      trimItems,
+      removeEmpty,
+      deduplicate,
+      sortOrder,
+      caseConversion,
+    ]
+  );
 
   const handleClear = () => {
     setInput('');
@@ -128,6 +90,7 @@ export function ListConverter() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Enter list items here..."
+              aria-label="List items"
               rows={8}
               className="font-mono text-sm"
             />
@@ -154,11 +117,17 @@ export function ListConverter() {
           <CardContent className="space-y-4 text-sm">
             {/* Input Delimiter */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="list-input-delimiter"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
                 Input Delimiter
               </label>
-              <Select value={inputDelimiter} onValueChange={setInputDelimiter}>
-                <SelectTrigger>
+              <Select
+                value={inputDelimiter}
+                onValueChange={(val) => setInputDelimiter(val as ListDelimiter)}
+              >
+                <SelectTrigger id="list-input-delimiter">
                   <SelectValue placeholder="Select delimiter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,6 +142,7 @@ export function ListConverter() {
                 <Input
                   type="text"
                   placeholder="Custom delimiter character/string"
+                  aria-label="Custom input delimiter"
                   value={customInputDelimiter}
                   onChange={(e) => setCustomInputDelimiter(e.target.value)}
                   className="mt-2"
@@ -182,9 +152,9 @@ export function ListConverter() {
 
             {/* List cleanup options */}
             <div className="space-y-3 pt-2 border-t">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Cleanup Options
-              </label>
+              </div>
               
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -222,15 +192,17 @@ export function ListConverter() {
 
             {/* Transform options */}
             <div className="space-y-3 pt-2 border-t">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Transformations
-              </label>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Sorting</label>
-                  <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as typeof sortOrder)}>
-                    <SelectTrigger className="h-8 text-xs">
+                  <label htmlFor="list-sort-order" className="text-xs font-medium text-muted-foreground">
+                    Sorting
+                  </label>
+                  <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as ListSortOrder)}>
+                    <SelectTrigger id="list-sort-order" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -242,9 +214,14 @@ export function ListConverter() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Case conversion</label>
-                  <Select value={caseConversion} onValueChange={(val) => setCaseConversion(val as typeof caseConversion)}>
-                    <SelectTrigger className="h-8 text-xs">
+                  <label htmlFor="list-case-conversion" className="text-xs font-medium text-muted-foreground">
+                    Case conversion
+                  </label>
+                  <Select
+                    value={caseConversion}
+                    onValueChange={(val) => setCaseConversion(val as ListCaseConversion)}
+                  >
+                    <SelectTrigger id="list-case-conversion" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -285,7 +262,7 @@ export function ListConverter() {
                     {copyCsv.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.csv} className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea readOnly value={outputs.csv} aria-label="Comma-separated output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
               </CardContent>
             </Card>
 
@@ -304,7 +281,7 @@ export function ListConverter() {
                     {copySingleQuoted.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.singleQuoted} className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea readOnly value={outputs.singleQuoted} aria-label="Single-quoted output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
               </CardContent>
             </Card>
 
@@ -323,7 +300,7 @@ export function ListConverter() {
                     {copyDoubleQuoted.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.doubleQuoted} className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea readOnly value={outputs.doubleQuoted} aria-label="Double-quoted output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
               </CardContent>
             </Card>
 
@@ -342,7 +319,7 @@ export function ListConverter() {
                     {copyJson.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.json} className="font-mono text-xs bg-muted/30 h-24" />
+                <Textarea readOnly value={outputs.json} aria-label="JSON array output" className="font-mono text-xs bg-muted/30 h-24" />
               </CardContent>
             </Card>
 
@@ -361,7 +338,7 @@ export function ListConverter() {
                     {copySql.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.sql} className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea readOnly value={outputs.sql} aria-label="SQL IN clause output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
               </CardContent>
             </Card>
 
@@ -376,6 +353,7 @@ export function ListConverter() {
                       value={outputDelimiter}
                       onChange={(e) => setOutputDelimiter(e.target.value)}
                       placeholder="Join string (e.g. | or -)"
+                      aria-label="Output delimiter"
                       className="w-24 h-7 text-xs font-mono"
                     />
                   </div>
@@ -389,7 +367,7 @@ export function ListConverter() {
                     {copyCustom.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.custom} className="font-mono text-xs bg-muted/30 h-16" />
+                <Textarea readOnly value={outputs.custom} aria-label="Custom delimited output" className="font-mono text-xs bg-muted/30 h-16" />
               </CardContent>
             </Card>
           </div>

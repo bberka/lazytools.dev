@@ -5,104 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Check, Type, Trash2 } from 'lucide-react';
+import { useCopyToClipboard } from '@/hooks';
+import { CASE_CONVERSIONS } from '@/lib/tools/case-converter';
 
 export function CaseConverter() {
   const [input, setInput] = useState('');
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const toCamelCase = (text: string): string => {
-    return text
-      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
-        return index === 0 ? word.toLowerCase() : word.toUpperCase();
-      })
-      .replace(/\s+|_|-/g, '');
-  };
-
-  const toPascalCase = (text: string): string => {
-    return text
-      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word) => {
-        return word.toUpperCase();
-      })
-      .replace(/\s+|_|-/g, '');
-  };
-
-  const toSnakeCase = (text: string): string => {
-    return text
-      .replace(/([A-Z])/g, '_$1')
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/-/g, '_')
-      .replace(/^_/, '');
-  };
-
-  const toKebabCase = (text: string): string => {
-    return text
-      .replace(/([A-Z])/g, '-$1')
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/_/g, '-')
-      .replace(/^-/, '');
-  };
-
-  const toUpperCase = (text: string): string => {
-    return text.toUpperCase();
-  };
-
-  const toLowerCase = (text: string): string => {
-    return text.toLowerCase();
-  };
-
-  const toTitleCase = (text: string): string => {
-    return text.replace(/\w\S*/g, (word) => {
-      return word.charAt(0).toUpperCase() + word.substr(1).toLowerCase();
-    });
-  };
-
-  const toSentenceCase = (text: string): string => {
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-  };
-
-  const toDotCase = (text: string): string => {
-    return text
-      .replace(/([A-Z])/g, '.$1')
-      .toLowerCase()
-      .replace(/\s+/g, '.')
-      .replace(/_/g, '.')
-      .replace(/-/g, '.')
-      .replace(/^\./, '');
-  };
-
-  const toConstantCase = (text: string): string => {
-    return text
-      .replace(/([A-Z])/g, '_$1')
-      .toUpperCase()
-      .replace(/\s+/g, '_')
-      .replace(/-/g, '_')
-      .replace(/^_/, '');
-  };
-
-  const handleCopy = async (value: string, index: number) => {
-    await navigator.clipboard.writeText(value);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+  const handleCopy = (value: string, label: string) => {
+    setCopiedLabel(label);
+    void copyToClipboard(value);
   };
 
   const handleClear = () => {
     setInput('');
   };
-
-  const conversions = [
-    { label: 'camelCase', fn: toCamelCase, example: 'helloWorldExample' },
-    { label: 'PascalCase', fn: toPascalCase, example: 'HelloWorldExample' },
-    { label: 'snake_case', fn: toSnakeCase, example: 'hello_world_example' },
-    { label: 'kebab-case', fn: toKebabCase, example: 'hello-world-example' },
-    { label: 'UPPERCASE', fn: toUpperCase, example: 'HELLO WORLD EXAMPLE' },
-    { label: 'lowercase', fn: toLowerCase, example: 'hello world example' },
-    { label: 'Title Case', fn: toTitleCase, example: 'Hello World Example' },
-    { label: 'Sentence case', fn: toSentenceCase, example: 'Hello world example' },
-    { label: 'dot.case', fn: toDotCase, example: 'hello.world.example' },
-    { label: 'CONSTANT_CASE', fn: toConstantCase, example: 'HELLO_WORLD_EXAMPLE' },
-  ];
 
   return (
     <div className="space-y-4">
@@ -119,6 +37,7 @@ export function CaseConverter() {
             value={input}
             onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
             placeholder="Hello World Example"
+            aria-label="Text to convert"
             rows={4}
             className="font-mono text-sm"
           />
@@ -132,9 +51,9 @@ export function CaseConverter() {
 
       {input && (
         <div className="grid gap-4">
-          {conversions.map((conversion, index) => {
-            const converted = conversion.fn(input);
-            const isCopied = copiedIndex === index;
+          {CASE_CONVERSIONS.map((conversion) => {
+            const converted = conversion.convert(input);
+            const showCopied = isCopied && copiedLabel === conversion.label;
             return (
               <Card key={conversion.label}>
                 <CardHeader>
@@ -144,16 +63,16 @@ export function CaseConverter() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-muted p-4 rounded-md font-mono text-sm break-all">
+                  <div className="bg-muted p-4 rounded-md font-mono text-sm break-all whitespace-pre-wrap">
                     {converted || <span className="text-muted-foreground italic">Empty result</span>}
                   </div>
                   <Button
-                    onClick={() => handleCopy(converted, index)}
+                    onClick={() => handleCopy(converted, conversion.label)}
                     disabled={!converted}
                     size="sm"
-                    variant={isCopied ? "default" : "outline"}
+                    variant={showCopied ? "default" : "outline"}
                   >
-                    {isCopied ? (
+                    {showCopied ? (
                       <>
                         <Check className="h-4 w-4 mr-2" />
                         Copied!
