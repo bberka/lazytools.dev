@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -81,10 +81,21 @@ export function ResumeAtsAnalyzer() {
   const [extractedText, setExtractedText] = useState('');
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
+  // Counts the analyses started and abandoned. Reading a large PDF takes a
+  // while; a result that arrives after another file was chosen, or after
+  // Clear, belongs to an older number and is dropped.
+  const analysisRunRef = useRef(0);
+
+  const abandonAnalysis = () => {
+    analysisRunRef.current += 1;
+    setIsAnalyzing(false);
+  };
+
   // The intake only passes PDFs on; anything else is reported under the picker.
   const intake = useFileIntake({
     accept: PDF_MIME_TYPE,
     onFiles: ([file]) => {
+      abandonAnalysis();
       setResumeFile(file);
       setAnalysis(null);
       setExtractedText('');
@@ -98,11 +109,16 @@ export function ResumeAtsAnalyzer() {
       return;
     }
 
+    analysisRunRef.current += 1;
+    const run = analysisRunRef.current;
+    const isCurrentRun = () => analysisRunRef.current === run;
+
     setIsAnalyzing(true);
     setError('');
 
     try {
       const { pageCount, text } = await extractPdfText(resumeFile);
+      if (!isCurrentRun()) return;
 
       if (!text.trim()) {
         throw new Error('No selectable text was found in this PDF. Try a PDF with a text layer.');
@@ -116,17 +132,20 @@ export function ResumeAtsAnalyzer() {
         })
       );
     } catch (analysisError) {
+      if (!isCurrentRun()) return;
+
       setAnalysis(null);
       setExtractedText('');
       setError(
         analysisError instanceof Error ? analysisError.message : 'The PDF could not be analyzed.'
       );
     } finally {
-      setIsAnalyzing(false);
+      if (isCurrentRun()) setIsAnalyzing(false);
     }
   };
 
   const handleClear = () => {
+    abandonAnalysis();
     setResumeFile(null);
     setJobDescription('');
     setResumeLanguage('auto');
@@ -275,7 +294,7 @@ export function ResumeAtsAnalyzer() {
       </Card>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -399,14 +418,20 @@ export function ResumeAtsAnalyzer() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Missing opportunities</p>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.localizedMissingSections.map((section) => (
-                      <span
-                        key={section}
-                        className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
-                      >
-                        {section}
+                    {analysis.localizedMissingSections.length > 0 ? (
+                      analysis.localizedMissingSections.map((section) => (
+                        <span
+                          key={section}
+                          className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
+                        >
+                          {section}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        None. Every standard section was found.
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -457,13 +482,21 @@ export function ResumeAtsAnalyzer() {
                   title="Matched"
                   tone="success"
                   items={analysis.matchedKeywords}
-                  emptyLabel="Add a job description to evaluate keyword alignment."
+                  emptyLabel={
+                    analysis.jobKeywords.length > 0
+                      ? 'None of the job description keywords were found in the resume.'
+                      : 'Add a job description to evaluate keyword alignment.'
+                  }
                 />
                 <KeywordGroup
                   title="Missing / Underrepresented"
                   tone="muted"
                   items={analysis.missingJobKeywords.slice(0, 12)}
-                  emptyLabel="No missing job keywords detected in the sampled keyword set."
+                  emptyLabel={
+                    analysis.jobKeywords.length > 0
+                      ? 'No missing job keywords detected in the sampled keyword set.'
+                      : 'Add a job description to see which of its keywords are missing.'
+                  }
                 />
               </CardContent>
             </Card>
@@ -476,12 +509,17 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {analysis.suggestions.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No priority improvements were found for this resume.
+                  </p>
+                )}
                 {analysis.suggestions.map((suggestion) => (
                   <div
                     key={suggestion}
                     className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-3"
                   >
-                    <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
                     <p className="text-sm">{suggestion}</p>
                   </div>
                 ))}
@@ -490,7 +528,7 @@ export function ResumeAtsAnalyzer() {
           </div>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>Extracted Text Preview</CardTitle>
                 <CardDescription>
