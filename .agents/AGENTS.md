@@ -21,6 +21,7 @@ This guide is for coding agents working in this repository. It is grounded in th
 - Lint: `npm run lint`
 - Fix lint: `npm run lint:fix`
 - Format: `npm run format`
+- Unit tests: `npm run test:unit`
 - E2E tests: `npm run test:e2e`
 - E2E UI runner: `npm run test:e2e:ui`
 - Install Playwright browsers: `npm run test:e2e:install`
@@ -113,9 +114,9 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 ## PWA And Service Worker
 
 - `public/sw.js` implements static asset caching, route precache loading, network-first navigation, and stale-while-revalidate static assets.
-- `scripts/generate-sw-precache.js` runs after `next build` and writes `public/sw-precache.js` from registry slugs.
-- If tool routes change, `npm run build` regenerates the precache list.
-- Avoid hand-editing generated `public/sw-precache.js` unless intentionally changing generated output.
+- `src/app/sw-precache.js/route.ts` is a static route handler that emits `/sw-precache.js` from the registry during `next build`, the same way the sitemap is emitted.
+- If tool routes change, `npm run build` regenerates the precache list. There is no separate generation script.
+- Do not add a `public/sw-precache.js` file; it would conflict with the route.
 
 ## Desktop And Release
 
@@ -127,7 +128,9 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 ## Testing
 
-- Playwright config is in `playwright.config.ts`.
+- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `npm run test:unit` (`playwright.unit.config.ts`). They use the Playwright test runner but need no browser and no dev server; import the module under test with the `@/` alias.
+- Put tool logic that can be a plain function in `src/lib/` and cover it with a unit test rather than an e2e test.
+- Playwright e2e config is in `playwright.config.ts`.
 - Tests run against `http://localhost:3000` and start `npm run dev` automatically.
 - Projects cover Chromium, Firefox, and WebKit; route coverage skips non-Chromium for speed.
 - `playwright/route-coverage.spec.ts` iterates every `TOOLS` entry and verifies each tool page renders.

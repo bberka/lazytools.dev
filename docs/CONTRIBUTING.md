@@ -197,6 +197,12 @@ export function ExampleTool() {
 
 ## Testing
 
+Pure logic is covered by unit tests in `tests/unit/`. They run on the Playwright test runner without a browser or dev server:
+
+```bash
+npm run test:unit
+```
+
 Automated e2e tests are implemented using Playwright.
 
 To set up and run the e2e tests:
