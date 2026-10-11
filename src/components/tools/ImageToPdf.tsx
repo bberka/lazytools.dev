@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { useObjectUrl } from '@/hooks/useObjectUrl';
-import { downloadBlob, readFileAsArrayBuffer } from '@/lib/files';
+import { downloadBlob } from '@/lib/files';
 import { pdfBlob } from '@/lib/pdf';
+import { imagesToPdf } from '@/lib/tools/image-to-pdf';
 
 // The preview URL belongs to the thumbnail: it is revoked when the image is
 // removed from the list or the tool unmounts.
@@ -16,7 +16,7 @@ function ImageThumbnail({ file }: { file: File }) {
   const url = useObjectUrl(file);
   if (!url) return null;
 
-  return <img src={url} alt="Uploaded" className="object-cover w-full h-full" />;
+  return <img src={url} alt={file.name} className="object-cover w-full h-full" />;
 }
 
 export function ImageToPdf() {
@@ -27,7 +27,7 @@ export function ImageToPdf() {
   // The intake only passes JPEG and PNG on; anything else is reported under the drop area.
   const addImages = (files: File[]) => {
     const newImages = files.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       file,
     }));
 
@@ -43,32 +43,7 @@ export function ImageToPdf() {
     setError('');
 
     try {
-      const pdfDoc = await PDFDocument.create();
-
-      for (const imgData of images) {
-        const imgBytes = await readFileAsArrayBuffer(imgData.file);
-        let pdfImg;
-
-        if (imgData.file.type === 'image/jpeg' || imgData.file.type === 'image/jpg') {
-          pdfImg = await pdfDoc.embedJpg(imgBytes);
-        } else if (imgData.file.type === 'image/png') {
-          pdfImg = await pdfDoc.embedPng(imgBytes);
-        } else {
-          // Attempt to convert to PNG/JPG via canvas if needed, but for simplicity:
-          console.warn('Unsupported image format for direct embedding');
-          continue;
-        }
-
-        const page = pdfDoc.addPage([pdfImg.width, pdfImg.height]);
-        page.drawImage(pdfImg, {
-          x: 0,
-          y: 0,
-          width: pdfImg.width,
-          height: pdfImg.height,
-        });
-      }
-
-      const pdfBytes = await pdfDoc.save();
+      const pdfBytes = await imagesToPdf(images.map((image) => image.file));
       downloadBlob(pdfBlob(pdfBytes), 'images.pdf');
     } catch (generateError) {
       console.error('Error generating PDF:', generateError);
@@ -100,9 +75,7 @@ export function ImageToPdf() {
           <div
             {...intake.dropzoneProps}
             className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-              intake.isDragging
-                ? 'border-primary bg-primary/5'
-                : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'
+              intake.isDragging ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
             }`}
           >
             <input {...intake.inputProps} aria-label="Upload JPEG or PNG images" />
@@ -126,7 +99,7 @@ export function ImageToPdf() {
       {images.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium flex justify-between items-center">
+            <CardTitle className="text-sm font-medium flex justify-between items-center gap-2">
               Selected Images ({images.length})
               <Button onClick={generatePdf} disabled={generating}>
                 {generating ? 'Generating...' : 'Generate PDF'}
@@ -136,13 +109,16 @@ export function ImageToPdf() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {images.map((img) => (
-                <div key={img.id} className="relative group aspect-square border rounded-md overflow-hidden bg-slate-100">
+                <div key={img.id} className="relative group aspect-square border rounded-md overflow-hidden bg-muted">
                   <ImageThumbnail file={img.file} />
+                  {/* Hidden until hover only where there is a pointer to hover with; touch screens and keyboard focus always show it. */}
                   <button
+                    type="button"
                     onClick={() => removeImage(img.id)}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Remove ${img.file.name}`}
+                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 aria-hidden="true" className="h-3 w-3" />
                   </button>
                 </div>
               ))}
