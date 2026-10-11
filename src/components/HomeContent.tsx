@@ -1,36 +1,49 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 
 import { TagFilter } from './TagFilter';
 import { FavoriteButton } from './FavoriteButton';
-import { SearchBar } from './SearchBar';
 import { Card, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
+import { Input } from './ui/input';
 import { toolCatalog } from '@/lib/catalog';
+import { useHomeViewState } from '@/lib/home/client';
+import {
+  countGridColumns,
+  isArrowKey,
+  moveSelection,
+  NO_SELECTION,
+} from '@/lib/home/grid-navigation';
 import { TAGS } from '@/lib/tags';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { cn } from '@/lib/utils/cn';
-import type { Tool, ToolTag } from '@/lib/types';
+import type { Tool } from '@/lib/types';
 
 export function HomeContent() {
   const router = useRouter();
   const { favorites } = useFavorites();
   const { compactMode } = useSettings();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<ToolTag | null>(null);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
+  const {
+    searchQuery,
+    selectedTag,
+    showFavoritesOnly,
+    setSearchQuery,
+    clearSearch,
+    selectTag,
+    toggleFavoritesOnly,
+  } = useHomeViewState();
+  const [selectedSearchIndex, setSelectedSearchIndex] = useState(NO_SELECTION);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Reset selection when search query or filters change
   useEffect(() => {
-    setSelectedSearchIndex(-1);
+    setSelectedSearchIndex(NO_SELECTION);
   }, [searchQuery, selectedTag, showFavoritesOnly]);
 
   const filteredTools = useMemo(
@@ -53,239 +66,84 @@ export function HomeContent() {
     [favorites]
   );
 
+  // The tag sections with the keyboard index of each one's first card. A tool
+  // with several tags is rendered in each of its sections, so cards are
+  // numbered by where they are on the page, not by tool.
+  const tagSections = useMemo(
+    () =>
+      groupedTools.map((group, index) => ({
+        ...group,
+        firstIndex: groupedTools
+          .slice(0, index)
+          .reduce((count, previous) => count + previous.tools.length, 0),
+      })),
+    [groupedTools]
+  );
+
+  // The cards the arrow keys move through, as the grids they are rendered in:
+  // one grid for search results and favorites, one per section under a tag.
+  // Keyboard navigation is off while the page shows the whole catalog.
+  const keyboardSections = useMemo<Tool[][]>(() => {
+    if (searchQuery || showFavoritesOnly) return [filteredTools];
+    if (selectedTag) return tagSections.map((section) => section.tools);
+    return [];
+  }, [filteredTools, searchQuery, selectedTag, showFavoritesOnly, tagSections]);
+
+  // Read from the rendered grid, so it always matches the breakpoints in ToolGrid
   const getGridColumns = () => {
-    if (typeof window === 'undefined') return 1;
-    const width = window.innerWidth;
-    if (width >= 1920) return 6;
-    if (width >= 1536) return 5;
-    if (width >= 1280) return 4;
-    if (width >= 1024) return 3;
-    if (width >= 640) return 2;
-    return 1;
+    const grid = contentRef.current?.querySelector('[data-tool-grid]');
+    return grid ? countGridColumns(window.getComputedStyle(grid).gridTemplateColumns) : 1;
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (filteredTools.length === 0) return;
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const keyboardTools = keyboardSections.flat();
+    if (keyboardTools.length === 0) return;
 
-    // Only navigate via keyboard when search or filter is active
-    const isFlatList = !!(searchQuery || showFavoritesOnly || selectedTag);
-    if (!isFlatList) return;
+    if (isArrowKey(e.key)) {
+      e.preventDefault();
+      const nextIndex = moveSelection(selectedSearchIndex, e.key, {
+        sections: keyboardSections.map((tools) => tools.length),
+        columns: getGridColumns(),
+      });
+      setSelectedSearchIndex(nextIndex);
 
-    const cols = getGridColumns();
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedSearchIndex((prev) => {
-        if (prev === -1) {
-          const nextIndex = 0;
-          const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
-          activeElement?.scrollIntoView({ block: 'nearest' });
-          return nextIndex;
-        }
-        const nextIndex = Math.min(prev + cols, filteredTools.length - 1);
-        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
-        activeElement?.scrollIntoView({ block: 'nearest' });
-        return nextIndex;
-      });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedSearchIndex((prev) => {
-        if (prev === -1) return -1;
-        const nextIndex = prev - cols;
-        if (nextIndex < 0) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return -1;
-        }
-        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
-        activeElement?.scrollIntoView({ block: 'nearest' });
-        return nextIndex;
-      });
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      setSelectedSearchIndex((prev) => {
-        if (prev === -1) return -1;
-        const nextIndex = Math.min(prev + 1, filteredTools.length - 1);
-        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
-        activeElement?.scrollIntoView({ block: 'nearest' });
-        return nextIndex;
-      });
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      setSelectedSearchIndex((prev) => {
-        if (prev === -1) return -1;
-        const nextIndex = prev - 1;
-        if (nextIndex < 0) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return -1;
-        }
-        const activeElement = document.querySelector(`[data-tool-id="${filteredTools[nextIndex].id}"]`);
-        activeElement?.scrollIntoView({ block: 'nearest' });
-        return nextIndex;
-      });
+      if (nextIndex !== NO_SELECTION) {
+        contentRef.current
+          ?.querySelector(`[data-keyboard-index="${nextIndex}"]`)
+          ?.scrollIntoView({ block: 'nearest' });
+      } else if (selectedSearchIndex !== NO_SELECTION) {
+        // Moved out of the cards, back to the search box
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } else if (e.key === 'Enter') {
-      if (selectedSearchIndex >= 0 && selectedSearchIndex < filteredTools.length) {
+      const tool = keyboardTools[selectedSearchIndex];
+      if (tool) {
         e.preventDefault();
-        const tool = filteredTools[selectedSearchIndex];
         router.push(`/tools/${tool.id}`);
       }
     } else if (e.key === 'Escape') {
-      setSelectedSearchIndex(-1);
-      setSearchQuery('');
+      setSelectedSearchIndex(NO_SELECTION);
+      clearSearch();
     }
-  };
-
-  const isInitializedRef = useRef(false);
-  const hasRestoredScrollRef = useRef(false);
-  const savedScrollPositionRef = useRef<number | null>(null);
-
-  // Load state from sessionStorage on mount
-  useEffect(() => {
-    try {
-      const savedSearch = sessionStorage.getItem('home-search-query');
-      const savedTag = sessionStorage.getItem('home-selected-tag');
-      const savedFavoritesOnly = sessionStorage.getItem('home-favorites-only');
-      const savedScroll = sessionStorage.getItem('home-scroll-y');
-
-      if (savedSearch !== null) setSearchQuery(savedSearch);
-      if (savedTag !== null) {
-        setSelectedTag(savedTag ? (savedTag as ToolTag) : null);
-      }
-      if (savedFavoritesOnly !== null) {
-        setShowFavoritesOnly(savedFavoritesOnly === 'true');
-      }
-
-      if (savedScroll !== null) {
-        const scrollY = parseInt(savedScroll, 10);
-        if (scrollY > 0) {
-          savedScrollPositionRef.current = scrollY;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to restore home page state:', e);
-    } finally {
-      isInitializedRef.current = true;
-    }
-  }, []);
-
-  // Save states to sessionStorage when they change
-  useEffect(() => {
-    if (!isInitializedRef.current) return;
-    try {
-      sessionStorage.setItem('home-search-query', searchQuery);
-      sessionStorage.setItem('home-selected-tag', selectedTag || '');
-      sessionStorage.setItem('home-favorites-only', showFavoritesOnly.toString());
-    } catch (e) {}
-  }, [searchQuery, selectedTag, showFavoritesOnly]);
-
-  // Restore scroll position when list is rendered and page height matches
-  useEffect(() => {
-    if (!isInitializedRef.current || hasRestoredScrollRef.current) return;
-    if (savedScrollPositionRef.current === null) {
-      hasRestoredScrollRef.current = true;
-      return;
-    }
-
-    const scrollY = savedScrollPositionRef.current;
-
-    const tryScroll = () => {
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (maxScroll >= scrollY) {
-        window.scrollTo({
-          top: scrollY,
-          behavior: 'instant' as ScrollBehavior,
-        });
-        hasRestoredScrollRef.current = true;
-        return true;
-      }
-      return false;
-    };
-
-    // Try immediately
-    if (tryScroll()) return;
-
-    // If page is not tall enough yet, poll on animation frames for up to 2 seconds (120 frames)
-    let frameId: number;
-    let frames = 0;
-    const loop = () => {
-      frames++;
-      if (tryScroll() || frames > 120) {
-        hasRestoredScrollRef.current = true;
-        return;
-      }
-      frameId = requestAnimationFrame(loop);
-    };
-    frameId = requestAnimationFrame(loop);
-
-    return () => cancelAnimationFrame(frameId);
-  }, [filteredTools]);
-
-  // Track window scroll position (only after scroll has been restored)
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!isInitializedRef.current || !hasRestoredScrollRef.current) return;
-      try {
-        sessionStorage.setItem('home-scroll-y', window.scrollY.toString());
-      } catch (e) {}
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // Listen to reset events (e.g. clicking the main logo)
-  useEffect(() => {
-    const handleReset = () => {
-      setSearchQuery('');
-      setSelectedTag(null);
-      setShowFavoritesOnly(false);
-      try {
-        sessionStorage.setItem('home-scroll-y', '0');
-      } catch (e) {}
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.addEventListener('reset-home-state', handleReset);
-    return () => {
-      window.removeEventListener('reset-home-state', handleReset);
-    };
-  }, []);
-
-  const handleFavoritesToggle = () => {
-    const nextShowFavorites = !showFavoritesOnly;
-    setShowFavoritesOnly(nextShowFavorites);
-    if (nextShowFavorites) {
-      setSelectedTag(null);
-    }
-    try {
-      sessionStorage.setItem('home-scroll-y', '0');
-    } catch (e) {}
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-  };
-
-  const handleTagChange = (tag: ToolTag | null) => {
-    setSelectedTag(tag);
-    if (tag) {
-      setShowFavoritesOnly(false);
-    }
-    try {
-      sessionStorage.setItem('home-scroll-y', '0');
-    } catch (e) {}
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-  };
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    try {
-      sessionStorage.setItem('home-scroll-y', '0');
-    } catch (e) {}
   };
 
   return (
-    <div className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}>
+    <div
+      ref={contentRef}
+      className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}
+    >
       <div className="flex justify-center">
-        <SearchBar value={searchQuery} onSearch={handleSearchChange} onKeyDown={handleKeyDown} />
+        <div className="relative w-full max-w-2xl">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search tools..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="h-11 pl-10 text-base sm:h-10 sm:text-sm"
+          />
+        </div>
       </div>
 
       <div className="flex justify-center">
@@ -293,8 +151,8 @@ export function HomeContent() {
           selectedTag={selectedTag}
           showFavoritesOnly={showFavoritesOnly}
           favoritesCount={favorites.length}
-          onTagChange={handleTagChange}
-          onFavoritesToggle={handleFavoritesToggle}
+          onTagChange={selectTag}
+          onFavoritesToggle={toggleFavoritesOnly}
         />
       </div>
 
@@ -315,6 +173,7 @@ export function HomeContent() {
                   key={tool.id}
                   tool={tool}
                   compactMode={compactMode}
+                  keyboardIndex={index}
                   isActive={selectedSearchIndex === index}
                 />
               ))}
@@ -352,8 +211,8 @@ export function HomeContent() {
 
       {!showFavoritesOnly && !searchQuery && (
         <div className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}>
-          {groupedTools.map(
-            ({ tag: tagId, tools: tagTools }) => {
+          {tagSections.map(
+            ({ tag: tagId, tools: tagTools, firstIndex }) => {
               const tag = TAGS[tagId];
               const Icon = tag.icon;
 
@@ -370,17 +229,15 @@ export function HomeContent() {
                     <span>{tag.name}</span>
                   </h2>
                   <ToolGrid compactMode={compactMode}>
-                    {tagTools.map((tool) => {
-                      const globalIndex = filteredTools.findIndex((t) => t.id === tool.id);
-                      return (
-                        <ToolCard
-                          key={tool.id}
-                          tool={tool}
-                          compactMode={compactMode}
-                          isActive={selectedSearchIndex === globalIndex}
-                        />
-                      );
-                    })}
+                    {tagTools.map((tool, index) => (
+                      <ToolCard
+                        key={tool.id}
+                        tool={tool}
+                        compactMode={compactMode}
+                        keyboardIndex={firstIndex + index}
+                        isActive={selectedSearchIndex === firstIndex + index}
+                      />
+                    ))}
                   </ToolGrid>
                 </section>
               );
@@ -398,6 +255,7 @@ export function HomeContent() {
                   key={tool.id}
                   tool={tool}
                   compactMode={compactMode}
+                  keyboardIndex={index}
                   isActive={selectedSearchIndex === index}
                 />
               ))}
@@ -431,6 +289,7 @@ function ToolGrid({
 }) {
   return (
     <div
+      data-tool-grid
       className={cn(
         'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-6',
         compactMode ? 'gap-2' : 'gap-4'
@@ -446,10 +305,13 @@ function ToolGrid({
 function ToolCard({
   tool,
   compactMode,
+  keyboardIndex,
   isActive,
 }: {
   tool: Tool;
   compactMode: boolean;
+  /** The card's place in arrow-key navigation, where it takes part in it. */
+  keyboardIndex?: number;
   isActive?: boolean;
 }) {
   const primaryTag = TAGS[tool.tags[0]];
@@ -464,6 +326,7 @@ function ToolCard({
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className="h-full"
       data-tool-id={tool.id}
+      data-keyboard-index={keyboardIndex}
     >
       <Link href={`/tools/${tool.id}`} className="group block h-full">
         <Card className={cn(

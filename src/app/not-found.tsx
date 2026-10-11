@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
+import { homeViewState } from '@/lib/home/client';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
 import { cn } from '@/lib/utils/cn';
@@ -26,14 +26,7 @@ export default function NotFound() {
   }, []);
 
   const handleTagClick = (tagId: ToolTag) => {
-    try {
-      sessionStorage.setItem('home-selected-tag', tagId);
-      sessionStorage.setItem('home-search-query', '');
-      sessionStorage.setItem('home-favorites-only', 'false');
-      sessionStorage.setItem('home-scroll-y', '0');
-    } catch (e) {
-      console.error(e);
-    }
+    homeViewState.showTag(tagId);
     router.push('/');
   };
 
