@@ -1113,4 +1113,18 @@ export const TOOL_REGISTRY = {
         (module) => module.ClampCalculator
       ),
   },
+  'hmac-generator': {
+    name: 'HMAC Generator',
+    description: 'Generate and verify HMAC signatures with SHA-1 to SHA-512',
+    tags: ['security'],
+    icon: 'Signature',
+    keywords: [
+      'hmac', 'sha256', 'sha512', 'sha1', 'sha384', 'signature', 'webhook',
+      'secret', 'mac', 'verify', 'authentication', 'base64',
+    ],
+    component: () =>
+      import('@/components/tools/HmacGenerator').then(
+        (module) => module.HmacGenerator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
