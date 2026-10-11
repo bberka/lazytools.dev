@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
 import { Radar, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useActionButton } from '@/hooks';
+import { planScan, probePort, type ScanMode } from '@/lib/tools/port-checker';
 
 interface PortResult {
   port: number;
@@ -14,161 +15,47 @@ interface PortResult {
   protocol?: string;
 }
 
-interface CommonPort {
-  port: number;
-  service: string;
-  protocol: string;
-}
-
-const COMMON_PORTS: CommonPort[] = [
-  { port: 21, service: 'FTP', protocol: 'TCP' },
-  { port: 22, service: 'SSH', protocol: 'TCP' },
-  { port: 23, service: 'Telnet', protocol: 'TCP' },
-  { port: 25, service: 'SMTP', protocol: 'TCP' },
-  { port: 53, service: 'DNS', protocol: 'TCP/UDP' },
-  { port: 80, service: 'HTTP', protocol: 'TCP' },
-  { port: 110, service: 'POP3', protocol: 'TCP' },
-  { port: 143, service: 'IMAP', protocol: 'TCP' },
-  { port: 443, service: 'HTTPS', protocol: 'TCP' },
-  { port: 465, service: 'SMTPS', protocol: 'TCP' },
-  { port: 587, service: 'SMTP (Submission)', protocol: 'TCP' },
-  { port: 993, service: 'IMAPS', protocol: 'TCP' },
-  { port: 995, service: 'POP3S', protocol: 'TCP' },
-  { port: 3306, service: 'MySQL', protocol: 'TCP' },
-  { port: 3389, service: 'RDP', protocol: 'TCP' },
-  { port: 5432, service: 'PostgreSQL', protocol: 'TCP' },
-  { port: 6379, service: 'Redis', protocol: 'TCP' },
-  { port: 8080, service: 'HTTP Proxy', protocol: 'TCP' },
-  { port: 8443, service: 'HTTPS Alt', protocol: 'TCP' },
-  { port: 27017, service: 'MongoDB', protocol: 'TCP' },
-];
-
 export function PortChecker() {
   const [hostname, setHostname] = useState('');
   const [customPorts, setCustomPorts] = useState('');
   const [scanResults, setScanResults] = useState<PortResult[]>([]);
   const [error, setError] = useState('');
-  const [scanMode, setScanMode] = useState<'common' | 'custom'>('common');
+  const [scanMode, setScanMode] = useState<ScanMode>('common');
 
   const { executeAction: executeScan, isLoading } = useActionButton();
 
-  const isValidHostname = (host: string): boolean => {
-    // Allow localhost, IP addresses, and domain names
-    const localhostPattern = /^localhost$/i;
-    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-    const domainPattern = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+  const hostnameId = useId();
+  const customPortsId = useId();
 
-    return localhostPattern.test(host) || ipPattern.test(host) || domainPattern.test(host);
-  };
+  // The scan in flight, so that Clear and leaving the page can stop it.
+  const activeScan = useRef<AbortController | null>(null);
 
-  const parsePortList = (portStr: string): number[] => {
-    const ports: number[] = [];
-    const parts = portStr.split(',');
-
-    for (const part of parts) {
-      const trimmed = part.trim();
-      if (trimmed.includes('-')) {
-        // Range like 80-85
-        const [start, end] = trimmed.split('-').map((p) => parseInt(p.trim(), 10));
-        if (!isNaN(start) && !isNaN(end) && start <= end && start >= 1 && end <= 65535) {
-          for (let port = start; port <= end; port++) {
-            if (!ports.includes(port)) {
-              ports.push(port);
-            }
-          }
-        }
-      } else {
-        const port = parseInt(trimmed, 10);
-        if (!isNaN(port) && port >= 1 && port <= 65535 && !ports.includes(port)) {
-          ports.push(port);
-        }
-      }
-    }
-
-    return ports.sort((a, b) => a - b);
-  };
-
-  const checkPort = async (host: string, port: number): Promise<'open' | 'closed' | 'filtered'> => {
-    return new Promise((resolve) => {
-      const timeout = 3000;
-      const protocol = port === 80 || port === 8080 ? 'http' : port === 443 || port === 8443 ? 'https' : 'http';
-
-      // Create an image to test connectivity
-      const img = new Image();
-      const timer = setTimeout(() => {
-        img.src = '';
-        resolve('filtered');
-      }, timeout);
-
-      img.onload = () => {
-        clearTimeout(timer);
-        resolve('open');
-      };
-
-      img.onerror = () => {
-        clearTimeout(timer);
-        // Check if we got a response (even error means port is responding)
-        resolve('filtered');
-      };
-
-      // Try to load a resource from the host:port
-      img.src = `${protocol}://${host}:${port}/favicon.ico?${Date.now()}`;
-    });
-  };
+  useEffect(() => () => activeScan.current?.abort(), []);
 
   const scanPorts = async () => {
+    activeScan.current?.abort();
+    const controller = new AbortController();
+    activeScan.current = controller;
+
     setError('');
     setScanResults([]);
 
-    const host = hostname.trim();
-
-    if (!host) {
-      setError('Please enter a hostname or IP address');
+    const plan = planScan(hostname, scanMode, customPorts);
+    if (!plan.ok) {
+      setError(plan.error);
       return;
     }
 
-    if (!isValidHostname(host)) {
-      setError('Invalid hostname or IP address format');
-      return;
-    }
-
-    let portsToScan: PortResult[];
-
-    if (scanMode === 'common') {
-      portsToScan = COMMON_PORTS.map((cp) => ({
-        port: cp.port,
-        service: cp.service,
-        status: 'checking' as const,
-        protocol: cp.protocol,
-      }));
-    } else {
-      const ports = parsePortList(customPorts);
-      if (ports.length === 0) {
-        setError('Please enter valid port numbers (e.g., 80,443 or 8000-8010)');
-        return;
-      }
-      if (ports.length > 50) {
-        setError('Please limit the scan to 50 ports maximum');
-        return;
-      }
-      portsToScan = ports.map((port) => ({
-        port,
-        service: COMMON_PORTS.find((cp) => cp.port === port)?.service || 'Unknown',
-        status: 'checking' as const,
-        protocol: COMMON_PORTS.find((cp) => cp.port === port)?.protocol || 'TCP',
-      }));
-    }
-
-    setScanResults(portsToScan);
+    setScanResults(plan.ports.map((target) => ({ ...target, status: 'checking' as const })));
 
     // Scan ports sequentially to avoid overwhelming the browser
-    for (let i = 0; i < portsToScan.length; i++) {
-      const portInfo = portsToScan[i];
-      const status = await checkPort(host, portInfo.port);
+    for (const target of plan.ports) {
+      const status = await probePort(plan.host, target.port, { signal: controller.signal });
+      if (controller.signal.aborted) return;
 
       setScanResults((prev) =>
         prev.map((p) =>
-          p.port === portInfo.port
+          p.port === target.port
             ? { ...p, status }
             : p
         )
@@ -181,6 +68,7 @@ export function PortChecker() {
   };
 
   const handleClear = () => {
+    activeScan.current?.abort();
     setHostname('');
     setCustomPorts('');
     setScanResults([]);
@@ -196,7 +84,7 @@ export function PortChecker() {
     <div className="space-y-4">
       {/* Warning */}
       <Card className="border-yellow-500/20 bg-yellow-500/5">
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
             <div className="text-yellow-600 dark:text-yellow-500">
               <AlertCircle className="h-5 w-5" />
@@ -220,6 +108,7 @@ export function PortChecker() {
         <Button
           variant={scanMode === 'common' ? 'default' : 'outline'}
           onClick={() => setScanMode('common')}
+          aria-pressed={scanMode === 'common'}
           className="flex-1 sm:flex-none"
         >
           Common Ports
@@ -227,6 +116,7 @@ export function PortChecker() {
         <Button
           variant={scanMode === 'custom' ? 'default' : 'outline'}
           onClick={() => setScanMode('custom')}
+          aria-pressed={scanMode === 'custom'}
           className="flex-1 sm:flex-none"
         >
           Custom Ports
@@ -247,8 +137,9 @@ export function PortChecker() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-2 block">Hostname or IP Address</label>
+              <label htmlFor={hostnameId} className="text-sm font-medium mb-2 block">Hostname or IP Address</label>
               <Input
+                id={hostnameId}
                 type="text"
                 value={hostname}
                 onChange={(e) => setHostname((e.target as HTMLInputElement).value)}
@@ -259,10 +150,11 @@ export function PortChecker() {
 
             {scanMode === 'custom' && (
               <div>
-                <label className="text-sm font-medium mb-2 block">
+                <label htmlFor={customPortsId} className="text-sm font-medium mb-2 block">
                   Ports (comma-separated or ranges)
                 </label>
                 <Input
+                  id={customPortsId}
                   type="text"
                   value={customPorts}
                   onChange={(e) => setCustomPorts((e.target as HTMLInputElement).value)}
@@ -300,7 +192,7 @@ export function PortChecker() {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
