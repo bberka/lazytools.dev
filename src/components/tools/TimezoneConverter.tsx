@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
 import { ArrowRightLeft, Check, Clock3, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,392 +17,257 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCopyToClipboard } from '@/hooks';
+import { toDateInputValue } from '@/lib/tools/calendar-date';
+import {
+  COMMON_TIME_ZONES,
+  convertTimeZone,
+  listTimeZones,
+  resolveLocalTimeZone,
+  searchTimeZones,
+  timeZoneLabel,
+  toTimeZoneOptions,
+  type TimeZoneOption,
+} from '@/lib/tools/timezone-converter';
 import { cn } from '@/lib/utils/cn';
 
-type DateParts = {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-  second: number;
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+const COMMON_TIME_ZONE_OPTIONS = toTimeZoneOptions(COMMON_TIME_ZONES);
+
+type Defaults = {
+  timeZone: string;
+  date: string;
+  hour: string;
+  minute: string;
 };
 
-type TimeZoneOption = {
-  value: string;
-  label: string;
-};
+// What the static HTML is built with: no clock and no local zone.
+const STATIC_DEFAULTS: Defaults = { timeZone: 'UTC', date: '', hour: '00', minute: '00' };
 
-const COMMON_TIME_ZONES = [
-  'UTC',
-  // Americas
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'America/Toronto',
-  'America/Vancouver',
-  'America/Mexico_City',
-  'America/Sao_Paulo',
-  'America/Argentina/Buenos_Aires',
-  // Europe
-  'Europe/London',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'Europe/Rome',
-  'Europe/Madrid',
-  'Europe/Amsterdam',
-  'Europe/Stockholm',
-  'Europe/Warsaw',
-  'Europe/Istanbul',
-  'Europe/Moscow',
-  // Africa
-  'Africa/Cairo',
-  'Africa/Lagos',
-  'Africa/Johannesburg',
-  // Middle East & Asia
-  'Asia/Dubai',
-  'Asia/Karachi',
-  'Asia/Kolkata',
-  'Asia/Dhaka',
-  'Asia/Bangkok',
-  'Asia/Singapore',
-  'Asia/Shanghai',
-  'Asia/Hong_Kong',
-  'Asia/Tokyo',
-  'Asia/Seoul',
-  // Oceania
-  'Australia/Perth',
-  'Australia/Sydney',
-  'Pacific/Auckland',
-  'Pacific/Honolulu',
-] as const;
-
-const FALLBACK_TIME_ZONES = COMMON_TIME_ZONES;
-
-const MAX_SEARCH_RESULTS = 50;
-
-function getDefaultSourceTimeZone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
-function getSupportedTimeZones(): string[] {
-  const supportedValuesOf = Intl.supportedValuesOf as
-    | ((key: 'timeZone') => string[])
-    | undefined;
-
-  if (typeof supportedValuesOf === 'function') {
-    return supportedValuesOf('timeZone');
-  }
-
-  return [...FALLBACK_TIME_ZONES];
-}
-
-function buildTimeZoneLabel(timeZone: string): string {
-  return timeZone.replace(/_/g, ' / ');
-}
-
-function getNowInputValue(): string {
+function getLocalDefaults(): Defaults {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hour = String(now.getHours()).padStart(2, '0');
-  const minute = String(now.getMinutes()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
-function parseDateTimeInput(value: string): DateParts | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
-
-  if (!match) {
-    return null;
-  }
-
-  const parts = {
-    year: Number(match[1]),
-    month: Number(match[2]),
-    day: Number(match[3]),
-    hour: Number(match[4]),
-    minute: Number(match[5]),
-    second: 0,
-  };
-
-  const date = new Date(
-    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second)
-  );
-
-  if (
-    date.getUTCFullYear() !== parts.year ||
-    date.getUTCMonth() !== parts.month - 1 ||
-    date.getUTCDate() !== parts.day ||
-    parts.hour > 23 ||
-    parts.minute > 59
-  ) {
-    return null;
-  }
-
-  return parts;
-}
-
-function datePartsToInputValue(parts: DateParts): string {
-  const year = String(parts.year).padStart(4, '0');
-  const month = String(parts.month).padStart(2, '0');
-  const day = String(parts.day).padStart(2, '0');
-  const hour = String(parts.hour).padStart(2, '0');
-  const minute = String(parts.minute).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
-function getFormatter(timeZone: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hour12: false,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-}
-
-function getTimeZoneParts(date: Date, timeZone: string): DateParts {
-  const parts = getFormatter(timeZone).formatToParts(date);
-  const map = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== 'literal')
-      .map((part) => [part.type, Number(part.value)])
-  ) as Record<string, number>;
 
   return {
-    year: map.year,
-    month: map.month,
-    day: map.day,
-    hour: map.hour,
-    minute: map.minute,
-    second: map.second,
+    timeZone: resolveLocalTimeZone(),
+    date: toDateInputValue(now),
+    hour: String(now.getHours()).padStart(2, '0'),
+    minute: String(now.getMinutes()).padStart(2, '0'),
   };
 }
 
-function getTimeZoneOffsetMinutes(timestamp: number, timeZone: string): number {
-  const parts = getTimeZoneParts(new Date(timestamp), timeZone);
-  const utcFromParts = Date.UTC(
-    parts.year,
-    parts.month - 1,
-    parts.day,
-    parts.hour,
-    parts.minute,
-    parts.second
+const noSubscription = () => () => {};
+
+function TimeZonePicker({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (timeZone: string) => void;
+  options: TimeZoneOption[];
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+  const filteredOptions = useMemo(
+    () => (search.trim() ? searchTimeZones(options, search) : COMMON_TIME_ZONE_OPTIONS),
+    [search, options]
   );
+  const activeIndex = Math.min(highlightedIndex, filteredOptions.length - 1);
+  const optionId = (index: number) => `${id}-option-${index}`;
 
-  return (utcFromParts - timestamp) / 60000;
-}
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    setSearch('');
+    // Start on the current zone when it is in the list that opens.
+    setHighlightedIndex(
+      Math.max(0, COMMON_TIME_ZONE_OPTIONS.findIndex((option) => option.value === value))
+    );
+  };
 
-function sameMinute(left: DateParts, right: DateParts): boolean {
-  return (
-    left.year === right.year &&
-    left.month === right.month &&
-    left.day === right.day &&
-    left.hour === right.hour &&
-    left.minute === right.minute
-  );
-}
+  const select = (timeZone: string) => {
+    onChange(timeZone);
+    handleOpenChange(false);
+  };
 
-function zonedDateTimeToUtc(parts: DateParts, timeZone: string): Date | null {
-  const utcGuess = Date.UTC(
-    parts.year,
-    parts.month - 1,
-    parts.day,
-    parts.hour,
-    parts.minute,
-    parts.second
-  );
+  const scrollToOption = (index: number) => {
+    document.getElementById(optionId(index))?.scrollIntoView({ block: 'nearest' });
+  };
 
-  let timestamp = utcGuess;
+  const highlight = (index: number) => {
+    setHighlightedIndex(index);
+    scrollToOption(index);
+  };
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const offsetMinutes = getTimeZoneOffsetMinutes(timestamp, timeZone);
-    const candidate = utcGuess - offsetMinutes * 60_000;
-    const candidateParts = getTimeZoneParts(new Date(candidate), timeZone);
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // Enter that confirms an input-method composition is not a selection.
+    if (filteredOptions.length === 0 || event.nativeEvent.isComposing) return;
 
-    timestamp = candidate;
-
-    if (sameMinute(candidateParts, parts)) {
-      return new Date(candidate);
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        highlight(activeIndex + 1 >= filteredOptions.length ? 0 : activeIndex + 1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        highlight(activeIndex - 1 < 0 ? filteredOptions.length - 1 : activeIndex - 1);
+        break;
+      case 'Enter':
+        event.preventDefault();
+        select(filteredOptions[activeIndex].value);
+        break;
+      default:
+        break;
     }
-  }
+  };
 
-  return null;
-}
-
-function formatDateInTimeZone(
-  date: Date,
-  timeZone: string,
-  options?: Intl.DateTimeFormatOptions
-): string {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    dateStyle: 'full',
-    timeStyle: 'long',
-    ...options,
-  }).format(date);
-}
-
-function formatOffset(date: Date, timeZone: string): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    timeZoneName: 'shortOffset',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  const parts = formatter.formatToParts(date);
-  const offsetPart = parts.find((part) => part.type === 'timeZoneName')?.value;
-
-  return offsetPart ?? 'UTC';
-}
-
-export function TimezoneConverter() {
-  const timeZoneOptions = useMemo<TimeZoneOption[]>(
-    () =>
-      getSupportedTimeZones().map((timeZone) => ({
-        value: timeZone,
-        label: buildTimeZoneLabel(timeZone),
-      })),
-    []
+  return (
+    <div>
+      <span id={`${id}-label`} className="mb-2 block text-sm font-medium">
+        {label}
+      </span>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <Button
+            id={`${id}-trigger`}
+            variant="outline"
+            className="w-full justify-start text-left font-normal truncate"
+            aria-labelledby={`${id}-label ${id}-trigger`}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                handleOpenChange(true);
+              }
+            }}
+          >
+            <span className="truncate">{timeZoneLabel(value)}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] min-w-full max-w-none overflow-hidden p-0"
+          align="start"
+          onKeyDown={handleKeyDown}
+          onOpenAutoFocus={() => scrollToOption(activeIndex)}
+        >
+          <div className="border-b p-1">
+            <Input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setHighlightedIndex(0);
+              }}
+              placeholder="Search time zones..."
+              className="h-9"
+              autoFocus
+              role="combobox"
+              aria-label={`Search ${label} time zones`}
+              aria-expanded
+              aria-controls={`${id}-list`}
+              aria-autocomplete="list"
+              aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
+            />
+          </div>
+          <ScrollArea className="h-60">
+            <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`} className="p-1">
+              {filteredOptions.map((option, index) => (
+                <button
+                  key={option.value}
+                  id={optionId(index)}
+                  role="option"
+                  aria-selected={value === option.value}
+                  tabIndex={-1}
+                  className={cn(
+                    'flex w-full cursor-default items-center truncate rounded-sm px-2 py-1.5 text-sm outline-none',
+                    value === option.value && 'font-medium',
+                    index === activeIndex && 'bg-accent text-accent-foreground'
+                  )}
+                  type="button"
+                  onClick={() => select(option.value)}
+                  onMouseMove={() => setHighlightedIndex(index)}
+                >
+                  {option.label}
+                </button>
+              ))}
+              {filteredOptions.length === 0 && (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching time zones</div>
+              )}
+            </div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
+}
 
-  const commonTimeZoneOptions = useMemo<TimeZoneOption[]>(
-    () =>
-      COMMON_TIME_ZONES.map((timeZone) => ({
-        value: timeZone,
-        label: buildTimeZoneLabel(timeZone),
-      })),
-    []
-  );
-
-  const defaultSourceTimeZone = useMemo(() => {
-    const resolved = getDefaultSourceTimeZone();
-    return timeZoneOptions.some((option) => option.value === resolved) ? resolved : 'UTC';
-  }, [timeZoneOptions]);
-
-  const [sourceTimeZone, setSourceTimeZone] = useState(defaultSourceTimeZone);
+function Converter({ defaults }: { defaults: Defaults }) {
+  const id = useId();
+  const [sourceTimeZone, setSourceTimeZone] = useState(defaults.timeZone);
   const [targetTimeZone, setTargetTimeZone] = useState('UTC');
-  const [inputValue, setInputValue] = useState(getNowInputValue());
-  const [sourceSearch, setSourceSearch] = useState('');
-  const [targetSearch, setTargetSearch] = useState('');
-  const [sourceOpen, setSourceOpen] = useState(false);
-  const [targetOpen, setTargetOpen] = useState(false);
+  const [date, setDate] = useState(defaults.date);
+  const [hour, setHour] = useState(defaults.hour);
+  const [minute, setMinute] = useState(defaults.minute);
   const copyResult = useCopyToClipboard();
 
-  const filteredSourceOptions = useMemo(() => {
-    const query = sourceSearch.trim().toLowerCase();
-    if (!query) return commonTimeZoneOptions;
-    return timeZoneOptions
-      .filter((o) => o.label.toLowerCase().includes(query) || o.value.toLowerCase().includes(query))
-      .slice(0, MAX_SEARCH_RESULTS);
-  }, [sourceSearch, timeZoneOptions, commonTimeZoneOptions]);
+  const timeZoneOptions = useMemo(
+    () => toTimeZoneOptions(listTimeZones(undefined, [defaults.timeZone])),
+    [defaults.timeZone]
+  );
 
-  const filteredTargetOptions = useMemo(() => {
-    const query = targetSearch.trim().toLowerCase();
-    if (!query) return commonTimeZoneOptions;
-    return timeZoneOptions
-      .filter((o) => o.label.toLowerCase().includes(query) || o.value.toLowerCase().includes(query))
-      .slice(0, MAX_SEARCH_RESULTS);
-  }, [targetSearch, timeZoneOptions, commonTimeZoneOptions]);
+  const conversion = useMemo(
+    () => convertTimeZone(date ? `${date}T${hour}:${minute}` : '', sourceTimeZone, targetTimeZone),
+    [date, hour, minute, sourceTimeZone, targetTimeZone]
+  );
 
-  const result = useMemo(() => {
-    const inputParts = parseDateTimeInput(inputValue);
+  const converted = conversion.status === 'ok' ? conversion : null;
+  const error =
+    conversion.status === 'invalid'
+      ? 'Enter a valid date and time.'
+      : conversion.status === 'nonexistent'
+        ? 'This local time is invalid or ambiguous in the selected source time zone. Try a different minute.'
+        : '';
+  const detail = converted
+    ? `${sourceTimeZone} → ${targetTimeZone}`
+    : conversion.status === 'empty'
+      ? 'Choose a date and time to convert.'
+      : '';
 
-    if (!inputValue) {
-      return {
-        value: '',
-        detail: 'Choose a date and time to convert.',
-        error: '',
-        utcDate: null as Date | null,
-      };
-    }
+  const setDateTime = (now: Date) => {
+    setDate(toDateInputValue(now));
+    setHour(String(now.getHours()).padStart(2, '0'));
+    setMinute(String(now.getMinutes()).padStart(2, '0'));
+  };
 
-    if (!inputParts) {
-      return {
-        value: '',
-        detail: '',
-        error: 'Enter a valid date and time.',
-        utcDate: null as Date | null,
-      };
-    }
-
-    const utcDate = zonedDateTimeToUtc(inputParts, sourceTimeZone);
-
-    if (!utcDate) {
-      return {
-        value: '',
-        detail: '',
-        error:
-          'This local time is invalid or ambiguous in the selected source time zone. Try a different minute.',
-        utcDate: null as Date | null,
-      };
-    }
-
-    return {
-      value: formatDateInTimeZone(utcDate, targetTimeZone),
-      detail: `${sourceTimeZone} → ${targetTimeZone}`,
-      error: '',
-      utcDate,
-    };
-  }, [inputValue, sourceTimeZone, targetTimeZone]);
-
-  const targetInputValue = useMemo(() => {
-    if (!result.utcDate) {
-      return '';
-    }
-
-    return datePartsToInputValue(getTimeZoneParts(result.utcDate, targetTimeZone));
-  }, [result.utcDate, targetTimeZone]);
-
-  const sourceFormatted = useMemo(() => {
-    if (!result.utcDate) {
-      return '';
-    }
-
-    return formatDateInTimeZone(result.utcDate, sourceTimeZone);
-  }, [result.utcDate, sourceTimeZone]);
-
-  const utcFormatted = useMemo(() => {
-    if (!result.utcDate) {
-      return '';
-    }
-
-    return formatDateInTimeZone(result.utcDate, 'UTC');
-  }, [result.utcDate]);
+  // Picking a time before any date starts from today.
+  const ensureDate = () => {
+    if (!date) setDate(toDateInputValue(new Date()));
+  };
 
   const handleSwap = () => {
     setSourceTimeZone(targetTimeZone);
     setTargetTimeZone(sourceTimeZone);
 
-    if (targetInputValue) {
-      setInputValue(targetInputValue);
+    if (converted) {
+      setDate(converted.targetInputValue.slice(0, 10));
+      setHour(converted.targetInputValue.slice(11, 13));
+      setMinute(converted.targetInputValue.slice(14, 16));
     }
   };
 
-  const handleNow = () => {
-    setInputValue(getNowInputValue());
-  };
-
   const handleClear = () => {
-    setInputValue('');
-    setSourceTimeZone(defaultSourceTimeZone);
+    setDate('');
+    setHour('00');
+    setMinute('00');
+    setSourceTimeZone(defaults.timeZone);
     setTargetTimeZone('UTC');
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Timezone Converter</CardTitle>
@@ -411,32 +276,26 @@ export function TimezoneConverter() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium">Date and time</label>
-            <div className="flex gap-2 items-center">
-              <DatePicker
-                value={inputValue.slice(0, 10)}
-                onChange={(datePart) => {
-                  const time = inputValue.length >= 16 ? inputValue.slice(11, 16) : '00:00';
-                  setInputValue(`${datePart}T${time}`);
-                }}
-                className="w-40"
-              />
+          <div role="group" aria-labelledby={`${id}-datetime`}>
+            <span id={`${id}-datetime`} className="mb-2 block text-sm font-medium">
+              Date and time
+            </span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <DatePicker value={date} onChange={setDate} className="w-40" />
               <div className="flex items-center gap-1">
                 <Select
-                  value={inputValue.length >= 16 ? inputValue.slice(11, 13) : '00'}
-                  onValueChange={(hour) => {
-                    const date = inputValue.slice(0, 10) || new Date().toISOString().slice(0, 10);
-                    const minute = inputValue.length >= 16 ? inputValue.slice(14, 16) : '00';
-                    setInputValue(`${date}T${hour}:${minute}`);
+                  value={hour}
+                  onValueChange={(nextHour: string) => {
+                    ensureDate();
+                    setHour(nextHour);
                   }}
                 >
-                  <SelectTrigger className="w-18">
+                  <SelectTrigger className="w-18" aria-label="Hour">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectGroup>
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+                      {HOURS.map((h) => (
                         <SelectItem key={h} value={h}>{h}</SelectItem>
                       ))}
                     </SelectGroup>
@@ -444,19 +303,18 @@ export function TimezoneConverter() {
                 </Select>
                 <span className="font-medium text-muted-foreground">:</span>
                 <Select
-                  value={inputValue.length >= 16 ? inputValue.slice(14, 16) : '00'}
-                  onValueChange={(minute) => {
-                    const date = inputValue.slice(0, 10) || new Date().toISOString().slice(0, 10);
-                    const hour = inputValue.length >= 16 ? inputValue.slice(11, 13) : '00';
-                    setInputValue(`${date}T${hour}:${minute}`);
+                  value={minute}
+                  onValueChange={(nextMinute: string) => {
+                    ensureDate();
+                    setMinute(nextMinute);
                   }}
                 >
-                  <SelectTrigger className="w-18">
+                  <SelectTrigger className="w-18" aria-label="Minute">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     <SelectGroup>
-                      {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                      {MINUTES.map((m) => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
                       ))}
                     </SelectGroup>
@@ -467,47 +325,12 @@ export function TimezoneConverter() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
-            <div>
-              <label className="mb-2 block text-sm font-medium">From</label>
-              <Popover open={sourceOpen} onOpenChange={(open) => { setSourceOpen(open); if (!open) setSourceSearch(''); }}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal truncate">
-                    <span className="truncate">{buildTimeZoneLabel(sourceTimeZone)}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-full max-w-none overflow-hidden p-0" align="start">
-                  <div className="border-b p-1">
-                    <Input
-                      value={sourceSearch}
-                      onChange={(e) => setSourceSearch((e.target as HTMLInputElement).value)}
-                      placeholder="Search time zones..."
-                      className="h-9"
-                      autoFocus
-                    />
-                  </div>
-                  <ScrollArea className="h-60">
-                    <div className="p-1">
-                      {filteredSourceOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          className={cn(
-                            'flex w-full cursor-default items-center truncate rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground',
-                            sourceTimeZone === option.value && 'bg-accent font-medium'
-                          )}
-                          type="button"
-                          onClick={() => { setSourceTimeZone(option.value); setSourceOpen(false); setSourceSearch(''); }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                      {filteredSourceOptions.length === 0 && (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching time zones</div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <TimeZonePicker
+              label="From"
+              value={sourceTimeZone}
+              onChange={setSourceTimeZone}
+              options={timeZoneOptions}
+            />
 
             <div className="flex justify-center lg:pb-0.5">
               <Button
@@ -521,57 +344,22 @@ export function TimezoneConverter() {
               </Button>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">To</label>
-              <Popover open={targetOpen} onOpenChange={(open) => { setTargetOpen(open); if (!open) setTargetSearch(''); }}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal truncate">
-                    <span className="truncate">{buildTimeZoneLabel(targetTimeZone)}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-full max-w-none overflow-hidden p-0" align="start">
-                  <div className="border-b p-1">
-                    <Input
-                      value={targetSearch}
-                      onChange={(e) => setTargetSearch((e.target as HTMLInputElement).value)}
-                      placeholder="Search time zones..."
-                      className="h-9"
-                      autoFocus
-                    />
-                  </div>
-                  <ScrollArea className="h-60">
-                    <div className="p-1">
-                      {filteredTargetOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          className={cn(
-                            'flex w-full cursor-default items-center truncate rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground',
-                            targetTimeZone === option.value && 'bg-accent font-medium'
-                          )}
-                          type="button"
-                          onClick={() => { setTargetTimeZone(option.value); setTargetOpen(false); setTargetSearch(''); }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                      {filteredTargetOptions.length === 0 && (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching time zones</div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <TimeZonePicker
+              label="To"
+              value={targetTimeZone}
+              onChange={setTargetTimeZone}
+              options={timeZoneOptions}
+            />
           </div>
 
-          {result.error && (
+          {error && (
             <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {result.error}
+              {error}
             </div>
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleNow} variant="outline">
+            <Button onClick={() => setDateTime(new Date())} variant="outline">
               <Clock3 className="mr-2 h-4 w-4" />
               Now
             </Button>
@@ -580,9 +368,9 @@ export function TimezoneConverter() {
               Clear
             </Button>
             <Button
-              onClick={() => copyResult.copyToClipboard(targetInputValue || result.value)}
+              onClick={() => copyResult.copyToClipboard(converted?.targetInputValue ?? '')}
               variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
+              disabled={!converted}
             >
               {copyResult.isCopied ? (
                 <>
@@ -603,40 +391,38 @@ export function TimezoneConverter() {
       <Card>
         <CardHeader>
           <CardTitle>Converted Time</CardTitle>
-          <CardDescription>{result.error ? 'Adjust the date, time, or zone selection.' : result.detail}</CardDescription>
+          <CardDescription>{error ? 'Adjust the date, time, or zone selection.' : detail}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md bg-muted p-4 font-mono text-xl font-semibold tracking-tight sm:text-2xl">
-            {result.value || '-'}
+            {converted?.value || '-'}
           </div>
 
-          {result.utcDate && (
+          {converted && (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Source time
                 </div>
-                <div className="mt-1 font-semibold">{sourceFormatted}</div>
-                <div className="mt-1 text-sm text-muted-foreground" suppressHydrationWarning>
-                  {formatOffset(result.utcDate, sourceTimeZone)}
-                </div>
+                <div className="mt-1 font-semibold">{converted.sourceFormatted}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{converted.sourceOffset}</div>
               </div>
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Target input format
                 </div>
-                <div className="mt-1 font-mono text-base font-semibold">{targetInputValue}</div>
-                <div className="mt-1 text-sm text-muted-foreground" suppressHydrationWarning>
-                  {formatOffset(result.utcDate, targetTimeZone)}
+                <div className="mt-1 font-mono text-base font-semibold">
+                  {converted.targetInputValue}
                 </div>
+                <div className="mt-1 text-sm text-muted-foreground">{converted.targetOffset}</div>
               </div>
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   UTC reference
                 </div>
-                <div className="mt-1 font-semibold">{utcFormatted}</div>
+                <div className="mt-1 font-semibold">{converted.utcFormatted}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  {result.utcDate.toISOString()}
+                  {converted.utcDate.toISOString()}
                 </div>
               </div>
             </div>
@@ -644,5 +430,24 @@ export function TimezoneConverter() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export function TimezoneConverter() {
+  // The page is exported as static HTML at build time. Rendering the build
+  // machine's clock and zone into it gives every visitor stale values and a
+  // hydration mismatch, so the HTML and the first client render use fixed
+  // defaults and the form is mounted again with local ones once hydrated.
+  const hydrated = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false
+  );
+  const [localDefaults] = useState(getLocalDefaults);
+
+  return hydrated ? (
+    <Converter key="local" defaults={localDefaults} />
+  ) : (
+    <Converter key="static" defaults={STATIC_DEFAULTS} />
   );
 }
