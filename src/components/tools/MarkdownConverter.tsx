@@ -25,24 +25,39 @@ import {
   buildStandaloneHtml,
   previewMarkdown,
   sourceLineOffset,
+  type MarkdownTheme,
 } from '@/lib/markdown';
 import { firstHeadingText, scrollTextareaToOffset, sourceLineAt } from '@/lib/markdown/dom';
+import {
+  PAGE_FORMATS_MM,
+  escapeHtml,
+  previewPageSize,
+  type PageOrientation,
+} from '@/lib/tools/document-export';
+import { cn } from '@/lib/utils';
 // Styles for the markup `previewMarkdown` emits: highlighted code and KaTeX maths.
 import 'highlight.js/styles/github-dark.css';
 import 'katex/dist/katex.min.css';
 
 type ExportFormat = 'pdf' | 'html' | 'txt' | 'png' | 'jpg';
 type PageSize = 'A4' | 'Letter';
-type Orientation = 'portrait' | 'landscape';
+type Orientation = PageOrientation;
 
 // Exports are named after the document's first heading.
 const getSafeFilename = (htmlContent: string, defaultName: string): string =>
   sanitizeFileName(firstHeadingText(htmlContent), defaultName);
 
-const pageFormats: Record<PageSize, [number, number]> = {
-  A4: [210, 297],
-  Letter: [215.9, 279.4],
-};
+// Title of an exported document: its first heading, or a stand-in when it has none.
+const getDocumentTitle = (htmlContent: string): string =>
+  firstHeadingText(htmlContent) || 'Markdown Export';
+
+// Exports are always laid out on the light theme.
+const EXPORT_THEME: MarkdownTheme = 'light';
+
+// Encodes a canvas as an image file. Resolves with null when the browser
+// cannot, which is what happens when the canvas is larger than it supports.
+const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) =>
+  new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
 
 const defaultMarkdown = `# Document Title
 
@@ -79,19 +94,10 @@ export function MarkdownConverter() {
   const [margin, setMargin] = useState(16);
   const [scale, setScale] = useState(2);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [pdfTheme, setPdfTheme] = useState<'light' | 'dark'>('light');
-
-  const handlePdfThemeChange = (theme: 'light' | 'dark') => {
-    setPdfTheme(theme);
-    if (theme === 'dark') {
-      setBackgroundColor('#000000');
-    } else {
-      setBackgroundColor('#ffffff');
-    }
-  };
-
   const [includePageNumbers, setIncludePageNumbers] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  // Which of the two export buttons is at work, so that one shows the progress.
+  const [activeExport, setActiveExport] = useState<'format' | 'snapshot' | null>(null);
+  const exporting = activeExport !== null;
   const [exportProgress, setExportProgress] = useState('');
   const previewRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -122,34 +128,42 @@ export function MarkdownConverter() {
     renderMarkdown(text);
   };
 
-  const [basePageWidth, basePageHeight] = pageFormats[pageSize];
-  const pageWidth = orientation === 'portrait' ? basePageWidth : basePageHeight;
-  const pageHeight = orientation === 'portrait' ? basePageHeight : basePageWidth;
-  const previewWidthPx = Math.round(pageWidth * 3.78);
+  const previewSize = previewPageSize(pageSize, orientation);
   const previewPageStyle: CSSProperties = {
     backgroundColor,
-    maxWidth: `${previewWidthPx}px`,
-    minHeight: `${Math.round((pageHeight / pageWidth) * previewWidthPx)}px`,
+    maxWidth: `${previewSize.width}px`,
+    minHeight: `${previewSize.minHeight}px`,
+  };
+
+  // Markdown such as a lone link definition renders to nothing at all.
+  const hasPreview = html.trim() !== '';
+
+  // The element a picture of the preview is taken from, or null (after
+  // telling the user) when the preview has nothing in it to capture.
+  const getCaptureTarget = (): HTMLDivElement | null => {
+    if (previewRef.current && hasPreview) return previewRef.current;
+    toast.error('The preview is empty, so there is nothing to capture.');
+    return null;
   };
 
   const exportPrintPdf = () => {
-    const firstHeader = firstHeadingText(html);
+    const title = getDocumentTitle(html);
     const printDocument = buildStandaloneHtml({
       bodyHtml: html,
-      title: firstHeader,
-      theme: pdfTheme,
+      title: escapeHtml(title),
+      theme: EXPORT_THEME,
       backgroundColor,
       page: { size: pageSize, orientation, marginMm: margin },
     });
 
-    printHtmlDocument(printDocument, firstHeader);
+    printHtmlDocument(printDocument, title);
   };
 
   const exportHtml = () => {
     const fullHtml = buildStandaloneHtml({
       bodyHtml: html,
-      title: firstHeadingText(html) || 'Markdown Export',
-      theme: pdfTheme,
+      title: escapeHtml(getDocumentTitle(html)),
+      theme: EXPORT_THEME,
       backgroundColor,
     });
 
@@ -161,7 +175,8 @@ export function MarkdownConverter() {
   };
 
   const exportImage = async (format: 'png' | 'jpg') => {
-    if (!previewRef.current) return;
+    const target = getCaptureTarget();
+    if (!target) return;
 
     setExportProgress(`Generating ${format.toUpperCase()}...`);
 
@@ -169,54 +184,57 @@ export function MarkdownConverter() {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(previewRef.current, {
+      const canvas = await html2canvas(target, {
         scale,
         useCORS: true,
         logging: false,
         backgroundColor,
-        windowWidth: previewRef.current.scrollWidth,
-        windowHeight: previewRef.current.scrollHeight,
+        windowWidth: target.scrollWidth,
+        windowHeight: target.scrollHeight,
       });
 
       setExportProgress('Saving image...');
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return;
-          downloadBlob(blob, `${getSafeFilename(html, 'markdown-export')}.${format}`);
-          setExportProgress('');
-        },
-        `image/${format === 'jpg' ? 'jpeg' : 'png'}`,
-        0.95
-      );
+      const blob = await canvasToBlob(canvas, `image/${format === 'jpg' ? 'jpeg' : 'png'}`, 0.95);
+      if (!blob) {
+        toast.error(
+          `The ${format.toUpperCase()} is too large for the browser to create. Try a lower render scale or a shorter document.`
+        );
+        return;
+      }
+
+      downloadBlob(blob, `${getSafeFilename(html, 'markdown-export')}.${format}`);
     } catch (error) {
       console.error(`Error exporting ${format.toUpperCase()}:`, error);
       toast.error(`Error exporting ${format.toUpperCase()}. Please try again.`);
-      setExportProgress('');
     }
   };
 
   const exportSnapshotPdf = async () => {
-    if (!previewRef.current) return;
+    const target = getCaptureTarget();
+    if (!target) return;
+
+    setActiveExport('snapshot');
 
     try {
-      await saveSnapshotPdf(previewRef.current, {
+      await saveSnapshotPdf(target, {
         fileName: `${getSafeFilename(html, 'markdown-export')}.pdf`,
         title: firstHeadingText(html),
-        pageFormat: pageFormats[pageSize],
+        pageFormat: PAGE_FORMATS_MM[pageSize],
         orientation,
         marginMm: margin,
         scale,
         backgroundColor,
         pageNumbers: includePageNumbers,
-        theme: pdfTheme,
+        theme: EXPORT_THEME,
         onProgress: setExportProgress,
       });
     } catch (error) {
       console.error('Error exporting PDF:', error);
       toast.error('Error exporting PDF. Please try again.');
     } finally {
+      setActiveExport(null);
       setExportProgress('');
     }
   };
@@ -227,7 +245,7 @@ export function MarkdownConverter() {
       return;
     }
 
-    setExporting(true);
+    setActiveExport('format');
     setExportProgress('');
 
     try {
@@ -249,7 +267,7 @@ export function MarkdownConverter() {
           break;
       }
     } finally {
-      setExporting(false);
+      setActiveExport(null);
       setExportProgress('');
     }
   };
@@ -279,6 +297,7 @@ export function MarkdownConverter() {
               value={input}
               onChange={(event) => handleInputChange(event.currentTarget.value)}
               placeholder="# Enter your markdown here..."
+              aria-label="Markdown input"
               rows={18}
               className="min-h-[420px] flex-1 resize-y font-mono text-sm xl:min-h-0"
             />
@@ -303,12 +322,15 @@ export function MarkdownConverter() {
           <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Export format</label>
+                <label id="markdown-export-format" className="text-sm font-medium">
+                  Export format
+                </label>
                 <Select
                   value={exportFormat}
                   onValueChange={(value) => setExportFormat(value as ExportFormat)}
+                  disabled={exporting}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-labelledby="markdown-export-format">
                     <SelectValue placeholder="Export format" />
                   </SelectTrigger>
                   <SelectContent>
@@ -325,13 +347,15 @@ export function MarkdownConverter() {
 
               {(showPdfOptions || showImageOptions) && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Page size</label>
+                  <label id="markdown-export-page-size" className="text-sm font-medium">
+                    Page size
+                  </label>
                   <Select
                     value={pageSize}
                     onValueChange={(value) => setPageSize(value as PageSize)}
                     disabled={exporting}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-labelledby="markdown-export-page-size">
                       <SelectValue placeholder="Page size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -349,13 +373,15 @@ export function MarkdownConverter() {
               <div className="space-y-4 rounded-md border p-3 sm:p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Orientation</label>
+                    <label id="markdown-export-orientation" className="text-sm font-medium">
+                      Orientation
+                    </label>
                     <Select
                       value={orientation}
                       onValueChange={(value) => setOrientation(value as Orientation)}
                       disabled={exporting}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-labelledby="markdown-export-orientation">
                         <SelectValue placeholder="Orientation" />
                       </SelectTrigger>
                       <SelectContent>
@@ -367,20 +393,45 @@ export function MarkdownConverter() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {showPdfOptions ? 'Margins' : 'Render scale'}: {showPdfOptions ? `${margin} mm` : `${scale}x`}
+                  <div
+                    className="space-y-2"
+                    role="group"
+                    aria-labelledby="markdown-export-measure"
+                  >
+                    <label id="markdown-export-measure" className="text-sm font-medium">
+                      {showPdfOptions ? 'Margins' : 'Render scale'}:{' '}
+                      {showPdfOptions ? `${margin} mm` : `${scale}x`}
                     </label>
                     {showPdfOptions ? (
-                      <Slider value={margin} onChange={setMargin} min={0} max={40} step={1} />
+                      <Slider
+                        value={margin}
+                        onChange={setMargin}
+                        min={0}
+                        max={40}
+                        step={1}
+                        disabled={exporting}
+                      />
                     ) : (
-                      <Slider value={scale} onChange={setScale} min={1} max={4} step={1} />
+                      <Slider
+                        value={scale}
+                        onChange={setScale}
+                        min={1}
+                        max={4}
+                        step={1}
+                        disabled={exporting}
+                      />
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Background</label>
+                <div
+                  className="space-y-2"
+                  role="group"
+                  aria-labelledby="markdown-export-background"
+                >
+                  <label id="markdown-export-background" className="text-sm font-medium">
+                    Background
+                  </label>
                   <ColorPicker
                     value={backgroundColor}
                     onChange={setBackgroundColor}
@@ -393,6 +444,7 @@ export function MarkdownConverter() {
                     checked={includePageNumbers}
                     onCheckedChange={setIncludePageNumbers}
                     label="Include page numbers in snapshot PDF mode"
+                    disabled={exporting}
                   />
                 )}
               </div>
@@ -400,7 +452,7 @@ export function MarkdownConverter() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Button onClick={handleExport} disabled={exporting || !input.trim()}>
-                {exporting ? (
+                {activeExport === 'format' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {exportProgress || 'Exporting...'}
@@ -418,7 +470,14 @@ export function MarkdownConverter() {
                   variant="outline"
                   disabled={exporting || !input.trim()}
                 >
-                  Snapshot PDF
+                  {activeExport === 'snapshot' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {exportProgress || 'Exporting...'}
+                    </>
+                  ) : (
+                    'Snapshot PDF'
+                  )}
                 </Button>
               )}
             </div>
@@ -439,9 +498,17 @@ export function MarkdownConverter() {
         <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
           <div className="flex-1 rounded-md border bg-muted/30 p-3 sm:p-4">
             <style>{MARKDOWN_PREVIEW_CSS}</style>
+            {!hasPreview && (
+              <p className="py-6 text-center text-sm text-muted-foreground sm:py-12">
+                Nothing to preview yet. Write some Markdown and it shows up here.
+              </p>
+            )}
             <div
               ref={previewRef}
-              className="markdown-print-preview mx-auto w-full overflow-hidden bg-white p-4 shadow-sm sm:p-6 lg:p-8 cursor-pointer select-text"
+              className={cn(
+                'markdown-print-preview mx-auto w-full overflow-hidden bg-white p-4 shadow-sm sm:p-6 lg:p-8 cursor-pointer select-text',
+                !hasPreview && 'hidden'
+              )}
               style={previewPageStyle}
               dangerouslySetInnerHTML={{ __html: html }}
               onDoubleClick={handlePreviewDoubleClick}
