@@ -114,7 +114,9 @@ export function PdfToImage() {
 
         if (!isCurrent()) return;
         setImages(pages);
-        setError(describeFailedPages(failedPages, pdf.pageCount));
+        setError(
+          pdf.pageCount === 0 ? 'This PDF has no pages to convert.' : describeFailedPages(failedPages, pdf.pageCount)
+        );
       } finally {
         await pdf.destroy();
       }
@@ -153,7 +155,7 @@ export function PdfToImage() {
             {pdfFile && <p className="text-xs text-primary mt-2 break-all">{pdfFile.name}</p>}
           </div>
           {intake.error && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
+            <p role="alert" className="mt-2 break-words text-sm text-destructive">
               {intake.error}
             </p>
           )}

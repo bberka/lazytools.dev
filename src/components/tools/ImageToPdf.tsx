@@ -83,7 +83,7 @@ export function ImageToPdf() {
             <p className="text-sm font-medium">Click to upload JPEG or PNG images</p>
           </div>
           {intake.error && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
+            <p role="alert" className="mt-2 break-words text-sm text-destructive">
               {intake.error}
             </p>
           )}
@@ -91,7 +91,7 @@ export function ImageToPdf() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm break-words">
           <strong>Error:</strong> {error}
         </div>
       )}

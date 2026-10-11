@@ -130,7 +130,7 @@ export function WordToPdf() {
             {wordFile && <p className="text-xs text-primary mt-2 break-all">{wordFile.name}</p>}
           </div>
           {intake.error && (
-            <p role="alert" className="mt-2 text-sm text-destructive">
+            <p role="alert" className="mt-2 break-words text-sm text-destructive">
               {intake.error}
             </p>
           )}
