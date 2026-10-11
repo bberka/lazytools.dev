@@ -3,8 +3,9 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, ArrowUp, ArrowDown, Files } from 'lucide-react';
+import { FileText, Upload, Trash2, ArrowUp, ArrowDown, Files } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
+import { isPdfFile, pdfBlob } from '@/lib/pdf';
 
 interface PdfFile {
   id: string;
@@ -21,7 +22,7 @@ export function PdfMerge() {
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newFiles = files
-      .filter((file) => file.type === 'application/pdf')
+      .filter((file) => isPdfFile(file))
       .map((file) => ({
         id: Math.random().toString(36).substr(2, 9),
         file,
@@ -65,7 +66,7 @@ export function PdfMerge() {
       }
 
       const pdfBytes = await mergedPdf.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

@@ -11,19 +11,15 @@ import {
   Download,
   Trash2,
   RotateCw,
-  ArrowLeft,
-  ArrowRight,
   Plus,
-  Type,
   Edit2,
   ArrowUp,
   ArrowDown,
-  Sparkles,
   Undo2,
-  Trash
 } from 'lucide-react';
-import { PDFDocument, rgb, degrees } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import { cn } from '@/lib/utils';
+import { isPdfFile, openPdf, pdfBlob, type OpenedPdf } from '@/lib/pdf';
 
 interface Point {
   x: number;
@@ -62,7 +58,8 @@ export function PdfEditor() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [dragging, setDragging] = useState(false);
-  
+  const [error, setError] = useState('');
+
   // Annotation states
   const [activeTool, setActiveTool] = useState<'pan' | 'draw' | 'text'>('pan');
   const [brushColor, setBrushColor] = useState('#ff0000');
@@ -76,7 +73,7 @@ export function PdfEditor() {
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null); // pdfjs doc instance
+  const pdfDocRef = useRef<OpenedPdf | null>(null); // opened document, used for page previews
   const workspaceRef = useRef<HTMLDivElement>(null);
   const pageCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -101,47 +98,35 @@ export function PdfEditor() {
     setPdfFile(null);
     setPages([]);
     setSelectedPageId(null);
+    setError('');
     pdfDocRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const loadPdfFile = async (file: File) => {
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
 
     setPdfFile(file);
     setLoading(true);
     setPages([]);
     setSelectedPageId(null);
+    setError('');
 
     try {
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const pdf = await openPdf(file);
       pdfDocRef.current = pdf;
 
       const loadedPages: PageState[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 0.3 }); // Small thumbnail size
+      for (let i = 1; i <= pdf.pageCount; i++) {
+        const page = await pdf.page(i);
+        const thumbnail = await page.render({ scale: 0.3 }); // Small thumbnail size
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          await page.render({
-            canvasContext: ctx,
-            canvas: canvas,
-            viewport: viewport,
-          }).promise;
-
+        if (thumbnail) {
           loadedPages.push({
             id: `page-${i}-${Math.random().toString(36).substr(2, 4)}`,
             originalIndex: i - 1,
             rotation: 0,
-            thumbnailUrl: canvas.toDataURL('image/png'),
+            thumbnailUrl: thumbnail.canvas.toDataURL('image/png'),
             drawPaths: [],
             texts: [],
           });
@@ -152,9 +137,9 @@ export function PdfEditor() {
       if (loadedPages.length > 0) {
         setSelectedPageId(loadedPages[0].id);
       }
-    } catch (error) {
-      console.error('Error loading PDF:', error);
-      alert('Failed to load PDF file.');
+    } catch (loadError) {
+      console.error('Error loading PDF:', loadError);
+      setError('Failed to load PDF file.');
     } finally {
       setLoading(false);
     }
@@ -180,7 +165,7 @@ export function PdfEditor() {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type === 'application/pdf') {
+    if (isPdfFile(file)) {
       await loadPdfFile(file);
     }
   };
@@ -196,39 +181,30 @@ export function PdfEditor() {
 
     const renderActivePage = async () => {
       try {
-        const page = await doc.getPage(selectedPage.originalIndex + 1);
-        
-        // Render at scale 1.25 for comfortable editing. Adjust based on rotation
-        const viewport = page.getViewport({
-          scale: 1.25,
-          rotation: (page.rotate + selectedPage.rotation) % 360,
-        });
+        const page = await doc.page(selectedPage.originalIndex + 1);
 
         if (!active) return;
 
         const canvas = pageCanvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({
-          canvasContext: ctx,
-          canvas: canvas,
-          viewport: viewport,
-        }).promise;
+        // Render at scale 1.25 for comfortable editing. Adjust based on rotation
+        const rendered = await page.render({
+          canvas,
+          scale: 1.25,
+          rotation: selectedPage.rotation,
+        });
+        if (!rendered) return;
 
         // Sync drawing canvas sizes
         const drawCanvas = drawingCanvasRef.current;
         if (drawCanvas) {
-          drawCanvas.width = viewport.width;
-          drawCanvas.height = viewport.height;
+          drawCanvas.width = rendered.width;
+          drawCanvas.height = rendered.height;
           redrawDrawingCanvas(drawCanvas, selectedPage.drawPaths);
         }
-      } catch (error) {
-        console.error('Error rendering page preview:', error);
+      } catch (renderError) {
+        console.error('Error rendering page preview:', renderError);
       }
     };
 
@@ -335,8 +311,6 @@ export function PdfEditor() {
     const canvas = drawingCanvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (ctx && canvas && currentPathPoints.current.length > 1) {
-      const pts = currentPathPoints.current;
-      const last = pts[pts.length - 2];
       ctx.lineTo(pos.x * canvas.width, pos.y * canvas.height);
       ctx.stroke();
     }
@@ -471,6 +445,7 @@ export function PdfEditor() {
   const exportEditedPdf = async () => {
     if (pages.length === 0 || !pdfFile) return;
     setExporting(true);
+    setError('');
 
     try {
       const originalArrayBuffer = await pdfFile.arrayBuffer();
@@ -541,7 +516,7 @@ export function PdfEditor() {
       }
 
       const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
@@ -550,9 +525,9 @@ export function PdfEditor() {
       link.click();
 
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting edited PDF:', error);
-      alert('Failed to generate output PDF.');
+    } catch (exportError) {
+      console.error('Error exporting edited PDF:', exportError);
+      setError('Failed to generate output PDF.');
     } finally {
       setExporting(false);
     }
@@ -619,6 +594,12 @@ export function PdfEditor() {
           )}
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {loading && (
         <div className="flex flex-col items-center justify-center p-12 space-y-4">

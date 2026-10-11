@@ -3,8 +3,9 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
+import { pdfBlob } from '@/lib/pdf';
 
 export function ImageToPdf() {
   const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([]);
@@ -52,7 +53,7 @@ export function ImageToPdf() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

@@ -3,61 +3,53 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, ImageIcon } from 'lucide-react';
+import { Upload, Download, Trash2, ImageIcon } from 'lucide-react';
+import { isPdfFile, openPdf } from '@/lib/pdf';
 
 export function PdfToImage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [converting, setConverting] = useState(false);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
     setPdfFile(file);
     setImages([]);
+    setError('');
   };
 
   const convertToImages = async () => {
     if (!pdfFile) return;
     setConverting(true);
+    setError('');
 
     try {
-      // Dynamic import to avoid SSR issues with pdfjs
-      const pdfjsLib = await import('pdfjs-dist');
-      
-      // Set worker path
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+      const pdf = await openPdf(pdfFile);
 
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-      const totalPages = pdf.numPages;
-      const imageUrls: string[] = [];
+      try {
+        const imageUrls: string[] = [];
 
-      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+        for (let pageNum = 1; pageNum <= pdf.pageCount; pageNum++) {
+          const page = await pdf.page(pageNum);
+          const rendered = await page.render({ scale: 2.0 }); // Higher scale for better quality
+          if (!rendered) continue;
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context) continue;
+          imageUrls.push(rendered.canvas.toDataURL('image/png'));
+        }
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({
-          canvasContext: context,
-          canvas: canvas,
-          viewport: viewport,
-        }).promise;
-
-        imageUrls.push(canvas.toDataURL('image/png'));
+        setImages(imageUrls);
+      } finally {
+        await pdf.destroy();
       }
-
-      setImages(imageUrls);
-    } catch (error) {
-      console.error('Error converting PDF to images:', error);
-      alert('Failed to convert PDF: ' + (error instanceof Error ? error.message : String(error)));
+    } catch (conversionError) {
+      console.error('Error converting PDF to images:', conversionError);
+      setError(
+        'Failed to convert PDF: ' +
+          (conversionError instanceof Error ? conversionError.message : String(conversionError))
+      );
     } finally {
       setConverting(false);
     }
@@ -102,7 +94,7 @@ export function PdfToImage() {
               <Button onClick={convertToImages} disabled={converting} className="flex-1">
                 {converting ? 'Converting...' : 'Convert to Images'}
               </Button>
-              <Button variant="outline" onClick={() => setPdfFile(null)}>
+              <Button variant="outline" onClick={() => { setPdfFile(null); setError(''); }}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
@@ -110,6 +102,12 @@ export function PdfToImage() {
           )}
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {images.length > 0 && (
         <Card>

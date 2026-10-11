@@ -3,9 +3,10 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileDown, Upload, Download, Trash2, Shield, Sparkles, CheckCircle2 } from 'lucide-react';
+import { FileDown, Upload, Download, CheckCircle2 } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { cn } from '@/lib/utils';
+import { isPdfFile, openPdf, pdfBlob } from '@/lib/pdf';
 
 interface CompressionResult {
   originalSize: number;
@@ -20,7 +21,8 @@ export function PdfCompress() {
   const [compressing, setCompressing] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [result, setResult] = useState<CompressionResult | null>(null);
-  
+  const [error, setError] = useState('');
+
   // Settings
   const [compressionLevel, setCompressionLevel] = useState<'high' | 'medium' | 'low'>('medium');
   const [compressionMode, setCompressionMode] = useState<'image' | 'structure'>('image');
@@ -29,16 +31,18 @@ export function PdfCompress() {
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
     setPdfFile(file);
     setResult(null);
     setProgress(null);
+    setError('');
   };
 
   const handleClear = () => {
     setPdfFile(null);
     setResult(null);
     setProgress(null);
+    setError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -47,6 +51,7 @@ export function PdfCompress() {
     setCompressing(true);
     setResult(null);
     setProgress(null);
+    setError('');
 
     try {
       let compressedBytes: Uint8Array;
@@ -68,68 +73,55 @@ export function PdfCompress() {
         compressedBytes = await pdfDoc.save({ useObjectStreams: true });
       } else {
         // Mode 2: Re-compress images (render pages to JPEG at lower quality/DPI)
-        const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+        const pdf = await openPdf(pdfFile);
 
-        const arrayBuffer = await pdfFile.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-        const totalPages = pdf.numPages;
-        
-        setProgress({ current: 0, total: totalPages });
-        const newPdf = await PDFDocument.create();
+        try {
+          const totalPages = pdf.pageCount;
 
-        // Preset parameters
-        let scale = 1.5;
-        let quality = 0.65;
-        if (compressionLevel === 'high') {
-          scale = 1.0;
-          quality = 0.45;
-        } else if (compressionLevel === 'low') {
-          scale = 2.0;
-          quality = 0.85;
-        }
+          setProgress({ current: 0, total: totalPages });
+          const newPdf = await PDFDocument.create();
 
-        for (let i = 1; i <= totalPages; i++) {
-          setProgress({ current: i, total: totalPages });
-          const page = await pdf.getPage(i);
-          
-          // Get original dimensions in points
-          const originalViewport = page.getViewport({ scale: 1.0 });
-          
-          // Render to canvas at target compression scale (DPI adjustments)
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (ctx) {
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            await page.render({
-              canvasContext: ctx,
-              canvas: canvas,
-              viewport: viewport,
-            }).promise;
-
-            // Compress page rendering as JPEG
-            const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-            const image = await newPdf.embedJpg(jpegDataUrl);
-            
-            // Add a page matching original dimensions to keep layout physical size
-            const newPage = newPdf.addPage([originalViewport.width, originalViewport.height]);
-            newPage.drawImage(image, {
-              x: 0,
-              y: 0,
-              width: originalViewport.width,
-              height: originalViewport.height,
-            });
+          // Preset parameters
+          let scale = 1.5;
+          let quality = 0.65;
+          if (compressionLevel === 'high') {
+            scale = 1.0;
+            quality = 0.45;
+          } else if (compressionLevel === 'low') {
+            scale = 2.0;
+            quality = 0.85;
           }
-        }
 
-        compressedBytes = await newPdf.save();
+          for (let i = 1; i <= totalPages; i++) {
+            setProgress({ current: i, total: totalPages });
+            const page = await pdf.page(i);
+
+            // Render to canvas at target compression scale (DPI adjustments)
+            const rendered = await page.render({ scale });
+
+            if (rendered) {
+              // Compress page rendering as JPEG
+              const jpegDataUrl = rendered.canvas.toDataURL('image/jpeg', quality);
+              const image = await newPdf.embedJpg(jpegDataUrl);
+
+              // Add a page matching original dimensions (in points) to keep layout physical size
+              const newPage = newPdf.addPage([page.width, page.height]);
+              newPage.drawImage(image, {
+                x: 0,
+                y: 0,
+                width: page.width,
+                height: page.height,
+              });
+            }
+          }
+
+          compressedBytes = await newPdf.save();
+        } finally {
+          await pdf.destroy();
+        }
       }
 
-      const blob = new Blob([compressedBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(compressedBytes);
       const reduction = ((pdfFile.size - blob.size) / pdfFile.size) * 100;
       
       setResult({
@@ -139,9 +131,12 @@ export function PdfCompress() {
         downloadUrl: URL.createObjectURL(blob),
         fileName: `compressed-${pdfFile.name}`,
       });
-    } catch (error) {
-      console.error('Error compressing PDF:', error);
-      alert('Failed to compress PDF: ' + (error instanceof Error ? error.message : String(error)));
+    } catch (compressionError) {
+      console.error('Error compressing PDF:', compressionError);
+      setError(
+        'Failed to compress PDF: ' +
+          (compressionError instanceof Error ? compressionError.message : String(compressionError))
+      );
     } finally {
       setCompressing(false);
       setProgress(null);
@@ -189,6 +184,12 @@ export function PdfCompress() {
           </div>
         </CardContent>
       </Card>
+
+      {error && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {pdfFile && !result && !compressing && (
         <Card className="border-border/60 shadow-md">

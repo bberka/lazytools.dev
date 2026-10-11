@@ -143,7 +143,7 @@ async function staleWhileRevalidate(request) {
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/_next/static/') ||
-    ['.css', '.js', '.json', '.webmanifest', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff2'].some(
+    ['.css', '.js', '.json', '.webmanifest', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff2', '.ttf'].some(
       (extension) => url.pathname.endsWith(extension)
     )
   );

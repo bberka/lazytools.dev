@@ -29,74 +29,22 @@ import {
   type ResumeAnalysis,
   type ResumeLanguage,
 } from '@/lib/utils/resume-ats-analyzer';
-
-type PdfTextExtractor = {
-  getDocument: (source: { data: Uint8Array }) => {
-    promise: Promise<{
-      numPages: number;
-      getPage: (page: number) => Promise<{
-        getTextContent: () => Promise<{
-          items: Array<{ str?: string; hasEOL?: boolean; transform?: number[] }>;
-        }>;
-      }>;
-    }>;
-  };
-  GlobalWorkerOptions: { workerSrc: string };
-};
+import { openPdf } from '@/lib/pdf';
 
 async function extractPdfText(file: File) {
-  const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as PdfTextExtractor;
+  const pdf = await openPdf(file);
 
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString();
+  try {
+    // Keep line breaks: the analyzer finds section headings by matching whole lines.
+    const pages = await pdf.text('lines');
+
+    return {
+      pageCount: pdf.pageCount,
+      text: pages.join('\n\n'),
+    };
+  } finally {
+    await pdf.destroy();
   }
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const document = await pdfjs.getDocument({ data: bytes }).promise;
-  const pages: string[] = [];
-
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    let currentLine = '';
-    let lastY: number | null = null;
-    const lines: string[] = [];
-
-    textContent.items.forEach((item) => {
-      const value = item.str?.trim();
-      if (!value) return;
-
-      const y = Math.round(item.transform?.[5] ?? 0);
-
-      if (lastY !== null && Math.abs(y - lastY) > 2 && currentLine.trim()) {
-        lines.push(currentLine.trim());
-        currentLine = '';
-      }
-
-      currentLine += `${value} `;
-
-      if (item.hasEOL) {
-        lines.push(currentLine.trim());
-        currentLine = '';
-      }
-
-      lastY = y;
-    });
-
-    if (currentLine.trim()) {
-      lines.push(currentLine.trim());
-    }
-
-    pages.push(lines.join('\n'));
-  }
-
-  return {
-    pageCount: document.numPages,
-    text: pages.join('\n\n'),
-  };
 }
 
 function getScoreTone(score: number) {

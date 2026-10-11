@@ -4,8 +4,9 @@ import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, Upload, Download, Trash2, Scissors } from 'lucide-react';
+import { FileText, Upload, Trash2, Scissors } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
+import { isPdfFile, parsePageRange, pdfBlob } from '@/lib/pdf';
 
 export function PdfSplit() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -24,7 +25,7 @@ export function PdfSplit() {
   };
 
   const loadPdfFile = async (file: File) => {
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
 
     setPdfFile(file);
     try {
@@ -57,7 +58,7 @@ export function PdfSplit() {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type === 'application/pdf') {
+    if (isPdfFile(file)) {
       await loadPdfFile(file);
     }
   };
@@ -71,29 +72,14 @@ export function PdfSplit() {
       const pdf = await PDFDocument.load(arrayBuffer);
       const newPdf = await PDFDocument.create();
 
-      const ranges = range.split(',').map((r) => r.trim());
-      const pagesToExtract: number[] = [];
+      // Requested pages, without duplicates and in document order
+      const uniquePages = parsePageRange(range, pageCount);
 
-      ranges.forEach((r) => {
-        if (r.includes('-')) {
-          const [start, end] = r.split('-').map(Number);
-          for (let i = start; i <= end; i++) {
-            if (i > 0 && i <= pageCount) pagesToExtract.push(i - 1);
-          }
-        } else {
-          const page = Number(r);
-          if (page > 0 && page <= pageCount) pagesToExtract.push(page - 1);
-        }
-      });
-
-      // Remove duplicates and sort
-      const uniquePages = Array.from(new Set(pagesToExtract)).sort((a, b) => a - b);
-      
       const copiedPages = await newPdf.copyPages(pdf, uniquePages);
       copiedPages.forEach((page) => newPdf.addPage(page));
 
       const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

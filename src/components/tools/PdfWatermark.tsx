@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { FileText, Upload, Download, Trash2, Stamp, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Upload, Download, Stamp } from 'lucide-react';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { cn } from '@/lib/utils';
+import { isPdfFile, openPdf, parsePageRange, pdfBlob, type OpenedPdf } from '@/lib/pdf';
 
 export function PdfWatermark() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -36,14 +37,16 @@ export function PdfWatermark() {
   const [rendering, setRendering] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [previewLoaded, setPreviewLoaded] = useState(false);
-  
+  const [loadError, setLoadError] = useState('');
+  const [exportError, setExportError] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  const pdfDocRef = useRef<import('pdfjs-dist').PDFDocumentProxy | null>(null); // pdfjs doc instance
+  const pdfDocRef = useRef<OpenedPdf | null>(null); // opened document, used for the preview
   const [actualPageSize, setActualPageSize] = useState({ width: 612, height: 792 }); // Letter default
 
   // Clean up references
@@ -51,6 +54,8 @@ export function PdfWatermark() {
     setPdfFile(null);
     pdfDocRef.current = null;
     setPreviewLoaded(false);
+    setLoadError('');
+    setExportError('');
     setWatermarkImageFile(null);
     setWatermarkImgElement(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -59,27 +64,24 @@ export function PdfWatermark() {
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
 
     setPdfFile(file);
     setRendering(true);
     setPreviewLoaded(false);
+    setLoadError('');
+    setExportError('');
 
     try {
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const pdf = await openPdf(file);
       pdfDocRef.current = pdf;
-      
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.0 });
-      setActualPageSize({ width: viewport.width, height: viewport.height });
+
+      const page = await pdf.page(1);
+      setActualPageSize({ width: page.width, height: page.height });
       setPreviewLoaded(true);
     } catch (error) {
       console.error('Error loading PDF:', error);
-      alert('Failed to parse PDF.');
+      setLoadError('Failed to parse PDF.');
     } finally {
       setRendering(false);
     }
@@ -109,35 +111,26 @@ export function PdfWatermark() {
 
     const renderPreview = async () => {
       try {
-        const page = await doc.getPage(1);
-        
-        // Render at a responsive preview scale (e.g. max width 500px)
-        const defaultViewport = page.getViewport({ scale: 1.0 });
-        const scale = Math.min(500 / defaultViewport.width, 1.0);
-        const viewport = page.getViewport({ scale });
+        const page = await doc.page(1);
 
         if (!active) return;
 
         const canvas = previewCanvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({
-          canvasContext: ctx,
-          canvas: canvas,
-          viewport: viewport,
-        }).promise;
+        // Render at a responsive preview scale (e.g. max width 500px)
+        const rendered = await page.render({
+          canvas,
+          scale: Math.min(500 / page.width, 1.0),
+        });
+        if (!rendered) return;
 
         // Sync overlay canvas size
         const overlay = overlayCanvasRef.current;
         if (overlay) {
-          overlay.width = viewport.width;
-          overlay.height = viewport.height;
-          drawOverlayWatermark(overlay, viewport.width, defaultViewport.width);
+          overlay.width = rendered.width;
+          overlay.height = rendered.height;
+          drawOverlayWatermark(overlay, rendered.width, page.width);
         }
       } catch (error) {
         console.error('Error rendering preview page:', error);
@@ -299,6 +292,7 @@ export function PdfWatermark() {
   const addWatermarkToPdf = async () => {
     if (!pdfFile) return;
     setProcessing(true);
+    setExportError('');
 
     try {
       const arrayBuffer = await pdfFile.arrayBuffer();
@@ -336,19 +330,7 @@ export function PdfWatermark() {
       } else if (pageRange === 'last') {
         targetIndices.push(pageCount - 1);
       } else if (pageRange === 'custom') {
-        const parts = customRange.split(',');
-        parts.forEach((p) => {
-          const trimStr = p.trim();
-          if (trimStr.includes('-')) {
-            const [start, end] = trimStr.split('-').map(Number);
-            for (let k = start; k <= end; k++) {
-              if (k > 0 && k <= pageCount) targetIndices.push(k - 1);
-            }
-          } else {
-            const pageNum = Number(trimStr);
-            if (pageNum > 0 && pageNum <= pageCount) targetIndices.push(pageNum - 1);
-          }
-        });
+        targetIndices.push(...parsePageRange(customRange, pageCount));
       }
 
       // De-duplicate indices
@@ -483,7 +465,7 @@ export function PdfWatermark() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
@@ -493,7 +475,7 @@ export function PdfWatermark() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error watermarking PDF:', err);
-      alert('Failed to apply watermark.');
+      setExportError('Failed to apply watermark.');
     } finally {
       setProcessing(false);
     }
@@ -544,6 +526,12 @@ export function PdfWatermark() {
           </div>
         </CardContent>
       </Card>
+
+      {loadError && (
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+          <strong>Error:</strong> {loadError}
+        </div>
+      )}
 
       {rendering && (
         <div className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3">
@@ -776,6 +764,12 @@ export function PdfWatermark() {
                   )}
                 </div>
 
+                {exportError && (
+                  <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+                    <strong>Error:</strong> {exportError}
+                  </div>
+                )}
+
                 {/* 5. Export Actions */}
                 <div className="flex gap-2 pt-2 border-t mt-4">
                   <Button
@@ -818,9 +812,4 @@ export function PdfWatermark() {
       )}
     </div>
   );
-
-  // Fallback helper to patch single line typo in code
-  function setWarmarkText(val: string) {
-    setWatermarkText(val);
-  }
 }

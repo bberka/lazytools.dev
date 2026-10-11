@@ -3,16 +3,21 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, FileInput } from 'lucide-react';
+import { Upload, Download, Trash2, FileInput } from 'lucide-react';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 // @ts-expect-error - mammoth does not export typescript declarations
 import mammoth from 'mammoth/mammoth.browser.min.js';
+import { pdfBlob } from '@/lib/pdf';
+
+// Roboto ships with the app in public/fonts, so the text font needs no third-party request.
+const FONT_URL = '/fonts/Roboto-Regular.ttf';
 
 export function WordToPdf() {
   const [wordFile, setWordFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
   const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -20,11 +25,13 @@ export function WordToPdf() {
     if (!file || !file.name.endsWith('.docx')) return;
     setWordFile(file);
     setPdfDataUrl(null);
+    setError('');
   };
 
   const convertToPdf = async () => {
     if (!wordFile) return;
     setConverting(true);
+    setError('');
 
     try {
       // 1. Extract text from Word document using mammoth
@@ -33,7 +40,7 @@ export function WordToPdf() {
       const text = result.value;
 
       if (!text.trim()) {
-        alert('No text found in the Word document.');
+        setError('No text found in the Word document.');
         setConverting(false);
         return;
       }
@@ -42,10 +49,12 @@ export function WordToPdf() {
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
 
-      const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-      const font = await pdfDoc.embedFont(fontBytes);
-      
+      const fontResponse = await fetch(FONT_URL);
+      if (!fontResponse.ok) {
+        throw new Error('The font needed to write the PDF could not be loaded.');
+      }
+      const font = await pdfDoc.embedFont(await fontResponse.arrayBuffer());
+
       let page = pdfDoc.addPage();
       const { width, height } = page.getSize();
       const margin = 50;
@@ -96,13 +105,16 @@ export function WordToPdf() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      const blob = pdfBlob(pdfBytes);
       const url = URL.createObjectURL(blob);
       setPdfDataUrl(url);
 
-    } catch (error) {
-      console.error('Error converting Word to PDF:', error);
-      alert('Failed to convert document: ' + (error instanceof Error ? error.message : String(error)));
+    } catch (conversionError) {
+      console.error('Error converting Word to PDF:', conversionError);
+      setError(
+        'Failed to convert document: ' +
+          (conversionError instanceof Error ? conversionError.message : String(conversionError))
+      );
     } finally {
       setConverting(false);
     }
@@ -152,10 +164,16 @@ export function WordToPdf() {
               <Button onClick={convertToPdf} disabled={converting} className="flex-1">
                 {converting ? 'Converting...' : 'Convert to PDF'}
               </Button>
-              <Button variant="outline" onClick={() => setWordFile(null)}>
+              <Button variant="outline" onClick={() => { setWordFile(null); setError(''); }}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
+            </div>
+          )}
+
+          {error && (
+            <div role="alert" className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+              <strong>Error:</strong> {error}
             </div>
           )}
 

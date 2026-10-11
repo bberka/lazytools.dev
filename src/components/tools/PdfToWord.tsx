@@ -3,43 +3,40 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, FileOutput } from 'lucide-react';
+import { Upload, Download, Trash2, FileOutput } from 'lucide-react';
+import { isPdfFile, openPdf } from '@/lib/pdf';
 
 export function PdfToWord() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
   const [wordDataUrl, setWordDataUrl] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') return;
+    if (!isPdfFile(file)) return;
     setPdfFile(file);
     setWordDataUrl(null);
+    setError('');
   };
 
   const convertToWord = async () => {
     if (!pdfFile) return;
     setConverting(true);
+    setError('');
 
     try {
-      // 1. Read PDF text using pdfjs-dist
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-      
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-      const totalPages = pdf.numPages;
-      
+      // 1. Read the text of every page
+      const pdf = await openPdf(pdfFile);
       let fullText = '';
 
-      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item) => (item as { str?: string }).str ?? '')
-          .join(' ');
-        fullText += pageText + '\n\n';
+      try {
+        for (const pageText of await pdf.text('flow')) {
+          fullText += pageText + '\n\n';
+        }
+      } finally {
+        await pdf.destroy();
       }
 
       // 2. Generate Word Document using docx
@@ -64,9 +61,12 @@ export function PdfToWord() {
       const url = URL.createObjectURL(blob);
       setWordDataUrl(url);
 
-    } catch (error) {
-      console.error('Error converting PDF to Word:', error);
-      alert('Failed to extract text from PDF: ' + (error instanceof Error ? error.message : String(error)));
+    } catch (conversionError) {
+      console.error('Error converting PDF to Word:', conversionError);
+      setError(
+        'Failed to extract text from PDF: ' +
+          (conversionError instanceof Error ? conversionError.message : String(conversionError))
+      );
     } finally {
       setConverting(false);
     }
@@ -116,13 +116,19 @@ export function PdfToWord() {
               <Button onClick={convertToWord} disabled={converting} className="flex-1">
                 {converting ? 'Extracting Text...' : 'Convert to Word'}
               </Button>
-              <Button variant="outline" onClick={() => setPdfFile(null)}>
+              <Button variant="outline" onClick={() => { setPdfFile(null); setError(''); }}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
             </div>
           )}
-          
+
+          {error && (
+            <div role="alert" className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
           {wordDataUrl && (
             <div className="mt-4 flex gap-2">
               <Button onClick={handleDownload} className="flex-1 bg-green-600 hover:bg-green-700">
