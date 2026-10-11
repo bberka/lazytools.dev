@@ -79,24 +79,25 @@ export function ImageConverter() {
   const [cropSize, setCropSize] = useState<{ width: number; height: number } | null>(null);
   const [cropAspect, setCropAspect] = useState<number | undefined>(undefined);
 
+  const cropSizeInImagePixels = (pixelCrop: PixelCrop, image: HTMLImageElement) => ({
+    width: Math.round(pixelCrop.width * (image.naturalWidth / image.width)),
+    height: Math.round(pixelCrop.height * (image.naturalHeight / image.height)),
+  });
+
   const onCropImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const image = e.currentTarget;
     if (cropAspect) {
-      const { width, height } = e.currentTarget;
+      const { width, height } = image;
       setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, cropAspect, width, height), width, height));
     }
-  }, [cropAspect]);
+    // A crop kept from the previous image now maps onto this image's pixels.
+    setCropSize(completedCrop ? cropSizeInImagePixels(completedCrop, image) : null);
+  }, [cropAspect, completedCrop]);
 
   const handleCropComplete = (pixelCrop: PixelCrop) => {
     setCompletedCrop(pixelCrop);
     const image = cropImgRef.current;
-    setCropSize(
-      image
-        ? {
-            width: Math.round(pixelCrop.width * (image.naturalWidth / image.width)),
-            height: Math.round(pixelCrop.height * (image.naturalHeight / image.height)),
-          }
-        : null
-    );
+    setCropSize(image ? cropSizeInImagePixels(pixelCrop, image) : null);
   };
 
   const handleDownloadCropped = useCallback(() => {

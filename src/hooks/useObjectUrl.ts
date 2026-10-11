@@ -6,9 +6,11 @@ import { useEffect, useState } from 'react';
  * `source` is replaced, cleared, or the component unmounts, so the tool has
  * nothing to clean up.
  *
- * Returns null until the URL exists, which is one render after `source`
- * changes. Pass a Blob that keeps its identity between renders (from state or
- * a memo), not one built inline.
+ * Returns null until the first URL exists, which is one render after `source`
+ * is set. When `source` is replaced, the previous URL is returned for that one
+ * render so an image already on screen does not blank out. Pass a Blob that
+ * keeps its identity between renders (from state or a memo), not one built
+ * inline.
  */
 export function useObjectUrl(source: Blob | null | undefined): string | null {
   const [entry, setEntry] = useState<{ source: Blob; url: string } | null>(null);
@@ -28,7 +30,8 @@ export function useObjectUrl(source: Blob | null | undefined): string | null {
     };
   }, [source]);
 
-  // An entry made for an earlier source points at a URL that is about to be
-  // revoked, so it is never handed out.
-  return entry && entry.source === source ? entry.url : null;
+  // While a new source waits for its URL, the entry still holds the previous
+  // one. It is revoked right after this render, which does not unload an image
+  // that has already been decoded.
+  return source && entry ? entry.url : null;
 }

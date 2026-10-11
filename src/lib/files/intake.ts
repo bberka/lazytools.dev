@@ -130,8 +130,13 @@ export function validateFiles<T extends FileLike>(
 
 // ── Reading ───────────────────────────────────────────────────────────────────
 
-// Every reader fails the same way, whatever the browser reports underneath.
 const READ_ERROR = 'Failed to read file';
+
+// Keeps the browser's own explanation (file moved, permission lost) when it gives one.
+function readError(cause: unknown): Error {
+  const detail = cause instanceof Error ? cause.message : '';
+  return new Error(detail ? `${READ_ERROR}: ${detail}` : READ_ERROR, { cause });
+}
 
 function readWithFileReader(file: Blob, method: 'readAsText' | 'readAsDataURL'): Promise<string> {
   return new Promise<string>((resolve, reject) => {
@@ -140,7 +145,7 @@ function readWithFileReader(file: Blob, method: 'readAsText' | 'readAsDataURL'):
       if (typeof reader.result === 'string') resolve(reader.result);
       else reject(new Error(READ_ERROR));
     };
-    reader.onerror = () => reject(new Error(READ_ERROR, { cause: reader.error }));
+    reader.onerror = () => reject(readError(reader.error));
     reader[method](file);
   });
 }
@@ -163,7 +168,7 @@ export async function readFileAsArrayBuffer(file: Blob): Promise<ArrayBuffer> {
   try {
     return await file.arrayBuffer();
   } catch (cause) {
-    throw new Error(READ_ERROR, { cause });
+    throw readError(cause);
   }
 }
 

@@ -57,9 +57,10 @@ export interface FileIntake {
  * Everything a tool needs to take files from the user: a picker behind a
  * hidden input, drag-and-drop with drag state, and type and size validation.
  *
- * `accept` and `maxSize` are enforced for picked and dropped files alike. To
- * offer a picker filter the user may step around, leave `accept` out here and
- * set the attribute on the input instead.
+ * `accept` and `maxSize` are enforced for picked and dropped files alike, with
+ * one exception: a picked file for which the browser reports no MIME type
+ * (no extension, or a format the system does not know) is let through, since
+ * the user chose it on purpose and the tool's own decoding reports a bad file.
  *
  * Render `<FileDropzone intake={intake} />` for the standard drop area, or
  * spread `dropzoneProps` and `inputProps` onto your own markup. A plain upload
@@ -71,14 +72,20 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const take = (files: File[]) => {
+  const take = (files: File[], source: 'picker' | 'drop') => {
     const candidates = multiple ? files : files.slice(0, 1);
     if (candidates.length === 0) return;
 
     const result = validateFiles(candidates, { accept, maxSize });
-    setError(result.error);
-    if (result.rejected.length > 0) onReject?.(result.rejected);
-    if (result.accepted.length > 0) onFiles(result.accepted);
+    const rejected =
+      source === 'picker'
+        ? result.rejected.filter((rejection) => rejection.reason !== 'type' || rejection.file.type !== '')
+        : result.rejected;
+    const accepted = candidates.filter((file) => !rejected.some((rejection) => rejection.file === file));
+
+    setError(rejected.length === result.rejected.length ? result.error : (rejected[0]?.message ?? null));
+    if (rejected.length > 0) onReject?.(rejected);
+    if (accepted.length > 0) onFiles(accepted);
   };
 
   const open = () => inputRef.current?.click();
@@ -95,7 +102,7 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
         const files = Array.from(event.target.files ?? []);
         // Empty the input so choosing the same file again still fires a change.
         event.target.value = '';
-        take(files);
+        take(files, 'picker');
       },
       // The input usually sits inside the drop target; its click must not
       // bubble up and open the picker a second time.
@@ -124,7 +131,7 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
       onDrop: (event) => {
         event.preventDefault();
         setIsDragging(false);
-        take(Array.from(event.dataTransfer.files));
+        take(Array.from(event.dataTransfer.files), 'drop');
       },
     },
     isDragging,
