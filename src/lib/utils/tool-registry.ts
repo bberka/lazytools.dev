@@ -1213,4 +1213,18 @@ export const TOOL_REGISTRY = {
         (module) => module.CssGradientGenerator
       ),
   },
+  'docker-run-to-compose': {
+    name: 'Docker Run to Compose',
+    description: 'Turn a docker run command into a docker-compose.yml file',
+    tags: ['converters', 'utilities'],
+    icon: 'Container',
+    keywords: [
+      'docker', 'docker run', 'docker compose', 'docker-compose', 'compose',
+      'yaml', 'container', 'converter', 'command line', 'devops',
+    ],
+    component: () =>
+      import('@/components/tools/DockerRunToCompose').then(
+        (module) => module.DockerRunToCompose
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
