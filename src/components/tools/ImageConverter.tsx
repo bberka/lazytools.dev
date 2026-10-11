@@ -246,10 +246,15 @@ export function ImageConverter() {
             // The library's worker loads the library a second time by URL and
             // defaults to a CDN copy. This is the bundler's asset syntax for
             // the copy that ships with the app, so nothing is fetched from
-            // anywhere else.
+            // anywhere else. The bundler may give a path ("/_next/static/media/...")
+            // and the worker is a blob: script, which cannot resolve one, so the
+            // address is made absolute here.
             libURL: new URL(
-              'browser-image-compression/dist/browser-image-compression.js',
-              import.meta.url
+              new URL(
+                'browser-image-compression/dist/browser-image-compression.js',
+                import.meta.url
+              ).toString(),
+              window.location.href
             ).toString(),
           });
         } catch {
