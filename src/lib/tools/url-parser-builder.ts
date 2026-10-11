@@ -34,6 +34,12 @@ const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//;
 const RELATIVE = /^(?:\/(?!\/)|[?#]|\.{1,2}(?:\/|$))/;
 // Schemes that are meaningless without a host.
 const NEEDS_HOST = /^(?:https?|wss?|ftp):?(?:\/\/)?$/i;
+// Schemes that name a resource without a host and are written without "//":
+// `mailto:me@example.com`. Not told apart from `host:port` or `user:pw@host` by
+// shape alone, so only the well-known ones are recognised.
+const OPAQUE_SCHEMES = 'mailto|tel|sms|urn|geo|magnet|news|xmpp|sips?';
+const OPAQUE_URL = new RegExp(`^(?:${OPAQUE_SCHEMES}):`, 'i');
+const OPAQUE_PROTOCOL = new RegExp(`^(?:${OPAQUE_SCHEMES}):?(?://)?$`, 'i');
 
 function parseQuery(query: string): UrlParam[] {
   // URLSearchParams never throws: a stray "%" is kept as it is.
@@ -84,7 +90,11 @@ export function parseUrl(input: string): UrlParts {
   if (!working) return { protocol: '', host: '', path: '', hash: '', params: [] };
 
   let parts: UrlParts;
-  if (RELATIVE.test(working)) {
+  const opaque = OPAQUE_URL.exec(working);
+  if (opaque) {
+    // What follows the scheme is a path, not a host: `someone@example.com` is no address to resolve.
+    parts = { ...splitByHand(working.slice(opaque[0].length), true), protocol: opaque[0].toLowerCase() };
+  } else if (RELATIVE.test(working)) {
     parts = splitByHand(working, true);
   } else {
     const hasScheme = SCHEME.test(working);
@@ -111,7 +121,8 @@ export function parseUrl(input: string): UrlParts {
 /**
  * The URL made of the given parts. Parameters that are disabled or have a
  * blank key are skipped. Without a host the result is a relative reference,
- * unless the scheme is one like `file:` that works without a host.
+ * unless the scheme is one like `file:` that works without a host. A scheme
+ * like `mailto:` is written without "//".
  */
 export function buildUrl(parts: UrlParts): string {
   const { protocol, host, hash, params } = parts;
@@ -119,7 +130,9 @@ export function buildUrl(parts: UrlParts): string {
   const path = host && parts.path && !parts.path.startsWith('/') ? `/${parts.path}` : parts.path;
 
   let result = '';
-  if (protocol && (host || (path && !NEEDS_HOST.test(protocol)))) {
+  if (!host && path && OPAQUE_PROTOCOL.test(protocol)) {
+    result += `${protocol.replace(/:?(?:\/\/)?$/, '')}:`;
+  } else if (protocol && (host || (path && !NEEDS_HOST.test(protocol)))) {
     result += protocol.endsWith('//') ? protocol : protocol.endsWith(':') ? `${protocol}//` : `${protocol}://`;
   } else if (host) {
     result += 'https://';

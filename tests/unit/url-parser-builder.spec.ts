@@ -100,6 +100,25 @@ test.describe('parseUrl', () => {
     ]);
   });
 
+  // Defect: "mailto:someone@example.com" became host "example.com" with user name "mailto".
+  test('reads a scheme written without "//" as a path, not as a host', () => {
+    const mail = parseUrl('mailto:someone@example.com?subject=Hello%20there&cc=a@b.test#top');
+    expect(mail).toMatchObject({ protocol: 'mailto:', host: '', path: 'someone@example.com', hash: '#top' });
+    expect(pairs(mail)).toEqual([
+      ['subject', 'Hello there'],
+      ['cc', 'a@b.test'],
+    ]);
+
+    expect(parseUrl('TEL:+15551234567')).toMatchObject({ protocol: 'tel:', host: '', path: '+15551234567' });
+    expect(parseUrl('urn:isbn:0451450523')).toMatchObject({ protocol: 'urn:', host: '', path: 'isbn:0451450523' });
+    expect(parseUrl('mailto:')).toMatchObject({ protocol: 'mailto:', host: '', path: '' });
+  });
+
+  test('still reads host:port and user:password@host as a host', () => {
+    expect(parseUrl('localhost:8080/a')).toMatchObject({ protocol: '', host: 'localhost:8080', path: '/a' });
+    expect(parseUrl('user:pw@example.com/a')).toMatchObject({ protocol: '', host: 'user:pw@example.com', path: '/a' });
+  });
+
   test('gives a host a root path, and a hash of just "#" no hash', () => {
     expect(parseUrl('https://example.com').path).toBe('/');
     expect(parseUrl('https://a b').path).toBe('/');
@@ -173,6 +192,16 @@ test.describe('buildUrl', () => {
     expect(buildUrl({ ...EMPTY, protocol: 'file:', path: '/C:/Users/me/a.txt' })).toBe('file:///C:/Users/me/a.txt');
   });
 
+  test('writes mailto: and the like without "//"', () => {
+    const base = { ...EMPTY, path: 'someone@example.com', params: [{ key: 'subject', value: 'Hello there' }] };
+    for (const protocol of ['mailto:', 'mailto', 'mailto://']) {
+      expect(buildUrl({ ...base, protocol }), protocol).toBe('mailto:someone@example.com?subject=Hello+there');
+    }
+    expect(buildUrl({ ...EMPTY, protocol: 'tel:', path: '+15551234567' })).toBe('tel:+15551234567');
+    // With a host the usual form is kept.
+    expect(buildUrl({ ...EMPTY, protocol: 'mailto:', host: 'example.com', path: '/x' })).toBe('mailto://example.com/x');
+  });
+
   test('separates the host from a path typed without its slash', () => {
     expect(buildUrl({ ...EMPTY, protocol: 'https:', host: 'example.com', path: 'search' })).toBe(
       'https://example.com/search'
@@ -188,6 +217,8 @@ test.describe('parseUrl then buildUrl', () => {
       'https://user:pw@example.com:8443/a/b?x=1&x=2',
       's3://bucket/key',
       'file:///C:/Users/me/a.txt',
+      'mailto:someone@example.com?subject=Hello',
+      'tel:+15551234567',
       '/api/search?q=1#top',
       '?page=2',
       '#top',

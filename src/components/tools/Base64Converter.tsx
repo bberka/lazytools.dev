@@ -159,7 +159,7 @@ export function Base64Converter() {
           <Card>
             <CardHeader>
               <CardTitle>Output</CardTitle>
-              <CardDescription>{output ? `${output.length} characters` : 'Result appears here automatically'}</CardDescription>
+              <CardDescription>{output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result appears here automatically'}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

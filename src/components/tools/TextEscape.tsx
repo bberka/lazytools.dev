@@ -112,7 +112,7 @@ export function TextEscape() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} characters` : 'Result will appear here automatically'}
+            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>
