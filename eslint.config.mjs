@@ -19,6 +19,13 @@ const eslintConfig = [
     },
   },
   {
+    // Node scripts run by CI are CommonJS.
+    files: ['scripts/**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     ignores: ignoredPaths,
   },
 ];

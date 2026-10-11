@@ -16,14 +16,20 @@ interface InstallDialogProps {
   onClose: () => void;
 }
 
+// Chromium's install prompt event; not in the standard DOM typings.
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
     };
 
@@ -123,7 +129,7 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
                   <div className="flex gap-2 items-start text-[11px] text-muted-foreground leading-snug">
                     <Info className="h-3.5 w-3.5 text-purple-400 shrink-0 mt-0.5" />
                     <span>
-                      To install: tap your browser's menu (or <span className="font-semibold text-foreground">Share</span> on iOS Safari) and select <span className="font-semibold text-foreground">Add to Home Screen</span>.
+                      To install: tap your browser&apos;s menu (or <span className="font-semibold text-foreground">Share</span> on iOS Safari) and select <span className="font-semibold text-foreground">Add to Home Screen</span>.
                     </span>
                   </div>
                 </div>
