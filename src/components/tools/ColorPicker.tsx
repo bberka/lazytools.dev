@@ -168,8 +168,20 @@ export function ColorPicker() {
     setColor(hsvToRgb(next));
   };
 
-  const handleHexChange = (value: string) => {
-    setHexInput(value.toUpperCase());
+  const handleHexChange = (field: HTMLInputElement) => {
+    const { value, selectionStart, selectionEnd } = field;
+    const upper = value.toUpperCase();
+
+    // Writing the upper-cased text into the field moves the caret to the end,
+    // which sent letters typed in the middle of the colour to the wrong place.
+    // Writing it here and putting the caret back means React finds the field
+    // already showing the state and leaves it alone.
+    if (upper !== value) {
+      field.value = upper;
+      field.setSelectionRange(selectionStart, selectionEnd);
+    }
+
+    setHexInput(upper);
     const nextRgb = parseHexColor(value);
 
     if (!nextRgb) {
@@ -225,7 +237,7 @@ export function ColorPicker() {
             Pick a color, tune channels, and copy production-ready values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px),1fr]">
+        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
             <div
               className="flex min-h-48 flex-col justify-end px-6 py-5"
@@ -269,7 +281,7 @@ export function ColorPicker() {
                 />
                 <Input
                   value={hexInput}
-                  onChange={(event) => handleHexChange(event.currentTarget.value)}
+                  onChange={(event) => handleHexChange(event.currentTarget)}
                   onBlur={handleHexBlur}
                   placeholder="#3B82F6"
                   className="h-14 border-0 bg-transparent px-0 font-mono text-base uppercase shadow-none focus-visible:ring-0"

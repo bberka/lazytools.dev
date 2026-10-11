@@ -421,7 +421,7 @@ export function BoxShadowVisualizer() {
   return (
     <div className="space-y-6">
       {/* Dynamic layout: left controls side, right preview side */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,460px)] gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,460px)] gap-4 sm:gap-6">
         
         {/* Left Side: Controls & Editor */}
         <div className="space-y-6 order-2 lg:order-1">
@@ -662,7 +662,7 @@ export function BoxShadowVisualizer() {
                 </div>
 
                 {/* Color and Opacity Row */}
-                <div className="grid grid-cols-1 md:grid-cols-[160px,1fr] gap-4 p-4 rounded-xl border border-border/50 bg-muted/5">
+                <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4 p-4 rounded-xl border border-border/50 bg-muted/5">
                   
                   {/* HEX Color Input */}
                   <div className="space-y-2">
@@ -760,7 +760,7 @@ export function BoxShadowVisualizer() {
               </div>
 
               {/* Box Color and Corner Radius */}
-              <div className="grid grid-cols-1 md:grid-cols-[160px,1fr] gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4">
                 {/* Box Background */}
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                   <label className="text-xs font-semibold text-muted-foreground">Box BG Color</label>

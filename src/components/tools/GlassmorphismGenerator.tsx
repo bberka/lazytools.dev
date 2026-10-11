@@ -228,7 +228,7 @@ export function GlassmorphismGenerator() {
 
       {/* Main Interactive Grid */}
       {/* grid-cols-1 keeps the column as wide as the page: without it a long line of generated code widens the column instead of scrolling inside its box */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[1fr,minmax(380px,440px)]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)]">
         
         {/* Left Side: Interactive Live Preview Playground */}
         <div className="flex flex-col gap-4 sm:gap-6">
