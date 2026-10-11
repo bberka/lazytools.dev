@@ -1227,4 +1227,19 @@ export const TOOL_REGISTRY = {
         (module) => module.DockerRunToCompose
       ),
   },
+  'unicode-inspector': {
+    name: 'Unicode & Zero-Width Inspector',
+    description: 'Find zero-width and invisible Unicode characters in text',
+    tags: ['text-tools'],
+    icon: 'ScanSearch',
+    keywords: [
+      'unicode', 'zero-width', 'invisible characters', 'code point', 'utf-8',
+      'byte order mark', 'bidi', 'normalize', 'nfc', 'grapheme', 'hidden text',
+      'non-breaking space',
+    ],
+    component: () =>
+      import('@/components/tools/UnicodeInspector').then(
+        (module) => module.UnicodeInspector
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
