@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRightLeft, Check, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -14,195 +15,78 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useActionButton, useCopyToClipboard } from '@/hooks';
-
-type CurrencyOption = {
-  code: string;
-  name: string;
-  symbol: string;
-};
-
-type RateResponse = {
-  date: string;
-  base: string;
-  quote: string;
-  rate: number;
-};
-
-type ConversionResult = {
-  amount: number;
-  convertedAmount: number;
-  base: string;
-  quote: string;
-  rate: number;
-  date: string;
-};
-
-const CURRENCIES: CurrencyOption[] = [
-  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'BGN', name: 'Bulgarian Lev', symbol: 'лв' },
-  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
-  { code: 'CZK', name: 'Czech Koruna', symbol: 'Kc' },
-  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
-  { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
-  { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft' },
-  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' },
-  { code: 'ILS', name: 'Israeli New Shekel', symbol: '₪' },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
-  { code: 'ISK', name: 'Icelandic Krona', symbol: 'kr' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-  { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
-  { code: 'MXN', name: 'Mexican Peso', symbol: '$' },
-  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
-  { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
-  { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
-  { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
-  { code: 'PLN', name: 'Polish Zloty', symbol: 'zl' },
-  { code: 'RON', name: 'Romanian Leu', symbol: 'lei' },
-  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
-  { code: 'THB', name: 'Thai Baht', symbol: '฿' },
-  { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
-  { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-];
-
-function parseNumber(value: string): number | null {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const normalized = trimmed.replace(/,/g, '');
-  const parsed = Number(normalized);
-
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatNumber(value: number, maximumFractionDigits = 6): string {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits,
-    minimumFractionDigits: Math.min(2, maximumFractionDigits),
-  }).format(value);
-}
-
-function formatDate(value: string): string {
-  const date = new Date(`${value}T00:00:00Z`);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
-}
+import {
+  CURRENCIES,
+  convertCurrency,
+  formatAmount,
+  formatRate,
+  formatRateDate,
+  getCurrencySymbol,
+  isIsoDate,
+  localIsoDate,
+  type CurrencyConversion,
+  type CurrencyOption,
+} from '@/lib/tools/currency-converter';
 
 function getCurrencyLabel(currency: CurrencyOption): string {
   return `${currency.code} · ${currency.name}`;
 }
+
+// Read when it is needed, never while rendering: the page is prerendered at
+// build time, and a date rendered into that HTML would be the build date.
+const getToday = () => localIsoDate(new Date());
 
 export function CurrencyConverter() {
   const [amount, setAmount] = useState('100');
   const [fromCurrency, setFromCurrency] = useState('USD');
   const [toCurrency, setToCurrency] = useState('EUR');
   const [date, setDate] = useState('');
-  const [result, setResult] = useState<ConversionResult | null>(null);
+  const [result, setResult] = useState<CurrencyConversion | null>(null);
   const [error, setError] = useState('');
+  // The conversion in flight, so that Clear, a newer conversion or leaving the
+  // page can abandon it.
+  const activeRequest = useRef<AbortController | null>(null);
 
   const { executeAction, isLoading } = useActionButton();
   const copyResult = useCopyToClipboard();
 
-  const fromCurrencyInfo = useMemo(
-    () => CURRENCIES.find((currency) => currency.code === fromCurrency),
-    [fromCurrency]
-  );
-  const toCurrencyInfo = useMemo(
-    () => CURRENCIES.find((currency) => currency.code === toCurrency),
-    [toCurrency]
-  );
+  useEffect(() => {
+    return () => {
+      activeRequest.current?.abort();
+    };
+  }, []);
 
-  const convertCurrency = async () => {
+  const runConversion = async () => {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+
     setError('');
     setResult(null);
 
-    const parsedAmount = parseNumber(amount);
-
-    if (parsedAmount === null) {
-      setError('Enter a valid amount to convert.');
-      return;
-    }
-
-    if (parsedAmount < 0) {
-      setError('Amount cannot be negative.');
-      return;
-    }
-
-    if (fromCurrency === toCurrency) {
-      setResult({
-        amount: parsedAmount,
-        convertedAmount: parsedAmount,
-        base: fromCurrency,
-        quote: toCurrency,
-        rate: 1,
-        date: date || new Date().toISOString().slice(0, 10),
-      });
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (date) {
-      params.set('date', date);
-    }
-
-    const query = params.toString();
-    const url = `https://api.frankfurter.dev/v2/rate/${fromCurrency}/${toCurrency}${query ? `?${query}` : ''}`;
-
-    try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        let message = 'Failed to fetch exchange rate.';
-
-        try {
-          const data = (await response.json()) as { message?: string };
-          if (data.message) {
-            message = data.message;
-          }
-        } catch {}
-
-        throw new Error(message);
+    const outcome = await convertCurrency(
+      { amount, from: fromCurrency, to: toCurrency, date },
+      {
+        fetch: (url, init) => fetch(url, init),
+        today: getToday(),
+        signal: controller.signal,
       }
+    );
 
-      const data = (await response.json()) as RateResponse;
-
-      setResult({
-        amount: parsedAmount,
-        convertedAmount: parsedAmount * data.rate,
-        base: data.base,
-        quote: data.quote,
-        rate: data.rate,
-        date: data.date,
-      });
-    } catch (fetchError) {
-      setError(
-        fetchError instanceof Error
-          ? fetchError.message
-          : 'Failed to fetch exchange rate.'
-      );
+    if (controller.signal.aborted || outcome.status === 'cancelled') {
+      return;
     }
+
+    if (outcome.status === 'failed') {
+      setError(outcome.error);
+      return;
+    }
+
+    setResult(outcome.conversion);
   };
 
   const handleConvert = async () => {
-    await executeAction(convertCurrency);
+    await executeAction(runConversion);
   };
 
   const handleSwap = () => {
@@ -211,6 +95,7 @@ export function CurrencyConverter() {
   };
 
   const handleClear = () => {
+    activeRequest.current?.abort();
     setAmount('');
     setFromCurrency('USD');
     setToCurrency('EUR');
@@ -219,12 +104,10 @@ export function CurrencyConverter() {
     setError('');
   };
 
-  const copyValue = result
-    ? `${formatNumber(result.convertedAmount, 4)} ${result.quote}`
-    : '';
+  const copyValue = result ? `${formatAmount(result.convertedAmount)} ${result.quote}` : '';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Currency Converter</CardTitle>
@@ -250,9 +133,11 @@ export function CurrencyConverter() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
             <div>
-              <label className="mb-2 block text-sm font-medium">From</label>
+              <label htmlFor="currency-from" className="mb-2 block text-sm font-medium">
+                From
+              </label>
               <Select value={fromCurrency} onValueChange={setFromCurrency}>
-                <SelectTrigger>
+                <SelectTrigger id="currency-from">
                   <SelectValue placeholder="Select source currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -280,9 +165,11 @@ export function CurrencyConverter() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">To</label>
+              <label htmlFor="currency-to" className="mb-2 block text-sm font-medium">
+                To
+              </label>
               <Select value={toCurrency} onValueChange={setToCurrency}>
-                <SelectTrigger>
+                <SelectTrigger id="currency-to">
                   <SelectValue placeholder="Select target currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -298,16 +185,15 @@ export function CurrencyConverter() {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="currency-date" className="mb-2 block text-sm font-medium">
+          <div role="group" aria-labelledby="currency-date-label">
+            <span id="currency-date-label" className="mb-2 block text-sm font-medium">
               Reference date
-            </label>
-            <Input
-              id="currency-date"
-              type="date"
+            </span>
+            <DatePicker
               value={date}
-              onChange={(event) => setDate((event.target as HTMLInputElement).value)}
-              max={new Date().toISOString().slice(0, 10)}
+              onChange={setDate}
+              disabled={(day) => localIsoDate(day) > getToday()}
+              error={date !== '' && !isIsoDate(date)}
             />
             <p className="mt-2 text-xs text-muted-foreground">
               Leave blank to use the latest available rate.
@@ -315,7 +201,10 @@ export function CurrencyConverter() {
           </div>
 
           {error && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
@@ -364,15 +253,13 @@ export function CurrencyConverter() {
           <CardTitle>Result</CardTitle>
           <CardDescription>
             {result
-              ? `Reference date: ${formatDate(result.date)}`
+              ? `Reference date: ${formatRateDate(result.date)}`
               : 'Run a conversion to see the latest result.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
-            {result
-              ? `${formatNumber(result.convertedAmount, 4)} ${result.quote}`
-              : '-'}
+          <div className="break-words rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
+            {copyValue || '-'}
           </div>
 
           {result && (
@@ -381,17 +268,17 @@ export function CurrencyConverter() {
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Conversion
                 </div>
-                <div className="mt-1 font-semibold">
-                  {formatNumber(result.amount, 4)} {result.base} ={' '}
-                  {formatNumber(result.convertedAmount, 4)} {result.quote}
+                <div className="mt-1 break-words font-semibold">
+                  {formatAmount(result.amount)} {result.base} ={' '}
+                  {formatAmount(result.convertedAmount)} {result.quote}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Exchange rate
                 </div>
-                <div className="mt-1 font-semibold">
-                  1 {result.base} = {formatNumber(result.rate, 6)} {result.quote}
+                <div className="mt-1 break-words font-semibold">
+                  1 {result.base} = {formatRate(result.rate)} {result.quote}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -399,8 +286,7 @@ export function CurrencyConverter() {
                   Symbols
                 </div>
                 <div className="mt-1 font-semibold">
-                  {(fromCurrencyInfo?.symbol ?? result.base)} to{' '}
-                  {(toCurrencyInfo?.symbol ?? result.quote)}
+                  {getCurrencySymbol(result.base)} to {getCurrencySymbol(result.quote)}
                 </div>
               </div>
             </div>
@@ -408,8 +294,8 @@ export function CurrencyConverter() {
         </CardContent>
       </Card>
 
-      <Card className="border-blue-500/20 bg-blue-500/5">
-        <CardContent className="pt-6 text-sm text-muted-foreground">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 text-sm text-muted-foreground sm:pt-6">
           Rates are fetched from Frankfurter when you click convert. These are reference rates and can change as newer published data becomes available.
         </CardContent>
       </Card>

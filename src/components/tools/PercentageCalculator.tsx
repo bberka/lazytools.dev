@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
+import { calculatePercentage, type PercentageMode } from '@/lib/tools/percentage-calculator';
 
-type Mode = 'percent-of' | 'what-percent' | 'percent-change';
+type Mode = PercentageMode;
 
 const modeOptions = [
   { value: 'percent-of', label: 'X% of Y' },
@@ -29,88 +30,13 @@ const exampleValues: Record<Mode, { x: string; y: string }> = {
   'percent-change': { x: '100', y: '120' },
 };
 
-function parseNumber(value: string): number | null {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const normalized = trimmed.replace(/,/g, '');
-  const parsed = Number(normalized);
-
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-  }).format(value);
-}
-
 export function PercentageCalculator() {
   const [mode, setMode] = useState<Mode>('percent-of');
   const [x, setX] = useState(exampleValues['percent-of'].x);
   const [y, setY] = useState(exampleValues['percent-of'].y);
   const copyResult = useCopyToClipboard();
 
-  const result = useMemo(() => {
-    const xValue = parseNumber(x);
-    const yValue = parseNumber(y);
-
-    if (xValue === null || yValue === null) {
-      return {
-        value: '',
-        detail: 'Enter numbers in both fields to calculate.',
-        error: '',
-      };
-    }
-
-    if (mode === 'percent-of') {
-      const calculated = (xValue / 100) * yValue;
-
-      return {
-        value: formatNumber(calculated),
-        detail: `${formatNumber(xValue)}% of ${formatNumber(yValue)} = ${formatNumber(calculated)}`,
-        error: '',
-      };
-    }
-
-    if (mode === 'what-percent') {
-      if (yValue === 0) {
-        return {
-          value: '',
-          detail: '',
-          error: 'Result is undefined because the second value cannot be zero in this mode.',
-        };
-      }
-
-      const calculated = (xValue / yValue) * 100;
-
-      return {
-        value: `${formatNumber(calculated)}%`,
-        detail: `${formatNumber(xValue)} is ${formatNumber(calculated)}% of ${formatNumber(yValue)}`,
-        error: '',
-      };
-    }
-
-    if (xValue === 0) {
-      return {
-        value: '',
-        detail: '',
-        error: 'Percentage change is undefined when the starting value is zero.',
-      };
-    }
-
-    const calculated = ((yValue - xValue) / xValue) * 100;
-
-    return {
-      value: `${formatNumber(calculated)}%`,
-      detail: `Change from ${formatNumber(xValue)} to ${formatNumber(yValue)} = ${formatNumber(calculated)}%`,
-      error: '',
-    };
-  }, [mode, x, y]);
+  const result = useMemo(() => calculatePercentage(mode, x, y), [mode, x, y]);
 
   const labels = useMemo(() => {
     switch (mode) {
@@ -150,7 +76,7 @@ export function PercentageCalculator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Percentage Calculator</CardTitle>
@@ -160,9 +86,11 @@ export function PercentageCalculator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium">Mode</label>
+            <label htmlFor="percentage-mode" className="mb-2 block text-sm font-medium">
+              Mode
+            </label>
             <Select value={mode} onValueChange={(value) => handleModeChange(value as Mode)}>
-              <SelectTrigger>
+              <SelectTrigger id="percentage-mode">
                 <SelectValue placeholder="Select mode" />
               </SelectTrigger>
               <SelectContent>
@@ -179,8 +107,11 @@ export function PercentageCalculator() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium">{labels.x}</label>
+              <label htmlFor="percentage-x" className="mb-2 block text-sm font-medium">
+                {labels.x}
+              </label>
               <Input
+                id="percentage-x"
                 type="text"
                 inputMode="decimal"
                 value={x}
@@ -190,8 +121,11 @@ export function PercentageCalculator() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium">{labels.y}</label>
+              <label htmlFor="percentage-y" className="mb-2 block text-sm font-medium">
+                {labels.y}
+              </label>
               <Input
+                id="percentage-y"
                 type="text"
                 inputMode="decimal"
                 value={y}
@@ -203,7 +137,10 @@ export function PercentageCalculator() {
           </div>
 
           {result.error && (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
               {result.error}
             </div>
           )}
@@ -239,7 +176,7 @@ export function PercentageCalculator() {
           <CardTitle>Result</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
+          <div className="break-words rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
             {result.value || '-'}
           </div>
           <p className="text-sm text-muted-foreground">
@@ -247,7 +184,6 @@ export function PercentageCalculator() {
           </p>
         </CardContent>
       </Card>
-
     </div>
   );
 }
