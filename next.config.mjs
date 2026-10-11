@@ -1,4 +1,8 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import bundleAnalyzer from '@next/bundle-analyzer';
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -19,6 +23,12 @@ const nextConfig = {
 
   // Enable React strict mode for better development experience
   reactStrictMode: true,
+
+  // Pin the workspace root to this project. Without it Next walks up looking
+  // for lockfiles and can pick a parent directory that happens to hold one.
+  turbopack: {
+    root: projectRoot,
+  },
 
   // Allow development access from local network IP
   allowedDevOrigins: ['192.168.0.17', '192.168.0.17:3000'],
