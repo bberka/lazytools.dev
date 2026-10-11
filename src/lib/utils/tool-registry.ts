@@ -1198,4 +1198,19 @@ export const TOOL_REGISTRY = {
         (module) => module.JsonDiff
       ),
   },
+  'css-gradient-generator': {
+    name: 'CSS Gradient Generator',
+    description: 'Build linear, radial and conic CSS gradients with live preview',
+    tags: ['design', 'generators'],
+    icon: 'Rainbow',
+    keywords: [
+      'css gradient', 'gradient generator', 'linear gradient',
+      'radial gradient', 'conic gradient', 'repeating gradient', 'color stops',
+      'tailwind gradient', 'background', 'css background',
+    ],
+    component: () =>
+      import('@/components/tools/CssGradientGenerator').then(
+        (module) => module.CssGradientGenerator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
