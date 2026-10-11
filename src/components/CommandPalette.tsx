@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
 import {
@@ -9,25 +9,49 @@ import {
   Star,
   ArrowRight,
   Settings,
-  Moon,
-  Sun,
-  Layers,
-  Maximize2,
-  Trash2,
+  type LucideIcon,
 } from 'lucide-react';
 import { toolCatalog } from '@/lib/catalog';
+import {
+  APP_COMMANDS,
+  PALETTE_SHORTCUTS,
+  detectPlatform,
+  filterCommands,
+  findCommandByShortcut,
+  isTypingTarget,
+  matchesShortcut,
+  shortcutLabel,
+  type AppCommand,
+} from '@/lib/commands';
+import { useAppCommands } from '@/lib/commands/client';
 import { TAGS } from '@/lib/tags';
-import type { ToolTag } from '@/lib/types';
+import type { Tool, ToolTag } from '@/lib/types';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
-import { useSettings } from '@/lib/contexts/SettingsContext';
-import { useTheme } from '@/lib/contexts/ThemeContext';
-import { getModifierKey, isModifierKey } from '@/lib/utils/keyboard';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { cn } from '@/lib/utils/cn';
 import { TooltipSimple } from './ui/tooltip';
+
+// One row of the list: a tool to open or a command to run
+interface PaletteRow {
+  key: string;
+  /** What cmdk selects and highlights the row by. */
+  value: string;
+  icon: LucideIcon;
+  iconClassName: string;
+  label: string;
+  /** Shown at the end of the row. */
+  detail: React.ReactNode;
+  onSelect: () => void;
+}
+
+interface PaletteSection {
+  key: string;
+  heading: React.ReactNode;
+  rows: PaletteRow[];
+}
 
 function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   const tag = TAGS[tagId];
@@ -50,122 +74,51 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   );
 }
 
+function SectionHeading({
+  icon: Icon,
+  iconClassName,
+  children,
+}: {
+  icon: LucideIcon;
+  iconClassName: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClassName)} />
+      <span>{children}</span>
+    </span>
+  );
+}
+
+function PaletteItem({ row }: { row: PaletteRow }) {
+  const Icon = row.icon;
+
+  return (
+    <Command.Item
+      value={row.value}
+      onSelect={row.onSelect}
+      className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+    >
+      <Icon className={cn('mr-2 h-4 w-4 shrink-0', row.iconClassName)} />
+      <span className="flex-1">{row.label}</span>
+      {row.detail}
+    </Command.Item>
+  );
+}
+
 export function CommandPalette() {
   const router = useRouter();
-  const { open, setOpen } = useCommandPalette();
-  const { favorites, toggleFavorite, clearFavorites } = useFavorites();
-  const { recentTools, addRecentTool, clearRecentTools } = useRecentTools();
-  const { theme, toggleTheme } = useTheme();
-  const { compactMode, setCompactMode, fullWidth, setFullWidth } = useSettings();
+  const { open, setOpen, toggle } = useCommandPalette();
+  const { favorites, toggleFavorite } = useFavorites();
+  const { recentTools, addRecentTool } = useRecentTools();
+  const commands = useAppCommands();
 
   const [search, setSearch] = useState('');
-  const modKey = getModifierKey();
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  // Settings commands definitions
-  const settingsCommands = useMemo(() => {
-    return [
-      {
-        id: 'cmd-theme',
-        name: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
-        status: theme === 'dark' ? 'Dark' : 'Light',
-        icon: theme === 'dark' ? Sun : Moon,
-        keywords: ['theme', 'dark', 'light', 'mode', 'toggle', 'switch', 'appearance', 'color'],
-        action: () => {
-          toggleTheme();
-          toast.success(`Switched to ${theme === 'dark' ? 'light' : 'dark'} mode`);
-          setOpen(false);
-        },
-      },
-      {
-        id: 'cmd-compact',
-        name: compactMode ? 'Disable Compact Mode' : 'Enable Compact Mode',
-        status: compactMode ? 'Enabled' : 'Disabled',
-        icon: Layers,
-        keywords: ['compact', 'mode', 'size', 'toggle', 'layout', 'spacing', 'appearance'],
-        action: () => {
-          setCompactMode(!compactMode);
-          toast.success(`Compact mode ${!compactMode ? 'enabled' : 'disabled'}`);
-          setOpen(false);
-        },
-      },
-      {
-        id: 'cmd-full',
-        name: fullWidth ? 'Disable Full Width Mode' : 'Enable Full Width Mode',
-        status: fullWidth ? 'Enabled' : 'Disabled',
-        icon: Maximize2,
-        keywords: ['full', 'width', 'mode', 'toggle', 'layout', 'expand', 'appearance'],
-        action: () => {
-          setFullWidth(!fullWidth);
-          toast.success(`Full width mode ${!fullWidth ? 'enabled' : 'disabled'}`);
-          setOpen(false);
-        },
-      },
-      {
-        id: 'cmd-clear-recents',
-        name: 'Clear Recent Tools',
-        status: recentTools.length > 0 ? `${recentTools.length} tools` : 'Empty',
-        icon: Trash2,
-        keywords: ['clear', 'recent', 'tools', 'delete', 'history', 'reset'],
-        action: () => {
-          if (recentTools.length === 0) {
-            toast.info('No recent tools to clear');
-            return;
-          }
-          clearRecentTools();
-          toast.success('Recent tools cleared');
-          setOpen(false);
-        },
-      },
-      {
-        id: 'cmd-clear-favorites',
-        name: 'Clear Favorites',
-        status: favorites.length > 0 ? `${favorites.length} tools` : 'Empty',
-        icon: Trash2,
-        keywords: ['clear', 'favorites', 'bookmarks', 'delete', 'reset'],
-        action: () => {
-          if (favorites.length === 0) {
-            toast.info('No favorites to clear');
-            return;
-          }
-          clearFavorites();
-          toast.success('Favorites cleared');
-          setOpen(false);
-        },
-      },
-    ];
-  }, [
-    theme,
-    toggleTheme,
-    compactMode,
-    setCompactMode,
-    fullWidth,
-    setFullWidth,
-    recentTools,
-    clearRecentTools,
-    favorites,
-    clearFavorites,
-    setOpen,
-  ]);
-
-  // Filter settings commands based on search
-  const searchedSettingsCommands = useMemo(() => {
-    if (!search) return [];
-    const cleanSearch = search.trim().toLowerCase();
-    return settingsCommands.filter(
-      (cmd) =>
-        cmd.name.toLowerCase().includes(cleanSearch) ||
-        cmd.keywords.some((k) => k.toLowerCase().includes(cleanSearch))
-    );
-  }, [search, settingsCommands]);
-
-  const handleToggleFavorite = useCallback((toolId: string) => {
-    const wasFavorite = favorites.includes(toolId);
-    toggleFavorite(toolId);
-    toast.success(wasFavorite ? 'Removed from favorites' : 'Added to favorites');
-  }, [favorites, toggleFavorite]);
+  const platform = detectPlatform();
 
   // Auto-focus search input when dialog opens
   useEffect(() => {
@@ -177,19 +130,25 @@ export function CommandPalette() {
     }
   }, [open]);
 
+  // cmdk runs uncontrolled here, and uncontrolled it reports its selection to
+  // no callback, so the value of the highlighted row is read from cmdk's DOM.
+  //
+  // Known gap: on opening, this runs before the dialog's portal has mounted
+  // the list, finds no list and returns. Tracking starts once the search text
+  // or the number of recents or favorites changes.
   useEffect(() => {
     if (!open || !listRef.current) return;
 
-    const syncSelectedTool = () => {
+    const syncSelectedValue = () => {
       const selectedItem = listRef.current?.querySelector<HTMLElement>(
         '[cmdk-item][data-selected="true"]'
       );
 
-      setSelectedTool(selectedItem?.getAttribute('data-value') ?? null);
+      setSelectedValue(selectedItem?.getAttribute('data-value') ?? null);
     };
 
-    const frame = window.requestAnimationFrame(syncSelectedTool);
-    const observer = new MutationObserver(syncSelectedTool);
+    const frame = window.requestAnimationFrame(syncSelectedValue);
+    const observer = new MutationObserver(syncSelectedValue);
 
     observer.observe(listRef.current, {
       subtree: true,
@@ -203,56 +162,6 @@ export function CommandPalette() {
       observer.disconnect();
     };
   }, [open, search, recentTools.length, favorites.length]);
-
-  // Handle keyboard shortcuts within the palette
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-
-      // Escape to close
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        setOpen(false);
-        return;
-      }
-
-      // Ctrl/Cmd+Shift+Delete to clear recents
-      if (e.key === 'Delete' && e.shiftKey && isModifierKey(e)) {
-        e.preventDefault();
-        clearRecentTools();
-        toast.success('Recent tools cleared');
-        return;
-      }
-
-      // Ctrl/Cmd+Shift+F to toggle favorite on selected tool (only if it is a tool, not a command)
-      if (key === 'f' && e.shiftKey && isModifierKey(e) && selectedTool && !selectedTool.startsWith('cmd-')) {
-        e.preventDefault();
-        handleToggleFavorite(selectedTool);
-        return;
-      }
-
-      // Ctrl/Cmd+Enter to open in new tab (only if it is a tool, not a command)
-      if (e.key === 'Enter' && isModifierKey(e) && selectedTool && !selectedTool.startsWith('cmd-')) {
-        e.preventDefault();
-        addRecentTool(selectedTool);
-        window.open(`/tools/${selectedTool}`, '_blank');
-        setOpen(false);
-        return;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    open,
-    selectedTool,
-    setOpen,
-    clearRecentTools,
-    addRecentTool,
-    handleToggleFavorite,
-  ]);
 
   // Get tool data for recent tools
   const recentToolsData = useMemo(
@@ -282,13 +191,17 @@ export function CommandPalette() {
     return toolCatalog.search(search);
   }, [search]);
 
-  // Handle navigation to tool
-  const handleNavigate = (toolId: string, openInNewTab: boolean = false) => {
+  // Every command without a search, the matching ones with one
+  const listedCommands = useMemo(
+    () => filterCommands(search, commands.state),
+    [search, commands.state]
+  );
+
+  const openTool = (toolId: string, inNewTab = false) => {
     // Track in recent tools
     addRecentTool(toolId);
 
-    if (openInNewTab) {
-      // Open in new tab
+    if (inNewTab) {
       window.open(`/tools/${toolId}`, '_blank');
     } else {
       // Navigate in current tab using Next.js router
@@ -299,26 +212,209 @@ export function CommandPalette() {
     setOpen(false);
   };
 
-  const searchHeading = (
-    <span className="flex items-center gap-1.5">
-      <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>Search Results</span>
-    </span>
-  );
+  const handleToggleFavorite = (toolId: string) => {
+    const wasFavorite = favorites.includes(toolId);
+    toggleFavorite(toolId);
+    toast.success(wasFavorite ? 'Removed from favorites' : 'Added to favorites');
+  };
 
-  const recentHeading = (
-    <span className="flex items-center gap-1.5">
-      <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>Recent</span>
-    </span>
-  );
+  const selectCommand = (command: AppCommand) => {
+    const nothingToDo = command.nothingToDo?.(commands.state);
+    if (nothingToDo) {
+      toast.info(nothingToDo);
+      return;
+    }
 
-  const favoritesHeading = (
-    <span className="flex items-center gap-1.5">
-      <Star className="h-3.5 w-3.5 shrink-0 text-yellow-500 fill-yellow-500/20" />
-      <span>Favorites</span>
-    </span>
-  );
+    toast.success(commands.run(command));
+    setOpen(false);
+  };
+
+  const toolRow = (
+    tool: Tool,
+    look: { key?: string; icon: LucideIcon; iconClassName: string; arrow?: boolean }
+  ): PaletteRow => ({
+    key: look.key ?? tool.id,
+    value: tool.id,
+    icon: look.icon,
+    iconClassName: look.iconClassName,
+    label: tool.name,
+    detail: (
+      <>
+        <div className="flex items-center gap-1 shrink-0">
+          {tool.tags.map((tagId) => (
+            <TagIconBadge key={tagId} tagId={tagId} />
+          ))}
+        </div>
+        {look.arrow && (
+          <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
+        )}
+      </>
+    ),
+    onSelect: () => openTool(tool.id),
+  });
+
+  const commandRow = (command: AppCommand): PaletteRow => ({
+    key: command.id,
+    // A tool id is a slug and has no colon, so this is never one
+    value: `command:${command.id}`,
+    icon: command.icon(commands.state),
+    iconClassName: 'text-muted-foreground',
+    label: command.label(commands.state),
+    detail: (
+      <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+        {command.status(commands.state)}
+      </span>
+    ),
+    onSelect: () => selectCommand(command),
+  });
+
+  const commandsSection: PaletteSection = {
+    key: search ? 'search-commands' : 'commands',
+    heading: (
+      <SectionHeading icon={Settings} iconClassName="text-muted-foreground">
+        Settings & Commands
+      </SectionHeading>
+    ),
+    rows: listedCommands.map(commandRow),
+  };
+
+  // With a search: the matching tools, best match first, then the matching
+  // commands. Without one: recents, favorites, every other tool under its
+  // tags, then all commands. A section with no rows is left out.
+  const sections: PaletteSection[] = (
+    search
+      ? [
+          {
+            key: 'search-tools',
+            heading: (
+              <SectionHeading icon={Search} iconClassName="text-muted-foreground">
+                Search Results
+              </SectionHeading>
+            ),
+            rows: searchedTools.map((tool) => {
+              const mainTag = TAGS[tool.tags[0]];
+              return toolRow(tool, { icon: mainTag.icon, iconClassName: mainTag.color });
+            }),
+          },
+          commandsSection,
+        ]
+      : [
+          {
+            key: 'recent',
+            heading: (
+              <SectionHeading icon={Clock} iconClassName="text-muted-foreground">
+                Recent
+              </SectionHeading>
+            ),
+            rows: recentToolsData.map((tool) =>
+              toolRow(tool, { icon: Clock, iconClassName: 'text-muted-foreground' })
+            ),
+          },
+          {
+            key: 'favorites',
+            heading: (
+              <SectionHeading icon={Star} iconClassName="text-yellow-500 fill-yellow-500/20">
+                Favorites
+              </SectionHeading>
+            ),
+            rows: favoriteToolsData.map((tool) =>
+              toolRow(tool, {
+                icon: Star,
+                iconClassName: 'fill-yellow-500 text-yellow-500',
+                arrow: true,
+              })
+            ),
+          },
+          ...groupedTools.map(({ tag: tagId, tools: tagTools }) => {
+            const tag = TAGS[tagId];
+            return {
+              key: `tag-${tagId}`,
+              heading: (
+                <SectionHeading icon={tag.icon} iconClassName={tag.color}>
+                  {tag.name}
+                </SectionHeading>
+              ),
+              rows: tagTools.map((tool) =>
+                toolRow(tool, {
+                  key: `${tagId}-${tool.id}`,
+                  icon: tag.icon,
+                  iconClassName: tag.color,
+                })
+              ),
+            };
+          }),
+          commandsSection,
+        ]
+  ).filter((section) => section.rows.length > 0);
+
+  // The tool on the highlighted row. A tool row's value is the tool's id and a
+  // command row's value is no tool's id, so this is null for a command.
+  const selectedTool = (selectedValue && toolCatalog.get(selectedValue)?.tool) || null;
+
+  // The app's one global keydown listener. It handles the shortcut that opens
+  // the palette, the shortcuts of the app commands and, while the palette is
+  // open, the keys that act on the highlighted row.
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (matchesShortcut(event, PALETTE_SHORTCUTS.toggle, platform)) {
+      event.preventDefault();
+      toggle();
+      return;
+    }
+
+    const command = findCommandByShortcut(event, {
+      platform,
+      paletteOpen: open,
+      typing: isTypingTarget(document.activeElement),
+    });
+    if (command) {
+      event.preventDefault();
+      const message = commands.run(command);
+      // An app-wide shortcut repeats while its keys are held, flipping the
+      // setting each time. The id makes each toast replace the one before it.
+      toast.success(message, command.shortcut?.scope === 'app' ? { id: command.id } : undefined);
+      return;
+    }
+
+    if (!open) return;
+
+    // Escape to close
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+      return;
+    }
+
+    // Only a tool can be a favorite or open in a tab, so these leave the key
+    // alone while a command is highlighted
+    if (!selectedTool) return;
+
+    if (matchesShortcut(event, PALETTE_SHORTCUTS.toggleFavorite, platform)) {
+      event.preventDefault();
+      handleToggleFavorite(selectedTool.id);
+      return;
+    }
+
+    // Known gap: cmdk handles Enter first, whatever modifier is held. It opens
+    // the tool in this tab, which closes the palette before this is reached.
+    if (matchesShortcut(event, PALETTE_SHORTCUTS.openInNewTab, platform)) {
+      event.preventDefault();
+      openTool(selectedTool.id, true);
+    }
+  };
+
+  // The listener is added once and always calls the handler of the latest
+  // render, so it sees the current selection without being added again.
+  const handleKeyDownRef = useRef(handleKeyDown);
+  useEffect(() => {
+    handleKeyDownRef.current = handleKeyDown;
+  });
+
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => handleKeyDownRef.current(event);
+
+    window.addEventListener('keydown', listener);
+    return () => window.removeEventListener('keydown', listener);
+  }, []);
 
   return (
     <Dialog
@@ -328,7 +424,7 @@ export function CommandPalette() {
 
         if (!nextOpen) {
           setSearch('');
-          setSelectedTool(null);
+          setSelectedValue(null);
         }
       }}
     >
@@ -365,188 +461,19 @@ export function CommandPalette() {
               scrollPaddingBlockEnd: '0.5rem',
             }}
           >
-              {search && searchedTools.length === 0 && searchedSettingsCommands.length === 0 && (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No tools or commands found matching &quot;{search}&quot;
-                </div>
-              )}
+            {search && sections.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No tools or commands found matching &quot;{search}&quot;
+              </div>
+            )}
 
-              {/* Search Results (Custom Ordered) */}
-              {search && searchedTools.length > 0 && (
-                <Command.Group heading={searchHeading}>
-                  {searchedTools.map((tool) => {
-                    const mainTag = TAGS[tool.tags[0]];
-                    const Icon = mainTag.icon;
-                    return (
-                      <Command.Item
-                        key={tool.id}
-                        value={tool.id}
-                        onSelect={() => handleNavigate(tool.id)}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                      >
-                        <Icon className={cn("mr-2 h-4 w-4 shrink-0", mainTag.color)} />
-                        <span className="flex-1">{tool.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => (
-                            <TagIconBadge key={tagId} tagId={tagId} />
-                          ))}
-                        </div>
-                      </Command.Item>
-                    );
-                  })}
-                </Command.Group>
-              )}
-
-              {/* Search Results - Settings Commands */}
-              {search && searchedSettingsCommands.length > 0 && (
-                <Command.Group
-                  heading={
-                    <span className="flex items-center gap-1.5">
-                      <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span>Settings & Commands</span>
-                    </span>
-                  }
-                >
-                  {searchedSettingsCommands.map((cmd) => {
-                    const Icon = cmd.icon;
-                    return (
-                      <Command.Item
-                        key={cmd.id}
-                        value={cmd.id}
-                        onSelect={cmd.action}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                      >
-                        <Icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="flex-1">{cmd.name}</span>
-                        {cmd.status && (
-                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
-                            {cmd.status}
-                          </span>
-                        )}
-                      </Command.Item>
-                    );
-                  })}
-                </Command.Group>
-              )}
-
-              {/* Recent Tools Group */}
-              {recentToolsData.length > 0 && !search && (
-                <Command.Group heading={recentHeading}>
-                  {recentToolsData.map((tool) => {
-                    return (
-                      <Command.Item
-                        key={tool.id}
-                        value={tool.id}
-                        onSelect={(value: string) => handleNavigate(value)}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                      >
-                        <Clock className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="flex-1">{tool.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => (
-                            <TagIconBadge key={tagId} tagId={tagId} />
-                          ))}
-                        </div>
-                      </Command.Item>
-                    );
-                  })}
-                </Command.Group>
-              )}
-
-              {/* Favorites Group */}
-              {favoriteToolsData.length > 0 && !search && (
-                <Command.Group heading={favoritesHeading}>
-                  {favoriteToolsData.map((tool) => {
-                    return (
-                      <Command.Item
-                        key={tool.id}
-                        value={tool.id}
-                        onSelect={(value: string) => handleNavigate(value)}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                      >
-                        <Star className="mr-2 h-4 w-4 fill-yellow-500 text-yellow-500 shrink-0" />
-                        <span className="flex-1">{tool.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {tool.tags.map((tagId) => (
-                            <TagIconBadge key={tagId} tagId={tagId} />
-                          ))}
-                        </div>
-                        <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
-                      </Command.Item>
-                    );
-                  })}
-                </Command.Group>
-              )}
-
-              {/* All Tools Grouped by Tag */}
-              {!search && groupedTools.map(
-                ({ tag: tagId, tools: tagTools }) => {
-                  const tag = TAGS[tagId];
-                  const TagIcon = tag.icon;
-                  const heading = (
-                    <span className="flex items-center gap-1.5">
-                      <TagIcon className={cn("h-3.5 w-3.5 shrink-0", tag.color)} />
-                      <span>{tag.name}</span>
-                    </span>
-                  );
-
-                  return (
-                    <Command.Group key={tagId} heading={heading}>
-                      {tagTools.map((tool) => {
-                        const Icon = tag.icon;
-                        return (
-                          <Command.Item
-                            key={`${tagId}-${tool.id}`}
-                            value={tool.id}
-                            onSelect={() => handleNavigate(tool.id)}
-                            className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                          >
-                            <Icon className={cn("mr-2 h-4 w-4 shrink-0", tag.color)} />
-                            <span className="flex-1">{tool.name}</span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {tool.tags.map((tId) => (
-                                <TagIconBadge key={tId} tagId={tId} />
-                              ))}
-                            </div>
-                          </Command.Item>
-                        );
-                      })}
-                    </Command.Group>
-                  );
-                }
-              )}
-
-              {/* Settings Group */}
-              {!search && (
-                <Command.Group
-                  heading={
-                    <span className="flex items-center gap-1.5">
-                      <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span>Settings & Commands</span>
-                    </span>
-                  }
-                >
-                  {settingsCommands.map((cmd) => {
-                    const Icon = cmd.icon;
-                    return (
-                      <Command.Item
-                        key={cmd.id}
-                        value={cmd.id}
-                        onSelect={cmd.action}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
-                      >
-                        <Icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="flex-1">{cmd.name}</span>
-                        {cmd.status && (
-                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
-                            {cmd.status}
-                          </span>
-                        )}
-                      </Command.Item>
-                    );
-                  })}
-                </Command.Group>
-              )}
+            {sections.map((section) => (
+              <Command.Group key={section.key} heading={section.heading}>
+                {section.rows.map((row) => (
+                  <PaletteItem key={row.key} row={row} />
+                ))}
+              </Command.Group>
+            ))}
           </Command.List>
 
           {/* Footer with shortcuts */}
@@ -567,7 +494,7 @@ export function CommandPalette() {
                 </span>
                 <span className="hidden sm:inline">
                   <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    {modKey}+↵
+                    {shortcutLabel(PALETTE_SHORTCUTS.openInNewTab, platform)}
                   </kbd>{' '}
                   new tab
                 </span>
@@ -577,15 +504,12 @@ export function CommandPalette() {
                   <TooltipSimple content="Clear recent tools">
                     <button
                       type="button"
-                      onClick={() => {
-                        clearRecentTools();
-                        toast.success('Recent tools cleared');
-                      }}
+                      onClick={() => toast.success(commands.run(APP_COMMANDS.clearRecentTools))}
                       className="hover:text-foreground transition-colors"
                       aria-label="Clear recent tools"
                     >
                       <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                        {modKey}+⇧+Del
+                        {shortcutLabel(APP_COMMANDS.clearRecentTools.shortcut, platform)}
                       </kbd>{' '}
                       clear
                     </button>
@@ -594,13 +518,13 @@ export function CommandPalette() {
                 <TooltipSimple content="Toggle favorite for focused tool">
                   <button
                     type="button"
-                    onClick={() => selectedTool && !selectedTool.startsWith('cmd-') && handleToggleFavorite(selectedTool)}
+                    onClick={() => selectedTool && handleToggleFavorite(selectedTool.id)}
                     className="hover:text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     aria-label="Toggle favorite for focused tool"
-                    disabled={!selectedTool || selectedTool.startsWith('cmd-')}
+                    disabled={!selectedTool}
                   >
                     <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                      {modKey}+⇧+F
+                      {shortcutLabel(PALETTE_SHORTCUTS.toggleFavorite, platform)}
                     </kbd>{' '}
                     favorite
                   </button>
