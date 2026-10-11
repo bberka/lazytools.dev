@@ -1256,4 +1256,19 @@ export const TOOL_REGISTRY = {
         (module) => module.HttpStatusCodes
       ),
   },
+  'user-agent-parser': {
+    name: 'User-Agent Parser',
+    description: 'Parse a User-Agent into browser, engine, OS, device and CPU',
+    tags: ['networking', 'utilities'],
+    icon: 'MonitorSmartphone',
+    keywords: [
+      'user agent', 'user-agent', 'ua string', 'browser detection', 'parser',
+      'device detection', 'bot detection', 'navigator', 'useragent',
+      'operating system',
+    ],
+    component: () =>
+      import('@/components/tools/UserAgentParser').then(
+        (module) => module.UserAgentParser
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
