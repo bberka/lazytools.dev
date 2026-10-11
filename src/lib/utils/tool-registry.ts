@@ -1141,4 +1141,18 @@ export const TOOL_REGISTRY = {
         (module) => module.JwtSigner
       ),
   },
+  'totp-generator': {
+    name: 'TOTP Code Generator',
+    description: 'Generate live TOTP 2FA codes from a Base32 secret.',
+    tags: ['security', 'generators'],
+    icon: 'Timer',
+    keywords: [
+      'totp', '2fa', 'otp', 'mfa', 'authenticator', 'one-time password', 'hotp',
+      'rfc 6238', 'otpauth', 'base32', 'google authenticator', 'qr code',
+    ],
+    component: () =>
+      import('@/components/tools/TotpGenerator').then(
+        (module) => module.TotpGenerator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
