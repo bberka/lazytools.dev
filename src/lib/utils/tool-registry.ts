@@ -1271,4 +1271,18 @@ export const TOOL_REGISTRY = {
         (module) => module.UserAgentParser
       ),
   },
+  'loan-calculator': {
+    name: 'Loan & Mortgage Calculator',
+    description: 'Calculate loan and mortgage payments with a payoff schedule',
+    tags: ['calculators'],
+    icon: 'Landmark',
+    keywords: [
+      'loan', 'mortgage', 'amortization', 'amortisation', 'payment', 'interest',
+      'repayment', 'payoff', 'schedule', 'emi', 'extra payment',
+    ],
+    component: () =>
+      import('@/components/tools/LoanCalculator').then(
+        (module) => module.LoanCalculator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
