@@ -356,6 +356,7 @@ export function MarkdownToDocx() {
                           <SelectItem value="1">1.0 (Single)</SelectItem>
                           <SelectItem value="1.15">1.15 (Compact)</SelectItem>
                           <SelectItem value="1.25">1.25 (Readable)</SelectItem>
+                          <SelectItem value="1.35">1.35 (Relaxed)</SelectItem>
                           <SelectItem value="1.5">1.5 (Spacious)</SelectItem>
                           <SelectItem value="2">2.0 (Double)</SelectItem>
                         </SelectContent>

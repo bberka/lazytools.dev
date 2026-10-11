@@ -189,7 +189,9 @@ export function MarkdownConverter() {
         useCORS: true,
         logging: false,
         backgroundColor,
-        windowWidth: target.scrollWidth,
+        // The sheet sits inside padded cards, so it is laid out as wide as on
+        // screen only when the capture window is as wide as the page's.
+        windowWidth: Math.max(document.documentElement.clientWidth, target.scrollWidth),
         windowHeight: target.scrollHeight,
       });
 
