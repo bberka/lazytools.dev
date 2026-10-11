@@ -69,9 +69,12 @@ export function TextDiff() {
       return 'Enter text in both fields to see the diff';
     }
     if (!hasChanges(segments)) {
-      return leftText === rightText
-        ? 'No differences found'
-        : 'No differences found (the word diff ignores whitespace)';
+      if (leftText === rightText) {
+        return 'No differences found';
+      }
+      return diffMode === 'words'
+        ? 'No differences found (the word diff ignores whitespace)'
+        : 'No differences found (a missing final line break is ignored)';
     }
     return viewMode === 'side-by-side' ? 'Side-by-side comparison' : 'Inline comparison';
   };

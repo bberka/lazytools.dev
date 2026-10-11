@@ -58,6 +58,67 @@ test.describe('diffText', () => {
   });
 });
 
+// Defect: the last line of a text rarely ends in a line break, so adding a line
+// after it showed that line as removed and added again.
+test.describe('diffText by line at the end of a text', () => {
+  test('keeps the last line unchanged when a line is added after it', () => {
+    expect(diffText('alpha\nbeta', 'alpha\nbeta\ngamma', 'lines')).toEqual([
+      { text: 'alpha\nbeta\n', change: 'unchanged' },
+      { text: 'gamma', change: 'added' },
+    ]);
+  });
+
+  test('keeps the last line unchanged when a line is removed after it', () => {
+    expect(diffText('alpha\nbeta\ngamma', 'alpha\nbeta', 'lines')).toEqual([
+      { text: 'alpha\nbeta\n', change: 'unchanged' },
+      { text: 'gamma', change: 'removed' },
+    ]);
+  });
+
+  test('ignores a line break that only one text ends with', () => {
+    expect(hasChanges(diffText('a\nb', 'a\nb\n', 'lines'))).toBe(false);
+    expect(hasChanges(diffText('a\nb\n', 'a\nb', 'lines'))).toBe(false);
+    expect(hasChanges(diffText('a\nb', 'a\nc\n', 'lines'))).toBe(true);
+  });
+});
+
+// Defect: a removed or added line without a line break ran into the segment
+// after it in the inline view: "worldthere".
+test.describe('diffText line breaks between segments', () => {
+  test('ends every segment but the last with a line break', () => {
+    expect(diffText('hello\nworld', 'hello\nthere', 'lines')).toEqual([
+      { text: 'hello\n', change: 'unchanged' },
+      { text: 'world\n', change: 'removed' },
+      { text: 'there', change: 'added' },
+    ]);
+    expect(diffText('x', 'y\nz', 'lines')).toEqual([
+      { text: 'x\n', change: 'removed' },
+      { text: 'y\nz', change: 'added' },
+    ]);
+  });
+
+  test('does not change the rows of the side-by-side view', () => {
+    expect(sketch(lineRows('hello\nworld', 'hello\nthere'))).toEqual([
+      ' hello |  hello',
+      '-world | (none)',
+      '(none) | +there',
+    ]);
+    expect(sketch(lineRows('alpha\nbeta\ngamma', 'alpha\nbeta'))).toEqual([
+      ' alpha |  alpha',
+      ' beta |  beta',
+      '-gamma | (none)',
+    ]);
+  });
+
+  test('leaves a word diff alone', () => {
+    expect(diffText('one two', 'one 2', 'words').map((segment) => segment.text)).toEqual([
+      'one ',
+      'two',
+      '2',
+    ]);
+  });
+});
+
 test.describe('hasChanges', () => {
   test('is false for identical texts and true otherwise', () => {
     expect(hasChanges(diffText('same\ntext', 'same\ntext', 'lines'))).toBe(false);

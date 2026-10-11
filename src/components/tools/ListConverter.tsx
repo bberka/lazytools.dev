@@ -255,6 +255,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyCsv.copyToClipboard(outputs.csv)}
                     variant={copyCsv.isCopied ? 'default' : 'outline'}
+                    aria-label={copyCsv.isCopied ? 'Copied Comma-Separated (CSV)' : 'Copy Comma-Separated (CSV)'}
                     size="sm"
                     className="h-8"
                   >
@@ -274,6 +275,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copySingleQuoted.copyToClipboard(outputs.singleQuoted)}
                     variant={copySingleQuoted.isCopied ? 'default' : 'outline'}
+                    aria-label={copySingleQuoted.isCopied ? 'Copied Single-Quoted List' : 'Copy Single-Quoted List'}
                     size="sm"
                     className="h-8"
                   >
@@ -293,6 +295,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyDoubleQuoted.copyToClipboard(outputs.doubleQuoted)}
                     variant={copyDoubleQuoted.isCopied ? 'default' : 'outline'}
+                    aria-label={copyDoubleQuoted.isCopied ? 'Copied Double-Quoted List' : 'Copy Double-Quoted List'}
                     size="sm"
                     className="h-8"
                   >
@@ -312,6 +315,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyJson.copyToClipboard(outputs.json)}
                     variant={copyJson.isCopied ? 'default' : 'outline'}
+                    aria-label={copyJson.isCopied ? 'Copied JSON Array' : 'Copy JSON Array'}
                     size="sm"
                     className="h-8"
                   >
@@ -331,6 +335,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copySql.copyToClipboard(outputs.sql)}
                     variant={copySql.isCopied ? 'default' : 'outline'}
+                    aria-label={copySql.isCopied ? 'Copied SQL IN Clause' : 'Copy SQL IN Clause'}
                     size="sm"
                     className="h-8"
                   >
@@ -360,6 +365,7 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyCustom.copyToClipboard(outputs.custom)}
                     variant={copyCustom.isCopied ? 'default' : 'outline'}
+                    aria-label={copyCustom.isCopied ? 'Copied Custom Delimited' : 'Copy Custom Delimited'}
                     size="sm"
                     className="h-8 shrink-0 self-end sm:self-auto"
                   >

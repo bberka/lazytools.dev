@@ -113,6 +113,11 @@ function quote(item: string, quoteCharacter: "'" | '"'): string {
   return `${quoteCharacter}${escaped}${quoteCharacter}`;
 }
 
+/** A CSV field as RFC 4180 writes it: quoted when it holds a comma, a quote or a line break. */
+function csvField(item: string): string {
+  return /[",\r\n]/.test(item) ? `"${item.replace(/"/g, '""')}"` : item;
+}
+
 function sqlLiteral(item: string): string {
   return `'${item.replace(/'/g, "''")}'`;
 }
@@ -126,7 +131,7 @@ export function convertList(input: string, options: ListOptions): ListConversion
   return {
     items,
     outputs: {
-      csv: items.join(', '),
+      csv: items.map(csvField).join(', '),
       singleQuoted: items.map((item) => quote(item, "'")).join(', '),
       doubleQuoted: items.map((item) => quote(item, '"')).join(', '),
       json: JSON.stringify(items, null, 2),

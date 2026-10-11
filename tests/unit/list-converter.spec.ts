@@ -139,6 +139,22 @@ test.describe('outputs', () => {
     expect(new Function(`return [${outputs.singleQuoted}]`)()).toEqual(['one\ntwo', 'three']);
   });
 
+  // Defect: items were joined as they were, so "Doe, Jane" read back as two fields.
+  test('quotes a CSV item that holds a comma, a quote or a line break', () => {
+    expect(convert('Doe, Jane\nSmith, John').outputs.csv).toBe('"Doe, Jane", "Smith, John"');
+    expect(convert('say "hi"\nplain').outputs.csv).toBe('"say ""hi""", plain');
+    expect(convert('one\ntwo,three', { inputDelimiter: 'comma' }).outputs.csv).toBe(
+      '"one\ntwo", three'
+    );
+  });
+
+  test('leaves the other outputs as they were for an item with a comma', () => {
+    const { outputs } = convert('Doe, Jane\nplain');
+
+    expect(outputs.doubleQuoted).toBe('"Doe, Jane", "plain"');
+    expect(outputs.custom).toBe('Doe, Jane|plain');
+  });
+
   test('round-trips awkward items through the quoted outputs', () => {
     const awkward = ["it's \\'quoted\\'", 'tab\there', '"double" \\ \'single\'', 'ünïcödé 😀'];
     const { outputs } = convert(awkward.join('\n'));

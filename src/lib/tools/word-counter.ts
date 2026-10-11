@@ -30,11 +30,29 @@ export interface CountOptions {
   includeNumbers: boolean;
 }
 
-// A word starts with a letter (or digit) and carries the marks that follow:
-// without \p{M} a decomposed accent or an Indic vowel sign would end the word.
-// Apostrophes and hyphens join the parts of "don't" and "well-known".
-const WORDS_WITH_NUMBERS = /[\p{L}\p{N}][\p{L}\p{N}\p{M}]*(?:['’-][\p{L}\p{N}][\p{L}\p{N}\p{M}]*)*/gu;
-const WORDS_LETTERS_ONLY = /\p{L}[\p{L}\p{M}]*(?:['’-]\p{L}[\p{L}\p{M}]*)*/gu;
+// A web address and an e-mail address are one word however much punctuation
+// they hold, so are a number with decimal or thousands separators ("3.14",
+// "1,299.99"). The address ends before the full stop or bracket that closes the
+// sentence around it.
+const WEB_ADDRESS = String.raw`(?:https?:\/\/|www\.)[^\s<>"]*[^\s<>"'.,;:!?)\]}]`;
+// The local part is capped at the 64 characters an address may have, so a long
+// run of dotted letters is not searched again from every dot.
+const EMAIL_ADDRESS = String.raw`[\p{L}\p{N}][\p{L}\p{N}._%+-]{0,63}@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+`;
+const SEPARATED_NUMBER = String.raw`\p{N}+(?:[.,]\p{N}+)+`;
+
+// Any other word starts with a letter (or digit) and carries the marks that
+// follow: without \p{M} a decomposed accent or an Indic vowel sign would end
+// the word. Apostrophes and hyphens join the parts of "don't" and "well-known".
+const WORDS_WITH_NUMBERS = new RegExp(
+  `${WEB_ADDRESS}|${EMAIL_ADDRESS}|${SEPARATED_NUMBER}|` +
+    String.raw`[\p{L}\p{N}][\p{L}\p{N}\p{M}]*(?:['’-][\p{L}\p{N}][\p{L}\p{N}\p{M}]*)*`,
+  'gu'
+);
+const WORDS_LETTERS_ONLY = new RegExp(
+  `${WEB_ADDRESS}|${EMAIL_ADDRESS}|` +
+    String.raw`\p{L}[\p{L}\p{M}]*(?:['’-]\p{L}[\p{L}\p{M}]*)*`,
+  'gu'
+);
 
 // Below U+0300 every UTF-16 unit is one visible character, so plain Latin
 // text never needs the segmenter.

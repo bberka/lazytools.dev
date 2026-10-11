@@ -28,20 +28,36 @@ export interface DiffRow {
 
 /**
  * The differences in reading order. By line every segment is a run of whole
- * lines. By word, whitespace-only differences are ignored and shared text is
- * given with the modified text's spacing.
+ * lines, each ending in its line break; a break missing at the very end of
+ * either text is not a difference. By word, whitespace-only differences are
+ * ignored and shared text is given with the modified text's spacing.
  */
 export function diffText(original: string, modified: string, mode: DiffMode): DiffSegment[] {
   if (!original && !modified) {
     return [];
   }
 
-  const changes = mode === 'lines' ? diffLines(original, modified) : diffWords(original, modified);
+  const changes =
+    mode === 'lines'
+      ? diffLines(original, modified, { ignoreNewlineAtEof: true })
+      : diffWords(original, modified);
 
-  return changes.map((change) => ({
+  const segments = changes.map<DiffSegment>((change) => ({
     text: change.value,
     change: change.added ? 'added' : change.removed ? 'removed' : 'unchanged',
   }));
+
+  if (mode === 'words') {
+    return segments;
+  }
+
+  // Only the last line of a text can lack its break. Where another segment
+  // follows, give the line one, or the inline view runs the two together.
+  return segments.map((segment, index) =>
+    index < segments.length - 1 && !segment.text.endsWith('\n')
+      ? { ...segment, text: `${segment.text}\n` }
+      : segment
+  );
 }
 
 /** True when the comparison found something added or removed. */

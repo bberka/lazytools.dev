@@ -87,6 +87,36 @@ test.describe('analyzeText', () => {
     expect(count('résumé', false).words).toBe(1);
   });
 
+  // Defect: the punctuation inside a number, an e-mail address or a web
+  // address ended the word, so "3.14" counted as 2 words and a URL as 4.
+  test('counts a number with separators as one word', () => {
+    expect(count('Pi is 3.14 and costs $1,299.99').words).toBe(6);
+    expect(count('Version 1.2.3 is out').words).toBe(4);
+    expect(count('Version 1.2.3 is out', false).words).toBe(3);
+    // A separator with no digit after it ends the number.
+    expect(count('10, 20 and 30.').words).toBe(4);
+  });
+
+  test('counts an e-mail address and a web address as one word each', () => {
+    expect(count('Mail ada@example.com or visit https://example.com/docs today').words).toBe(6);
+    expect(count('Mail ada@example.com or visit https://example.com/docs today', false).words).toBe(6);
+    expect(count('See www.example.com/a?b=1&c=2.').words).toBe(2);
+    expect(count('See www.example.com/a?b=1&c=2.').longestWord).toBe('www.example.com/a?b=1&c=2');
+    expect(count('Write to first.last+tag@mail.example.co.uk, please').longestWord).toBe(
+      'first.last+tag@mail.example.co.uk'
+    );
+    // The full stop that ends the sentence is not part of the address.
+    expect(count('Mail ada@example.com.').words).toBe(2);
+    expect(count('(see https://example.com/docs).').longestWord).toBe('https://example.com/docs');
+  });
+
+  test('counts a long run of dotted letters without slowing down', () => {
+    const started = Date.now();
+
+    expect(count('a.'.repeat(100000)).words).toBe(100000);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
   test('measures word length in visible characters', () => {
     const stats = count('résumé cv');
 

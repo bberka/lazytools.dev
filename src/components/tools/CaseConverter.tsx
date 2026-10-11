@@ -11,7 +11,7 @@ import { CASE_CONVERSIONS } from '@/lib/tools/case-converter';
 export function CaseConverter() {
   const [input, setInput] = useState('');
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const { copyToClipboard, isCopied, isError } = useCopyToClipboard();
 
   const handleCopy = (value: string, label: string) => {
     setCopiedLabel(label);
@@ -54,6 +54,7 @@ export function CaseConverter() {
           {CASE_CONVERSIONS.map((conversion) => {
             const converted = conversion.convert(input);
             const showCopied = isCopied && copiedLabel === conversion.label;
+            const showFailed = isError && copiedLabel === conversion.label;
             return (
               <Card key={conversion.label}>
                 <CardHeader>
@@ -71,11 +72,23 @@ export function CaseConverter() {
                     disabled={!converted}
                     size="sm"
                     variant={showCopied ? "default" : "outline"}
+                    aria-label={
+                      showCopied
+                        ? `Copied! ${conversion.label}`
+                        : showFailed
+                          ? `Copy failed: ${conversion.label}`
+                          : `Copy ${conversion.label}`
+                    }
                   >
                     {showCopied ? (
                       <>
                         <Check className="h-4 w-4 mr-2" />
                         Copied!
+                      </>
+                    ) : showFailed ? (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy failed
                       </>
                     ) : (
                       <>
