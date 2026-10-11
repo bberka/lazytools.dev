@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,44 +16,62 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Image as ImageIcon, Download, Trash2, Loader2, Crop as CropIcon } from 'lucide-react';
-import ReactCrop, { type Crop as CropType, centerCrop, makeAspectCrop, type PixelCrop } from 'react-image-crop';
+import ReactCrop, {
+  type Crop as CropType,
+  centerCrop,
+  convertToPixelCrop,
+  makeAspectCrop,
+  type PixelCrop,
+} from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { FileDropzone } from '@/components/FileDropzone';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { useObjectUrl } from '@/hooks/useObjectUrl';
-import { downloadBlob, downloadDataUrl, formatBytes, readFileAsDataUrl } from '@/lib/files';
+import {
+  downloadBlob,
+  downloadDataUrl,
+  formatBytes,
+  loadImage,
+  outputFileName,
+  readFileAsDataUrl,
+} from '@/lib/files';
+import {
+  canvasImageType,
+  canvasToBlob,
+  imageTypeExtension,
+  type CanvasImageType,
+} from '@/lib/tools/image-canvas';
+import {
+  canvasFilter,
+  cropToImagePixels,
+  encodeIco,
+  planOutput,
+  type OutputFormat,
+  type Rect,
+} from '@/lib/tools/image-converter';
 
-type OutputFormat = 'png' | 'jpeg' | 'webp' | 'ico';
+// Results above this size are handed to the compressor to be brought back under it.
+const MAX_OUTPUT_MB = 10;
 
-const createIcoBlob = async (pngBlob: Blob, width: number, height: number) => {
-  const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
-  const headerSize = 6;
-  const directorySize = 16;
-  const imageOffset = headerSize + directorySize;
-  const icoBytes = new Uint8Array(imageOffset + pngBytes.length);
-  const view = new DataView(icoBytes.buffer);
-
-  view.setUint16(0, 0, true);
-  view.setUint16(2, 1, true);
-  view.setUint16(4, 1, true);
-
-  icoBytes[6] = width >= 256 ? 0 : width;
-  icoBytes[7] = height >= 256 ? 0 : height;
-  icoBytes[8] = 0;
-  icoBytes[9] = 0;
-  view.setUint16(10, 1, true);
-  view.setUint16(12, 32, true);
-  view.setUint32(14, pngBytes.length, true);
-  view.setUint32(18, imageOffset, true);
-  icoBytes.set(pngBytes, imageOffset);
-
-  return new Blob([icoBytes], { type: 'image/x-icon' });
+const parseSide = (value: string): number | '' => {
+  const side = Number(value);
+  return value.trim() !== '' && Number.isFinite(side) ? Math.trunc(side) : '';
 };
 
+// The crop selection is measured on the displayed image; files are cut from its own pixels.
+const cropInImagePixels = (pixelCrop: PixelCrop, image: HTMLImageElement) =>
+  cropToImagePixels(
+    pixelCrop,
+    { width: image.width, height: image.height },
+    { width: image.naturalWidth, height: image.naturalHeight }
+  );
+
 export function ImageConverter() {
+  const id = useId();
   const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
-  const processedImage = useObjectUrl(processedBlob);
+  // The format is kept with the result: the format select may change before the download.
+  const [processed, setProcessed] = useState<{ blob: Blob; format: OutputFormat } | null>(null);
+  const processedImage = useObjectUrl(processed?.blob ?? null);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('png');
   const [quality, setQuality] = useState(90);
@@ -70,212 +88,233 @@ export function ImageConverter() {
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [filtersSkipped, setFiltersSkipped] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropImgRef = useRef<HTMLImageElement>(null);
+  // Each file load and each conversion gets a number; a result that is no longer the latest is dropped.
+  const loadRef = useRef(0);
+  const runRef = useRef(0);
 
+  // In percent, so the selection follows the image when the layout changes size.
   const [crop, setCrop] = useState<CropType>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  // Size of the completed crop in the image's own pixels, for the label under the crop area.
-  const [cropSize, setCropSize] = useState<{ width: number; height: number } | null>(null);
+  // The completed selection in the image's own pixels: what the label shows and the download cuts.
+  const [cropRect, setCropRect] = useState<Rect | null>(null);
   const [cropAspect, setCropAspect] = useState<number | undefined>(undefined);
 
-  const cropSizeInImagePixels = (pixelCrop: PixelCrop, image: HTMLImageElement) => ({
-    width: Math.round(pixelCrop.width * (image.naturalWidth / image.width)),
-    height: Math.round(pixelCrop.height * (image.naturalHeight / image.height)),
-  });
-
-  const onCropImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const image = e.currentTarget;
-    if (cropAspect) {
-      const { width, height } = image;
-      setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, cropAspect, width, height), width, height));
-    }
-    // A crop kept from the previous image now maps onto this image's pixels.
-    setCropSize(completedCrop ? cropSizeInImagePixels(completedCrop, image) : null);
-  }, [cropAspect, completedCrop]);
-
-  const handleCropComplete = (pixelCrop: PixelCrop) => {
-    setCompletedCrop(pixelCrop);
-    const image = cropImgRef.current;
-    setCropSize(image ? cropSizeInImagePixels(pixelCrop, image) : null);
+  const applyAspectCrop = (image: HTMLImageElement, aspect: number) => {
+    const { width: shownWidth, height: shownHeight } = image;
+    const next = centerCrop(
+      makeAspectCrop({ unit: '%', width: 90 }, aspect, shownWidth, shownHeight),
+      shownWidth,
+      shownHeight
+    );
+    setCrop(next);
+    setCropRect(cropInImagePixels(convertToPixelCrop(next, shownWidth, shownHeight), image));
   };
 
-  const handleDownloadCropped = useCallback(() => {
+  // The crop library does not reshape an existing selection when the aspect changes, so it is done here.
+  const selectAspect = (aspect: number | undefined) => {
+    setCropAspect(aspect);
     const image = cropImgRef.current;
-    if (!image || !completedCrop) return;
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    if (aspect && image && image.width > 0 && image.height > 0) {
+      applyAspectCrop(image, aspect);
+    } else if (!aspect) {
+      setCrop(undefined);
+      setCropRect(null);
+    }
+  };
+
+  const onCropImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (cropAspect) applyAspectCrop(e.currentTarget, cropAspect);
+  };
+
+  const handleCropComplete = (pixelCrop: PixelCrop) => {
+    const image = cropImgRef.current;
+    setCropRect(image ? cropInImagePixels(pixelCrop, image) : null);
+  };
+
+  const handleDownloadCropped = () => {
+    const image = cropImgRef.current;
+    if (!image || !cropRect) return;
     const canvas = document.createElement('canvas');
-    const pixelRatio = window.devicePixelRatio;
-    canvas.width = completedCrop.width * scaleX * pixelRatio;
-    canvas.height = completedCrop.height * scaleY * pixelRatio;
+    canvas.width = cropRect.width;
+    canvas.height = cropRect.height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(
       image,
-      completedCrop.x * scaleX,
-      completedCrop.y * scaleY,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
+      cropRect.x,
+      cropRect.y,
+      cropRect.width,
+      cropRect.height,
       0, 0,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
+      cropRect.width,
+      cropRect.height,
     );
-    const mimeType = originalFile?.type || 'image/png';
-    const ext = mimeType.split('/')[1] || 'png';
-    downloadDataUrl(canvas.toDataURL(mimeType), `cropped-${originalFile?.name || `image.${ext}`}`);
-  }, [completedCrop, originalFile]);
 
-  const processImage = async (imageSrc: string, file: File) => {
+    // A canvas writes PNG, JPEG or WebP; any other source type comes out as PNG and is named so.
+    const dataUrl = canvas.toDataURL(canvasImageType(originalFile?.type ?? ''));
+    if (!dataUrl.startsWith('data:image/')) {
+      toast.error('The cropped area is too large to export in this browser');
+      return;
+    }
+    const writtenType = dataUrl.slice('data:'.length, dataUrl.indexOf(';'));
+    const fileName =
+      originalFile && originalFile.type === writtenType
+        ? `cropped-${originalFile.name}`
+        : outputFileName(originalFile?.name || 'image', {
+            prefix: 'cropped-',
+            extension: imageTypeExtension(writtenType),
+          });
+    downloadDataUrl(dataUrl, fileName);
+  };
+
+  const processImage = async (imageSrc: string) => {
+    runRef.current += 1;
+    const run = runRef.current;
     setProcessing(true);
+    setError('');
 
     try {
-      const img = new Image();
-      img.onload = async () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+      const img = await loadImage(imageSrc);
+      if (run !== runRef.current) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) throw new Error('Canvas is not available in this browser.');
 
-        // Calculate dimensions
-        let targetWidth = width || img.width;
-        let targetHeight = height || img.height;
+      // Calculate dimensions
+      const plan = planOutput(
+        { width: img.width, height: img.height },
+        { width, height, maintainAspectRatio, rotation, format: outputFormat }
+      );
+      if (!plan) throw new Error('This image has no pixel size, so it cannot be converted.');
 
-        if (maintainAspectRatio) {
-          if (width && !height) {
-            targetHeight = (img.height * (width as number)) / img.width;
-          } else if (height && !width) {
-            targetWidth = (img.width * (height as number)) / img.height;
-          }
+      // Adjust dimensions for rotation
+      canvas.width = plan.canvasWidth;
+      canvas.height = plan.canvasHeight;
+
+      const mimeType: CanvasImageType = outputFormat === 'ico' ? 'image/png' : `image/${outputFormat}`;
+
+      // JPEG has no transparency; without a backdrop the see-through areas come out black.
+      if (mimeType === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Apply filters
+      const filter = canvasFilter({ grayscale, sepia, blur, brightness, contrast, saturation });
+      const canFilter = typeof (ctx as { filter?: unknown }).filter === 'string';
+      if (filter !== 'none' && canFilter) ctx.filter = filter;
+
+      // Handle transformations
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
+      ctx.drawImage(img, -plan.drawWidth / 2, -plan.drawHeight / 2, plan.drawWidth, plan.drawHeight);
+      ctx.restore();
+
+      // Convert to desired format
+      const qualityValue = mimeType === 'image/png' ? 1 : quality / 100;
+      const blob = await canvasToBlob(canvas, mimeType, qualityValue);
+      if (run !== runRef.current) return;
+
+      // A browser that cannot write the requested type writes PNG instead.
+      const format: OutputFormat =
+        outputFormat === 'ico' ? 'ico' : blob.type === mimeType ? outputFormat : 'png';
+      let result = blob;
+
+      if (format === 'ico') {
+        const png = new Uint8Array(await blob.arrayBuffer());
+        result = new Blob([encodeIco(png, plan.canvasWidth, plan.canvasHeight)], {
+          type: 'image/x-icon',
+        });
+      } else if (format === 'png' || blob.size > MAX_OUTPUT_MB * 1024 * 1024) {
+        // JPEG and WebP already carry the chosen quality. PNG is shrunk by the
+        // compressor, and so is anything over the size limit.
+        try {
+          // Compress only after conversion begins so the image tool shell stays light.
+          const { default: imageCompression } = await import('browser-image-compression');
+          result = await imageCompression(new File([blob], 'image', { type: blob.type }), {
+            maxSizeMB: MAX_OUTPUT_MB,
+            maxWidthOrHeight: Math.max(plan.drawWidth, plan.drawHeight),
+            useWebWorker: true,
+            initialQuality: qualityValue,
+            // The library's worker loads the library a second time by URL and
+            // defaults to a CDN copy. This is the bundler's asset syntax for
+            // the copy that ships with the app, so nothing is fetched from
+            // anywhere else.
+            libURL: new URL(
+              'browser-image-compression/dist/browser-image-compression.js',
+              import.meta.url
+            ).toString(),
+          });
+        } catch {
+          result = blob;
         }
+      }
+      if (run !== runRef.current) return;
 
-        if (outputFormat === 'ico') {
-          const largestSide = Math.max(targetWidth as number, targetHeight as number);
-
-          if (largestSide > 256) {
-            const scale = 256 / largestSide;
-            targetWidth = Math.round((targetWidth as number) * scale);
-            targetHeight = Math.round((targetHeight as number) * scale);
-          }
-        }
-
-        // Adjust dimensions for rotation
-        const isRotated90 = (rotation / 90) % 2 !== 0;
-        canvas.width = isRotated90 ? targetHeight as number : targetWidth as number;
-        canvas.height = isRotated90 ? targetWidth as number : targetHeight as number;
-
-        // Apply filters
-        ctx.filter = `
-          grayscale(${grayscale ? 100 : 0}%)
-          sepia(${sepia ? 100 : 0}%)
-          blur(${blur}px)
-          brightness(${brightness}%)
-          contrast(${contrast}%)
-          saturate(${saturation}%)
-        `.trim();
-
-        // Handle transformations
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
-        ctx.drawImage(
-          img,
-          -(targetWidth as number) / 2,
-          -(targetHeight as number) / 2,
-          targetWidth as number,
-          targetHeight as number
-        );
-        ctx.restore();
-
-        // Convert to desired format
-        const mimeType = outputFormat === 'ico' ? 'image/png' : `image/${outputFormat}`;
-        const qualityValue = outputFormat === 'png' || outputFormat === 'ico' ? 1 : quality / 100;
-
-        canvas.toBlob(
-          async (blob) => {
-            if (!blob) return;
-
-            try {
-              if (outputFormat === 'ico') {
-                const icoBlob = await createIcoBlob(blob, canvas.width, canvas.height);
-                setProcessedBlob(icoBlob);
-                setProcessing(false);
-                return;
-              }
-
-              // Compress only after conversion begins so the image tool shell stays light.
-              const { default: imageCompression } = await import('browser-image-compression');
-              const options = {
-                maxSizeMB: 10,
-                maxWidthOrHeight: Math.max(targetWidth as number, targetHeight as number),
-                useWebWorker: true,
-                quality: qualityValue,
-              };
-
-              const compressedFile = await imageCompression(
-                new File([blob], file.name, { type: mimeType }),
-                options
-              );
-              setProcessedBlob(compressedFile);
-            } catch (error) {
-              if (outputFormat === 'ico') {
-                console.error('Error creating ICO:', error);
-                setProcessing(false);
-                return;
-              }
-
-              setProcessedBlob(blob);
-            }
-
-            setProcessing(false);
-          },
-          mimeType,
-          qualityValue
-        );
-      };
-
-      img.src = imageSrc;
-    } catch (error) {
-      console.error('Error processing image:', error);
-      setProcessing(false);
+      setProcessed({ blob: result, format });
+      setFiltersSkipped(filter !== 'none' && !canFilter);
+    } catch (cause) {
+      if (run !== runRef.current) return;
+      setProcessed(null);
+      setFiltersSkipped(false);
+      setError(cause instanceof Error ? cause.message : 'The image could not be converted.');
+    } finally {
+      if (run === runRef.current) setProcessing(false);
     }
   };
 
   const loadImageFile = async (file: File) => {
-    setOriginalFile(file);
+    loadRef.current += 1;
+    const load = loadRef.current;
 
     let result: string;
     try {
       result = await readFileAsDataUrl(file);
     } catch {
-      toast.error('Failed to read file');
+      if (load === loadRef.current) toast.error('Failed to read file');
       return;
     }
+    // A newer file was chosen while this one was being read.
+    if (load !== loadRef.current) return;
 
+    // What belonged to the previous image goes with it.
+    setProcessed(null);
+    setCrop(undefined);
+    setCropRect(null);
+    setOriginalFile(file);
     setOriginalImage(result);
-    processImage(result, file);
+    void processImage(result);
   };
 
   const intake = useFileIntake({ accept: 'image/*', onFiles: ([file]) => loadImageFile(file) });
 
   const handleConvert = () => {
-    if (originalImage && originalFile) {
-      processImage(originalImage, originalFile);
+    if (originalImage) {
+      void processImage(originalImage);
     }
   };
 
   const handleDownload = () => {
-    if (!processedBlob) return;
-    downloadBlob(processedBlob, `converted.${outputFormat}`);
+    if (!processed) return;
+    downloadBlob(processed.blob, `converted.${processed.format}`);
   };
 
   const handleClear = () => {
+    // Anything still being read or converted must not come back after the reset.
+    loadRef.current += 1;
+    runRef.current += 1;
+    setProcessing(false);
+    setError('');
+    setFiltersSkipped(false);
     setOriginalImage(null);
-    setProcessedBlob(null);
+    setProcessed(null);
     setOriginalFile(null);
     setWidth('');
     setHeight('');
@@ -289,7 +328,7 @@ export function ImageConverter() {
     setContrast(100);
     setSaturation(100);
     setCrop(undefined);
-    setCompletedCrop(undefined);
+    setCropRect(null);
     intake.reset();
   };
 
@@ -333,32 +372,32 @@ export function ImageConverter() {
               </CardTitle>
               <CardDescription>Select an area to crop from your image</CardDescription>
               <div className="flex gap-2 flex-wrap pt-2">
-                <Button variant={cropAspect === undefined ? 'default' : 'outline'} size="sm" onClick={() => { setCropAspect(undefined); setCrop(undefined); setCompletedCrop(undefined); }}>Free</Button>
-                <Button variant={cropAspect === 1 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(1)}>1:1</Button>
-                <Button variant={cropAspect === 16 / 9 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(16 / 9)}>16:9</Button>
-                <Button variant={cropAspect === 4 / 3 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(4 / 3)}>4:3</Button>
-                <Button variant={cropAspect === 9 / 16 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(9 / 16)}>9:16</Button>
-                <Button variant={cropAspect === 3 / 4 ? 'default' : 'outline'} size="sm" onClick={() => setCropAspect(3 / 4)}>3:4</Button>
+                <Button variant={cropAspect === undefined ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === undefined} onClick={() => selectAspect(undefined)}>Free</Button>
+                <Button variant={cropAspect === 1 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 1} onClick={() => selectAspect(1)}>1:1</Button>
+                <Button variant={cropAspect === 16 / 9 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 16 / 9} onClick={() => selectAspect(16 / 9)}>16:9</Button>
+                <Button variant={cropAspect === 4 / 3 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 4 / 3} onClick={() => selectAspect(4 / 3)}>4:3</Button>
+                <Button variant={cropAspect === 9 / 16 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 9 / 16} onClick={() => selectAspect(9 / 16)}>9:16</Button>
+                <Button variant={cropAspect === 3 / 4 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 3 / 4} onClick={() => selectAspect(3 / 4)}>3:4</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-center">
                 <ReactCrop
                   crop={crop}
-                  onChange={(c) => setCrop(c)}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
                   onComplete={handleCropComplete}
                   aspect={cropAspect}
                 >
                   <img ref={cropImgRef} alt="Crop" src={originalImage} onLoad={onCropImageLoad} style={{ maxHeight: '500px', minWidth: '200px', width: 'auto', maxWidth: '100%' }} />
                 </ReactCrop>
               </div>
-              {completedCrop && cropSize && (
+              {cropRect && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Crop: {cropSize.width}×{cropSize.height}px
+                  Crop: {cropRect.width}×{cropRect.height}px
                 </p>
               )}
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button onClick={handleDownloadCropped} disabled={!completedCrop} className="flex-1 min-h-11 sm:min-h-10">
+                <Button onClick={handleDownloadCropped} disabled={!cropRect} className="flex-1 min-h-11 sm:min-h-10">
                   <Download className="h-4 w-4 mr-2" />
                   Download Cropped Image
                 </Button>
@@ -374,12 +413,12 @@ export function ImageConverter() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Output Format</label>
+                  <label id={`${id}-format-label`} className="text-sm font-medium">Output Format</label>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id={`${id}-format`} aria-labelledby={`${id}-format-label ${id}-format`}>
                       <SelectValue placeholder="Select output format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -394,8 +433,8 @@ export function ImageConverter() {
                 </div>
 
                 {outputFormat !== 'png' && outputFormat !== 'ico' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Quality: {quality}%</label>
+                  <div className="space-y-2" role="group" aria-labelledby={`${id}-quality`}>
+                    <label id={`${id}-quality`} className="text-sm font-medium">Quality: {quality}%</label>
                     <Slider
                       min={1}
                       max={100}
@@ -410,20 +449,24 @@ export function ImageConverter() {
                 <label className="text-sm font-medium">Resize</label>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs text-muted-foreground">Width (px)</label>
+                    <label htmlFor={`${id}-width`} className="text-xs text-muted-foreground">Width (px)</label>
                     <Input
+                      id={`${id}-width`}
                       type="number"
+                      min={1}
                       value={width}
-                      onChange={(e) => setWidth((e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : '')}
+                      onChange={(e) => setWidth(parseSide(e.target.value))}
                       placeholder="Auto"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Height (px)</label>
+                    <label htmlFor={`${id}-height`} className="text-xs text-muted-foreground">Height (px)</label>
                     <Input
+                      id={`${id}-height`}
                       type="number"
+                      min={1}
                       value={height}
-                      onChange={(e) => setHeight((e.target as HTMLInputElement).value ? parseInt((e.target as HTMLInputElement).value) : '')}
+                      onChange={(e) => setHeight(parseSide(e.target.value))}
                       placeholder="Auto"
                     />
                   </div>
@@ -438,8 +481,8 @@ export function ImageConverter() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Transform</label>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-xs text-muted-foreground">Rotate: {rotation}°</label>
+                  <div className="space-y-2" role="group" aria-labelledby={`${id}-rotate`}>
+                    <label id={`${id}-rotate`} className="text-xs text-muted-foreground">Rotate: {rotation}°</label>
                     <Slider
                       min={0}
                       max={270}
@@ -479,8 +522,8 @@ export function ImageConverter() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Blur: {blur}px</label>
+              <div className="space-y-2" role="group" aria-labelledby={`${id}-blur`}>
+                <label id={`${id}-blur`} className="text-sm font-medium">Blur: {blur}px</label>
                 <Slider
                   min={0}
                   max={20}
@@ -489,8 +532,8 @@ export function ImageConverter() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Brightness: {brightness}%</label>
+              <div className="space-y-2" role="group" aria-labelledby={`${id}-brightness`}>
+                <label id={`${id}-brightness`} className="text-sm font-medium">Brightness: {brightness}%</label>
                 <Slider
                   min={0}
                   max={200}
@@ -499,8 +542,8 @@ export function ImageConverter() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Contrast: {contrast}%</label>
+              <div className="space-y-2" role="group" aria-labelledby={`${id}-contrast`}>
+                <label id={`${id}-contrast`} className="text-sm font-medium">Contrast: {contrast}%</label>
                 <Slider
                   min={0}
                   max={200}
@@ -509,8 +552,8 @@ export function ImageConverter() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Saturation: {saturation}%</label>
+              <div className="space-y-2" role="group" aria-labelledby={`${id}-saturation`}>
+                <label id={`${id}-saturation`} className="text-sm font-medium">Saturation: {saturation}%</label>
                 <Slider
                   min={0}
                   max={200}
@@ -560,7 +603,20 @@ export function ImageConverter() {
                 )}
               </div>
 
-              {processedImage && !processing && (
+              {error && !processing && (
+                <div
+                  role="alert"
+                  className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                >
+                  {error}
+                </div>
+              )}
+              {filtersSkipped && !processing && (
+                <p role="status" className="mt-4 text-sm text-muted-foreground">
+                  This browser cannot apply filters when exporting, so the converted image does not include them.
+                </p>
+              )}
+              {processed && !processing && (
                 <Button onClick={handleDownload} className="mt-4 min-h-11 w-full sm:min-h-10 sm:w-auto">
                   <Download className="h-4 w-4 mr-2" />
                   Download Converted Image

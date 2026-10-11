@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Check, Copy, Download, Eye, Image as ImageIcon, Loader2, Shield, Trash2, Upload, X, Archive, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,319 +26,56 @@ import {
   readFileAsArrayBuffer,
   type FormatBytesOptions,
 } from '@/lib/files';
+import { parseExifSections, uniqueFileNames, type ExifSection } from '@/lib/tools/exif-viewer-remover';
+import { canvasImageType, canvasToBlob, imageTypeExtension, type CanvasImageType } from '@/lib/tools/image-canvas';
 import JSZip from 'jszip';
 
 type OutputFormat = 'original' | 'jpeg' | 'png' | 'webp';
 
-type ExifField = {
-  label: string;
-  value: string;
-};
-
-type ExifSection = {
-  title: string;
-  fields: ExifField[];
-};
-
-const TAG_NAMES: Record<number, string> = {
-  0x010f: 'Camera Make',
-  0x0110: 'Camera Model',
-  0x0112: 'Orientation',
-  0x0131: 'Software',
-  0x0132: 'Modified',
-  0x013b: 'Artist',
-  0x8298: 'Copyright',
-  0x829a: 'Exposure Time',
-  0x829d: 'Aperture',
-  0x8827: 'ISO',
-  0x9003: 'Taken',
-  0x9004: 'Digitized',
-  0x9201: 'Shutter Speed',
-  0x9202: 'Aperture Value',
-  0x9204: 'Exposure Bias',
-  0x9207: 'Metering Mode',
-  0x9209: 'Flash',
-  0x920a: 'Focal Length',
-  0x927c: 'Maker Note',
-  0x9286: 'Comment',
-  0xa002: 'Width',
-  0xa003: 'Height',
-  0xa405: 'Focal Length (35mm)',
-  0xa406: 'Scene Capture Type',
-  0xa430: 'Owner',
-  0xa431: 'Serial Number',
-  0xa432: 'Lens Info',
-  0xa433: 'Lens Make',
-  0xa434: 'Lens Model',
-  0x0001: 'Latitude Ref',
-  0x0002: 'Latitude',
-  0x0003: 'Longitude Ref',
-  0x0004: 'Longitude',
-  0x0005: 'Altitude Ref',
-  0x0006: 'Altitude',
-  0x0012: 'Map Datum',
-  0x001d: 'Captured',
-};
-
-const TYPE_SIZES: Record<number, number> = {
-  1: 1,
-  2: 1,
-  3: 2,
-  4: 4,
-  5: 8,
-  7: 1,
-  9: 4,
-  10: 8,
-};
-
 // Sizes on this page read "512 B", "845.3 KB", "2.41 MB".
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B', decimals: { KB: 1 } };
 
-function formatNumber(value: number, maximumFractionDigits = 6): string {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits,
-  }).format(value);
-}
+const outputTypeFor = (file: File, format: OutputFormat): CanvasImageType =>
+  format === 'original' ? canvasImageType(file.type) : `image/${format}`;
 
-function clampText(value: string, maxLength = 140): string {
-  return value.length <= maxLength ? value : `${value.slice(0, maxLength)}...`;
-}
+/**
+ * Redraws the image on a canvas and encodes it again, which leaves every
+ * embedded metadata block behind. The Blob's type says what was written: a
+ * browser that cannot encode the requested type writes PNG instead.
+ */
+async function reencodeWithoutMetadata(file: File, format: OutputFormat): Promise<Blob> {
+  const image = await loadImage(file);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
 
-function getString(view: DataView, start: number, length: number): string {
-  const bytes: string[] = [];
-
-  for (let index = 0; index < length && start + index < view.byteLength; index += 1) {
-    const byte = view.getUint8(start + index);
-
-    if (byte === 0) {
-      break;
-    }
-
-    bytes.push(String.fromCharCode(byte));
+  if (!context) {
+    throw new Error('Canvas context is not available for cleanup.');
   }
 
-  return bytes.join('').trim();
-}
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
 
-function getTagValue(
-  view: DataView,
-  tiffStart: number,
-  type: number,
-  count: number,
-  valueOffset: number,
-  littleEndian: boolean
-): string {
-  const typeSize = TYPE_SIZES[type];
+  const type = outputTypeFor(file, format);
 
-  if (!typeSize) {
-    return 'Unsupported value type';
+  // JPEG has no transparency; without a backdrop the see-through areas come out black.
+  if (type === 'image/jpeg') {
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  const totalSize = typeSize * count;
-  const valueStart =
-    totalSize <= 4 ? valueOffset : tiffStart + view.getUint32(valueOffset, littleEndian);
+  context.drawImage(image, 0, 0);
 
-  if (valueStart < 0 || valueStart >= view.byteLength) {
-    return 'Out of bounds';
+  try {
+    return await canvasToBlob(canvas, type, type === 'image/png' ? 1 : 0.92);
+  } finally {
+    // Hand the pixel buffer back now; a batch would otherwise hold one per image until collected.
+    canvas.width = 0;
+    canvas.height = 0;
   }
-
-  const readUnsigned = (offset: number) => {
-    if (type === 1 || type === 7) return view.getUint8(offset);
-    if (type === 3) return view.getUint16(offset, littleEndian);
-    if (type === 4) return view.getUint32(offset, littleEndian);
-    return 0;
-  };
-
-  const readSigned = (offset: number) => {
-    if (type === 9) return view.getInt32(offset, littleEndian);
-    return 0;
-  };
-
-  const readRational = (offset: number) => {
-    const numerator = type === 10
-      ? view.getInt32(offset, littleEndian)
-      : view.getUint32(offset, littleEndian);
-    const denominator = type === 10
-      ? view.getInt32(offset + 4, littleEndian)
-      : view.getUint32(offset + 4, littleEndian);
-
-    if (denominator === 0) {
-      return '0';
-    }
-
-    const raw = numerator / denominator;
-
-    if (Math.abs(raw) < 1) {
-      return `${numerator}/${denominator}`;
-    }
-
-    return formatNumber(raw);
-  };
-
-  if (type === 2) {
-    return clampText(getString(view, valueStart, count)) || 'Empty';
-  }
-
-  if (type === 5 || type === 10) {
-    const values: string[] = [];
-
-    for (let index = 0; index < count; index += 1) {
-      values.push(readRational(valueStart + index * 8));
-    }
-
-    return values.join(', ');
-  }
-
-  const values: Array<number | string> = [];
-
-  for (let index = 0; index < count; index += 1) {
-    const itemOffset = valueStart + index * typeSize;
-
-    if (itemOffset + typeSize > view.byteLength) {
-      break;
-    }
-
-    if (type === 9) {
-      values.push(readSigned(itemOffset));
-    } else {
-      values.push(readUnsigned(itemOffset));
-    }
-  }
-
-  return values.join(', ');
-}
-
-function parseIfd(
-  view: DataView,
-  tiffStart: number,
-  ifdOffset: number,
-  littleEndian: boolean,
-  title: string,
-  visited: Set<number>
-): ExifSection[] {
-  const absoluteOffset = tiffStart + ifdOffset;
-
-  if (visited.has(absoluteOffset) || absoluteOffset + 2 > view.byteLength) {
-    return [];
-  }
-
-  visited.add(absoluteOffset);
-
-  const entryCount = view.getUint16(absoluteOffset, littleEndian);
-  const fields: ExifField[] = [];
-  let exifPointer: number | null = null;
-  let gpsPointer: number | null = null;
-
-  for (let index = 0; index < entryCount; index += 1) {
-    const entryOffset = absoluteOffset + 2 + index * 12;
-
-    if (entryOffset + 12 > view.byteLength) {
-      break;
-    }
-
-    const tag = view.getUint16(entryOffset, littleEndian);
-    const type = view.getUint16(entryOffset + 2, littleEndian);
-    const count = view.getUint32(entryOffset + 4, littleEndian);
-    const label = TAG_NAMES[tag] ?? `Tag 0x${tag.toString(16).padStart(4, '0')}`;
-
-    if (tag === 0x8769) {
-      exifPointer = view.getUint32(entryOffset + 8, littleEndian);
-      continue;
-    }
-
-    if (tag === 0x8825) {
-      gpsPointer = view.getUint32(entryOffset + 8, littleEndian);
-      continue;
-    }
-
-    const value = getTagValue(view, tiffStart, type, count, entryOffset + 8, littleEndian);
-
-    if (value && value !== 'Maker Note') {
-      fields.push({ label, value });
-    }
-  }
-
-  const sections: ExifSection[] = fields.length > 0 ? [{ title, fields }] : [];
-
-  if (exifPointer !== null) {
-    sections.push(
-      ...parseIfd(view, tiffStart, exifPointer, littleEndian, 'EXIF', visited)
-    );
-  }
-
-  if (gpsPointer !== null) {
-    sections.push(
-      ...parseIfd(view, tiffStart, gpsPointer, littleEndian, 'GPS', visited)
-    );
-  }
-
-  return sections;
-}
-
-function parseExifSections(buffer: ArrayBuffer): ExifSection[] {
-  const view = new DataView(buffer);
-
-  if (view.byteLength < 4 || view.getUint16(0) !== 0xffd8) {
-    return [];
-  }
-
-  let offset = 2;
-
-  while (offset + 4 <= view.byteLength) {
-    const marker = view.getUint16(offset);
-    offset += 2;
-
-    if (marker === 0xffda || marker === 0xffd9) {
-      break;
-    }
-
-    const segmentLength = view.getUint16(offset);
-
-    if (segmentLength < 2 || offset + segmentLength > view.byteLength) {
-      break;
-    }
-
-    if (marker === 0xffe1 && getString(view, offset + 2, 6) === 'Exif') {
-      const tiffStart = offset + 8;
-      const byteOrder = getString(view, tiffStart, 2);
-      const littleEndian = byteOrder === 'II';
-
-      if (!littleEndian && byteOrder !== 'MM') {
-        return [];
-      }
-
-      if (view.getUint16(tiffStart + 2, littleEndian) !== 42) {
-        return [];
-      }
-
-      const firstIfdOffset = view.getUint32(tiffStart + 4, littleEndian);
-      const visited = new Set<number>();
-      const sections = parseIfd(
-        view,
-        tiffStart,
-        firstIfdOffset,
-        littleEndian,
-        'Image',
-        visited
-      );
-
-      return sections
-        .map((section) => ({
-          title: section.title,
-          fields: section.fields.filter((field, index, array) => {
-            return array.findIndex((candidate) => candidate.label === field.label) === index;
-          }),
-        }))
-        .filter((section) => section.fields.length > 0);
-    }
-
-    offset += segmentLength;
-  }
-
-  return [];
 }
 
 export function ExifViewerRemover() {
+  const id = useId();
   const [file, setFile] = useState<File | null>(null);
   const [cleanFile, setCleanFile] = useState<File | null>(null);
   // The previews follow the files: each URL is revoked when its file changes or the tool unmounts.
@@ -348,9 +85,20 @@ export function ExifViewerRemover() {
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('original');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // The field whose copy button was pressed last. The hook knows whether that copy worked and when to stop showing it.
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const copyResult = useCopyToClipboard();
+  // Bumped whenever the single image changes, so work started for the previous one is dropped.
+  const singleRun = useRef(0);
+  // A batch saves its ZIP when it finishes, but not once the tool has been left.
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Batch processing types
   type BatchFileStatus = 'waiting' | 'processing' | 'done' | 'error';
@@ -368,21 +116,7 @@ export function ExifViewerRemover() {
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [batchOutputFormat, setBatchOutputFormat] = useState<OutputFormat>('original');
   const [batchZip, setBatchZip] = useState<Blob | null>(null);
-
-  const getExtensionForFormat = (file: File, format: OutputFormat): string => {
-    if (format !== 'original') {
-      return format === 'jpeg' ? 'jpg' : format;
-    }
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext && ['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
-      return ext === 'jpeg' ? 'jpg' : ext;
-    }
-    return file.type === 'image/jpeg'
-      ? 'jpg'
-      : file.type === 'image/webp'
-        ? 'webp'
-        : 'png';
-  };
+  const [batchError, setBatchError] = useState('');
 
   // The intake only passes images on; anything else is reported under the drop area.
   const addBatchFiles = (files: File[]) => {
@@ -392,49 +126,17 @@ export function ExifViewerRemover() {
       status: 'waiting',
     }));
     setBatchZip(null);
+    setBatchError('');
     setBatchItems((prev) => [...prev, ...newItems]);
   };
 
   const batchIntake = useFileIntake({ accept: 'image/*', multiple: true, onFiles: addBatchFiles });
 
-  const processSingleBatchFile = async (file: File, format: OutputFormat): Promise<Blob> => {
-    const image = await loadImage(file);
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Canvas context not available');
-    }
-
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0);
-
-    const selectedFormat = format === 'original'
-      ? (file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/jpeg'
-          ? file.type
-          : 'image/png')
-      : `image/${format}`;
-
-    return new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (result) => {
-          if (!result) {
-            reject(new Error('Unable to generate cleaned image.'));
-            return;
-          }
-          resolve(result);
-        },
-        selectedFormat,
-        selectedFormat === 'image/png' ? 1 : 0.92
-      );
-    });
-  };
-
   const handleProcessBatch = async () => {
     if (batchItems.length === 0) return;
     setBatchProcessing(true);
     setBatchZip(null);
+    setBatchError('');
 
     // Reset status of all items to 'waiting'
     const resetItems: BatchItem[] = batchItems.map(item => ({
@@ -463,7 +165,7 @@ export function ExifViewerRemover() {
         );
 
         try {
-          const cleanedBlob = await processSingleBatchFile(item.file, batchOutputFormat);
+          const cleanedBlob = await reencodeWithoutMetadata(item.file, batchOutputFormat);
 
           setBatchItems((prev) =>
             prev.map((prevItem) =>
@@ -503,25 +205,35 @@ export function ExifViewerRemover() {
     await Promise.all(workers);
 
     try {
+      const cleaned = activeItems.flatMap((item) =>
+        item.status === 'done' && item.cleanedBlob ? [{ file: item.file, blob: item.cleanedBlob }] : []
+      );
+
+      if (cleaned.length === 0) {
+        setBatchError('None of the images could be cleaned, so there is no ZIP to download.');
+        return;
+      }
+
+      // Two files may share a name, or differ only in an extension that the
+      // output format replaces. Each entry needs a name of its own or the
+      // archive keeps only the last of them.
+      const zipFileNames = uniqueFileNames(
+        cleaned.map(({ file: source, blob }) =>
+          outputFileName(source.name, { suffix: '-clean', extension: imageTypeExtension(blob.type) })
+        )
+      );
+
       const zip = new JSZip();
-      let hasCleanedFiles = false;
+      cleaned.forEach(({ blob }, position) => zip.file(zipFileNames[position], blob));
 
-      for (const item of activeItems) {
-        if (item.status === 'done' && item.cleanedBlob) {
-          const extension = getExtensionForFormat(item.file, batchOutputFormat);
-          const zipFileName = outputFileName(item.file.name, { suffix: '-clean', extension });
-          zip.file(zipFileName, item.cleanedBlob);
-          hasCleanedFiles = true;
-        }
-      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      if (!mountedRef.current) return;
 
-      if (hasCleanedFiles) {
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        setBatchZip(zipBlob);
-        downloadBlob(zipBlob, `cleaned_images_${Date.now()}.zip`);
-      }
+      setBatchZip(zipBlob);
+      downloadBlob(zipBlob, `cleaned_images_${Date.now()}.zip`);
     } catch (zipErr) {
       console.error('Failed to generate ZIP archive', zipErr);
+      setBatchError('The ZIP archive could not be created.');
     } finally {
       setBatchProcessing(false);
     }
@@ -530,6 +242,7 @@ export function ExifViewerRemover() {
   const handleRemoveBatchItem = (id: string) => {
     setBatchItems((prev) => prev.filter((item) => item.id !== id));
     setBatchZip(null);
+    setBatchError('');
   };
 
   const handleClearBatch = () => {
@@ -537,6 +250,7 @@ export function ExifViewerRemover() {
     setBatchProcessing(false);
     setBatchOutputFormat('original');
     setBatchZip(null);
+    setBatchError('');
     batchIntake.reset();
   };
 
@@ -557,22 +271,27 @@ export function ExifViewerRemover() {
     }
   };
 
-  const handleCopyField = async (value: string, label: string) => {
-    await copyResult.copyToClipboard(value);
-    setCopiedField(label);
-    setTimeout(() => setCopiedField(null), 2000);
+  const handleCopyField = (value: string, fieldKey: string) => {
+    setCopiedField(fieldKey);
+    void copyResult.copyToClipboard(value);
   };
 
   const loadSingleImage = async (nextFile: File) => {
+    singleRun.current += 1;
+    const run = singleRun.current;
+
     setError('');
+    setProcessing(false);
     setFile(nextFile);
     setCleanFile(null);
     setSections([]);
 
     try {
       const buffer = await readFileAsArrayBuffer(nextFile);
+      if (run !== singleRun.current) return;
       setSections(parseExifSections(buffer));
     } catch (readError) {
+      if (run !== singleRun.current) return;
       setError(
         readError instanceof Error
           ? readError.message
@@ -591,68 +310,29 @@ export function ExifViewerRemover() {
       return;
     }
 
+    const run = singleRun.current;
     setProcessing(true);
     setError('');
 
     try {
-      const image = await loadImage(file);
-      const canvas = canvasRef.current;
+      const blob = await reencodeWithoutMetadata(file, outputFormat);
+      if (run !== singleRun.current) return;
 
-      if (!canvas) {
-        throw new Error('Canvas is not available for cleanup.');
-      }
-
-      const context = canvas.getContext('2d');
-
-      if (!context) {
-        throw new Error('Canvas context is not available for cleanup.');
-      }
-
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0);
-
-      const selectedFormat = outputFormat === 'original'
-        ? (file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/jpeg'
-            ? file.type
-            : 'image/png')
-        : `image/${outputFormat}`;
-
-      const extension = selectedFormat === 'image/jpeg'
-        ? 'jpg'
-        : selectedFormat === 'image/png'
-          ? 'png'
-          : 'webp';
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (result) => {
-            if (!result) {
-              reject(new Error('Unable to generate a metadata-free image.'));
-              return;
-            }
-
-            resolve(result);
-          },
-          selectedFormat,
-          selectedFormat === 'image/png' ? 1 : 0.92
-        );
-      });
-
+      const extension = imageTypeExtension(blob.type);
       const nextCleanFile = new File([blob], outputFileName(file.name, { suffix: '-clean', extension }), {
-        type: selectedFormat,
+        type: blob.type,
       });
 
       setCleanFile(nextCleanFile);
     } catch (removeError) {
+      if (run !== singleRun.current) return;
       setError(
         removeError instanceof Error
           ? removeError.message
           : 'Unable to remove metadata from the selected image.'
       );
     } finally {
-      setProcessing(false);
+      if (run === singleRun.current) setProcessing(false);
     }
   };
 
@@ -665,12 +345,14 @@ export function ExifViewerRemover() {
   };
 
   const handleClear = () => {
+    singleRun.current += 1;
     setFile(null);
     setCleanFile(null);
     setSections([]);
     setError('');
     setProcessing(false);
     setOutputFormat('original');
+    setCopiedField(null);
     singleIntake.reset();
   };
 
@@ -683,11 +365,9 @@ export function ExifViewerRemover() {
   const metadataSummary = sections.flatMap((section) => section.fields);
 
   return (
-    <div className="space-y-6">
-      <canvas ref={canvasRef} className="hidden" />
-
+    <div className="space-y-4 sm:space-y-6">
       <Tabs defaultValue="single" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto mb-6">
+        <TabsList className="grid w-full grid-cols-2 h-auto mb-4 sm:mb-6">
           <TabsTrigger value="single" className="flex items-center justify-center gap-2 py-3">
             <ImageIcon className="h-4 w-4" />
             Single Image
@@ -698,7 +378,7 @@ export function ExifViewerRemover() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="single" className="space-y-6">
+        <TabsContent value="single" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -765,12 +445,12 @@ export function ExifViewerRemover() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Output format</label>
+                  <label id={`${id}-format-label`} className="mb-2 block text-sm font-medium">Output format</label>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id={`${id}-format`} aria-labelledby={`${id}-format-label ${id}-format`}>
                       <SelectValue placeholder="Select output format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -785,7 +465,10 @@ export function ExifViewerRemover() {
                 </div>
 
                 {error && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <div
+                    role="alert"
+                    className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                  >
                     {error}
                   </div>
                 )}
@@ -841,30 +524,36 @@ export function ExifViewerRemover() {
                       <div key={section.title} className="rounded-md border">
                         <div className="border-b px-4 py-3 font-medium">{section.title}</div>
                         <div className="divide-y">
-                          {section.fields.map((field) => (
-                            <div
-                              key={`${section.title}-${field.label}`}
-                              className="grid gap-2 px-4 py-3 sm:grid-cols-[180px_1fr_auto] sm:items-start"
-                            >
-                              <div className="text-sm font-medium">{field.label}</div>
-                              <div className="break-all font-mono text-sm text-muted-foreground">
-                                {field.value}
-                              </div>
-                              <Button
-                                onClick={() => handleCopyField(field.value, field.label)}
-                                variant={copiedField === field.label ? 'default' : 'ghost'}
-                                size="icon"
-                                className="h-8 w-8"
-                                aria-label={`Copy ${field.label}`}
+                          {section.fields.map((field) => {
+                            // Labels repeat across sections, so the section is part of the key.
+                            const fieldKey = `${section.title}-${field.label}`;
+                            const copied = copiedField === fieldKey && copyResult.isCopied;
+
+                            return (
+                              <div
+                                key={fieldKey}
+                                className="grid gap-2 px-4 py-3 sm:grid-cols-[180px_1fr_auto] sm:items-start"
                               >
-                                {copiedField === field.label ? (
-                                  <Check className="h-4 w-4" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          ))}
+                                <div className="text-sm font-medium">{field.label}</div>
+                                <div className="break-all font-mono text-sm text-muted-foreground">
+                                  {field.value}
+                                </div>
+                                <Button
+                                  onClick={() => handleCopyField(field.value, fieldKey)}
+                                  variant={copied ? 'default' : 'ghost'}
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  aria-label={copied ? `Copied ${field.label}` : `Copy ${field.label}`}
+                                >
+                                  {copied ? (
+                                    <Check className="h-4 w-4" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -905,7 +594,7 @@ export function ExifViewerRemover() {
           )}
         </TabsContent>
 
-        <TabsContent value="batch" className="space-y-6">
+        <TabsContent value="batch" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -917,38 +606,34 @@ export function ExifViewerRemover() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div
-                {...batchIntake.dropzoneProps}
-                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-10 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                  batchIntake.isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-muted-foreground/30 hover:border-primary/50'
-                }`}
-              >
-                <Upload className="h-10 w-10 text-muted-foreground" />
-                <div className="text-center">
-                  <p className="font-semibold text-foreground">Drop images here or click to browse</p>
-                  <p className="text-xs text-muted-foreground mt-1">Supports JPEG, PNG, and WebP formats</p>
-                </div>
-                <input {...batchIntake.inputProps} aria-label="Upload multiple images" />
-              </div>
+              <FileDropzone
+                intake={batchIntake}
+                label="Drop images here or click to browse"
+                hint="Supports JPEG, PNG, and WebP formats"
+              />
 
-              {batchIntake.error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {batchIntake.error}
-                </p>
+              {batchError && (
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                >
+                  {batchError}
+                </div>
               )}
 
               {batchItems.length > 0 && (
                 <div className="flex flex-col gap-4 p-4 rounded-lg border bg-card sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex-1 space-y-2 max-w-sm">
-                    <label className="text-sm font-medium">Batch Output Format</label>
+                    <label id={`${id}-batch-format-label`} className="text-sm font-medium">Batch Output Format</label>
                     <Select
                       value={batchOutputFormat}
                       onValueChange={(value) => setBatchOutputFormat(value as OutputFormat)}
                       disabled={batchProcessing}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        id={`${id}-batch-format`}
+                        aria-labelledby={`${id}-batch-format-label ${id}-batch-format`}
+                      >
                         <SelectValue placeholder="Select output format" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1069,10 +754,13 @@ export function ExifViewerRemover() {
                             <td className="p-3">
                               <div className="flex items-center gap-2">
                                 {getStatusBadge(item.status, item.error)}
-                                {item.status === 'done' && item.cleanedSize && (
+                                {item.status === 'done' && item.cleanedSize !== undefined && (
                                   <span className="text-xs text-muted-foreground font-mono">
                                     {formatBytes(item.cleanedSize, SIZE_FORMAT)}
                                   </span>
+                                )}
+                                {item.status === 'error' && item.error && (
+                                  <span className="text-xs text-destructive">{item.error}</span>
                                 )}
                               </div>
                             </td>
