@@ -8,6 +8,7 @@ import {
   searchTimeZones,
   timeZoneLabel,
   toTimeZoneOptions,
+  toZonedInputValue,
   type TimeZoneConversion,
 } from '@/lib/tools/timezone-converter';
 
@@ -157,6 +158,32 @@ test.describe('convertTimeZone', () => {
     ]) {
       expect(convertTimeZone(input, 'UTC', 'UTC'), input).toEqual({ status: 'invalid' });
     }
+  });
+});
+
+// "Now" fills the form with the clock of the From zone, not the visitor's.
+test.describe('toZonedInputValue', () => {
+  const moment = new Date('2025-03-16T02:45:30Z');
+
+  test('reads the wall clock of a moment in each zone, to the minute', () => {
+    expect(toZonedInputValue(moment, 'UTC')).toBe('2025-03-16T02:45');
+    expect(toZonedInputValue(moment, 'Asia/Tokyo')).toBe('2025-03-16T11:45');
+    // Still the 15th, and daylight saving time has started in New York.
+    expect(toZonedInputValue(moment, 'America/New_York')).toBe('2025-03-15T22:45');
+    expect(toZonedInputValue(moment, 'Asia/Kathmandu')).toBe('2025-03-16T08:30');
+  });
+
+  test('writes midnight as 00:00', () => {
+    expect(toZonedInputValue(new Date('2025-03-16T00:00:00Z'), 'UTC')).toBe('2025-03-16T00:00');
+    expect(toZonedInputValue(new Date('2025-03-16T15:00:00Z'), 'Asia/Tokyo')).toBe(
+      '2025-03-17T00:00'
+    );
+  });
+
+  test('converts back to the same moment through convertTimeZone', () => {
+    const wallClock = toZonedInputValue(moment, 'Asia/Tokyo');
+    const conversion = convert(wallClock, 'Asia/Tokyo', 'UTC');
+    expect(conversion.utcDate.toISOString()).toBe('2025-03-16T02:45:00.000Z');
   });
 });
 

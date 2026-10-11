@@ -26,6 +26,7 @@ import {
   searchTimeZones,
   timeZoneLabel,
   toTimeZoneOptions,
+  toZonedInputValue,
   type TimeZoneOption,
 } from '@/lib/tools/timezone-converter';
 import { cn } from '@/lib/utils/cn';
@@ -236,10 +237,13 @@ function Converter({ defaults }: { defaults: Defaults }) {
       ? 'Choose a date and time to convert.'
       : '';
 
+  // The form holds a time in the From zone, so "now" is the clock of that zone.
   const setDateTime = (now: Date) => {
-    setDate(toDateInputValue(now));
-    setHour(String(now.getHours()).padStart(2, '0'));
-    setMinute(String(now.getMinutes()).padStart(2, '0'));
+    const wallClock = toZonedInputValue(now, sourceTimeZone);
+
+    setDate(wallClock.slice(0, 10));
+    setHour(wallClock.slice(11, 13));
+    setMinute(wallClock.slice(14, 16));
   };
 
   // Picking a time before any date starts from today.
@@ -290,7 +294,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
                     setHour(nextHour);
                   }}
                 >
-                  <SelectTrigger className="w-18" aria-label="Hour">
+                  <SelectTrigger className="w-18 gap-1 px-2" aria-label="Hour">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -309,7 +313,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
                     setMinute(nextMinute);
                   }}
                 >
-                  <SelectTrigger className="w-18" aria-label="Minute">
+                  <SelectTrigger className="w-18 gap-1 px-2" aria-label="Minute">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">

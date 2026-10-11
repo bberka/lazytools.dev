@@ -173,7 +173,7 @@ export function TimestampConverter() {
                       apply((current) => editDateTime(current, { hour }))
                     }
                   >
-                    <SelectTrigger className="w-18" aria-label="Hour">
+                    <SelectTrigger className="w-18 gap-1 px-2" aria-label="Hour">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -191,7 +191,7 @@ export function TimestampConverter() {
                       apply((current) => editDateTime(current, { minute }))
                     }
                   >
-                    <SelectTrigger className="w-18" aria-label="Minute">
+                    <SelectTrigger className="w-18 gap-1 px-2" aria-label="Minute">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">

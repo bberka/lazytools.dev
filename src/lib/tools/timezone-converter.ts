@@ -224,6 +224,14 @@ function getTimeZoneParts(date: Date, timeZone: string): DateParts {
   };
 }
 
+/**
+ * The wall-clock time of the moment `date` in `timeZone`, to the minute, as
+ * `YYYY-MM-DDTHH:mm`: what a clock on the wall of that zone reads.
+ */
+export function toZonedInputValue(date: Date, timeZone: string): string {
+  return toDateTimeInput(getTimeZoneParts(date, timeZone));
+}
+
 function wallClockAsUtc(parts: DateParts): number {
   return utcTime(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
 }
