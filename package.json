@@ -18,6 +18,7 @@
     "format": "prettier --write .",
     "test:unit": "playwright test -c playwright.unit.config.ts",
     "test:e2e": "playwright test",
+    "test:e2e:export": "cross-env E2E_TARGET=export playwright test --project=chromium",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps",
     "tauri": "tauri",
