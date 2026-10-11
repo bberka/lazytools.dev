@@ -110,7 +110,17 @@ src/
     ui/
   hooks/
   lib/
+    catalog/
+    tags/
+    preferences/
     contexts/
+    home/
+    commands/
+    files/
+    pdf/
+    markdown/
+    export/
+    tools/
     utils/
     types.ts
   styles/

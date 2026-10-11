@@ -4,7 +4,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 76 tools across 12 categories.
 
 ## Immediate / Quality of Life
 
-- [x] Add route coverage tests (every `TOOLS` entry renders)
+- [x] Add route coverage tests (every catalog entry renders)
 - [x] Add focused tests for pure transform helpers (`npm run test:unit`, specs in `tests/unit/`)
 - [x] Add Playwright smoke tests for search, favorites, command palette, and a tool page
 - [ ] Add generated Open Graph images
