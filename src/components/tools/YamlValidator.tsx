@@ -12,94 +12,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, FileCode, Trash2, CheckCircle2, AlertTriangle, ChevronRight, ChevronDown } from 'lucide-react';
+import { Copy, Check, FileCode, Trash2, CheckCircle2, AlertTriangle, Info, ChevronRight, ChevronDown } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import {
+  describeLineCount,
+  describeTreeNode,
+  type TreeLeafType,
+  type TreeVocabulary,
+} from '@/lib/tools/formatter-output';
+import { loadYamlTools, type YamlTools } from '@/lib/tools/yaml-validator';
 
-function summarizeYaml(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `Top-level sequence with ${value.length.toLocaleString()} item${value.length === 1 ? '' : 's'}`;
-  }
+const TREE_WORDS: TreeVocabulary = { list: 'Sequence', map: 'Mapping', member: 'key', empty: 'null' };
 
-  if (value && typeof value === 'object') {
-    const keys = Object.keys(value as Record<string, unknown>);
-    return `Top-level mapping with ${keys.length.toLocaleString()} key${keys.length === 1 ? '' : 's'}`;
-  }
-
-  return `Top-level ${value === null ? 'null' : typeof value} value`;
-}
+const LEAF_CLASSES: Record<TreeLeafType, string> = {
+  empty: 'text-muted-foreground italic',
+  boolean: 'text-blue-600 dark:text-blue-400 font-semibold',
+  number: 'text-green-600 dark:text-green-400',
+  string: 'text-orange-600 dark:text-orange-400 break-all',
+};
 
 // Collapsible YAML Tree Node viewer component
-function TreeNode({ name, value, depth = 0 }: { name?: string; value: unknown; depth: number }) {
+function TreeNode({ name, value, depth }: { name?: string; value: unknown; depth: number }) {
   const [isExpanded, setIsExpanded] = useState(depth <= 1);
-  
-  if (value === null) {
+  const node = describeTreeNode(value, TREE_WORDS);
+  const label =
+    name === undefined ? null : (
+      <span className="text-purple-600 dark:text-purple-400 font-semibold">{name === '' ? '""' : name}:</span>
+    );
+
+  if (node.kind === 'leaf') {
     return (
       <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-muted-foreground italic">null</span>
+        {label}
+        <span className={LEAF_CLASSES[node.type]}>{node.text}</span>
       </div>
     );
   }
-  
-  if (typeof value === 'boolean') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-blue-600 dark:text-blue-400 font-semibold">{value ? 'true' : 'false'}</span>
-      </div>
-    );
-  }
-  
-  if (typeof value === 'number') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-green-600 dark:text-green-400">{value}</span>
-      </div>
-    );
-  }
-  
-  if (typeof value === 'string') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-orange-600 dark:text-orange-400 break-all">"{value}"</span>
-      </div>
-    );
-  }
-  
-  const isArray = Array.isArray(value);
-  const keys = isArray ? [] : Object.keys(value as Record<string, unknown>);
-  const itemsCount = isArray ? (value as unknown[]).length : keys.length;
-  
-  const label = isArray 
-    ? `Sequence[${itemsCount}]` 
-    : `Mapping {${itemsCount} key${itemsCount === 1 ? '' : 's'}}`;
-  
+
   return (
     <div className="font-mono text-sm py-0.5">
-      <div 
-        className="flex items-center gap-1 cursor-pointer select-none py-0.5 hover:bg-accent/40 rounded px-1 w-max max-w-full"
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        className="flex items-center gap-1 cursor-pointer select-none py-0.5 hover:bg-accent/40 rounded px-1 w-max max-w-full text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span className="text-muted-foreground shrink-0">
           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </span>
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-muted-foreground text-xs font-semibold">{label}</span>
-      </div>
-      
+        {label}
+        <span className="text-muted-foreground text-xs font-semibold">{node.label}</span>
+      </button>
+
       {isExpanded && (
         <div className="pl-4 ml-2 border-l border-muted-foreground/20 space-y-0.5">
-          {isArray ? (
-            (value as unknown[]).map((item, idx) => (
-              <TreeNode key={idx} name={String(idx)} value={item} depth={depth + 1} />
-            ))
-          ) : (
-            keys.map((key) => (
-              <TreeNode key={key} name={key} value={(value as Record<string, unknown>)[key]} depth={depth + 1} />
-            ))
-          )}
+          {node.children.map((child) => (
+            <TreeNode key={child.name} name={child.name} value={child.value} depth={depth + 1} />
+          ))}
         </div>
       )}
     </div>
@@ -111,117 +80,47 @@ export function YamlValidator() {
   const [indentation, setIndentation] = useState('2');
   const [isMinified, setIsMinified] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
-  
-  const [validation, setValidation] = useState<{
-    valid: boolean;
-    parsed: unknown;
-    summary: string;
-    error: string;
-  } | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [yaml, setYaml] = useState<YamlTools | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
+  const hasInput = Boolean(input.trim());
+
+  // The parser is a separate chunk, fetched once there is something to parse.
+  // Until it arrives nothing is derived; after a failed download every edit
+  // tries again.
   useEffect(() => {
-    if (!input.trim()) {
-      setValidation(null);
-      return;
-    }
+    if (yaml || !input.trim()) return;
 
     let isCurrent = true;
-    setIsEvaluating(true);
-
-    const validate = async () => {
-      try {
-        const yaml = await import('js-yaml');
-        if (!isCurrent) return;
-
-        const parsed = yaml.load(input);
-        if (!isCurrent) return;
-
-        setValidation({
-          valid: true,
-          parsed,
-          summary: summarizeYaml(parsed),
-          error: '',
-        });
-      } catch (e) {
-        if (!isCurrent) return;
-        setValidation({
-          valid: false,
-          parsed: null,
-          summary: '',
-          error: e instanceof Error ? e.message : 'Invalid YAML syntax',
-        });
-      } finally {
-        if (isCurrent) {
-          setIsEvaluating(false);
-        }
+    loadYamlTools().then(
+      (tools) => {
+        if (isCurrent) setYaml(tools);
+      },
+      () => {
+        if (isCurrent) setLoadFailed(true);
       }
-    };
-
-    void validate();
+    );
 
     return () => {
       isCurrent = false;
     };
-  }, [input]);
+  }, [yaml, input]);
 
-  const outputResult = useMemo(() => {
-    if (!validation || !validation.valid) return '';
+  // Reactive validation state computed from the input text
+  const validation = useMemo(() => (yaml ? yaml.validate(input) : null), [yaml, input]);
 
-    try {
-      if (isMinified) {
-        // Minifying YAML is typically represented as a single-line JSON structure
-        return JSON.stringify(validation.parsed);
-      }
+  // Reactive formatted output
+  const output = useMemo(() => {
+    if (!yaml || !validation?.valid) return { text: '', error: '' };
 
-      const spaces = indentation === 'tab' ? 4 : parseInt(indentation, 10);
-      const yamlStringify = async () => {
-        const yaml = await import('js-yaml');
-        return yaml.dump(validation.parsed, { indent: spaces, lineWidth: -1 });
-      };
-      
-      // Since yaml.dump is fast and we do it inside useMemo, we'll return a placeholder or do it synchronously by compiling.
-      // Wait, js-yaml dump is synchronous anyway. Let's just import it synchronously in the component or dynamically during output computation.
-      // Since useMemo must be synchronous, we can use require() or keep js-yaml statically imported for stringification, or we can compute formatted in useEffect!
-      // Computing formatted in useEffect is extremely clean and prevents any issues with async in useMemo!
-    } catch {
-      // Ignore
-    }
-    return '';
-  }, [validation, indentation, isMinified]);
-
-  // Let's store output in state to handle async dump cleanly
-  const [outputText, setOutputText] = useState('');
-  useEffect(() => {
-    if (!validation || !validation.valid) {
-      setOutputText('');
-      return;
-    }
-
-    let isCurrent = true;
-    const format = async () => {
-      try {
-        if (isMinified) {
-          if (isCurrent) setOutputText(JSON.stringify(validation.parsed));
-          return;
-        }
-        const yaml = await import('js-yaml');
-        if (!isCurrent) return;
-        const spaces = indentation === 'tab' ? 4 : parseInt(indentation, 10);
-        const formatted = yaml.dump(validation.parsed, { indent: spaces, lineWidth: -1 });
-        if (isCurrent) setOutputText(formatted);
-      } catch {
-        if (isCurrent) setOutputText('');
-      }
-    };
-
-    void format();
-    return () => {
-      isCurrent = false;
-    };
-  }, [validation, indentation, isMinified]);
+    return yaml.render(validation.documents, {
+      indent: parseInt(indentation, 10),
+      // Minifying YAML is typically represented as a single-line JSON structure
+      minify: isMinified,
+    });
+  }, [yaml, validation, indentation, isMinified]);
 
   const handleMinify = () => {
     setIsMinified(true);
@@ -237,7 +136,12 @@ export function YamlValidator() {
     setIsMinified(false);
   };
 
+  const outputText = output.text;
   const hasOutput = Boolean(outputText);
+  const documents = validation?.valid ? validation.documents : [];
+  const isEvaluating = hasInput && !yaml && !loadFailed;
+  const showTree =
+    viewMode === 'tree' && documents.length > 0 && (documents.length > 1 || documents[0] !== null);
 
   return (
     <div className="space-y-4">
@@ -255,15 +159,16 @@ export function YamlValidator() {
             value={input}
             onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
             placeholder={'name: Ada\nroles:\n  - Admin\n  - Editor'}
+            aria-label="YAML input"
             rows={10}
             className="font-mono text-sm bg-background"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              {/* Indentation configuration */}
+              {/* Indentation configuration. YAML forbids tabs, so spaces only. */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Indentation:</span>
+                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -273,7 +178,6 @@ export function YamlValidator() {
                       <SelectItem value="2">2 spaces</SelectItem>
                       <SelectItem value="4">4 spaces</SelectItem>
                       <SelectItem value="8">8 spaces</SelectItem>
-                      <SelectItem value="tab">Tab</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -291,7 +195,7 @@ export function YamlValidator() {
           </div>
 
           {/* Validation diagnostic status */}
-          {validation && !isEvaluating && (
+          {validation && (
             <div
               className={`flex items-start gap-3 rounded-md px-4 py-3 text-sm ${
                 validation.valid
@@ -309,7 +213,7 @@ export function YamlValidator() {
               ) : (
                 <>
                   <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                  <div>
+                  <div className="min-w-0 break-words">
                     <strong>Invalid YAML Syntax:</strong> {validation.error}
                   </div>
                 </>
@@ -320,6 +224,15 @@ export function YamlValidator() {
           {isEvaluating && (
             <div className="text-xs text-muted-foreground italic">Evaluating YAML syntax...</div>
           )}
+
+          {hasInput && !yaml && loadFailed && (
+            <div className="flex items-start gap-3 rounded-md bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 text-sm">
+              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <strong>Parser unavailable:</strong> The YAML parser could not be loaded. Check your connection, then edit the text to try again.
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -329,15 +242,16 @@ export function YamlValidator() {
           <div>
             <CardTitle>Formatted Output</CardTitle>
             <CardDescription>
-              {outputText ? `${outputText.split('\n').length} lines` : 'Output will appear here'}
+              {outputText ? describeLineCount(outputText) : 'Output will appear here'}
             </CardDescription>
           </div>
           {validation?.valid && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs">
+            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('text')}
+                aria-pressed={viewMode === 'text'}
                 className="h-7 px-2.5 text-xs font-semibold"
               >
                 Text
@@ -346,6 +260,7 @@ export function YamlValidator() {
                 variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('tree')}
+                aria-pressed={viewMode === 'tree'}
                 className="h-7 px-2.5 text-xs font-semibold"
               >
                 Tree View
@@ -354,15 +269,27 @@ export function YamlValidator() {
           )}
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
-          {viewMode === 'tree' && validation?.valid && validation.parsed !== null ? (
+          {showTree ? (
             <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
-              <TreeNode value={validation.parsed} depth={0} />
+              {documents.length === 1 ? (
+                <TreeNode value={documents[0]} depth={0} />
+              ) : (
+                documents.map((document, index) => (
+                  <TreeNode key={index} name={`Document ${index + 1}`} value={document} depth={0} />
+                ))
+              )}
+            </div>
+          ) : output.error ? (
+            <div className="flex items-start gap-3 rounded-md bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20 px-4 py-3 text-sm">
+              <Info className="h-5 w-5 shrink-0 mt-0.5" />
+              <div className="min-w-0 break-words">{output.error}</div>
             </div>
           ) : (
             <Textarea
               value={outputText}
               readOnly
               placeholder="Formatted output will appear here..."
+              aria-label="Formatted YAML output"
               rows={12}
               className="font-mono text-sm bg-muted/10 cursor-text"
             />
@@ -383,7 +310,7 @@ export function YamlValidator() {
             ) : (
               <>
                 <Copy className="h-4 w-4 mr-2" />
-                Copy Output
+                {copyFailed ? 'Copy failed' : 'Copy Output'}
               </>
             )}
           </Button>

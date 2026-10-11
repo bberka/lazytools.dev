@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Check, Copy, Database, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,31 +14,16 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-
-type SqlDialect =
-  | 'sql'
-  | 'bigquery'
-  | 'clickhouse'
-  | 'db2'
-  | 'db2i'
-  | 'duckdb'
-  | 'hive'
-  | 'mariadb'
-  | 'mysql'
-  | 'n1ql'
-  | 'plsql'
-  | 'postgresql'
-  | 'redshift'
-  | 'singlestoredb'
-  | 'snowflake'
-  | 'spark'
-  | 'sqlite'
-  | 'tidb'
-  | 'transactsql'
-  | 'trino';
-
-type KeywordCase = 'preserve' | 'upper' | 'lower';
-type LogicalOperatorNewline = 'before' | 'after';
+import { describeLineCount } from '@/lib/tools/formatter-output';
+import {
+  formatSql,
+  minifySql,
+  type SqlDialect,
+  type SqlFormatResult,
+  type SqlFormatSettings,
+  type SqlKeywordCase,
+  type SqlLogicalOperatorNewline,
+} from '@/lib/tools/sql-formatter';
 
 const DIALECT_OPTIONS: Array<{ value: SqlDialect; label: string }> = [
   { value: 'sql', label: 'Standard SQL' },
@@ -63,97 +48,68 @@ const DIALECT_OPTIONS: Array<{ value: SqlDialect; label: string }> = [
   { value: 'tidb', label: 'TiDB' },
 ];
 
-const CASE_OPTIONS: Array<{ value: KeywordCase; label: string }> = [
+const CASE_OPTIONS: Array<{ value: SqlKeywordCase; label: string }> = [
   { value: 'preserve', label: 'Preserve' },
   { value: 'upper', label: 'UPPERCASE' },
   { value: 'lower', label: 'lowercase' },
 ];
 
 const LOGICAL_OPERATOR_OPTIONS: Array<{
-  value: LogicalOperatorNewline;
+  value: SqlLogicalOperatorNewline;
   label: string;
 }> = [
   { value: 'before', label: 'Before operator' },
   { value: 'after', label: 'After operator' },
 ];
 
-let formatterPromise: Promise<typeof import('sql-formatter')> | null = null;
-
-function loadFormatter() {
-  formatterPromise ??= import('sql-formatter');
-  return formatterPromise;
-}
+const NO_RESULT: SqlFormatResult = { output: '', error: '' };
 
 export function SqlFormatter() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
   const [dialect, setDialect] = useState<SqlDialect>('sql');
   const [indentation, setIndentation] = useState('2');
-  const [keywordCase, setKeywordCase] = useState<KeywordCase>('upper');
+  const [keywordCase, setKeywordCase] = useState<SqlKeywordCase>('upper');
   const [logicalOperatorNewline, setLogicalOperatorNewline] =
-    useState<LogicalOperatorNewline>('before');
+    useState<SqlLogicalOperatorNewline>('before');
+  // Minify replaces the formatted output until the SQL or a setting changes.
+  const [isMinified, setIsMinified] = useState(false);
+  const [formatted, setFormatted] = useState<SqlFormatResult>(NO_RESULT);
+  // False until the formatter has answered once, i.e. while its chunk loads.
+  const [hasVerdict, setHasVerdict] = useState(false);
   const copy = useCopyToClipboard();
 
-  const formatSql = async (
-    text: string,
-    nextDialect = dialect,
-    nextIndentation = indentation,
-    nextKeywordCase = keywordCase,
-    nextLogicalOperatorNewline = logicalOperatorNewline
-  ) => {
-    if (!text.trim()) {
-      setOutput('');
-      setError('');
-      return;
-    }
+  const settings = useMemo<SqlFormatSettings>(
+    () => ({ dialect, indentation, keywordCase, logicalOperatorNewline }),
+    [dialect, indentation, keywordCase, logicalOperatorNewline]
+  );
 
-    try {
-      const { format } = await loadFormatter();
-      const useTabs = nextIndentation === 'tab';
-      const tabWidth = useTabs ? 2 : Number(nextIndentation);
+  // Format whenever the SQL or a setting changes. Only the latest request may
+  // land: an answer for text that has since been edited or cleared is dropped.
+  useEffect(() => {
+    let isCurrent = true;
 
-      const formatted = format(text, {
-        language: nextDialect,
-        tabWidth,
-        useTabs,
-        keywordCase: nextKeywordCase,
-        logicalOperatorNewline: nextLogicalOperatorNewline,
-      });
+    void formatSql(input, settings).then((result) => {
+      if (!isCurrent) return;
+      setFormatted(result);
+      if (input.trim()) setHasVerdict(true);
+    });
 
-      setOutput(formatted);
-      setError('');
-    } catch (formatError) {
-      setOutput('');
-      setError(
-        formatError instanceof Error ? formatError.message : 'Error formatting SQL.'
-      );
-    }
-  };
+    return () => {
+      isCurrent = false;
+    };
+  }, [input, settings]);
 
-  const minifySql = () => {
-    if (!input.trim()) {
-      setOutput('');
-      setError('');
-      return;
-    }
+  const hasInput = Boolean(input.trim());
+  const error = hasInput ? formatted.error : '';
 
-    const minified = input
-      .replace(/\s+/g, ' ')
-      .replace(/\(\s+/g, '(')
-      .replace(/\s+\)/g, ')')
-      .replace(/,\s+/g, ', ')
-      .replace(/\s*;\s*/g, '; ')
-      .trim();
-
-    setOutput(minified);
-    setError('');
-  };
+  const output = useMemo(() => {
+    if (!input.trim()) return '';
+    return isMinified ? minifySql(input, dialect) : formatted.output;
+  }, [input, isMinified, dialect, formatted]);
 
   const handleClear = () => {
     setInput('');
-    setOutput('');
-    setError('');
+    setIsMinified(false);
   };
 
   return (
@@ -172,35 +128,26 @@ export function SqlFormatter() {
           <Textarea
             value={input}
             onChange={(event) => {
-              const newValue = (event.target as HTMLTextAreaElement).value;
-              setInput(newValue);
-              void formatSql(newValue);
+              setInput((event.target as HTMLTextAreaElement).value);
+              setIsMinified(false);
             }}
             placeholder="SELECT * FROM users WHERE id = 1"
+            aria-label="SQL input"
             rows={10}
             className="font-mono text-sm"
           />
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">SQL dialect</label>
+              <label htmlFor="sql-dialect" className="text-sm font-medium">SQL dialect</label>
               <Select
                 value={dialect}
                 onValueChange={(value) => {
-                  const nextDialect = value as SqlDialect;
-                  setDialect(nextDialect);
-                  if (input.trim()) {
-                    void formatSql(
-                      input,
-                      nextDialect,
-                      indentation,
-                      keywordCase,
-                      logicalOperatorNewline
-                    );
-                  }
+                  setDialect(value as SqlDialect);
+                  setIsMinified(false);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="sql-dialect">
                   <SelectValue placeholder="Choose dialect" />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,23 +163,15 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Indentation</label>
+              <label htmlFor="sql-indentation" className="text-sm font-medium">Indentation</label>
               <Select
                 value={indentation}
                 onValueChange={(value) => {
                   setIndentation(value);
-                  if (input.trim()) {
-                    void formatSql(
-                      input,
-                      dialect,
-                      value,
-                      keywordCase,
-                      logicalOperatorNewline
-                    );
-                  }
+                  setIsMinified(false);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="sql-indentation">
                   <SelectValue placeholder="Indentation" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,24 +186,15 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Keyword case</label>
+              <label htmlFor="sql-keyword-case" className="text-sm font-medium">Keyword case</label>
               <Select
                 value={keywordCase}
                 onValueChange={(value) => {
-                  const nextKeywordCase = value as KeywordCase;
-                  setKeywordCase(nextKeywordCase);
-                  if (input.trim()) {
-                    void formatSql(
-                      input,
-                      dialect,
-                      indentation,
-                      nextKeywordCase,
-                      logicalOperatorNewline
-                    );
-                  }
+                  setKeywordCase(value as SqlKeywordCase);
+                  setIsMinified(false);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="sql-keyword-case">
                   <SelectValue placeholder="Keyword case" />
                 </SelectTrigger>
                 <SelectContent>
@@ -280,24 +210,15 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">AND / OR wrapping</label>
+              <label htmlFor="sql-operator-wrapping" className="text-sm font-medium">AND / OR wrapping</label>
               <Select
                 value={logicalOperatorNewline}
                 onValueChange={(value) => {
-                  const nextLogicalOperatorNewline = value as LogicalOperatorNewline;
-                  setLogicalOperatorNewline(nextLogicalOperatorNewline);
-                  if (input.trim()) {
-                    void formatSql(
-                      input,
-                      dialect,
-                      indentation,
-                      keywordCase,
-                      nextLogicalOperatorNewline
-                    );
-                  }
+                  setLogicalOperatorNewline(value as SqlLogicalOperatorNewline);
+                  setIsMinified(false);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="sql-operator-wrapping">
                   <SelectValue placeholder="Operator wrapping" />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,7 +235,7 @@ export function SqlFormatter() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button onClick={minifySql} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button onClick={() => setIsMinified(true)} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
               Minify
             </Button>
 
@@ -325,7 +246,7 @@ export function SqlFormatter() {
           </div>
 
           {/* Validation status diagnostics */}
-          {input.trim() && (
+          {hasInput && hasVerdict && (
             <div
               className={`flex items-start gap-3 rounded-md px-4 py-3 text-sm ${
                 !error
@@ -343,12 +264,16 @@ export function SqlFormatter() {
               ) : (
                 <>
                   <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                  <div>
+                  <div className="min-w-0 break-words">
                     <strong>Formatting Exception:</strong> {error}
                   </div>
                 </>
               )}
             </div>
+          )}
+
+          {hasInput && !hasVerdict && (
+            <div className="text-xs text-muted-foreground italic">Loading SQL formatter...</div>
           )}
         </CardContent>
       </Card>
@@ -357,7 +282,7 @@ export function SqlFormatter() {
         <CardHeader>
           <CardTitle>Formatted Output</CardTitle>
           <CardDescription>
-            {output ? `${output.split('\n').length} lines` : 'Output will appear here'}
+            {output ? describeLineCount(output) : 'Output will appear here'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -365,6 +290,7 @@ export function SqlFormatter() {
             value={output}
             readOnly
             placeholder="Formatted SQL will appear here..."
+            aria-label="Formatted SQL output"
             rows={10}
             className="font-mono text-sm"
           />
@@ -384,7 +310,7 @@ export function SqlFormatter() {
             ) : (
               <>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy to Clipboard
+                {copy.isError ? 'Copy failed' : 'Copy to Clipboard'}
               </>
             )}
           </Button>
