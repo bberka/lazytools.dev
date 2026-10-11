@@ -86,6 +86,40 @@ function toDateTimeLocalValue(ms: number): string {
   return new Date(ms - tzoffset).toISOString().slice(0, -1);
 }
 
+/** A node field's name in a row: its label without the trailing "ID", so "Node ID A" and "Node ID B" stay apart. */
+function rowLabel(label: string | undefined, fallback: string): string {
+  return label?.replace(/ ID$/, '') || fallback;
+}
+
+interface NodeValueInputProps {
+  value: number;
+  max: number;
+  label: string;
+  onValueChange: (value: number) => void;
+}
+
+/** A whole-number field that can be emptied and typed into again without a stray 0 left in front. */
+function NodeValueInput({ value, max, label, onValueChange }: NodeValueInputProps) {
+  const [emptied, setEmptied] = useState(false);
+
+  return (
+    <Input
+      type="number"
+      min={0}
+      max={max}
+      step={1}
+      value={emptied ? '' : value}
+      onChange={(e) => {
+        setEmptied(e.target.value === '');
+        onValueChange(Number(e.target.value));
+      }}
+      onBlur={() => setEmptied(false)}
+      aria-label={label}
+      className="h-8 text-xs font-mono"
+    />
+  );
+}
+
 interface GeneratedIdRowProps {
   item: SnowflakeId;
   index: number;
@@ -117,17 +151,17 @@ function GeneratedIdRow({ item, index, batch, copied, onInspect, onCopy }: Gener
           </span>
           {batch.layout.datacenterBits > 0 && (
             <span>
-              {labels.datacenter?.split(' ')[0] || 'Node A'}: <strong className="font-mono text-foreground">{item.datacenterId}</strong>
+              {rowLabel(labels.datacenter, 'Node A')}: <strong className="font-mono text-foreground">{item.datacenterId}</strong>
             </span>
           )}
           {batch.layout.workerBits > 0 && (
             <span>
-              {labels.worker?.split(' ')[0] || 'Node B'}: <strong className="font-mono text-foreground">{item.workerId}</strong>
+              {rowLabel(labels.worker, 'Node B')}: <strong className="font-mono text-foreground">{item.workerId}</strong>
             </span>
           )}
           {batch.layout.processBits > 0 && (
             <span>
-              {labels.process?.split(' ')[0] || 'Node C'}: <strong className="font-mono text-foreground">{item.processId}</strong>
+              {rowLabel(labels.process, 'Node C')}: <strong className="font-mono text-foreground">{item.processId}</strong>
             </span>
           )}
           <span>
@@ -536,15 +570,11 @@ export function SnowflakeGenerator() {
                         <span>{presetLabels.datacenter || 'Datacenter ID'}:</span>
                         <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{datacenterId}</span>
                       </div>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={maxDatacenterVal}
-                        step={1}
+                      <NodeValueInput
                         value={datacenterId}
-                        onChange={(e) => setDatacenterId(clampFieldValue(Number(e.target.value), datacenterBits))}
-                        aria-label={presetLabels.datacenter || 'Datacenter ID'}
-                        className="h-8 text-xs font-mono"
+                        max={maxDatacenterVal}
+                        label={presetLabels.datacenter || 'Datacenter ID'}
+                        onValueChange={(next) => setDatacenterId(clampFieldValue(next, datacenterBits))}
                       />
                       <span className="text-[10px] text-muted-foreground">Range: 0 - {maxDatacenterVal} ({datacenterBits} bits)</span>
                     </div>
@@ -556,15 +586,11 @@ export function SnowflakeGenerator() {
                         <span>{presetLabels.worker || 'Worker ID'}:</span>
                         <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{workerId}</span>
                       </div>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={maxWorkerVal}
-                        step={1}
+                      <NodeValueInput
                         value={workerId}
-                        onChange={(e) => setWorkerId(clampFieldValue(Number(e.target.value), workerBits))}
-                        aria-label={presetLabels.worker || 'Worker ID'}
-                        className="h-8 text-xs font-mono"
+                        max={maxWorkerVal}
+                        label={presetLabels.worker || 'Worker ID'}
+                        onValueChange={(next) => setWorkerId(clampFieldValue(next, workerBits))}
                       />
                       <span className="text-[10px] text-muted-foreground">Range: 0 - {maxWorkerVal} ({workerBits} bits)</span>
                     </div>
@@ -576,15 +602,11 @@ export function SnowflakeGenerator() {
                         <span>{presetLabels.process || 'Process ID'}:</span>
                         <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{processId}</span>
                       </div>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={maxProcessVal}
-                        step={1}
+                      <NodeValueInput
                         value={processId}
-                        onChange={(e) => setProcessId(clampFieldValue(Number(e.target.value), processBits))}
-                        aria-label={presetLabels.process || 'Process ID'}
-                        className="h-8 text-xs font-mono"
+                        max={maxProcessVal}
+                        label={presetLabels.process || 'Process ID'}
+                        onValueChange={(next) => setProcessId(clampFieldValue(next, processBits))}
                       />
                       <span className="text-[10px] text-muted-foreground">Range: 0 - {maxProcessVal} ({processBits} bits)</span>
                     </div>
@@ -595,15 +617,11 @@ export function SnowflakeGenerator() {
                       <span>Start Sequence:</span>
                       <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{sequenceVal}</span>
                     </div>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={maxSequenceVal}
-                      step={1}
+                    <NodeValueInput
                       value={sequenceVal}
-                      onChange={(e) => setSequenceVal(clampFieldValue(Number(e.target.value), sequenceBits))}
-                      aria-label="Start Sequence"
-                      className="h-8 text-xs font-mono"
+                      max={maxSequenceVal}
+                      label="Start Sequence"
+                      onValueChange={(next) => setSequenceVal(clampFieldValue(next, sequenceBits))}
                     />
                     <span className="text-[10px] text-muted-foreground">Range: 0 - {maxSequenceVal} ({sequenceBits} bits)</span>
                   </div>

@@ -131,10 +131,10 @@ test.describe('generateSnowflakeIds', () => {
       const decoded = valueOf(decodeSnowflake(item.id, layout));
       expect(decoded.timestamp, id).toBe(time);
       expect(decoded.offset, id).toBe(time - layout.epoch);
-      expect(decoded.datacenterId, id).toBe(item.datacenterId);
-      expect(decoded.workerId, id).toBe(item.workerId);
-      expect(decoded.processId, id).toBe(item.processId);
-      expect(decoded.sequence, id).toBe(42);
+      expect(decoded.datacenterId, id).toBe(BigInt(item.datacenterId));
+      expect(decoded.workerId, id).toBe(BigInt(item.workerId));
+      expect(decoded.processId, id).toBe(BigInt(item.processId));
+      expect(decoded.sequence, id).toBe(42n);
     }
   });
 
@@ -226,14 +226,14 @@ test.describe('decodeSnowflake', () => {
     const decoded = valueOf(decodeSnowflake(' 1541815603606036480 ', twitter));
     expect(decoded.timestamp).toBe(1656432460105);
     expect(decoded.offset).toBe(1656432460105 - twitter.epoch);
-    expect(decoded).toMatchObject({ datacenterId: 11, workerId: 26, processId: 0, sequence: 0 });
+    expect(decoded).toMatchObject({ datacenterId: 11n, workerId: 26n, processId: 0n, sequence: 0n });
     expect(decoded.binary).toBe('0001010101100101101000010001111101100010000101111010000000000000');
   });
 
   test('decodes a real Discord ID', () => {
     const decoded = valueOf(decodeSnowflake('175928847299117063', discord));
     expect(decoded.timestamp).toBe(1462015105796);
-    expect(decoded).toMatchObject({ datacenterId: 0, workerId: 1, processId: 0, sequence: 7 });
+    expect(decoded).toMatchObject({ datacenterId: 0n, workerId: 1n, processId: 0n, sequence: 7n });
   });
 
   test('decodes Instagram IDs against the published epoch', () => {
@@ -241,7 +241,7 @@ test.describe('decodeSnowflake', () => {
     const id = (1000n << 23n) | (5n << 10n) | 3n;
     const decoded = valueOf(decodeSnowflake(id.toString(), instagram));
     expect(decoded.timestamp).toBe(1314220021721 + 1000);
-    expect(decoded).toMatchObject({ datacenterId: 5, sequence: 3 });
+    expect(decoded).toMatchObject({ datacenterId: 5n, sequence: 3n });
   });
 
   test('segments cover all 64 bits in field order', () => {
@@ -269,8 +269,27 @@ test.describe('decodeSnowflake', () => {
     ]);
     expect(decoded.segments.map((segment) => segment.bits).join('')).toBe(decoded.binary);
     expect(decoded.binary).toHaveLength(64);
-    expect(parseInt(decoded.segments[1].bits, 2)).toBe(decoded.datacenterId);
-    expect(parseInt(decoded.segments[2].bits, 2)).toBe(decoded.sequence);
+    expect(BigInt(`0b${decoded.segments[1].bits}`)).toBe(decoded.datacenterId);
+    expect(BigInt(`0b${decoded.segments[2].bits}`)).toBe(decoded.sequence);
+  });
+
+  test('keeps every digit of a field wider than 53 bits', () => {
+    // One timestamp bit and a 63-bit node field. 2^53 + 1 is the first whole number a double cannot hold.
+    const wide: SnowflakeLayout = {
+      epoch: 0,
+      timestampBits: 1,
+      datacenterBits: 63,
+      workerBits: 0,
+      processBits: 0,
+      sequenceBits: 0,
+    };
+    const decoded = valueOf(decodeSnowflake('9007199254740993', wide));
+    expect(decoded.datacenterId).toBe(9007199254740993n);
+    expect(decoded.sequence).toBe(0n);
+    expect(decoded.offset).toBe(0);
+
+    const top = valueOf(decodeSnowflake(((1n << 63n) - 1n).toString(), wide));
+    expect(top.datacenterId).toBe((1n << 63n) - 1n);
   });
 
   test('accepts the whole unsigned 64-bit range and nothing outside it', () => {

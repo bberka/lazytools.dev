@@ -122,10 +122,11 @@ export interface DecodedSnowflake {
   timestamp: number;
   /** Milliseconds since the layout's epoch, exactly as stored. */
   offset: number;
-  datacenterId: number;
-  workerId: number;
-  processId: number;
-  sequence: number;
+  /** The node and sequence fields are bigints: a field can be wider than the 53 bits a number holds exactly. */
+  datacenterId: bigint;
+  workerId: bigint;
+  processId: bigint;
+  sequence: bigint;
   /** All 64 bits, most significant first. */
   binary: string;
   /** `binary` cut into its fields in order. Fields with no bits are left out. */
@@ -331,10 +332,10 @@ export function decodeSnowflake(
   return ok({
     timestamp: Number(offset + BigInt(layout.epoch)),
     offset: Number(offset),
-    datacenterId: Number((id >> shift.datacenter) & mask(layout.datacenterBits)),
-    workerId: Number((id >> shift.worker) & mask(layout.workerBits)),
-    processId: Number((id >> shift.process) & mask(layout.processBits)),
-    sequence: Number(id & mask(layout.sequenceBits)),
+    datacenterId: (id >> shift.datacenter) & mask(layout.datacenterBits),
+    workerId: (id >> shift.worker) & mask(layout.workerBits),
+    processId: (id >> shift.process) & mask(layout.processBits),
+    sequence: id & mask(layout.sequenceBits),
     binary,
     segments,
   });
