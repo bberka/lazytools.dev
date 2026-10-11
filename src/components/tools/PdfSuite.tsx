@@ -1,13 +1,14 @@
 'use client';
 
+import type { ComponentType } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const loadingEl = (
-  <div className="flex items-center justify-center py-12">
-    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  <div role="status" aria-label="Loading tool" className="flex items-center justify-center py-6 sm:py-12">
+    <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
   </div>
 );
 
@@ -21,59 +22,44 @@ const PdfSplit = dynamic(() => import('./PdfSplit').then((m) => ({ default: m.Pd
 const PdfCompress = dynamic(() => import('./PdfCompress').then((m) => ({ default: m.PdfCompress })), { ssr: false, loading: () => loadingEl });
 const PdfWatermark = dynamic(() => import('./PdfWatermark').then((m) => ({ default: m.PdfWatermark })), { ssr: false, loading: () => loadingEl });
 
-/** Converter tabs: format conversions */
-const CONVERTER_TABS = [
-  { slug: 'pdf-to-image', label: 'To Image', Component: PdfToImage },
-  { slug: 'pdf-to-word', label: 'To Word', Component: PdfToWord },
-  { slug: 'word-to-pdf', label: 'From Word', Component: WordToPdf },
-  { slug: 'image-to-pdf', label: 'From Image', Component: ImageToPdf },
-] as const;
+interface PdfSuitePage {
+  /** Full class literal: the grid needs one column per tab. */
+  tabsListClassName: string;
+  /** The first tab is the one shown when the slug names no tab. */
+  tabs: readonly { slug: string; label: string; Component: ComponentType }[];
+}
 
-/** Editor tabs: document operations */
-const EDITOR_TABS = [
-  { slug: 'pdf-editor', label: 'Edit Pages', Component: PdfEditor },
-  { slug: 'pdf-merge', label: 'Merge', Component: PdfMerge },
-  { slug: 'pdf-split', label: 'Split', Component: PdfSplit },
-  { slug: 'pdf-compress', label: 'Compress', Component: PdfCompress },
-  { slug: 'pdf-watermark', label: 'Watermark', Component: PdfWatermark },
-] as const;
+/** PDF Converter page: format conversions */
+const CONVERTER_PAGE: PdfSuitePage = {
+  tabsListClassName: 'grid grid-cols-4 h-auto gap-1 p-1',
+  tabs: [
+    { slug: 'pdf-to-image', label: 'To Image', Component: PdfToImage },
+    { slug: 'pdf-to-word', label: 'To Word', Component: PdfToWord },
+    { slug: 'word-to-pdf', label: 'From Word', Component: WordToPdf },
+    { slug: 'image-to-pdf', label: 'From Image', Component: ImageToPdf },
+  ],
+};
 
-const ALL_CONVERTER_SLUGS = new Set<string>(CONVERTER_TABS.map((t) => t.slug));
-const ALL_EDITOR_SLUGS = new Set<string>(EDITOR_TABS.map((t) => t.slug));
+/** PDF Editor page: document operations */
+const EDITOR_PAGE: PdfSuitePage = {
+  tabsListClassName: 'grid grid-cols-5 h-auto gap-1 p-1',
+  tabs: [
+    { slug: 'pdf-editor', label: 'Edit Pages', Component: PdfEditor },
+    { slug: 'pdf-merge', label: 'Merge', Component: PdfMerge },
+    { slug: 'pdf-split', label: 'Split', Component: PdfSplit },
+    { slug: 'pdf-compress', label: 'Compress', Component: PdfCompress },
+    { slug: 'pdf-watermark', label: 'Watermark', Component: PdfWatermark },
+  ],
+};
 
 export function PdfSuite() {
   const pathname = usePathname();
   const slug = pathname.split('/').filter(Boolean).pop() ?? '';
 
-  // Determine which page we're on
-  if (ALL_EDITOR_SLUGS.has(slug)) {
-    // PDF Editor page
-    const activeTab = EDITOR_TABS.find((t) => t.slug === slug)?.slug ?? 'pdf-editor';
-    return (
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => {
-          window.history.replaceState(null, '', `/tools/${value}/`);
-        }}
-      >
-        <TabsList className="grid grid-cols-5 h-auto gap-1 p-1">
-          {EDITOR_TABS.map((t) => (
-            <TabsTrigger key={t.slug} value={t.slug} className="text-xs sm:text-sm">
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {EDITOR_TABS.map((t) => (
-          <TabsContent key={t.slug} value={t.slug}>
-            <t.Component />
-          </TabsContent>
-        ))}
-      </Tabs>
-    );
-  }
+  // An editor slug opens the PDF Editor page; every other slug opens the PDF Converter page
+  const page = EDITOR_PAGE.tabs.some((t) => t.slug === slug) ? EDITOR_PAGE : CONVERTER_PAGE;
+  const activeTab = page.tabs.find((t) => t.slug === slug)?.slug ?? page.tabs[0].slug;
 
-  // PDF Converter page (default)
-  const activeTab = CONVERTER_TABS.find((t) => t.slug === slug)?.slug ?? 'pdf-to-image';
   return (
     <Tabs
       value={activeTab}
@@ -81,14 +67,14 @@ export function PdfSuite() {
         window.history.replaceState(null, '', `/tools/${value}/`);
       }}
     >
-      <TabsList className="grid grid-cols-4 h-auto gap-1 p-1">
-        {CONVERTER_TABS.map((t) => (
+      <TabsList className={page.tabsListClassName}>
+        {page.tabs.map((t) => (
           <TabsTrigger key={t.slug} value={t.slug} className="text-xs sm:text-sm">
             {t.label}
           </TabsTrigger>
         ))}
       </TabsList>
-      {CONVERTER_TABS.map((t) => (
+      {page.tabs.map((t) => (
         <TabsContent key={t.slug} value={t.slug}>
           <t.Component />
         </TabsContent>

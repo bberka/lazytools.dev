@@ -1,124 +1,29 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState, useSyncExternalStore } from 'react';
 import { CalendarRange, Check, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useCopyToClipboard } from '@/hooks';
-
-type DifferenceBreakdown = {
-  years: number;
-  months: number;
-  days: number;
-  totalDays: number;
-  totalWeeks: number;
-  totalMonths: number;
-};
-
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
+import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
+import {
+  calendarDifference,
+  formatCount,
+  formatDuration,
+  type CalendarDifference,
+} from '@/lib/tools/date-difference';
 
 function getTodayValue(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return toDateInputValue(new Date());
 }
 
-function parseDateInput(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+const noSubscription = () => () => {};
 
-  if (!match) {
-    return null;
-  }
-
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-  const day = Number(match[3]);
-  const date = new Date(Date.UTC(year, monthIndex, day));
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== monthIndex ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
-}
-
-function formatLongDate(value: string): string {
-  const date = parseDateInput(value);
-
-  if (!date) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
-}
-
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
-function getDaysInMonth(year: number, monthIndex: number): number {
-  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-}
-
-function calculateDifference(
-  startDateValue: string,
-  endDateValue: string
-): DifferenceBreakdown | null {
-  const startDate = parseDateInput(startDateValue);
-  const endDate = parseDateInput(endDateValue);
-
-  if (!startDate || !endDate || endDate < startDate) {
-    return null;
-  }
-
-  let years = endDate.getUTCFullYear() - startDate.getUTCFullYear();
-  let months = endDate.getUTCMonth() - startDate.getUTCMonth();
-  let days = endDate.getUTCDate() - startDate.getUTCDate();
-
-  if (days < 0) {
-    months -= 1;
-    const previousMonthIndex = (endDate.getUTCMonth() + 11) % 12;
-    const previousMonthYear =
-      previousMonthIndex === 11 ? endDate.getUTCFullYear() - 1 : endDate.getUTCFullYear();
-    days += getDaysInMonth(previousMonthYear, previousMonthIndex);
-  }
-
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / DAY_IN_MS);
-  const totalWeeks = Math.floor(totalDays / 7);
-  const totalMonths = years * 12 + months;
-
-  return {
-    years,
-    months,
-    days,
-    totalDays,
-    totalWeeks,
-    totalMonths,
-  };
-}
-
-export function DateDifferenceCalculator() {
+function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
+  const id = useId();
   const [startDate, setStartDate] = useState('2024-01-01');
-  const [endDate, setEndDate] = useState(getTodayValue());
+  const [endDate, setEndDate] = useState(initialEndDate);
   const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => {
@@ -127,7 +32,7 @@ export function DateDifferenceCalculator() {
         value: '',
         detail: 'Choose both dates to calculate the difference.',
         error: '',
-        breakdown: null as DifferenceBreakdown | null,
+        breakdown: null as CalendarDifference | null,
       };
     }
 
@@ -139,7 +44,7 @@ export function DateDifferenceCalculator() {
         value: '',
         detail: '',
         error: 'Enter valid calendar dates.',
-        breakdown: null as DifferenceBreakdown | null,
+        breakdown: null as CalendarDifference | null,
       };
     }
 
@@ -148,23 +53,23 @@ export function DateDifferenceCalculator() {
         value: '',
         detail: '',
         error: 'The end date cannot be earlier than the start date.',
-        breakdown: null as DifferenceBreakdown | null,
+        breakdown: null as CalendarDifference | null,
       };
     }
 
-    const breakdown = calculateDifference(startDate, endDate);
+    const breakdown = calendarDifference(startDate, endDate);
 
     if (!breakdown) {
       return {
         value: '',
         detail: '',
         error: 'Unable to calculate the difference for the selected dates.',
-        breakdown: null as DifferenceBreakdown | null,
+        breakdown: null as CalendarDifference | null,
       };
     }
 
     return {
-      value: `${breakdown.years} years, ${breakdown.months} months, ${breakdown.days} days`,
+      value: formatDuration(breakdown),
       detail: `${formatLongDate(startDate)} to ${formatLongDate(endDate)}`,
       error: '',
       breakdown,
@@ -177,7 +82,7 @@ export function DateDifferenceCalculator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Date Difference Calculator</CardTitle>
@@ -187,9 +92,12 @@ export function DateDifferenceCalculator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">Start date</label>
+            <div role="group" aria-labelledby={`${id}-start`}>
+              <span id={`${id}-start`} className="mb-2 block text-sm font-medium">
+                Start date
+              </span>
               <DatePicker
+                aria-labelledby={`${id}-start`}
                 value={startDate}
                 onChange={setStartDate}
                 disabled={(date) => {
@@ -200,9 +108,12 @@ export function DateDifferenceCalculator() {
                 error={!parseDateInput(startDate) && !!startDate}
               />
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">End date</label>
+            <div role="group" aria-labelledby={`${id}-end`}>
+              <span id={`${id}-end`} className="mb-2 block text-sm font-medium">
+                End date
+              </span>
               <DatePicker
+                aria-labelledby={`${id}-end`}
                 value={endDate}
                 onChange={setEndDate}
                 disabled={(date) => {
@@ -266,7 +177,7 @@ export function DateDifferenceCalculator() {
                   Total months
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalMonths)}
+                  {formatCount(result.breakdown.totalMonths)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -274,7 +185,7 @@ export function DateDifferenceCalculator() {
                   Total weeks
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalWeeks)}
+                  {formatCount(result.breakdown.totalWeeks)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -282,7 +193,7 @@ export function DateDifferenceCalculator() {
                   Total days
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalDays)}
+                  {formatCount(result.breakdown.totalDays)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -299,5 +210,24 @@ export function DateDifferenceCalculator() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export function DateDifferenceCalculator() {
+  // The page is exported as static HTML at build time. "Today" rendered into
+  // it would be the build date: stale for every visitor and a hydration
+  // mismatch. The HTML and the first client render leave the date empty, and
+  // the form is mounted again with the visitor's date once hydrated.
+  const hydrated = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false
+  );
+  const [today] = useState(getTodayValue);
+
+  return hydrated ? (
+    <DateDifferenceForm key="local" initialEndDate={today} />
+  ) : (
+    <DateDifferenceForm key="static" initialEndDate="" />
   );
 }

@@ -89,12 +89,12 @@ All tools must be:
 - **Key Features**: Format selectors, size settings, copy/download outputs.
 - **Implementation**: Uses `jsbarcode` library.
 
-#### TOTP (2FA) Code Generator
+#### TOTP (2FA) Code Generator (Status: Implemented)
 - **Description**: Generate and display 6-digit 2FA authenticator codes from secret keys.
 - **Key Features**: Real-time counter, scanning inputs.
 - **Implementation**: Uses `otplib` or lightweight HMAC-SHA1 calculation.
 
-#### ULID Generator
+#### ULID Generator (Status: Implemented)
 - **Description**: Generate Universally Unique Lexicographically Sortable Identifiers.
 - **Key Features**: Timestamp-based sorting, random generation.
 - **Implementation**: Dynamically imported `ulid` library.
@@ -152,7 +152,7 @@ All tools must be:
 - **Key Features**: Strips leading/trailing spaces, case insensitivity selectors, reverse sorting.
 - **Implementation**: Native JS array sorting routines.
 
-#### Zero-Width & Unicode Inspector
+#### Zero-Width & Unicode Inspector (Status: Implemented)
 - **Description**: Inspect string characters to highlight hidden or zero-width symbols.
 - **Key Features**: Detailed Unicode mapping, reveals characters like `\u200B` or control markers.
 - **Implementation**: Loop checking character codes.
@@ -192,7 +192,7 @@ All tools must be:
 - **Key Features**: Formatting toolbar, HTML source view.
 - **Implementation**: Lightweight editor like `quill` or `tiptap`.
 
-#### JSON Diff
+#### JSON Diff (Status: Implemented)
 - **Description**: Visual diff tool specifically for comparing two JSON objects.
 - **Key Features**: Highlights added, removed, and changed keys, ignores key order.
 - **Implementation**: React diff viewer with parsed JSON.
@@ -206,7 +206,7 @@ All tools must be:
 
 ### 6. Utilities
 
-#### JWT Creator/Signer
+#### JWT Creator/Signer (Status: Implemented)
 - **Description**: Generate mock JSON Web Tokens (HMAC) for testing authorization flows.
 - **Key Features**: Adjustable header/payload parameters, private keys signature.
 - **Implementation**: Client-side cryptography via Web Crypto API.
@@ -221,12 +221,12 @@ All tools must be:
 - **Key Features**: Real-time listener on window resizing.
 - **Implementation**: Browser standard APIs.
 
-#### Chmod Calculator
+#### Chmod Calculator (Status: Implemented)
 - **Description**: Visual Unix file permission calculator (e.g., `rwx` to `777`).
 - **Key Features**: Checkboxes for Owner/Group/Public, octal and symbolic output.
 - **Implementation**: Bitwise operations.
 
-#### Docker Run to Docker Compose
+#### Docker Run to Docker Compose (Status: Implemented)
 - **Description**: Convert `docker run` shell commands into `docker-compose.yml` configurations.
 - **Key Features**: Parses environment variables, ports, and volumes.
 - **Implementation**: Client-side parsing algorithm.
@@ -236,7 +236,7 @@ All tools must be:
 - **Key Features**: Fast offline lookup.
 - **Implementation**: Static dictionary dataset.
 
-#### User-Agent Parser
+#### User-Agent Parser (Status: Implemented)
 - **Description**: Parse and display device, OS, and browser info from a User-Agent string.
 - **Key Features**: Visual badges for browser/OS, current user-agent detection.
 - **Implementation**: `ua-parser-js` library.
@@ -260,7 +260,7 @@ All tools must be:
 
 ### 7. Security
 
-#### HMAC Generator
+#### HMAC Generator (Status: Implemented)
 - **Description**: Compute HMAC signatures (SHA-256/512) with a custom secret key.
 - **Key Features**: Hex and Base64 output options.
 - **Implementation**: Native Web Crypto API.
@@ -294,7 +294,7 @@ All tools must be:
 - **Key Features**: Output verbose error descriptions if request fails.
 - **Implementation**: Native `fetch` with error status inspection.
 
-#### HTTP Status Codes Cheat Sheet
+#### HTTP Status Codes Cheat Sheet (Status: Implemented)
 - **Description**: Fast reference directory of HTTP status codes and specifications.
 - **Key Features**: Responsive search filter.
 - **Implementation**: Static dictionary.
@@ -333,7 +333,7 @@ All tools must be:
 
 ### 9. Design
 
-#### CSS Gradient Generator
+#### CSS Gradient Generator (Status: Implemented)
 - **Description**: Visual multi-stop linear/radial gradient picker producing CSS and Tailwind.
 - **Key Features**: Colorful visual sliders, custom stop additions.
 - **Implementation**: Direct CSS rendering.
@@ -401,7 +401,7 @@ All tools must be:
 
 ### 11. Calculators
 
-#### Loan & Mortgage Calculator
+#### Loan & Mortgage Calculator (Status: Implemented)
 - **Description**: Compute loan payment tables and view complete amortization schedules.
 - **Key Features**: Interactive monthly tables.
 - **Implementation**: Math interest formula.

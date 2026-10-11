@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 
 interface CommandPaletteContextType {
   open: boolean;
@@ -25,23 +19,11 @@ export function CommandPaletteProvider({
 }) {
   const [open, setOpen] = useState(false);
 
+  // The shortcut that calls this is dispatched by the keydown listener in
+  // components/CommandPalette.tsx, together with every other app shortcut.
   const toggle = useCallback(() => {
     setOpen((prev: boolean) => !prev);
   }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+K (Windows/Linux) or Cmd+K (macOS)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        e.stopPropagation();
-        toggle();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggle]);
 
   return (
     <CommandPaletteContext.Provider value={{ open, setOpen, toggle }}>

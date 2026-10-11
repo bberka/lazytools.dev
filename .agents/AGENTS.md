@@ -21,7 +21,9 @@ This guide is for coding agents working in this repository. It is grounded in th
 - Lint: `npm run lint`
 - Fix lint: `npm run lint:fix`
 - Format: `npm run format`
+- Unit tests: `npm run test:unit`
 - E2E tests: `npm run test:e2e`
+- E2E tests against the static export: `npm run build && npm run test:e2e:export`
 - E2E UI runner: `npm run test:e2e:ui`
 - Install Playwright browsers: `npm run test:e2e:install`
 - Bundle analysis: `npm run analyze`
@@ -42,14 +44,20 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 - `src/app/layout.tsx` defines global metadata, font setup, theme flicker prevention, providers, header, footer, PWA registration, Tauri handling, and command palette.
 - `src/app/page.tsx` renders the home page shell.
-- `src/components/HomeContent.tsx` handles search, tag filtering, favorites filtering, session-state restoration, grouped tool cards, and compact-mode layout.
-- `src/app/tools/[slug]/page.tsx` statically generates every tool route from `TOOLS`, generates per-tool metadata, loads the tool component, and wraps it in `ToolPageClient`.
+- `src/components/HomeContent.tsx` renders search, tag filtering, favorites filtering, grouped tool cards, and compact-mode layout. Its session state lives in `src/lib/home`.
+- `src/app/tools/[slug]/page.tsx` statically generates every tool route from the catalog, generates per-tool metadata, loads the tool component, and wraps it in `ToolPageClient`.
 - `src/components/ToolPageClient.tsx` handles the tool page header, favorite button, full-width setting, and recent-tool tracking.
 - `src/lib/utils/tool-registry.ts` is the source of truth for tool IDs, names, descriptions, tags, icons, keywords, hidden/featured flags, and lazy component loaders.
-- `src/lib/utils/tools-config.ts` derives `TOOLS` and `TAGS`, search scoring, filtering, and helpers from the registry.
-- `src/lib/types.ts` defines shared tool, tag, settings, and filter types.
-- `src/lib/contexts/*` stores theme, settings, favorites, recents, and command-palette state.
-- `src/lib/utils/storage.ts` wraps browser `localStorage` with SSR-safe helpers and the `dev-toolbox:*` key namespace.
+- `src/lib/catalog` is the tool catalog built from the registry: visibility (hidden policy), lookup by slug with the component loader, search scoring, filtering, and grouping by tag. Ask it; do not read the registry directly or re-implement any of that in a component. `createToolCatalog(registry)` takes a fixture registry in tests.
+- `src/lib/tags` holds everything about a tag (name, description, icon, per-surface classes, order), keyed by the `ToolTag` union. Adding a tag means editing the union in `src/lib/types.ts` and this module only.
+- `src/lib/types.ts` defines the shared tool, tag, and registry types.
+- `src/lib/preferences` is the preferences store: `localStorage` key names (`dev-toolbox:*`), defaults, SSR-safe reads, write-through, and cross-tab sync, behind a storage seam with browser and in-memory adapters.
+- `src/lib/contexts/*` are thin React readers of that store for theme, settings, favorites, and recents, plus command-palette open state.
+- `src/lib/home` owns home-page session state (`sessionStorage` keys, restore, reset) and the grid keyboard-navigation maths.
+- `src/lib/commands` defines each app command once (label, shortcut, action, feedback). The command palette, the settings dialog, and the single global shortcut listener in `CommandPalette.tsx` work from it.
+- `src/lib/files`, `src/hooks/useFileIntake.ts`, `src/hooks/useObjectUrl.ts`, and `src/components/FileDropzone.tsx` cover taking files in (picker, drag-and-drop, validation, reading) and handing them back (downloads, file names, size labels). Tools must use these instead of their own file inputs, `FileReader` code, or download anchors.
+- `src/lib/pdf` owns pdfjs loading, the bundled worker, opening documents, rendering pages, and text extraction. `src/lib/markdown` owns the Markdown parser configuration and export template. `src/lib/export` holds the snapshot-PDF and print helpers.
+- `src/lib/tools/*` holds the pure logic of individual tools, covered by unit tests.
 - `src/components/ui/*` contains shadcn-style primitives. Avoid editing these for page-level layout fixes.
 - `src/components/tools/*` contains individual client-side tool implementations.
 
@@ -60,7 +68,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Each entry must include display metadata and a lazy component loader.
 - Description length is enforced at module load: 40 to 65 characters inclusive.
 - `hidden: true` keeps a route available but hides it from normal lists and search results.
-- `TOOLS` is derived from the registry; do not duplicate tool metadata elsewhere.
+- The catalog (`src/lib/catalog`) is derived from the registry; do not duplicate tool metadata elsewhere.
 - `src/app/tools/[slug]/page.tsx`, sitemap generation, home search/filtering, route coverage tests, and service-worker precache generation all depend on the registry.
 
 ## Adding A Tool
@@ -71,8 +79,9 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 4. Use existing primitives from `src/components/ui` before adding new UI primitives.
 5. Keep browser-only APIs inside client components, effects, or event handlers.
 6. Lazy-load heavy libraries inside the tool when practical, especially PDF, image, crypto, OCR, parser, or export dependencies.
-7. Verify `/tools/<slug>` in dev, home search, tag filtering, favorites, recents, and command palette navigation.
-8. Run `npm run typecheck` and `npm run build`; add or run Playwright tests for core flows or route behavior when relevant.
+7. Put logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. Use the shared file, PDF, and Markdown modules rather than private copies.
+8. Verify `/tools/<slug>` in dev, home search, tag filtering, favorites, recents, and command palette navigation.
+9. Run `npm run typecheck`, `npm run test:unit`, and `npm run build`; add or run Playwright tests for core flows or route behavior when relevant.
 
 ## UI And UX Conventions
 
@@ -98,24 +107,24 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 - Do not add request-time server rendering assumptions.
 - Keep route data static-safe.
-- Dynamic tool routes must be generated through `TOOLS` and `generateStaticParams()`.
+- Dynamic tool routes must be generated through the catalog and `generateStaticParams()`.
 - Do not add server-only APIs, Node-only runtime dependencies in browser paths, or Next features that break `output: 'export'`.
 - External lookup tools must call public CORS-enabled HTTPS APIs from the browser and handle failures gracefully.
 - Next image optimization is disabled for static export; use compatible image patterns.
 
 ## State And Persistence
 
-- Theme, favorites, recent tools, compact mode, full-width mode, and per-tool settings use `localStorage` through `src/lib/utils/storage.ts`.
-- Home search/filter/scroll restoration uses `sessionStorage` in `HomeContent`.
+- Theme, favorites, recent tools, compact mode, and full-width mode use `localStorage` through the preferences store in `src/lib/preferences`. Do not write `dev-toolbox:*` keys anywhere else. There is no per-tool settings storage.
+- Home search/filter/scroll restoration uses `sessionStorage` through `src/lib/home`.
 - Theme initialization is intentionally duplicated early in `layout.tsx` to prevent flicker before hydration.
 - Always guard direct browser storage, DOM, window, navigator, clipboard, canvas, file, audio, and crypto APIs behind client-only execution.
 
 ## PWA And Service Worker
 
 - `public/sw.js` implements static asset caching, route precache loading, network-first navigation, and stale-while-revalidate static assets.
-- `scripts/generate-sw-precache.js` runs after `next build` and writes `public/sw-precache.js` from registry slugs.
-- If tool routes change, `npm run build` regenerates the precache list.
-- Avoid hand-editing generated `public/sw-precache.js` unless intentionally changing generated output.
+- `src/app/sw-precache.js/route.ts` is a static route handler that emits `/sw-precache.js` from the registry during `next build`, the same way the sitemap is emitted.
+- If tool routes change, `npm run build` regenerates the precache list. There is no separate generation script.
+- Do not add a `public/sw-precache.js` file; it would conflict with the route.
 
 ## Desktop And Release
 
@@ -127,11 +136,15 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 ## Testing
 
-- Playwright config is in `playwright.config.ts`.
-- Tests run against `http://localhost:3000` and start `npm run dev` automatically.
+- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `npm run test:unit` (`playwright.unit.config.ts`). They use the Playwright test runner but need no browser and no dev server; import the module under test with the `@/` alias.
+- Put tool logic that can be a plain function in `src/lib/` and cover it with a unit test rather than an e2e test.
+- Playwright e2e config is in `playwright.config.ts`.
+- `npm run test:e2e` runs against `http://localhost:3000` and starts `npm run dev` automatically.
+- `npm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
 - Projects cover Chromium, Firefox, and WebKit; route coverage skips non-Chromium for speed.
-- `playwright/route-coverage.spec.ts` iterates every `TOOLS` entry and verifies each tool page renders.
+- `playwright/route-coverage.spec.ts` iterates every catalog entry and verifies each tool page renders.
 - `playwright/smoke.spec.ts` covers search, favorites, command palette navigation, and JSON Formatter behavior.
+- `playwright/tools/*.spec.ts` drive every tool through its main flow and an edge case, one spec per tool group, on Chromium only. A test marked `test.fixme` documents a known open defect; remove the marker when you fix it.
 - For UI changes, manually verify mobile and desktop widths, light/dark mode, compact mode, and full-width mode when affected.
 
 ## Code Style
@@ -148,7 +161,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 - Registry description length outside 40-65 characters will throw at import/build time.
 - Missing or mismatched named exports in tool components are caught by typecheck/build through lazy component loaders.
-- Hidden tools still generate routes because `generateStaticParams()` maps all `TOOLS` entries.
+- Hidden tools still generate routes because `generateStaticParams()` maps every catalog entry. Hidden means left out of discovery (lists, tag groups, search), never out of by-id access (route, favorites, recents).
 - Client tools can be statically routed, but interactive logic must hydrate in client components.
 - Browser APIs used during render or in server components will break static/server execution.
 - PWA service workers can create stale behavior during local testing; Playwright blocks service workers by default.
@@ -156,7 +169,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 ## Agent Workflow
 
 1. Read the relevant docs before changing behavior: start with `docs/ARCHITECTURE.md` and `docs/CONTRIBUTING.md`.
-2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `tools-config.ts`, and the relevant `src/components/tools/*` file.
+2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `src/lib/catalog`, and the relevant `src/components/tools/*` and `src/lib/tools/*` files.
 3. Keep privacy-first and static-export compatibility as non-negotiable constraints.
 4. Make minimal targeted edits and avoid touching shared UI primitives for one-off layout fixes.
 5. Run the narrowest useful checks first, then `npm run build` when feasible.

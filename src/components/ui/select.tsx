@@ -14,7 +14,7 @@ const extractText = (node: React.ReactNode): string => {
     return node.map(extractText).join('');
   }
   if (React.isValidElement(node)) {
-    const props = node.props as any;
+    const props = node.props as { children?: React.ReactNode };
     if (props && props.children) {
       return extractText(props.children);
     }
@@ -22,17 +22,26 @@ const extractText = (node: React.ReactNode): string => {
   return '';
 };
 
+interface SelectItemProps {
+  value: string;
+  children: React.ReactNode;
+}
+
+const isSelectItem = (element: React.ReactElement): element is React.ReactElement<SelectItemProps> => {
+  const type: unknown = element.type;
+  if (typeof type !== 'function' && (typeof type !== 'object' || type === null)) return false;
+  const { displayName, name } = type as { displayName?: string; name?: string };
+  return displayName === 'SelectItem' || name === 'SelectItem';
+};
+
 const extractItems = (children: React.ReactNode, map: Map<string, string>) => {
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child)) {
-      const type = child.type as any;
-      if (type && (type.displayName === 'SelectItem' || type.name === 'SelectItem')) {
-        const props = child.props as any;
-        const value = props.value;
-        const label = extractText(props.children);
-        map.set(value, label);
+      if (isSelectItem(child)) {
+        const { value, children: label } = child.props;
+        map.set(value, extractText(label));
       } else {
-        const props = child.props as any;
+        const props = child.props as { children?: React.ReactNode };
         if (props && props.children) {
           extractItems(props.children, map);
         }
@@ -60,7 +69,7 @@ interface SelectContextType {
 
 const SelectContext = React.createContext<SelectContextType | null>(null);
 
-function Select({
+function Select<T extends string = string>({
   children,
   value,
   onValueChange,
@@ -73,7 +82,7 @@ function Select({
 }: {
   children: React.ReactNode;
   value?: string;
-  onValueChange?: (value: any) => void;
+  onValueChange?: (value: T) => void;
   defaultValue?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -115,7 +124,7 @@ function Select({
 
   const handleValueChange = (val: string) => {
     setSelectedValue(val);
-    onValueChange?.(val);
+    onValueChange?.(val as T);
     setOpen(false);
     setSearch('');
   };
@@ -266,7 +275,7 @@ const SelectContent = React.forwardRef<
           />
         </div>
       )}
-      <div className="max-h-60 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
+      <div role="listbox" className="max-h-60 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
         {children}
       </div>
     </PopoverContent>
@@ -301,7 +310,7 @@ const SelectItem = React.forwardRef<
     (node: HTMLButtonElement | null) => {
       buttonRef.current = node;
       if (typeof ref === 'function') ref(node);
-      else if (ref) (ref as any).current = node;
+      else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
     },
     [ref]
   );

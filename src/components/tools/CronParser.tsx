@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { AlertCircle, Calendar, Check, Clock, Copy, Settings2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,46 +15,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
-
-interface CronParts {
-  minute: string;
-  hour: string;
-  dayOfMonth: string;
-  month: string;
-  dayOfWeek: string;
-}
+import {
+  CRON_SEARCH_YEARS,
+  DAY_NAMES,
+  MONTH_NAMES,
+  buildCronExpression,
+  formatTimeUntil,
+  nextCronRuns,
+  parseCron,
+  type CronBuilderMode,
+  type CronTimezone,
+} from '@/lib/tools/cron-expression';
 
 interface NextRun {
+  key: number;
   date: string;
   time: string;
   fromNow: string;
 }
 
-type BuilderMode =
-  | 'every-minutes'
-  | 'hourly'
-  | 'daily'
-  | 'weekdays'
-  | 'weekly'
-  | 'monthly'
-  | 'yearly'
-  | 'custom';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+type BuilderMode = CronBuilderMode | 'custom';
 
 const BUILDER_MODE_OPTIONS: Array<{ value: BuilderMode; label: string }> = [
   { value: 'every-minutes', label: 'Every N minutes' },
@@ -77,342 +57,58 @@ const presets = [
   { value: '0 0 1 * *', label: 'First day of every month' },
 ];
 
-function parseNumber(value: string): number | null {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) ? parsed : null;
-}
+const MINUTE_MS = 60_000;
 
-function isValidRange(value: number, min: number, max: number): boolean {
-  return value >= min && value <= max;
-}
+/** Calls back at the start of every minute, and when the tab is shown again. */
+function subscribeToMinutes(onChange: () => void): () => void {
+  let timer: ReturnType<typeof setTimeout>;
 
-function validateCronField(field: string, min: number, max: number, label: string) {
-  const segments = field.split(',');
-
-  segments.forEach((segment) => {
-    const trimmed = segment.trim();
-
-    if (!trimmed) {
-      throw new Error(`${label} contains an empty segment.`);
-    }
-
-    if (trimmed === '*') {
-      return;
-    }
-
-    const stepParts = trimmed.split('/');
-
-    if (stepParts.length > 2) {
-      throw new Error(`${label} has an invalid step value.`);
-    }
-
-    const base = stepParts[0];
-    const step = stepParts[1];
-
-    if (step) {
-      const stepValue = parseNumber(step);
-      if (stepValue === null || stepValue <= 0) {
-        throw new Error(`${label} step must be a positive integer.`);
-      }
-    }
-
-    if (base === '*') {
-      return;
-    }
-
-    if (base.includes('-')) {
-      const [startText, endText] = base.split('-');
-      const start = parseNumber(startText);
-      const end = parseNumber(endText);
-
-      if (
-        start === null ||
-        end === null ||
-        !isValidRange(start, min, max) ||
-        !isValidRange(end, min, max) ||
-        start > end
-      ) {
-        throw new Error(`${label} range must stay between ${min} and ${max}.`);
-      }
-
-      return;
-    }
-
-    const value = parseNumber(base);
-
-    if (value === null || !isValidRange(value, min, max)) {
-      throw new Error(`${label} must stay between ${min} and ${max}.`);
-    }
-  });
-}
-
-function parseCronExpression(expression: string): CronParts {
-  const cronParts = expression.trim().split(/\s+/);
-
-  if (cronParts.length !== 5) {
-    throw new Error(
-      'Cron expression must have exactly 5 fields: minute hour day-of-month month day-of-week.'
+  const waitForNextMinute = () => {
+    timer = setTimeout(
+      () => {
+        onChange();
+        waitForNextMinute();
+      },
+      MINUTE_MS - (Date.now() % MINUTE_MS) + 20
     );
+  };
+
+  waitForNextMinute();
+  document.addEventListener('visibilitychange', onChange);
+
+  return () => {
+    clearTimeout(timer);
+    document.removeEventListener('visibilitychange', onChange);
+  };
+}
+
+const getCurrentMinute = () => Math.floor(Date.now() / MINUTE_MS);
+// The clock is unknown while prerendering, so the run list waits for the browser.
+const getServerMinute = () => null;
+
+function formatRun(run: Date, timezone: CronTimezone, now: Date): NextRun {
+  const fromNow = formatTimeUntil(run, now);
+
+  if (timezone === 'utc') {
+    const iso = run.toISOString();
+    return {
+      key: run.getTime(),
+      date: iso.slice(0, 10),
+      time: `${iso.slice(11, 16)} UTC`,
+      fromNow,
+    };
   }
-
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
-
-  validateCronField(minute, 0, 59, 'Minute');
-  validateCronField(hour, 0, 23, 'Hour');
-  validateCronField(dayOfMonth, 1, 31, 'Day of month');
-  validateCronField(month, 1, 12, 'Month');
-  validateCronField(dayOfWeek, 0, 6, 'Day of week');
 
   return {
-    minute,
-    hour,
-    dayOfMonth,
-    month,
-    dayOfWeek,
+    key: run.getTime(),
+    date: run.toLocaleDateString(),
+    time: run.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    fromNow,
   };
-}
-
-function expandField(field: string, min: number, max: number): Set<number> {
-  const values = new Set<number>();
-
-  const addRange = (start: number, end: number, step = 1) => {
-    for (let value = start; value <= end; value += step) {
-      values.add(value);
-    }
-  };
-
-  field.split(',').forEach((segment) => {
-    const trimmed = segment.trim();
-    const [base, stepText] = trimmed.split('/');
-    const step = stepText ? Number(stepText) : 1;
-
-    if (base === '*') {
-      addRange(min, max, step);
-      return;
-    }
-
-    if (base.includes('-')) {
-      const [startText, endText] = base.split('-');
-      addRange(Number(startText), Number(endText), step);
-      return;
-    }
-
-    const singleValue = Number(base);
-    if (Number.isInteger(singleValue)) {
-      values.add(singleValue);
-    }
-  });
-
-  return values;
-}
-
-function matchesCron(date: Date, parts: CronParts, tz: 'local' | 'utc' = 'local'): boolean {
-  const minuteValues = expandField(parts.minute, 0, 59);
-  const hourValues = expandField(parts.hour, 0, 23);
-  const dayOfMonthValues = expandField(parts.dayOfMonth, 1, 31);
-  const monthValues = expandField(parts.month, 1, 12);
-  const dayOfWeekValues = expandField(parts.dayOfWeek, 0, 6);
-
-  if (tz === 'utc') {
-    return (
-      minuteValues.has(date.getUTCMinutes()) &&
-      hourValues.has(date.getUTCHours()) &&
-      dayOfMonthValues.has(date.getUTCDate()) &&
-      monthValues.has(date.getUTCMonth() + 1) &&
-      dayOfWeekValues.has(date.getUTCDay())
-    );
-  }
-
-  return (
-    minuteValues.has(date.getMinutes()) &&
-    hourValues.has(date.getHours()) &&
-    dayOfMonthValues.has(date.getDate()) &&
-    monthValues.has(date.getMonth() + 1) &&
-    dayOfWeekValues.has(date.getDay())
-  );
-}
-
-function getRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) {
-    return `in ${diffDays} day${diffDays === 1 ? '' : 's'}`;
-  }
-
-  if (diffHours > 0) {
-    return `in ${diffHours} hour${diffHours === 1 ? '' : 's'}`;
-  }
-
-  if (diffMins > 0) {
-    return `in ${diffMins} minute${diffMins === 1 ? '' : 's'}`;
-  }
-
-  return 'now';
-}
-
-function calculateNextRuns(parts: CronParts, tz: 'local' | 'utc' = 'local'): NextRun[] {
-  const runs: NextRun[] = [];
-  const cursor = new Date();
-  cursor.setSeconds(0, 0);
-  cursor.setMinutes(cursor.getMinutes() + 1);
-
-  let checked = 0;
-  const maxChecks = 60 * 24 * 366;
-
-  while (runs.length < 5 && checked < maxChecks) {
-    if (matchesCron(cursor, parts, tz)) {
-      if (tz === 'utc') {
-        const utcDateStr = cursor.toISOString().split('T')[0];
-        const utcTimeStr = cursor.toISOString().split('T')[1].substring(0, 5) + ' UTC';
-        runs.push({
-          date: utcDateStr,
-          time: utcTimeStr,
-          fromNow: getRelativeTime(cursor),
-        });
-      } else {
-        runs.push({
-          date: cursor.toLocaleDateString(),
-          time: cursor.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          fromNow: getRelativeTime(cursor),
-        });
-      }
-    }
-
-    cursor.setMinutes(cursor.getMinutes() + 1);
-    checked += 1;
-  }
-
-  return runs;
-}
-
-function describeNumericField(
-  field: string,
-  singular: string,
-  plural: string
-): string | null {
-  if (field === '*') {
-    return null;
-  }
-
-  if (field.startsWith('*/')) {
-    return `every ${field.slice(2)} ${plural}`;
-  }
-
-  if (field.includes(',')) {
-    return `${plural} ${field}`;
-  }
-
-  if (field.includes('-')) {
-    return `${singular}s ${field}`;
-  }
-
-  return `${singular} ${field}`;
-}
-
-function generateDescription(parts: CronParts): string {
-  const minuteDescription = describeNumericField(parts.minute, 'minute', 'minutes');
-  const hourDescription = describeNumericField(parts.hour, 'hour', 'hours');
-  const dayDescription =
-    parts.dayOfMonth === '*'
-      ? ''
-      : parts.dayOfMonth.includes(',')
-        ? `on days ${parts.dayOfMonth} of the month`
-        : `on day ${parts.dayOfMonth} of the month`;
-
-  const monthDescription =
-    parts.month === '*'
-      ? ''
-      : parts.month.includes(',')
-        ? `in months ${parts.month}`
-        : `in ${MONTH_NAMES[Number(parts.month) - 1] ?? `month ${parts.month}`}`;
-
-  let weekdayDescription = '';
-
-  if (parts.dayOfWeek !== '*') {
-    if (parts.dayOfWeek === '1-5') {
-      weekdayDescription = 'on weekdays';
-    } else if (parts.dayOfWeek.includes(',')) {
-      weekdayDescription = `on ${parts.dayOfWeek
-        .split(',')
-        .map((value) => DAY_NAMES[Number(value)] ?? value)
-        .join(', ')}`;
-    } else if (parts.dayOfWeek.includes('-')) {
-      const [start, end] = parts.dayOfWeek.split('-').map(Number);
-      weekdayDescription = `from ${DAY_NAMES[start] ?? start} through ${
-        DAY_NAMES[end] ?? end
-      }`;
-    } else {
-      weekdayDescription = `on ${DAY_NAMES[Number(parts.dayOfWeek)] ?? parts.dayOfWeek}`;
-    }
-  }
-
-  let timeDescription = 'every minute';
-
-  if (parts.minute !== '*' && parts.hour === '*') {
-    timeDescription = `at minute ${parts.minute} of every hour`;
-  } else if (parts.minute === '*' && parts.hour !== '*') {
-    timeDescription = `every minute during hour ${parts.hour}`;
-  } else if (parts.minute !== '*' && parts.hour !== '*') {
-    timeDescription = `at ${parts.hour.padStart(2, '0')}:${parts.minute.padStart(2, '0')}`;
-  } else if (parts.minute.startsWith('*/') && parts.hour === '*') {
-    timeDescription = `every ${parts.minute.slice(2)} minutes`;
-  }
-
-  return [
-    timeDescription,
-    minuteDescription && parts.minute.startsWith('*/') ? null : null,
-    hourDescription && parts.hour === '*' ? null : null,
-    dayDescription,
-    monthDescription,
-    weekdayDescription,
-  ]
-    .filter(Boolean)
-    .join(', ');
-}
-
-function buildExpression(
-  mode: BuilderMode,
-  values: {
-    everyMinutesInterval: string;
-    hourlyMinute: string;
-    scheduleHour: string;
-    scheduleMinute: string;
-    weeklyDay: string;
-    monthlyDay: string;
-    yearlyMonth: string;
-    yearlyDay: string;
-  }
-): string {
-  switch (mode) {
-    case 'every-minutes':
-      return `*/${values.everyMinutesInterval} * * * *`;
-    case 'hourly':
-      return `${values.hourlyMinute} * * * *`;
-    case 'daily':
-      return `${values.scheduleMinute} ${values.scheduleHour} * * *`;
-    case 'weekdays':
-      return `${values.scheduleMinute} ${values.scheduleHour} * * 1-5`;
-    case 'weekly':
-      return `${values.scheduleMinute} ${values.scheduleHour} * * ${values.weeklyDay}`;
-    case 'monthly':
-      return `${values.scheduleMinute} ${values.scheduleHour} ${values.monthlyDay} * *`;
-    case 'yearly':
-      return `${values.scheduleMinute} ${values.scheduleHour} ${values.yearlyDay} ${values.yearlyMonth} *`;
-    default:
-      return '';
-  }
 }
 
 export function CronParser() {
-  const [expression, setExpression] = useState('0 9 * * 1-5');
-  const [parts, setParts] = useState<CronParts | null>(null);
-  const [description, setDescription] = useState('');
-  const [nextRuns, setNextRuns] = useState<NextRun[]>([]);
-  const [error, setError] = useState('');
+  const [manualExpression, setManualExpression] = useState('0 9 * * 1-5');
   const [builderMode, setBuilderMode] = useState<BuilderMode>('weekdays');
   const [everyMinutesInterval, setEveryMinutesInterval] = useState('15');
   const [hourlyMinute, setHourlyMinute] = useState('0');
@@ -422,21 +118,30 @@ export function CronParser() {
   const [monthlyDay, setMonthlyDay] = useState('1');
   const [yearlyMonth, setYearlyMonth] = useState('1');
   const [yearlyDay, setYearlyDay] = useState('1');
-  const [timezoneMode, setTimezoneMode] = useState<'local' | 'utc'>('local');
+  const [timezoneMode, setTimezoneMode] = useState<CronTimezone>('local');
   const { copyToClipboard, isCopied } = useCopyToClipboard();
+
+  // Ticks once a minute so the run list and its "in N minutes" never go stale.
+  const currentMinute = useSyncExternalStore<number | null>(
+    subscribeToMinutes,
+    getCurrentMinute,
+    getServerMinute
+  );
 
   const builderExpression = useMemo(
     () =>
-      buildExpression(builderMode, {
-        everyMinutesInterval,
-        hourlyMinute,
-        scheduleHour,
-        scheduleMinute,
-        weeklyDay,
-        monthlyDay,
-        yearlyMonth,
-        yearlyDay,
-      }),
+      builderMode === 'custom'
+        ? ''
+        : buildCronExpression(builderMode, {
+            everyMinutesInterval,
+            hourlyMinute,
+            scheduleHour,
+            scheduleMinute,
+            weeklyDay,
+            monthlyDay,
+            yearlyMonth,
+            yearlyDay,
+          }),
     [
       builderMode,
       everyMinutesInterval,
@@ -450,50 +155,37 @@ export function CronParser() {
     ]
   );
 
-  useEffect(() => {
-    const trimmed = expression.trim();
+  // A guided schedule owns the expression until the user edits it by hand.
+  const expression = builderMode === 'custom' ? manualExpression : builderExpression;
 
-    if (!trimmed) {
-      setParts(null);
-      setDescription('');
-      setNextRuns([]);
-      setError('');
-      return;
-    }
+  const parsed = useMemo(() => (expression.trim() ? parseCron(expression) : null), [expression]);
+  const schedule = parsed?.ok ? parsed.schedule : null;
+  const error = parsed && !parsed.ok ? parsed.error : '';
 
-    try {
-      const parsed = parseCronExpression(trimmed);
-      setParts(parsed);
-      setDescription(generateDescription(parsed));
-      setNextRuns(calculateNextRuns(parsed, timezoneMode));
-      setError('');
-    } catch (parseError) {
-      setError(parseError instanceof Error ? parseError.message : 'Invalid cron expression');
-      setParts(null);
-      setDescription('');
-      setNextRuns([]);
-    }
-  }, [expression, timezoneMode]);
+  const nextRuns = useMemo(() => {
+    if (!schedule || currentMinute === null) return null;
+    const now = new Date(currentMinute * MINUTE_MS);
+    return nextCronRuns(schedule, { after: now, timezone: timezoneMode }).map((run) =>
+      formatRun(run, timezoneMode, now)
+    );
+  }, [schedule, currentMinute, timezoneMode]);
 
-  useEffect(() => {
-    if (builderMode !== 'custom' && builderExpression) {
-      setExpression(builderExpression);
+  const handleBuilderModeChange = (mode: BuilderMode) => {
+    if (mode === 'custom') {
+      // Keep what the guided schedule produced as the starting point.
+      setManualExpression(expression);
     }
-  }, [builderExpression, builderMode]);
+    setBuilderMode(mode);
+  };
 
   const handleManualExpressionChange = (value: string) => {
     setBuilderMode('custom');
-    setExpression(value);
+    setManualExpression(value);
   };
 
-  const handleClear = () => {
-    setExpression('');
-    setParts(null);
-    setDescription('');
-    setNextRuns([]);
-    setError('');
-    setBuilderMode('custom');
-  };
+  const handleClear = () => handleManualExpressionChange('');
+
+  const activePreset = presets.some((preset) => preset.value === expression) ? expression : '';
 
   return (
     <div className="space-y-4">
@@ -510,12 +202,14 @@ export function CronParser() {
         <CardContent className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Schedule type</label>
+              <label htmlFor="cron-schedule-type" className="text-sm font-medium">
+                Schedule type
+              </label>
               <Select
                 value={builderMode}
-                onValueChange={(value) => setBuilderMode(value as BuilderMode)}
+                onValueChange={(value) => handleBuilderModeChange(value as BuilderMode)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="cron-schedule-type">
                   <SelectValue placeholder="Select a schedule type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -532,15 +226,16 @@ export function CronParser() {
 
             {builderMode === 'every-minutes' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Interval (minutes)</label>
+                <label htmlFor="cron-interval" className="text-sm font-medium">
+                  Interval (minutes)
+                </label>
                 <Input
+                  id="cron-interval"
                   type="number"
                   min="1"
                   max="59"
                   value={everyMinutesInterval}
-                  onChange={(event) =>
-                    setEveryMinutesInterval((event.target as HTMLInputElement).value || '1')
-                  }
+                  onChange={(event) => setEveryMinutesInterval(event.target.value)}
                   className="font-mono"
                 />
               </div>
@@ -548,15 +243,16 @@ export function CronParser() {
 
             {builderMode === 'hourly' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Minute of the hour</label>
+                <label htmlFor="cron-hourly-minute" className="text-sm font-medium">
+                  Minute of the hour
+                </label>
                 <Input
+                  id="cron-hourly-minute"
                   type="number"
                   min="0"
                   max="59"
                   value={hourlyMinute}
-                  onChange={(event) =>
-                    setHourlyMinute((event.target as HTMLInputElement).value || '0')
-                  }
+                  onChange={(event) => setHourlyMinute(event.target.value)}
                   className="font-mono"
                 />
               </div>
@@ -569,28 +265,30 @@ export function CronParser() {
               builderMode === 'yearly') && (
               <>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Hour</label>
+                  <label htmlFor="cron-hour" className="text-sm font-medium">
+                    Hour
+                  </label>
                   <Input
+                    id="cron-hour"
                     type="number"
                     min="0"
                     max="23"
                     value={scheduleHour}
-                    onChange={(event) =>
-                      setScheduleHour((event.target as HTMLInputElement).value || '0')
-                    }
+                    onChange={(event) => setScheduleHour(event.target.value)}
                     className="font-mono"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Minute</label>
+                  <label htmlFor="cron-minute" className="text-sm font-medium">
+                    Minute
+                  </label>
                   <Input
+                    id="cron-minute"
                     type="number"
                     min="0"
                     max="59"
                     value={scheduleMinute}
-                    onChange={(event) =>
-                      setScheduleMinute((event.target as HTMLInputElement).value || '0')
-                    }
+                    onChange={(event) => setScheduleMinute(event.target.value)}
                     className="font-mono"
                   />
                 </div>
@@ -599,9 +297,11 @@ export function CronParser() {
 
             {builderMode === 'weekly' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Day of week</label>
+                <label htmlFor="cron-weekday" className="text-sm font-medium">
+                  Day of week
+                </label>
                 <Select value={weeklyDay} onValueChange={setWeeklyDay}>
-                  <SelectTrigger>
+                  <SelectTrigger id="cron-weekday">
                     <SelectValue placeholder="Select weekday" />
                   </SelectTrigger>
                   <SelectContent>
@@ -619,15 +319,16 @@ export function CronParser() {
 
             {builderMode === 'monthly' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Day of month</label>
+                <label htmlFor="cron-month-day" className="text-sm font-medium">
+                  Day of month
+                </label>
                 <Input
+                  id="cron-month-day"
                   type="number"
                   min="1"
                   max="31"
                   value={monthlyDay}
-                  onChange={(event) =>
-                    setMonthlyDay((event.target as HTMLInputElement).value || '1')
-                  }
+                  onChange={(event) => setMonthlyDay(event.target.value)}
                   className="font-mono"
                 />
               </div>
@@ -636,9 +337,11 @@ export function CronParser() {
             {builderMode === 'yearly' && (
               <>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Month</label>
+                  <label htmlFor="cron-year-month" className="text-sm font-medium">
+                    Month
+                  </label>
                   <Select value={yearlyMonth} onValueChange={setYearlyMonth}>
-                    <SelectTrigger>
+                    <SelectTrigger id="cron-year-month">
                       <SelectValue placeholder="Select month" />
                     </SelectTrigger>
                     <SelectContent>
@@ -653,15 +356,16 @@ export function CronParser() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Day</label>
+                  <label htmlFor="cron-year-day" className="text-sm font-medium">
+                    Day
+                  </label>
                   <Input
+                    id="cron-year-day"
                     type="number"
                     min="1"
                     max="31"
                     value={yearlyDay}
-                    onChange={(event) =>
-                      setYearlyDay((event.target as HTMLInputElement).value || '1')
-                    }
+                    onChange={(event) => setYearlyDay(event.target.value)}
                     className="font-mono"
                   />
                 </div>
@@ -691,21 +395,28 @@ export function CronParser() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={expression}
-                onChange={(event) =>
-                  handleManualExpressionChange((event.target as HTMLInputElement).value)
-                }
+                onChange={(event) => handleManualExpressionChange(event.target.value)}
                 placeholder="0 9 * * 1-5"
                 className="flex-1 font-mono"
+                aria-label="Cron expression"
+                aria-invalid={error ? true : undefined}
+                spellCheck={false}
               />
               <Button
                 onClick={() => copyToClipboard(expression)}
                 variant={isCopied ? 'default' : 'outline'}
                 size="sm"
                 disabled={!expression}
+                aria-label={isCopied ? 'Expression copied' : 'Copy expression'}
               >
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
-              <Button onClick={handleClear} variant="outline" size="sm">
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                aria-label="Clear expression"
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -740,7 +451,10 @@ export function CronParser() {
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <div>
                 <strong>Error:</strong> {error}
@@ -749,9 +463,15 @@ export function CronParser() {
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Quick presets</label>
-            <Select onValueChange={(value) => value && setExpression(value)}>
-              <SelectTrigger>
+            <label htmlFor="cron-preset" className="text-sm font-medium">
+              Quick presets
+            </label>
+            {/* Controlled, so it stops naming a preset once the expression moves on. */}
+            <Select
+              value={activePreset}
+              onValueChange={(value) => value && handleManualExpressionChange(value)}
+            >
+              <SelectTrigger id="cron-preset">
                 <SelectValue placeholder="Select a preset..." />
               </SelectTrigger>
               <SelectContent>
@@ -786,7 +506,7 @@ export function CronParser() {
         </CardContent>
       </Card>
 
-      {description && (
+      {schedule && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -795,12 +515,12 @@ export function CronParser() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg">{description}</p>
+            <p className="text-lg">{schedule.description}</p>
           </CardContent>
         </Card>
       )}
 
-      {parts && (
+      {schedule && (
         <Card>
           <CardHeader>
             <CardTitle>Breakdown</CardTitle>
@@ -810,41 +530,45 @@ export function CronParser() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1">
                 <div className="text-sm font-medium">Minute</div>
-                <div className="rounded bg-muted p-2 font-mono text-sm">{parts.minute}</div>
+                <div className="rounded bg-muted p-2 font-mono text-sm">
+                  {schedule.parts.minute}
+                </div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm font-medium">Hour</div>
-                <div className="rounded bg-muted p-2 font-mono text-sm">{parts.hour}</div>
+                <div className="rounded bg-muted p-2 font-mono text-sm">{schedule.parts.hour}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm font-medium">Day of Month</div>
                 <div className="rounded bg-muted p-2 font-mono text-sm">
-                  {parts.dayOfMonth}
+                  {schedule.parts.dayOfMonth}
                 </div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm font-medium">Month</div>
-                <div className="rounded bg-muted p-2 font-mono text-sm">{parts.month}</div>
+                <div className="rounded bg-muted p-2 font-mono text-sm">{schedule.parts.month}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm font-medium">Day of Week</div>
-                <div className="rounded bg-muted p-2 font-mono text-sm">{parts.dayOfWeek}</div>
+                <div className="rounded bg-muted p-2 font-mono text-sm">
+                  {schedule.parts.dayOfWeek}
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {nextRuns.length > 0 && (
+      {nextRuns && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
             <div>
               <CardTitle>Next Scheduled Runs</CardTitle>
               <CardDescription>
                 Upcoming execution times ({timezoneMode === 'utc' ? 'UTC' : 'your local time'})
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">UTC Mode</span>
               <Switch
                 checked={timezoneMode === 'utc'}
@@ -854,20 +578,27 @@ export function CronParser() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {nextRuns.map((run, index) => (
-                <div
-                  key={`${run.date}-${run.time}-${index}`}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div className="space-y-1">
-                    <div className="font-medium">{run.date}</div>
-                    <div className="text-sm text-muted-foreground">{run.time}</div>
+            {nextRuns.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground sm:py-6">
+                No runs in the next {CRON_SEARCH_YEARS} years. This combination of day and month
+                never occurs.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {nextRuns.map((run) => (
+                  <div
+                    key={run.key}
+                    className="flex items-center justify-between gap-3 rounded-md border p-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="font-medium">{run.date}</div>
+                      <div className="text-sm text-muted-foreground">{run.time}</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">{run.fromNow}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">{run.fromNow}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

@@ -1,13 +1,9 @@
-import type { ComponentType } from 'react';
-import type { Tool } from '../types';
+import type { ToolComponentLoader, ToolRegistryEntry } from '../types';
 
-type ToolComponent = ComponentType;
-type ToolComponentLoader = () => Promise<ToolComponent>;
-type ToolMetadata = Omit<Tool, 'id'>;
-
-type ToolRegistryEntry = ToolMetadata & {
-  component: ToolComponentLoader;
-};
+// Registry data only. Each key is the route slug. The tool catalog in
+// `lib/catalog` is built from this value: it validates the entries (including
+// the description length limit) and answers every question about them, so
+// nothing else should read this object directly.
 
 // ---------------------------------------------------------------------------
 // Shared loaders for PDF tools (kept as 2 standalone pages)
@@ -1117,24 +1113,176 @@ export const TOOL_REGISTRY = {
         (module) => module.ClampCalculator
       ),
   },
+  'hmac-generator': {
+    name: 'HMAC Generator',
+    description: 'Generate and verify HMAC signatures with SHA-1 to SHA-512',
+    tags: ['security'],
+    icon: 'Signature',
+    keywords: [
+      'hmac', 'sha256', 'sha512', 'sha1', 'sha384', 'signature', 'webhook',
+      'secret', 'mac', 'verify', 'authentication', 'base64',
+    ],
+    component: () =>
+      import('@/components/tools/HmacGenerator').then(
+        (module) => module.HmacGenerator
+      ),
+  },
+  'jwt-signer': {
+    name: 'JWT Creator & Signer',
+    description: 'Create, sign and verify HMAC-signed JWTs for testing auth.',
+    tags: ['security', 'encoders-decoders'],
+    icon: 'FileKey',
+    keywords: [
+      'jwt', 'json web token', 'jws', 'sign', 'signer', 'hs256', 'hs384',
+      'hs512', 'hmac', 'token', 'verify', 'auth',
+    ],
+    component: () =>
+      import('@/components/tools/JwtSigner').then(
+        (module) => module.JwtSigner
+      ),
+  },
+  'totp-generator': {
+    name: 'TOTP Code Generator',
+    description: 'Generate live TOTP 2FA codes from a Base32 secret.',
+    tags: ['security', 'generators'],
+    icon: 'Timer',
+    keywords: [
+      'totp', '2fa', 'otp', 'mfa', 'authenticator', 'one-time password', 'hotp',
+      'rfc 6238', 'otpauth', 'base32', 'google authenticator', 'qr code',
+    ],
+    component: () =>
+      import('@/components/tools/TotpGenerator').then(
+        (module) => module.TotpGenerator
+      ),
+  },
+  'ulid-generator': {
+    name: 'ULID Generator & Decoder',
+    description: 'Generate and decode sortable ULIDs, or convert them to UUIDs',
+    tags: ['generators'],
+    icon: 'CalendarClock',
+    keywords: [
+      'ulid', 'ulid generator', 'ulid decoder', 'sortable id', 'unique id',
+      'crockford base32', 'monotonic', 'ulid to uuid', 'uuid to ulid',
+      'timestamp id',
+    ],
+    component: () =>
+      import('@/components/tools/UlidGenerator').then(
+        (module) => module.UlidGenerator
+      ),
+  },
+  'chmod-calculator': {
+    name: 'Chmod Calculator',
+    description: 'Convert Unix file permissions: octal, symbolic and checkboxes',
+    tags: ['utilities', 'calculators'],
+    icon: 'FolderLock',
+    keywords: [
+      'chmod', 'unix permissions', 'file permissions', 'octal', 'symbolic',
+      'rwx', 'setuid', 'setgid', 'sticky bit', 'linux',
+    ],
+    component: () =>
+      import('@/components/tools/ChmodCalculator').then(
+        (module) => module.ChmodCalculator
+      ),
+  },
+  'json-diff': {
+    name: 'JSON Diff',
+    description: 'Compare two JSON documents and export an RFC 6902 patch.',
+    tags: ['text-tools', 'formatters-validators'],
+    icon: 'FileDiff',
+    keywords: [
+      'json', 'diff', 'compare', 'difference', 'patch', 'rfc 6902',
+      'json pointer', 'structural', 'validate', 'changes',
+    ],
+    component: () =>
+      import('@/components/tools/JsonDiff').then(
+        (module) => module.JsonDiff
+      ),
+  },
+  'css-gradient-generator': {
+    name: 'CSS Gradient Generator',
+    description: 'Build linear, radial and conic CSS gradients with live preview',
+    tags: ['design', 'generators'],
+    icon: 'Rainbow',
+    keywords: [
+      'css gradient', 'gradient generator', 'linear gradient',
+      'radial gradient', 'conic gradient', 'repeating gradient', 'color stops',
+      'tailwind gradient', 'background', 'css background',
+    ],
+    component: () =>
+      import('@/components/tools/CssGradientGenerator').then(
+        (module) => module.CssGradientGenerator
+      ),
+  },
+  'docker-run-to-compose': {
+    name: 'Docker Run to Compose',
+    description: 'Turn a docker run command into a docker-compose.yml file',
+    tags: ['converters', 'utilities'],
+    icon: 'Container',
+    keywords: [
+      'docker', 'docker run', 'docker compose', 'docker-compose', 'compose',
+      'yaml', 'container', 'converter', 'command line', 'devops',
+    ],
+    component: () =>
+      import('@/components/tools/DockerRunToCompose').then(
+        (module) => module.DockerRunToCompose
+      ),
+  },
+  'unicode-inspector': {
+    name: 'Unicode & Zero-Width Inspector',
+    description: 'Find zero-width and invisible Unicode characters in text',
+    tags: ['text-tools'],
+    icon: 'ScanSearch',
+    keywords: [
+      'unicode', 'zero-width', 'invisible characters', 'code point', 'utf-8',
+      'byte order mark', 'bidi', 'normalize', 'nfc', 'grapheme', 'hidden text',
+      'non-breaking space',
+    ],
+    component: () =>
+      import('@/components/tools/UnicodeInspector').then(
+        (module) => module.UnicodeInspector
+      ),
+  },
+  'http-status-codes': {
+    name: 'HTTP Status Codes',
+    description: 'Search HTTP status codes, meanings and common causes',
+    tags: ['networking', 'utilities'],
+    icon: 'ServerCrash',
+    keywords: [
+      'http', 'status', 'codes', 'response', 'error', '404', '500', 'redirect',
+      'rest', 'api', 'rfc', 'reference',
+    ],
+    component: () =>
+      import('@/components/tools/HttpStatusCodes').then(
+        (module) => module.HttpStatusCodes
+      ),
+  },
+  'user-agent-parser': {
+    name: 'User-Agent Parser',
+    description: 'Parse a User-Agent into browser, engine, OS, device and CPU',
+    tags: ['networking', 'utilities'],
+    icon: 'MonitorSmartphone',
+    keywords: [
+      'user agent', 'user-agent', 'ua string', 'browser detection', 'parser',
+      'device detection', 'bot detection', 'navigator', 'useragent',
+      'operating system',
+    ],
+    component: () =>
+      import('@/components/tools/UserAgentParser').then(
+        (module) => module.UserAgentParser
+      ),
+  },
+  'loan-calculator': {
+    name: 'Loan & Mortgage Calculator',
+    description: 'Calculate loan and mortgage payments with a payoff schedule',
+    tags: ['calculators'],
+    icon: 'Landmark',
+    keywords: [
+      'loan', 'mortgage', 'amortization', 'amortisation', 'payment', 'interest',
+      'repayment', 'payoff', 'schedule', 'emi', 'extra payment',
+    ],
+    component: () =>
+      import('@/components/tools/LoanCalculator').then(
+        (module) => module.LoanCalculator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
-
-// Enforce strict limits on tool description lengths to ensure visual consistency in the UI
-const MIN_DESC_LIMIT = 40;
-const MAX_DESC_LIMIT = 65;
-
-for (const [id, tool] of Object.entries(TOOL_REGISTRY)) {
-  const length = tool.description.length;
-  if (length < MIN_DESC_LIMIT || length > MAX_DESC_LIMIT) {
-    throw new Error(
-      `Tool Description Limit Error: Description for tool "${id}" is ${length} characters. ` +
-      `It must be between ${MIN_DESC_LIMIT} and ${MAX_DESC_LIMIT} characters (inclusive).`
-    );
-  }
-}
-
-export type ToolId = keyof typeof TOOL_REGISTRY;
-
-export function getToolComponentLoader(id: string): ToolComponentLoader | undefined {
-  return TOOL_REGISTRY[id as ToolId]?.component;
-}

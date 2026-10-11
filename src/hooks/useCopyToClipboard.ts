@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export type CopyStatus = 'idle' | 'copying' | 'copied' | 'error';
 
@@ -15,30 +15,31 @@ export interface UseCopyToClipboardReturn {
  */
 export function useCopyToClipboard(resetDelay = 2000): UseCopyToClipboardReturn {
   const [status, setStatus] = useState<CopyStatus>('idle');
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
 
   const copyToClipboard = useCallback(
     async (text: string) => {
       if (!text) return;
 
+      // A reset still pending from an earlier copy must not cut this one short.
+      clearTimeout(resetTimer.current);
       setStatus('copying');
 
       try {
         await navigator.clipboard.writeText(text);
         setStatus('copied');
-
-        // Reset status after delay
-        setTimeout(() => {
-          setStatus('idle');
-        }, resetDelay);
       } catch (error) {
         console.error('Failed to copy to clipboard:', error);
         setStatus('error');
-
-        // Reset error after delay
-        setTimeout(() => {
-          setStatus('idle');
-        }, resetDelay);
       }
+
+      // Reset status after delay
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => {
+        setStatus('idle');
+      }, resetDelay);
     },
     [resetDelay]
   );

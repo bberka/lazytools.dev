@@ -1,119 +1,106 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Upload, Download, Trash2, FileInput } from 'lucide-react';
-import { PDFDocument, rgb } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
+import { Upload, Download, Trash2, FileInput } from 'lucide-react';
 // @ts-expect-error - mammoth does not export typescript declarations
 import mammoth from 'mammoth/mammoth.browser.min.js';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, outputFileName, readFileAsArrayBuffer } from '@/lib/files';
+import { pdfBlob } from '@/lib/pdf';
+import { textToPdf } from '@/lib/tools/word-to-pdf';
+
+// Roboto ships with the app in public/fonts, so the text font needs no third-party request.
+const FONT_URL = '/fonts/Roboto-Regular.ttf';
+
+interface PdfResult {
+  // The converted document. It is kept as a Blob, so there is no object URL to revoke.
+  blob: Blob;
+  /** Characters of the document that the font cannot show. */
+  unsupportedCharacters: number;
+}
 
 export function WordToPdf() {
   const [wordFile, setWordFile] = useState<File | null>(null);
   const [converting, setConverting] = useState(false);
-  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pdfResult, setPdfResult] = useState<PdfResult | null>(null);
+  const [error, setError] = useState('');
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.name.endsWith('.docx')) return;
+  // Identifies the conversion whose result is still wanted. Choosing another
+  // file, Clear and leaving the tool all move it on, so a conversion that is
+  // still running cannot offer its document under the wrong file.
+  const runRef = useRef(0);
+  useEffect(
+    () => () => {
+      runRef.current += 1;
+    },
+    []
+  );
+
+  const showFile = (file: File | null) => {
+    runRef.current += 1;
     setWordFile(file);
-    setPdfDataUrl(null);
+    setPdfResult(null);
+    setConverting(false);
+    setError('');
+  };
+
+  // The intake only passes .docx files on; anything else is reported under the drop area.
+  const intake = useFileIntake({
+    accept: '.docx',
+    onFiles: ([file]) => showFile(file),
+  });
+
+  const clear = () => {
+    showFile(null);
+    intake.reset();
   };
 
   const convertToPdf = async () => {
     if (!wordFile) return;
+    const run = ++runRef.current;
+    const isCurrent = () => runRef.current === run;
     setConverting(true);
+    setError('');
 
     try {
       // 1. Extract text from Word document using mammoth
-      const arrayBuffer = await wordFile.arrayBuffer();
+      const arrayBuffer = await readFileAsArrayBuffer(wordFile);
       const result = await mammoth.extractRawText({ arrayBuffer });
-      const text = result.value;
+      const text: string = result.value;
+      if (!isCurrent()) return;
 
       if (!text.trim()) {
-        alert('No text found in the Word document.');
-        setConverting(false);
+        setError('No text found in the Word document.');
         return;
       }
 
       // 2. Generate PDF using pdf-lib
-      const pdfDoc = await PDFDocument.create();
-      pdfDoc.registerFontkit(fontkit);
-
-      const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
-      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-      const font = await pdfDoc.embedFont(fontBytes);
-      
-      let page = pdfDoc.addPage();
-      const { width, height } = page.getSize();
-      const margin = 50;
-      const fontSize = 12;
-      const lineHeight = font.heightAtSize(fontSize) + 4;
-      
-      let cursorY = height - margin;
-
-      // Basic text wrapping simulation
-      const words = text.split(' ');
-      let currentLine = '';
-
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const textWidth = font.widthOfTextAtSize(testLine, fontSize);
-
-        if (textWidth > width - margin * 2) {
-          // Draw current line and move down
-          page.drawText(currentLine, {
-            x: margin,
-            y: cursorY,
-            size: fontSize,
-            font: font,
-            color: rgb(0, 0, 0),
-          });
-          currentLine = word;
-          cursorY -= lineHeight;
-
-          // Add new page if necessary
-          if (cursorY < margin) {
-            page = pdfDoc.addPage();
-            cursorY = height - margin;
-          }
-        } else {
-          currentLine = testLine;
-        }
+      const fontResponse = await fetch(FONT_URL);
+      if (!fontResponse.ok) {
+        throw new Error('The font needed to write the PDF could not be loaded.');
       }
 
-      // Draw remaining text
-      if (currentLine) {
-        page.drawText(currentLine, {
-          x: margin,
-          y: cursorY,
-          size: fontSize,
-          font: font,
-          color: rgb(0, 0, 0),
-        });
-      }
+      const pdf = await textToPdf(text, await fontResponse.arrayBuffer());
+      if (!isCurrent()) return;
 
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      setPdfDataUrl(url);
-
-    } catch (error) {
-      console.error('Error converting Word to PDF:', error);
-      alert('Failed to convert document: ' + (error instanceof Error ? error.message : String(error)));
+      setPdfResult({ blob: pdfBlob(pdf.bytes), unsupportedCharacters: pdf.unsupportedCharacters });
+    } catch (conversionError) {
+      if (!isCurrent()) return;
+      console.error('Error converting Word to PDF:', conversionError);
+      setError(
+        'Failed to convert document: ' +
+          (conversionError instanceof Error ? conversionError.message : String(conversionError))
+      );
     } finally {
-      setConverting(false);
+      if (isCurrent()) setConverting(false);
     }
   };
 
   const handleDownload = () => {
-    if (!pdfDataUrl || !wordFile) return;
-    const link = document.createElement('a');
-    link.href = pdfDataUrl;
-    link.download = `${wordFile.name.replace('.docx', '')}.pdf`;
-    link.click();
+    if (!pdfResult || !wordFile) return;
+    downloadBlob(pdfResult.blob, outputFileName(wordFile.name, { extension: 'pdf' }));
   };
 
   return (
@@ -132,44 +119,59 @@ export function WordToPdf() {
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            {...intake.dropzoneProps}
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+              intake.isDragging ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+            }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".docx"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+            <input {...intake.inputProps} aria-label="Upload a Word document" />
+            <Upload aria-hidden="true" className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
             <p className="text-sm font-medium">Click to upload a Word Document (.docx)</p>
-            {wordFile && <p className="text-xs text-primary mt-2">{wordFile.name}</p>}
+            {wordFile && <p className="text-xs text-primary mt-2 break-all">{wordFile.name}</p>}
           </div>
+          {intake.error && (
+            <p role="alert" className="mt-2 break-words text-sm text-destructive">
+              {intake.error}
+            </p>
+          )}
 
-          {wordFile && !pdfDataUrl && (
+          {wordFile && !pdfResult && (
             <div className="mt-4 flex gap-2">
               <Button onClick={convertToPdf} disabled={converting} className="flex-1">
                 {converting ? 'Converting...' : 'Convert to PDF'}
               </Button>
-              <Button variant="outline" onClick={() => setWordFile(null)}>
+              <Button variant="outline" onClick={clear}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
             </div>
           )}
 
-          {pdfDataUrl && (
+          {error && (
+            <div role="alert" className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
+          {pdfResult && (
             <div className="mt-4 flex gap-2">
-              <Button onClick={handleDownload} className="flex-1 bg-red-600 hover:bg-red-700">
+              <Button onClick={handleDownload} className="flex-1">
                 <Download className="h-4 w-4 mr-2" />
                 Download .pdf
               </Button>
-              <Button variant="outline" onClick={() => { setWordFile(null); setPdfDataUrl(null); }}>
+              <Button variant="outline" onClick={clear}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
             </div>
+          )}
+
+          {pdfResult && pdfResult.unsupportedCharacters > 0 && (
+            <p role="status" className="mt-2 text-xs text-muted-foreground">
+              {pdfResult.unsupportedCharacters === 1
+                ? '1 character is not in the font this tool writes with and shows as an empty box in the PDF.'
+                : `${pdfResult.unsupportedCharacters} characters are not in the font this tool writes with and show as empty boxes in the PDF.`}
+            </p>
           )}
         </CardContent>
       </Card>

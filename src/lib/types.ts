@@ -1,3 +1,6 @@
+import type { ComponentType } from 'react';
+
+// Adding or renaming a tag means editing this union and `lib/tags`, nothing else
 export type ToolTag =
   | 'converters'
   | 'encoders-decoders'
@@ -16,37 +19,18 @@ export interface Tool {
   id: string; // slug-style: 'base64-encoder'
   name: string; // Display name: 'Base64 Encoder/Decoder'
   description: string; // Short description
-  tags: ToolTag[];
+  tags: [ToolTag, ...ToolTag[]]; // At least one; the first is the primary tag
   icon?: string; // Lucide icon name
   keywords?: string[]; // For search
   featured?: boolean; // Show prominently
-  score?: number; // Match score for search
-  hidden?: boolean; // If true, hide from lists but keep route
+  hidden?: boolean; // Left out of discovery, still reachable by id (see lib/catalog)
 }
 
-export interface TagInfo {
-  id: ToolTag;
-  name: string; // Display name
-  icon: string; // Lucide icon name
-  description: string;
-  color: string; // Tailwind color class
-}
+// Shape of the tool registry that the tool catalog is built from
+export type ToolComponentLoader = () => Promise<ComponentType>;
 
-export interface GlobalSettings {
-  theme: 'light' | 'dark';
-  favorites: string[]; // Tool IDs
-  recentTools: string[]; // Last 5 accessed
-  compactMode: boolean;
-  fullWidth: boolean;
-}
+export type ToolRegistryEntry = Omit<Tool, 'id'> & {
+  component: ToolComponentLoader;
+};
 
-export interface ToolSettings {
-  autoProcess?: boolean;
-  [key: string]: unknown; // Tool-specific settings
-}
-
-export interface FilterState {
-  searchQuery: string;
-  selectedTag: ToolTag | null;
-  showFavoritesOnly: boolean;
-}
+export type ToolRegistry = Readonly<Record<string, ToolRegistryEntry>>;

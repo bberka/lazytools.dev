@@ -54,17 +54,28 @@ src/
     tools/              # tool implementations
     ui/                 # shared shadcn-style React components
     CommandPalette.tsx
+    FileDropzone.tsx    # shared drop area for file tools
     HomeContent.tsx
     ToolPageClient.tsx
-  hooks/
+  hooks/                # useFileIntake, useObjectUrl, useCopyToClipboard, useActionButton
   lib/
-    contexts/           # theme, settings, favorites, recents, command palette
+    catalog/            # tool catalog: visibility, lookup, search, filter, grouping
+    tags/               # tag names, icons, styles, order
+    preferences/        # localStorage-backed preferences store
+    contexts/           # thin React readers of the preferences store
+    home/               # home-page session state and grid navigation
+    commands/           # app commands and keyboard shortcuts
+    files/              # file validation, reading, downloads, size labels
+    pdf/                # pdfjs loading, worker, rendering, text extraction
+    markdown/           # Markdown parser configuration and export template
+    export/             # snapshot PDF and print helpers
+    tools/              # pure logic of individual tools
     utils/
       tool-registry.ts  # tool metadata and lazy component loaders
-      tools-config.ts   # categories and derived tool metadata helpers
-      storage.ts
-      keyboard.ts
     types.ts
+tests/
+  unit/                 # browserless unit tests (npm run test:unit)
+playwright/             # e2e tests
   styles/
     globals.css
 public/
@@ -116,8 +127,8 @@ Edit `src/lib/utils/tool-registry.ts`:
 ```ts
 'example-tool': {
   name: 'Example Tool',
-  description: 'Do one useful utility task',
-  category: 'utilities',
+  description: 'Do one useful utility task, described in 40 to 65 chars',
+  tags: ['utilities'],
   icon: 'Wrench',
   keywords: ['example', 'utility'],
   component: () =>
@@ -127,7 +138,9 @@ Edit `src/lib/utils/tool-registry.ts`:
 },
 ```
 
-`TOOLS` is derived from this registry by `src/lib/utils/tools-config.ts`, so static routes, search, metadata, and renderer wiring all share the same source of truth.
+The tool catalog in `src/lib/catalog` is built from this registry, so static routes, search, metadata, and renderer wiring all share the same source of truth.
+
+Keep the logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. For file handling use `useFileIntake`, `FileDropzone` and `@/lib/files` instead of your own file input, `FileReader` code or download anchor.
 
 ### 2. Create the Component
 
@@ -191,11 +204,17 @@ export function ExampleTool() {
 ## Static Export Rules
 
 - Keep route data static-safe.
-- Add tool routes through `TOOLS`; `generateStaticParams()` reads from that config.
+- Add tool routes through the registry; `generateStaticParams()` reads them from the catalog.
 - Do not add server-only behavior that breaks `output: 'export'`.
 - External lookup tools should call public APIs from the browser and handle failures gracefully.
 
 ## Testing
+
+Pure logic is covered by unit tests in `tests/unit/`. They run on the Playwright test runner without a browser or dev server:
+
+```bash
+npm run test:unit
+```
 
 Automated e2e tests are implemented using Playwright.
 
@@ -210,7 +229,13 @@ npm run test:e2e
 
 # Run tests with the Playwright UI runner
 npm run test:e2e:ui
+
+# Run the suite on Chromium against the static export (faster, tests what ships)
+npm run build
+npm run test:e2e:export
 ```
+
+`playwright/tools/` holds one spec per tool group that drives each tool through its main flow. When you change a tool, run its spec: `npm run test:e2e:export -- playwright/tools/<group>.spec.ts`. Set `E2E_PORT=3100` if port 3000 is taken by a dev server.
 
 If you are modifying core features (like Search, Favorites, Command Palette) or adding new tools, make sure to add/run the appropriate tests and verify that the suite passes.
 

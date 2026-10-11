@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
+import { useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -10,11 +10,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { Button } from '../ui/button';
-import { Trash2 } from 'lucide-react';
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { useCopyToClipboard } from '@/hooks';
+import { convertNumberBase, type NumberBase } from '@/lib/tools/number-base-converter';
+import { Check, Copy, Trash2 } from 'lucide-react';
 
-type Base = 'binary' | 'octal' | 'decimal' | 'hex';
+type Base = NumberBase;
 
 const baseOptions = [
   { value: 'binary', label: 'Binary (2)' },
@@ -23,59 +25,57 @@ const baseOptions = [
   { value: 'hex', label: 'Hexadecimal (16)' },
 ];
 
-const baseMap: Record<Base, number> = {
-  binary: 2,
-  octal: 8,
-  decimal: 10,
-  hex: 16,
-};
+const resultCards: ReadonlyArray<{ base: Base; title: string }> = [
+  { base: 'binary', title: 'Binary (Base 2)' },
+  { base: 'octal', title: 'Octal (Base 8)' },
+  { base: 'decimal', title: 'Decimal (Base 10)' },
+  { base: 'hex', title: 'Hexadecimal (Base 16)' },
+];
+
+function ResultCard({ title, value }: { title: string; value: string }) {
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+        <CardTitle className="text-lg">{title}</CardTitle>
+        {/* The negative margin keeps the header as tall as its title */}
+        <Button
+          onClick={() => copyToClipboard(value)}
+          variant={isCopied ? 'default' : 'ghost'}
+          size="icon"
+          disabled={!value}
+          aria-label={isCopied ? `${title} copied` : `Copy ${title}`}
+          className="-my-2 h-8 w-8 shrink-0"
+        >
+          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
+          {value || '-'}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function NumberBaseConverter() {
   const [inputBase, setInputBase] = useState<Base>('decimal');
   const [inputValue, setInputValue] = useState('');
-  const [results, setResults] = useState({
-    binary: '',
-    octal: '',
-    decimal: '',
-    hex: '',
-  });
-  const [error, setError] = useState('');
+
+  const conversion = useMemo(
+    () => convertNumberBase(inputValue, inputBase),
+    [inputValue, inputBase]
+  );
+  const error = conversion.status === 'error' ? conversion.error : '';
 
   const handleClear = () => {
     setInputValue('');
-    setResults({ binary: '', octal: '', decimal: '', hex: '' });
-    setError('');
   };
 
-  useEffect(() => {
-    if (!inputValue) {
-      setResults({ binary: '', octal: '', decimal: '', hex: '' });
-      setError('');
-      return;
-    }
-
-    try {
-      const decimal = parseInt(inputValue, baseMap[inputBase]);
-
-      if (isNaN(decimal)) {
-        setError('Invalid input for selected base');
-        return;
-      }
-
-      setError('');
-      setResults({
-        binary: decimal.toString(2),
-        octal: decimal.toString(8),
-        decimal: decimal.toString(10),
-        hex: decimal.toString(16).toUpperCase(),
-      });
-    } catch (err) {
-      setError(`Error: ${(err as Error).message}`);
-    }
-  }, [inputValue, inputBase]);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Input Section */}
       <Card>
         <CardHeader>
@@ -83,9 +83,11 @@ export function NumberBaseConverter() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Base</label>
+            <label htmlFor="number-base" className="text-sm font-medium mb-2 block">
+              Base
+            </label>
             <Select value={inputBase} onValueChange={(value) => setInputBase(value as Base)}>
-              <SelectTrigger>
+              <SelectTrigger id="number-base">
                 <SelectValue placeholder="Select base" />
               </SelectTrigger>
               <SelectContent>
@@ -100,17 +102,23 @@ export function NumberBaseConverter() {
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Value</label>
+            <label htmlFor="number-value" className="text-sm font-medium mb-2 block">
+              Value
+            </label>
             <Input
+              id="number-value"
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue((e.target as HTMLInputElement).value)}
               placeholder="Enter number..."
+              aria-invalid={error ? true : undefined}
               className="font-mono"
             />
           </div>
           {error && (
-            <div className="text-sm text-destructive">{error}</div>
+            <div role="alert" className="text-sm text-destructive">
+              {error}
+            </div>
           )}
           <Button onClick={handleClear} variant="outline" size="sm">
             <Trash2 className="h-4 w-4 mr-2" />
@@ -121,49 +129,13 @@ export function NumberBaseConverter() {
 
       {/* Results Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Binary (Base 2)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
-              {results.binary || '-'}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Octal (Base 8)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
-              {results.octal || '-'}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Decimal (Base 10)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
-              {results.decimal || '-'}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Hexadecimal (Base 16)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
-              {results.hex || '-'}
-            </div>
-          </CardContent>
-        </Card>
+        {resultCards.map(({ base, title }) => (
+          <ResultCard
+            key={base}
+            title={title}
+            value={conversion.status === 'ok' ? conversion.values[base] : ''}
+          />
+        ))}
       </div>
     </div>
   );

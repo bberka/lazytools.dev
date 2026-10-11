@@ -5,11 +5,11 @@ test.describe('LazyTools Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to homepage before each test
     await page.goto('/');
-    // Clear storage and dispatch reset event to ensure clean slate
+    // Clear storage to ensure clean slate. Every test starts in a fresh browser
+    // context, so the home page is already showing its default view here.
     await page.evaluate(() => {
       sessionStorage.clear();
       localStorage.clear();
-      window.dispatchEvent(new Event('reset-home-state'));
     });
     // Wait for the main page title to be correct
     await expect(page).toHaveTitle(/(Dev\s*Tools|Lazy\s*Tools)/i);

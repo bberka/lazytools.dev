@@ -1,71 +1,57 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Download, Trash2, Pipette, Palette, Upload } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Trash2, Palette } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { formatBytes, loadImage, readFileAsDataUrl } from '@/lib/files';
+import { cn } from '@/lib/utils';
+import { extractPalette } from '@/lib/tools/color-palette-extractor';
 
 export function ColorPaletteExtractor() {
   const [image, setImage] = useState<string | null>(null);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [palette, setPalette] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
+  // The swatch pressed last. The hook knows whether that copy worked and when to stop showing it.
+  const [copiedColor, setCopiedColor] = useState<string | null>(null);
+  const copy = useCopyToClipboard();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Each chosen file gets a number; a file that is no longer the latest is dropped.
+  const loadRef = useRef(0);
 
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const loadImageFile = async (file: File) => {
+    loadRef.current += 1;
+    const load = loadRef.current;
 
-  const loadImageFile = (file: File) => {
-    if (!file) return;
+    let dataUrl: string;
+    try {
+      dataUrl = await readFileAsDataUrl(file);
+    } catch {
+      if (load === loadRef.current) toast.error('Failed to read file');
+      return;
+    }
+    if (load !== loadRef.current) return;
+
     setOriginalFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImage(event.target?.result as string);
-      extractPalette(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      loadImageFile(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      loadImageFile(file);
-    }
-  };
-
-  const extractPalette = (imageSrc: string) => {
+    setImage(null);
+    setPalette([]);
+    setCopiedColor(null);
+    setError('');
     setProcessing(true);
-    const img = new Image();
-    img.onload = () => {
+
+    try {
+      const img = await loadImage(dataUrl);
+      if (load !== loadRef.current) return;
+
       const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) throw new Error('Canvas is not available in this browser.');
 
       // Draw small version for faster processing
       const size = 100;
@@ -73,38 +59,32 @@ export function ColorPaletteExtractor() {
       canvas.height = size;
       ctx.drawImage(img, 0, 0, size, size);
 
-      const imageData = ctx.getImageData(0, 0, size, size).data;
-      const colorCounts: Record<string, number> = {};
-
-      for (let i = 0; i < imageData.length; i += 4) {
-        const r = imageData[i];
-        const g = imageData[i + 1];
-        const b = imageData[i + 2];
-        const a = imageData[i + 3];
-
-        if (a < 128) continue; // Skip transparent
-
-        // Quantize colors slightly to group similar ones
-        const qr = Math.round(r / 10) * 10;
-        const qg = Math.round(g / 10) * 10;
-        const qb = Math.round(b / 10) * 10;
-        const hex = `#${((1 << 24) + (qr << 16) + (qg << 8) + qb).toString(16).slice(1)}`;
-        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
-      }
-
-      const sortedColors = Object.entries(colorCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8)
-        .map(([color]) => color);
-
-      setPalette(sortedColors);
-      setProcessing(false);
-    };
-    img.src = imageSrc;
+      setPalette(extractPalette(ctx.getImageData(0, 0, size, size).data));
+      setImage(dataUrl);
+    } catch (cause) {
+      if (load !== loadRef.current) return;
+      setError(cause instanceof Error ? cause.message : 'The colors could not be extracted.');
+    } finally {
+      if (load === loadRef.current) setProcessing(false);
+    }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const intake = useFileIntake({ accept: 'image/*', onFiles: ([file]) => loadImageFile(file) });
+
+  const handleCopy = (color: string) => {
+    setCopiedColor(color);
+    void copy.copyToClipboard(color);
+  };
+
+  const handleClear = () => {
+    loadRef.current += 1;
+    setImage(null);
+    setOriginalFile(null);
+    setPalette([]);
+    setCopiedColor(null);
+    setError('');
+    setProcessing(false);
+    intake.reset();
   };
 
   return (
@@ -118,35 +98,34 @@ export function ColorPaletteExtractor() {
           </CardTitle>
           <CardDescription>Extract dominant colors from any image</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Drag & drop an image here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-            {originalFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
-                <ImageIcon className="h-3.5 w-3.5" />
-                {originalFile.name} ({formatSize(originalFile.size)})
-              </div>
-            )}
-          </div>
+        <CardContent className="space-y-4">
+          <FileDropzone
+            intake={intake}
+            label="Drag & drop an image here or click to browse"
+            hint="Files remain local on your machine"
+            selected={
+              originalFile && (
+                <>
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  {originalFile.name} ({formatBytes(originalFile.size)})
+                </>
+              )
+            }
+          />
+          {processing && (
+            <p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Extracting colors...
+            </p>
+          )}
+          {error && (
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            >
+              {error}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -155,41 +134,52 @@ export function ColorPaletteExtractor() {
           <CardHeader>
             <CardTitle>Extraction Results</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <div className="flex justify-center">
               <img src={image} alt="Source" className="max-h-64 rounded-md border" />
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Dominant Colors</h3>
+              {palette.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No colors found: every part of this image is transparent.
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {palette.map((color) => (
-                  <div
-                    key={color}
-                    className="group relative cursor-pointer"
-                    onClick={() => copyToClipboard(color)}
-                  >
-                    <div
-                      className="h-16 w-full rounded-md shadow-inner border"
-                      style={{ backgroundColor: color }}
-                    />
-                    <div className="mt-1 text-xs font-mono text-center">{color}</div>
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                      <span className="text-white text-[10px] font-bold">Copy</span>
-                    </div>
-                  </div>
-                ))}
+                {palette.map((color) => {
+                  const copied = copiedColor === color && copy.isCopied;
+
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className="group relative cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      onClick={() => handleCopy(color)}
+                      aria-label={copied ? `Copied ${color}` : `Copy ${color}`}
+                    >
+                      <span
+                        className="block h-16 w-full rounded-md shadow-inner border"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="mt-1 block text-xs font-mono text-center">{color}</span>
+                      <span
+                        className={cn(
+                          'absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity rounded-md',
+                          copied
+                            ? 'opacity-100'
+                            : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
+                        )}
+                      >
+                        <span className="text-white text-[10px] font-bold">{copied ? 'Copied' : 'Copy'}</span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              onClick={() => {
-                setImage(null);
-                setPalette([]);
-              }}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={handleClear} className="w-full">
               <Trash2 className="h-4 w-4 mr-2" />
               Clear Image
             </Button>

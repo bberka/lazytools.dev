@@ -1,145 +1,117 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { Copy, Check, Upload, FileText, X, File, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Copy, Check, Upload, FileText, X, File, ShieldAlert, CheckCircle2, Trash2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { formatBytes, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
+import {
+  EMPTY_HASHES,
+  HASH_ALGORITHMS,
+  computeHashes,
+  findMatchingAlgorithm,
+  type HashAlgorithm,
+  type HashSet,
+} from '@/lib/tools/hash-generator';
 
-type HashAlgorithm = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512';
-
-const ALGORITHMS: HashAlgorithm[] = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
-
-const EMPTY_HASHES: Record<HashAlgorithm, string> = {
-  MD5: '', 'SHA-1': '', 'SHA-256': '', 'SHA-384': '', 'SHA-512': '',
-};
-
-async function computeHash(algorithm: HashAlgorithm, data: ArrayBuffer | string): Promise<string> {
-  if (algorithm === 'MD5') {
-    const { default: md5 } = await import('blueimp-md5');
-    if (typeof data === 'string') return md5(data);
-    const bytes = new Uint8Array(data);
-    let binary = '';
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    return md5(binary);
-  }
-  const buffer = typeof data === 'string' ? new TextEncoder().encode(data).buffer : data;
-  const hashBuffer = await crypto.subtle.digest(algorithm, buffer);
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-async function computeAll(data: ArrayBuffer | string): Promise<Record<HashAlgorithm, string>> {
-  const results = { ...EMPTY_HASHES };
-  await Promise.all(
-    ALGORITHMS.map(async (alg) => {
-      results[alg] = await computeHash(alg, data);
-    })
-  );
-  return results;
-}
-
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(2)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
-}
+const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
 export function HashGenerator() {
   const [mode, setMode] = useState<'text' | 'file'>('text');
   const [input, setInput] = useState('');
-  const [hashes, setHashes] = useState<Record<HashAlgorithm, string>>(EMPTY_HASHES);
+  const [hashes, setHashes] = useState<HashSet>(EMPTY_HASHES);
   const [copiedHash, setCopiedHash] = useState<HashAlgorithm | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Hash comparison state
   const [compareHash, setCompareHash] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { copyToClipboard } = useCopyToClipboard();
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
+
+  // Hashing is asynchronous. Every new input, clear or mode switch takes a new
+  // number, and a run only shows its result while its number is still current,
+  // so a slow earlier run cannot overwrite a newer one.
+  const latestRun = useRef(0);
 
   const handleCopy = async (algorithm: HashAlgorithm) => {
-    await copyToClipboard(hashes[algorithm]);
     setCopiedHash(algorithm);
-    setTimeout(() => setCopiedHash(null), 2000);
+    await copyToClipboard(hashes[algorithm]);
   };
 
   const handleTextChange = async (text: string) => {
+    const run = ++latestRun.current;
     setInput(text);
+    setError('');
     if (!text) { setHashes(EMPTY_HASHES); return; }
-    const results = await computeAll(text);
-    setHashes(results);
+    try {
+      const results = await computeHashes(text);
+      if (run === latestRun.current) setHashes(results);
+    } catch (err) {
+      if (run !== latestRun.current) return;
+      setHashes(EMPTY_HASHES);
+      setError(err instanceof Error ? err.message : 'Failed to compute hashes');
+    }
+  };
+
+  const clearText = () => {
+    void handleTextChange('');
+    setCompareHash('');
   };
 
   const processFile = useCallback(async (f: File) => {
+    const run = ++latestRun.current;
     setFile(f);
     setHashes(EMPTY_HASHES);
     setError('');
     setLoading(true);
     try {
-      const buffer = await f.arrayBuffer();
-      const results = await computeAll(buffer);
-      setHashes(results);
+      const buffer = await readFileAsArrayBuffer(f);
+      const results = await computeHashes(buffer);
+      if (run === latestRun.current) setHashes(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to read file');
+      if (run === latestRun.current) setError(err instanceof Error ? err.message : 'Failed to read file');
     } finally {
-      setLoading(false);
+      if (run === latestRun.current) setLoading(false);
     }
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) processFile(f);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) processFile(f);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragging(true); };
-  const handleDragLeave = () => setDragging(false);
+  const intake = useFileIntake({ onFiles: ([f]) => processFile(f) });
 
   const clearFile = () => {
+    latestRun.current += 1;
     setFile(null);
     setHashes(EMPTY_HASHES);
     setCompareHash('');
     setError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setLoading(false);
+    intake.reset();
   };
 
   const switchMode = (m: 'text' | 'file') => {
+    latestRun.current += 1;
     setMode(m);
     setHashes(EMPTY_HASHES);
     setCompareHash('');
     setError('');
-    if (m === 'text') { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }
+    setLoading(false);
+    if (m === 'text') { setFile(null); intake.reset(); }
     else { setInput(''); }
   };
 
   // Check if comparison hash matches any calculated algorithm
-  const matchingAlgorithm = useMemo(() => {
-    const cleanCompare = compareHash.trim().toLowerCase();
-    if (!cleanCompare) return null;
+  const matchingAlgorithm = useMemo(
+    () => findMatchingAlgorithm(hashes, compareHash),
+    [compareHash, hashes]
+  );
 
-    for (const alg of ALGORITHMS) {
-      if (hashes[alg] && hashes[alg].toLowerCase() === cleanCompare) {
-        return alg;
-      }
-    }
-    return null;
-  }, [compareHash, hashes]);
-
-  const hasAnyHash = ALGORITHMS.some((a) => hashes[a]);
+  const hasAnyHash = HASH_ALGORITHMS.some((a) => hashes[a]);
 
   return (
     <div className="space-y-6">
@@ -158,15 +130,22 @@ export function HashGenerator() {
 
       {mode === 'text' ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Input</CardTitle>
-            <CardDescription>Hashes update in real time</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+            <div className="space-y-1.5">
+              <CardTitle>Input</CardTitle>
+              <CardDescription>Hashes update in real time</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={clearText} disabled={!input}>
+              <Trash2 className="h-4 w-4" />
+              Clear
+            </Button>
           </CardHeader>
           <CardContent>
             <Textarea
               value={input}
               onChange={(e) => handleTextChange((e.target as HTMLTextAreaElement).value)}
               placeholder="Enter text to hash..."
+              aria-label="Text to hash"
               rows={6}
             />
           </CardContent>
@@ -183,23 +162,20 @@ export function HashGenerator() {
                 <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">{formatBytes(file.size)}</p>
+                  <p className="text-sm text-muted-foreground">{formatBytes(file.size, SIZE_FORMAT)}</p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={clearFile}>
+                <Button variant="ghost" size="icon" onClick={clearFile} aria-label="Remove file">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-10 cursor-pointer transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={() => fileInputRef.current?.click()}
+                {...intake.dropzoneProps}
+                className={`flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-md p-6 sm:p-10 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${intake.isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Drop file here or click to browse</p>
-                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} aria-label="Select file to hash" />
+                <input {...intake.inputProps} aria-label="Select file to hash" />
               </div>
             )}
           </CardContent>
@@ -207,13 +183,13 @@ export function HashGenerator() {
       )}
 
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {loading && (
-        <div className="text-sm text-muted-foreground px-1">Computing hashes...</div>
+        <div role="status" className="text-sm text-muted-foreground px-1">Computing hashes...</div>
       )}
 
       {/* Checksum Comparison Card */}
@@ -232,10 +208,11 @@ export function HashGenerator() {
               value={compareHash}
               onChange={(e) => setCompareHash((e.target as HTMLInputElement).value)}
               placeholder="Paste checksum here..."
+              aria-label="Expected checksum"
               className="font-mono text-sm bg-background"
             />
             {compareHash.trim() && (
-              <div className="flex items-center gap-2 text-sm mt-1">
+              <div role="status" className="flex items-center gap-2 text-sm mt-1">
                 {matchingAlgorithm ? (
                   <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -255,8 +232,9 @@ export function HashGenerator() {
 
       {/* Calculated Output List */}
       <div className="space-y-3">
-        {ALGORITHMS.map((algorithm) => {
+        {HASH_ALGORITHMS.map((algorithm) => {
           const isMatch = matchingAlgorithm === algorithm;
+          const justCopied = isCopied && copiedHash === algorithm;
           return (
             <Card
               key={algorithm}
@@ -272,12 +250,13 @@ export function HashGenerator() {
                   )}
                 </div>
                 <Button
-                  variant={copiedHash === algorithm ? 'default' : 'ghost'}
+                  variant={justCopied ? 'default' : 'ghost'}
                   size="icon"
                   onClick={() => handleCopy(algorithm)}
                   disabled={!hashes[algorithm]}
+                  aria-label={justCopied ? `${algorithm} hash copied` : `Copy ${algorithm} hash`}
                 >
-                  {copiedHash === algorithm ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {justCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </CardHeader>
               <CardContent>

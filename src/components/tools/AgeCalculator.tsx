@@ -1,162 +1,29 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState, useSyncExternalStore } from 'react';
 import { CalendarDays, Check, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useCopyToClipboard } from '@/hooks';
-
-type AgeBreakdown = {
-  years: number;
-  months: number;
-  days: number;
-  totalMonths: number;
-  totalWeeks: number;
-  totalDays: number;
-  nextBirthdayAge: number;
-  nextBirthdayLabel: string;
-  nextBirthdayDaysAway: number;
-};
-
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
+import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
+import {
+  calculateAge,
+  formatCount,
+  formatDuration,
+  type AgeBreakdown,
+} from '@/lib/tools/date-difference';
 
 function getTodayValue(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+  return toDateInputValue(new Date());
 }
 
-function parseDateInput(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+const noSubscription = () => () => {};
 
-  if (!match) {
-    return null;
-  }
-
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-  const day = Number(match[3]);
-  const date = new Date(Date.UTC(year, monthIndex, day));
-
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== monthIndex ||
-    date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
-}
-
-
-function formatLongDate(value: string): string {
-  const date = parseDateInput(value);
-
-  if (!date) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
-function getDaysInMonth(year: number, monthIndex: number): number {
-  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-}
-
-function clampBirthdayDay(year: number, monthIndex: number, day: number): number {
-  return Math.min(day, getDaysInMonth(year, monthIndex));
-}
-
-function calculateAge(birthDateValue: string, targetDateValue: string): AgeBreakdown | null {
-  const birthDate = parseDateInput(birthDateValue);
-  const targetDate = parseDateInput(targetDateValue);
-
-  if (!birthDate || !targetDate || targetDate < birthDate) {
-    return null;
-  }
-
-  let years = targetDate.getUTCFullYear() - birthDate.getUTCFullYear();
-  let months = targetDate.getUTCMonth() - birthDate.getUTCMonth();
-  let days = targetDate.getUTCDate() - birthDate.getUTCDate();
-
-  if (days < 0) {
-    months -= 1;
-    const previousMonthIndex = (targetDate.getUTCMonth() + 11) % 12;
-    const previousMonthYear =
-      previousMonthIndex === 11 ? targetDate.getUTCFullYear() - 1 : targetDate.getUTCFullYear();
-    days += getDaysInMonth(previousMonthYear, previousMonthIndex);
-  }
-
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  const totalDays = Math.floor((targetDate.getTime() - birthDate.getTime()) / DAY_IN_MS);
-  const totalMonths = years * 12 + months;
-  const totalWeeks = Math.floor(totalDays / 7);
-
-  const birthMonthIndex = birthDate.getUTCMonth();
-  const birthDay = birthDate.getUTCDate();
-  let nextBirthdayYear = targetDate.getUTCFullYear();
-  let nextBirthday = new Date(
-    Date.UTC(
-      nextBirthdayYear,
-      birthMonthIndex,
-      clampBirthdayDay(nextBirthdayYear, birthMonthIndex, birthDay)
-    )
-  );
-
-  if (nextBirthday < targetDate) {
-    nextBirthdayYear += 1;
-    nextBirthday = new Date(
-      Date.UTC(
-        nextBirthdayYear,
-        birthMonthIndex,
-        clampBirthdayDay(nextBirthdayYear, birthMonthIndex, birthDay)
-      )
-    );
-  }
-
-  const nextBirthdayDaysAway = Math.floor(
-    (nextBirthday.getTime() - targetDate.getTime()) / DAY_IN_MS
-  );
-
-  return {
-    years,
-    months,
-    days,
-    totalMonths,
-    totalWeeks,
-    totalDays,
-    nextBirthdayAge: years + (nextBirthdayDaysAway === 0 ? 0 : 1),
-    nextBirthdayLabel: new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC',
-    }).format(nextBirthday),
-    nextBirthdayDaysAway,
-  };
-}
-
-export function AgeCalculator() {
+function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
+  const id = useId();
   const [birthDate, setBirthDate] = useState('1990-06-15');
-  const [targetDate, setTargetDate] = useState(getTodayValue());
+  const [targetDate, setTargetDate] = useState(initialTargetDate);
   const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => {
@@ -202,7 +69,7 @@ export function AgeCalculator() {
     }
 
     return {
-      value: `${breakdown.years} years, ${breakdown.months} months, ${breakdown.days} days`,
+      value: formatDuration(breakdown),
       error: '',
       detail: `From ${formatLongDate(birthDate)} to ${formatLongDate(targetDate)}`,
       breakdown,
@@ -215,7 +82,7 @@ export function AgeCalculator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Age Calculator</CardTitle>
@@ -225,9 +92,12 @@ export function AgeCalculator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">Birth date</label>
+            <div role="group" aria-labelledby={`${id}-birth`}>
+              <span id={`${id}-birth`} className="mb-2 block text-sm font-medium">
+                Birth date
+              </span>
               <DatePicker
+                aria-labelledby={`${id}-birth`}
                 value={birthDate}
                 onChange={setBirthDate}
                 disabled={(date) => {
@@ -238,9 +108,12 @@ export function AgeCalculator() {
                 error={!parseDateInput(birthDate) && !!birthDate}
               />
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Age at</label>
+            <div role="group" aria-labelledby={`${id}-target`}>
+              <span id={`${id}-target`} className="mb-2 block text-sm font-medium">
+                Age at
+              </span>
               <DatePicker
+                aria-labelledby={`${id}-target`}
                 value={targetDate}
                 onChange={setTargetDate}
                 disabled={(date) => {
@@ -302,7 +175,7 @@ export function AgeCalculator() {
                   Total months
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalMonths)}
+                  {formatCount(result.breakdown.totalMonths)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -310,7 +183,7 @@ export function AgeCalculator() {
                   Total weeks
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalWeeks)}
+                  {formatCount(result.breakdown.totalWeeks)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -318,7 +191,7 @@ export function AgeCalculator() {
                   Total days
                 </div>
                 <div className="mt-1 font-mono text-lg font-semibold">
-                  {formatNumber(result.breakdown.totalDays)}
+                  {formatCount(result.breakdown.totalDays)}
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
@@ -328,7 +201,7 @@ export function AgeCalculator() {
                 </div>
                 <div className="mt-1 font-semibold">{result.breakdown.nextBirthdayLabel}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Turns {result.breakdown.nextBirthdayAge} in {formatNumber(result.breakdown.nextBirthdayDaysAway)} day
+                  Turns {result.breakdown.nextBirthdayAge} in {formatCount(result.breakdown.nextBirthdayDaysAway)} day
                   {result.breakdown.nextBirthdayDaysAway === 1 ? '' : 's'}
                 </div>
               </div>
@@ -337,5 +210,24 @@ export function AgeCalculator() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export function AgeCalculator() {
+  // The page is exported as static HTML at build time. "Today" rendered into
+  // it would be the build date: stale for every visitor and a hydration
+  // mismatch. The HTML and the first client render leave the date empty, and
+  // the form is mounted again with the visitor's date once hydrated.
+  const hydrated = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false
+  );
+  const [today] = useState(getTodayValue);
+
+  return hydrated ? (
+    <AgeForm key="local" initialTargetDate={today} />
+  ) : (
+    <AgeForm key="static" initialTargetDate="" />
   );
 }

@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home, Terminal, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
+import { PREFERENCE_STORAGE_KEYS } from '@/lib/preferences/store';
 import '@/styles/globals.css';
 
 interface GlobalErrorProps {
@@ -66,7 +67,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('dev-toolbox:theme') ||
+                  const theme = localStorage.getItem('${PREFERENCE_STORAGE_KEYS.theme}') ||
                     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   if (theme === 'dark') {
                     document.documentElement.classList.add('dark');

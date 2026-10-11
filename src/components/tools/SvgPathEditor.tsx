@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
@@ -9,12 +9,8 @@ import { Input } from '../ui/input';
 import { ColorPicker } from '../ui/color-picker';
 import { Copy, Check, Pen, Download, Maximize2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
-
-interface PathInfo {
-  commandCount: number;
-  length: number;
-  commands: { [key: string]: number };
-}
+import { downloadText } from '@/lib/files';
+import { buildPathSvg, inspectPath, isValidViewBox } from '@/lib/tools/svg-path-editor';
 
 export function SvgPathEditor() {
   const [pathData, setPathData] = useState('M 10 10 H 90 V 90 H 10 L 10 10');
@@ -22,105 +18,38 @@ export function SvgPathEditor() {
   const [strokeWidth, setStrokeWidth] = useState('2');
   const [strokeColor, setStrokeColor] = useState('#000000');
   const [fillColor, setFillColor] = useState('none');
-  const [optimizedPath, setOptimizedPath] = useState('');
-  const [pathInfo, setPathInfo] = useState<PathInfo | null>(null);
-  const [error, setError] = useState('');
 
   const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const fieldId = useId();
 
-  const analyzePath = (path: string): PathInfo => {
-    const commands: { [key: string]: number } = {};
-    let commandCount = 0;
-
-    // Count SVG commands
-    const commandPattern = /[MmLlHhVvCcSsQqTtAaZz]/g;
-    const matches = path.match(commandPattern) || [];
-
-    matches.forEach((cmd) => {
-      const upperCmd = cmd.toUpperCase();
-      commands[upperCmd] = (commands[upperCmd] || 0) + 1;
-      commandCount++;
-    });
-
-    return {
-      commandCount,
-      length: path.length,
-      commands,
-    };
-  };
-
-  const optimizePath = (path: string): string => {
-    const optimized = path
-      // Remove unnecessary whitespace
-      .replace(/\s+/g, ' ')
-      .trim()
-      // Remove spaces around commas
-      .replace(/\s*,\s*/g, ',')
-      // Remove spaces after commands
-      .replace(/([MmLlHhVvCcSsQqTtAaZz])\s+/g, '$1')
-      // Remove leading zeros from decimals
-      .replace(/\b0+(\.\d+)/g, '$1')
-      // Remove trailing zeros from decimals
-      .replace(/(\.\d*?)0+\b/g, '$1')
-      .replace(/\.\b/g, '');
-
-    return optimized;
-  };
-
-  useEffect(() => {
-    if (pathData) {
-      try {
-        const info = analyzePath(pathData);
-        setPathInfo(info);
-        const opt = optimizePath(pathData);
-        setOptimizedPath(opt);
-        setError('');
-      } catch (err) {
-        setError('Invalid SVG path data');
-        setPathInfo(null);
-        setOptimizedPath('');
-      }
-    } else {
-      setPathInfo(null);
-      setOptimizedPath('');
-    }
-  }, [pathData]);
+  const inspection = useMemo(() => inspectPath(pathData), [pathData]);
+  const { analysis: pathInfo, optimized: optimizedPath, error } = inspection;
+  const viewBoxValid = isValidViewBox(viewBox);
 
   const handleCopy = async (text: string) => {
     await copyToClipboard(text);
   };
 
   const handleDownloadSVG = () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">
-  <path d="${pathData}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="${fillColor}"/>
-</svg>`;
+    const svg = buildPathSvg({
+      pathData,
+      viewBox,
+      stroke: strokeColor,
+      strokeWidth,
+      fill: fillColor,
+    });
 
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'path.svg';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadText(svg, 'path.svg', 'image/svg+xml');
   };
 
   const handleClear = () => {
     setPathData('');
-    setOptimizedPath('');
-    setPathInfo(null);
-    setError('');
   };
 
   const handleUseOptimized = () => {
     if (optimizedPath) {
       setPathData(optimizedPath);
     }
-  };
-
-  const getSavingsPercentage = (): string => {
-    if (!optimizedPath || !pathData) return '0';
-    const savings = ((pathData.length - optimizedPath.length) / pathData.length) * 100;
-    return savings.toFixed(1);
   };
 
   return (
@@ -141,21 +70,31 @@ export function SvgPathEditor() {
             placeholder="M 10 10 H 90 V 90 H 10 L 10 10"
             rows={4}
             className="font-mono text-sm"
+            aria-label="SVG path data"
+            aria-invalid={Boolean(error)}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">ViewBox</label>
+              <label htmlFor={`${fieldId}-viewbox`} className="text-sm font-medium">ViewBox</label>
               <Input
+                id={`${fieldId}-viewbox`}
                 type="text"
                 value={viewBox}
                 onChange={(e) => setViewBox((e.target as HTMLInputElement).value)}
                 placeholder="0 0 100 100"
                 className="font-mono"
+                aria-invalid={!viewBoxValid}
               />
+              {!viewBoxValid && (
+                <p className="text-xs text-destructive">
+                  ViewBox needs four numbers: min-x min-y width height.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Stroke Width</label>
+              <label htmlFor={`${fieldId}-stroke-width`} className="text-sm font-medium">Stroke Width</label>
               <Input
+                id={`${fieldId}-stroke-width`}
                 type="number"
                 value={strokeWidth}
                 onChange={(e) => setStrokeWidth((e.target as HTMLInputElement).value)}
@@ -165,15 +104,17 @@ export function SvgPathEditor() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Stroke Color</label>
+              <label htmlFor={`${fieldId}-stroke`} className="text-sm font-medium">Stroke Color</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Stroke color"
                   value={strokeColor}
                   onChange={setStrokeColor}
                   showText={false}
                   className="w-16 h-10 rounded border"
                 />
                 <Input
+                  id={`${fieldId}-stroke`}
                   type="text"
                   value={strokeColor}
                   onChange={(e) => setStrokeColor((e.target as HTMLInputElement).value)}
@@ -183,9 +124,10 @@ export function SvgPathEditor() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Fill Color</label>
+              <label htmlFor={`${fieldId}-fill`} className="text-sm font-medium">Fill Color</label>
               <div className="flex gap-2">
                 <ColorPicker
+                  label="Fill color"
                   value={fillColor === 'none' ? '#ffffff' : fillColor}
                   onChange={setFillColor}
                   disabled={fillColor === 'none'}
@@ -193,6 +135,7 @@ export function SvgPathEditor() {
                   className="w-16 h-10 rounded border"
                 />
                 <Input
+                  id={`${fieldId}-fill`}
                   type="text"
                   value={fillColor}
                   onChange={(e) => setFillColor((e.target as HTMLInputElement).value)}
@@ -207,7 +150,7 @@ export function SvgPathEditor() {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button onClick={handleDownloadSVG} disabled={!pathData}>
+        <Button onClick={handleDownloadSVG} disabled={inspection.empty}>
           <Download className="h-4 w-4 mr-2" />
           Download SVG
         </Button>
@@ -218,13 +161,13 @@ export function SvgPathEditor() {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="status" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
 
-      {/* Preview */}
-      {pathData && !error && (
+      {/* Preview: shown for broken paths too, since SVG draws a path up to its first error */}
+      {!inspection.empty && (
         <Card>
           <CardHeader>
             <CardTitle>Preview</CardTitle>
@@ -233,9 +176,11 @@ export function SvgPathEditor() {
           <CardContent>
             <div className="flex justify-center items-center p-4 sm:p-8 bg-muted rounded-md">
               <svg
-                viewBox={viewBox}
+                viewBox={viewBoxValid ? viewBox : undefined}
                 className="max-w-full h-auto border border-input"
                 style={{ maxHeight: '400px' }}
+                role="img"
+                aria-label="Path preview"
               >
                 <path
                   d={pathData}
@@ -306,7 +251,7 @@ export function SvgPathEditor() {
             <div>
               <CardTitle>Optimized Path</CardTitle>
               <CardDescription>
-                {optimizedPath.length} characters ({getSavingsPercentage()}% smaller)
+                {optimizedPath.length} characters ({inspection.savingsPercent}% smaller)
               </CardDescription>
             </div>
             <div className="flex gap-2">

@@ -15,128 +15,61 @@ import {
 } from '@/components/ui/select';
 import { Copy, Check, FileJson, Trash2, CheckCircle2, AlertTriangle, Search, Info, ChevronRight, ChevronDown } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import {
+  describeLineCount,
+  describeTreeNode,
+  type TreeLeafType,
+  type TreeVocabulary,
+} from '@/lib/tools/formatter-output';
+import { renderJson, validateJson } from '@/lib/tools/json-formatter';
 
-// Helper function to query a JSON object using dot or bracket notation paths
-function queryJson(obj: unknown, path: string): unknown {
-  if (!path.trim()) return obj;
-  
-  let cleanPath = path.trim();
-  if (cleanPath.startsWith('$.')) {
-    cleanPath = cleanPath.substring(2);
-  } else if (cleanPath.startsWith('$')) {
-    cleanPath = cleanPath.substring(1);
-  }
-  
-  if (!cleanPath) return obj;
-  
-  const tokens: string[] = [];
-  const tokenRegex = /([^.\[\]]+)|\[['"]?([^'"]+)['"]?\]/g;
-  let match;
-  while ((match = tokenRegex.exec(cleanPath)) !== null) {
-    tokens.push(match[1] || match[2]);
-  }
-  
-  let current: unknown = obj;
-  for (const token of tokens) {
-    if (current === null || current === undefined) {
-      return undefined;
-    }
-    
-    if (Array.isArray(current)) {
-      const idx = parseInt(token, 10);
-      if (isNaN(idx)) {
-        // Map key across array items if token is not an index
-        current = current.map(item => {
-          if (item && typeof item === 'object') {
-            return (item as Record<string, unknown>)[token];
-          }
-          return undefined;
-        });
-      } else {
-        current = current[idx];
-      }
-    } else if (typeof current === 'object') {
-      current = (current as Record<string, unknown>)[token];
-    } else {
-      return undefined;
-    }
-  }
-  
-  return current;
-}
+const TREE_WORDS: TreeVocabulary = { list: 'Array', map: 'Object', member: 'key', empty: 'null' };
+
+const LEAF_CLASSES: Record<TreeLeafType, string> = {
+  empty: 'text-muted-foreground italic',
+  boolean: 'text-blue-600 dark:text-blue-400 font-semibold',
+  number: 'text-green-600 dark:text-green-400',
+  string: 'text-orange-600 dark:text-orange-400 break-all',
+};
 
 // Collapsible JSON Tree Node viewer component
-function TreeNode({ name, value, depth = 0 }: { name?: string; value: unknown; depth: number }) {
+function TreeNode({ name, value, depth }: { name?: string; value: unknown; depth: number }) {
   const [isExpanded, setIsExpanded] = useState(depth <= 1);
-  
-  if (value === null) {
+  const node = describeTreeNode(value, TREE_WORDS);
+  const label =
+    name === undefined ? null : (
+      <span className="text-purple-600 dark:text-purple-400 font-semibold">{name === '' ? '""' : name}:</span>
+    );
+
+  if (node.kind === 'leaf') {
     return (
       <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-muted-foreground italic">null</span>
+        {label}
+        <span className={LEAF_CLASSES[node.type]}>{node.text}</span>
       </div>
     );
   }
-  
-  if (typeof value === 'boolean') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-blue-600 dark:text-blue-400 font-semibold">{value ? 'true' : 'false'}</span>
-      </div>
-    );
-  }
-  
-  if (typeof value === 'number') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-green-600 dark:text-green-400">{value}</span>
-      </div>
-    );
-  }
-  
-  if (typeof value === 'string') {
-    return (
-      <div className="flex items-start gap-1 font-mono text-sm py-0.5">
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-orange-600 dark:text-orange-400 break-all">"{value}"</span>
-      </div>
-    );
-  }
-  
-  const isArray = Array.isArray(value);
-  const keys = isArray ? [] : Object.keys(value as Record<string, unknown>);
-  const itemsCount = isArray ? (value as unknown[]).length : keys.length;
-  
-  const label = isArray 
-    ? `Array[${itemsCount}]` 
-    : `Object {${itemsCount} key${itemsCount === 1 ? '' : 's'}}`;
-  
+
   return (
     <div className="font-mono text-sm py-0.5">
-      <div 
-        className="flex items-center gap-1 cursor-pointer select-none py-0.5 hover:bg-accent/40 rounded px-1 w-max max-w-full"
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        className="flex items-center gap-1 cursor-pointer select-none py-0.5 hover:bg-accent/40 rounded px-1 w-max max-w-full text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span className="text-muted-foreground shrink-0">
           {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </span>
-        {name && <span className="text-purple-600 dark:text-purple-400 font-semibold">{name}:</span>}
-        <span className="text-muted-foreground text-xs font-semibold">{label}</span>
-      </div>
-      
+        {label}
+        <span className="text-muted-foreground text-xs font-semibold">{node.label}</span>
+      </button>
+
       {isExpanded && (
         <div className="pl-4 ml-2 border-l border-muted-foreground/20 space-y-0.5">
-          {isArray ? (
-            (value as unknown[]).map((item, idx) => (
-              <TreeNode key={idx} name={String(idx)} value={item} depth={depth + 1} />
-            ))
-          ) : (
-            keys.map((key) => (
-              <TreeNode key={key} name={key} value={(value as Record<string, unknown>)[key]} depth={depth + 1} />
-            ))
-          )}
+          {node.children.map((child) => (
+            <TreeNode key={child.name} name={child.name} value={child.value} depth={depth + 1} />
+          ))}
         </div>
       )}
     </div>
@@ -149,59 +82,20 @@ export function JsonFormatter() {
   const [indentation, setIndentation] = useState('2');
   const [isMinified, setIsMinified] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
   // Reactive validation state computed from the input text
-  const validation = useMemo(() => {
-    if (!input.trim()) return null;
-    try {
-      const parsed = JSON.parse(input);
-      let summary = '';
-      if (Array.isArray(parsed)) {
-        summary = `Array with ${parsed.length.toLocaleString()} item${parsed.length === 1 ? '' : 's'}`;
-      } else if (parsed && typeof parsed === 'object') {
-        const keys = Object.keys(parsed);
-        summary = `Object with ${keys.length.toLocaleString()} key${keys.length === 1 ? '' : 's'}`;
-      } else {
-        summary = `Primitive (${parsed === null ? 'null' : typeof parsed})`;
-      }
-      return { valid: true, parsed, summary, error: '' };
-    } catch (e) {
-      return {
-        valid: false,
-        parsed: null,
-        summary: '',
-        error: e instanceof Error ? e.message : 'Invalid JSON format',
-      };
-    }
-  }, [input]);
+  const validation = useMemo(() => validateJson(input), [input]);
 
   // Reactive output computation incorporating formatting and filter selectors
   const outputResult = useMemo(() => {
-    if (!validation || !validation.valid) return { text: '', error: '', parsedResult: null };
+    if (!validation || !validation.valid) return { text: '', error: '', value: null };
 
-    try {
-      let result = validation.parsed;
-      if (filterQuery.trim()) {
-        result = queryJson(validation.parsed, filterQuery);
-        if (result === undefined) {
-          return { text: '', error: `No matching properties found for path: "${filterQuery}"`, parsedResult: null };
-        }
-      }
-
-      if (isMinified) {
-        return { text: JSON.stringify(result), error: '', parsedResult: result };
-      }
-
-      const spaces = indentation === 'tab' ? '\t' : parseInt(indentation, 10);
-      return { text: JSON.stringify(result, null, spaces), error: '', parsedResult: result };
-    } catch (e) {
-      return {
-        text: '',
-        error: e instanceof Error ? e.message : 'Failed to process JSON output',
-        parsedResult: null,
-      };
-    }
+    return renderJson(validation.value, {
+      path: filterQuery,
+      indent: indentation === 'tab' ? '\t' : parseInt(indentation, 10),
+      minify: isMinified,
+    });
   }, [validation, filterQuery, indentation, isMinified]);
 
   const handleMinify = () => {
@@ -237,6 +131,7 @@ export function JsonFormatter() {
             value={input}
             onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
             placeholder='{"name": "Ada", "roles": ["Admin", "Editor"]}'
+            aria-label="JSON input"
             rows={10}
             className="font-mono text-sm"
           />
@@ -245,7 +140,7 @@ export function JsonFormatter() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Indentation configuration */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Indentation:</span>
+                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -291,7 +186,7 @@ export function JsonFormatter() {
               ) : (
                 <>
                   <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-                  <div>
+                  <div className="min-w-0 break-words">
                     <strong>Invalid JSON Syntax:</strong> {validation.error}
                   </div>
                 </>
@@ -318,6 +213,7 @@ export function JsonFormatter() {
               value={filterQuery}
               onChange={(e) => setFilterQuery((e.target as HTMLInputElement).value)}
               placeholder="e.g., roles or $.name"
+              aria-label="Filter path"
               className="font-mono text-sm bg-background"
             />
           </CardContent>
@@ -330,15 +226,16 @@ export function JsonFormatter() {
           <div>
             <CardTitle>Formatted Output</CardTitle>
             <CardDescription>
-              {outputResult.text ? `${outputResult.text.split('\n').length} lines` : 'Output will appear here'}
+              {outputResult.text ? describeLineCount(outputResult.text) : 'Output will appear here'}
             </CardDescription>
           </div>
           {validation?.valid && !outputResult.error && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs">
+            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('text')}
+                aria-pressed={viewMode === 'text'}
                 className="h-7 px-2.5 text-xs font-semibold"
               >
                 Text
@@ -347,6 +244,7 @@ export function JsonFormatter() {
                 variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('tree')}
+                aria-pressed={viewMode === 'tree'}
                 className="h-7 px-2.5 text-xs font-semibold"
               >
                 Tree View
@@ -358,17 +256,18 @@ export function JsonFormatter() {
           {outputResult.error ? (
             <div className="flex items-start gap-3 rounded-md bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20 px-4 py-3 text-sm">
               <Info className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>{outputResult.error}</div>
+              <div className="min-w-0 break-words">{outputResult.error}</div>
             </div>
-          ) : viewMode === 'tree' && outputResult.parsedResult !== null ? (
+          ) : viewMode === 'tree' && outputResult.value !== null ? (
             <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
-              <TreeNode value={outputResult.parsedResult} depth={0} />
+              <TreeNode value={outputResult.value} depth={0} />
             </div>
           ) : (
             <Textarea
               value={outputResult.text}
               readOnly
               placeholder="Formatted output will appear here..."
+              aria-label="Formatted JSON output"
               rows={12}
               className="font-mono text-sm"
             />
@@ -389,7 +288,7 @@ export function JsonFormatter() {
             ) : (
               <>
                 <Copy className="h-4 w-4 mr-2" />
-                Copy Output
+                {copyFailed ? 'Copy failed' : 'Copy Output'}
               </>
             )}
           </Button>

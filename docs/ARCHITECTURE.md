@@ -28,8 +28,12 @@ The app is a static export with client-side tool execution layered on top. It is
 - `src/app/tools/[slug]/page.tsx`
 - `src/components/ToolPageClient.tsx`
 - `src/lib/utils/tool-registry.ts`
-- `src/lib/utils/tools-config.ts`
-- `src/lib/contexts/*`
+- `src/lib/catalog` (tool catalog built from the registry)
+- `src/lib/tags` (tag names, icons, styles, order)
+- `src/lib/preferences` and `src/lib/contexts/*`
+- `src/lib/home` (home-page session state)
+- `src/lib/commands` (app commands and shortcuts)
+- `src/app/sw-precache.js/route.ts` (service-worker precache list, emitted by the build)
 - `scripts/sync-version.js` (invoked in CI to keep package.json, tauri.conf.json, and Cargo.toml versions in sync with the pushed Git release tag)
 - `src-tauri/tauri.conf.json` (Tauri app packaging configuration)
 
@@ -43,9 +47,27 @@ Tools are defined in `src/lib/utils/tool-registry.ts`. Each registry entry inclu
 
 Current behavior:
 
-- `src/lib/utils/tools-config.ts` derives `TOOLS` from the registry for static routes, search, sitemap, and metadata
+- `src/lib/catalog` builds the tool catalog from the registry for static routes, search, filtering, grouping, sitemap, and metadata. It owns the hidden policy: hidden tools are left out of discovery and always reachable by id
 - `src/app/tools/[slug]/page.tsx` resolves the selected tool and renders it inside `ToolPageClient`
 - `npm run typecheck` catches missing component loaders and invalid component exports
+
+## Module Map
+
+Behaviour that several callers need lives in one module with a small interface, so it can be tested through that interface and changed in one place.
+
+| Module | Owns |
+| --- | --- |
+| `src/lib/catalog` | Visibility, lookup with loader, search scoring, filtering, grouping by tag |
+| `src/lib/tags` | Tag name, description, icon, per-surface classes, order |
+| `src/lib/preferences` | `localStorage` keys, defaults, hydration, write-through, cross-tab sync |
+| `src/lib/home` | Home-page `sessionStorage` state, reset signal, grid navigation maths |
+| `src/lib/commands` | App commands, shortcuts, platform labels |
+| `src/lib/files` + `useFileIntake`, `useObjectUrl`, `FileDropzone` | File picking, drag-and-drop, validation, reading, downloads, size labels |
+| `src/lib/pdf` | pdfjs loading, bundled worker, opening, rendering, text extraction |
+| `src/lib/markdown`, `src/lib/export` | Markdown parser configuration, export template, snapshot PDF, print |
+| `src/lib/tools/*` | Pure logic of individual tools |
+
+Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests.
 
 ## Static Export Notes
 

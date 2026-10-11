@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,153 +14,19 @@ import {
 } from '@/components/ui/select';
 import { Copy, Quote, Trash2, ArrowLeftRight, Check } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
-
-type EscapeMode = 'javascript' | 'json' | 'html' | 'xml' | 'csv' | 'sql' | 'regex';
+import { convertEscape, type EscapeDirection, type EscapeMode } from '@/lib/tools/text-escape';
 
 export function TextEscape() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
   const [mode, setMode] = useState<EscapeMode>('javascript');
-  const [direction, setDirection] = useState<'escape' | 'unescape'>('escape');
-  const [error, setError] = useState('');
+  const [direction, setDirection] = useState<EscapeDirection>('escape');
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const escapeText = (text: string, escapeMode: EscapeMode): string => {
-    if (!text) return '';
-
-    switch (escapeMode) {
-      case 'javascript':
-        return text
-          .replace(/\\/g, '\\\\')
-          .replace(/'/g, "\\'")
-          .replace(/"/g, '\\"')
-          .replace(/\n/g, '\\n')
-          .replace(/\r/g, '\\r')
-          .replace(/\t/g, '\\t')
-          .replace(/\b/g, '\\b')
-          .replace(/\f/g, '\\f');
-
-      case 'json':
-        return JSON.stringify(text).slice(1, -1);
-
-      case 'html':
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-
-      case 'xml':
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-
-      case 'csv':
-        if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-          return '"' + text.replace(/"/g, '""') + '"';
-        }
-        return text;
-
-      case 'sql':
-        return text.replace(/'/g, "''");
-
-      case 'regex':
-        return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      default:
-        return text;
-    }
-  };
-
-  const unescapeText = (text: string, escapeMode: EscapeMode): string => {
-    if (!text) return '';
-
-    try {
-      switch (escapeMode) {
-        case 'javascript':
-          return text
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            .replace(/\\b/g, '\b')
-            .replace(/\\f/g, '\f')
-            .replace(/\\'/g, "'")
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\');
-
-        case 'json':
-          return JSON.parse('"' + text + '"');
-
-        case 'html':
-          return text
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/&amp;/g, '&');
-
-        case 'xml':
-          return text
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&apos;/g, "'")
-            .replace(/&amp;/g, '&');
-
-        case 'csv':
-          if (text.startsWith('"') && text.endsWith('"')) {
-            return text.slice(1, -1).replace(/""/g, '"');
-          }
-          return text;
-
-        case 'sql':
-          return text.replace(/''/g, "'");
-
-        case 'regex':
-          return text.replace(/\\([.*+?^${}()|[\]\\])/g, '$1');
-
-        default:
-          return text;
-      }
-    } catch (e) {
-      throw new Error('Invalid escaped text for the selected mode');
-    }
-  };
-
-  useEffect(() => {
-    handleConvert();
-  }, [input, mode, direction]);
-
-  const handleConvert = () => {
-    if (!input.trim()) {
-      setOutput('');
-      setError('');
-      return;
-    }
-
-    try {
-      if (direction === 'escape') {
-        const escaped = escapeText(input, mode);
-        setOutput(escaped);
-      } else {
-        const unescaped = unescapeText(input, mode);
-        setOutput(unescaped);
-      }
-      setError('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to convert text');
-      setOutput('');
-    }
-  };
+  const { output, error } = useMemo(() => convertEscape(input, mode, direction), [input, mode, direction]);
 
   const handleSwap = () => {
-    const temp = input;
     setInput(output);
-    setOutput(temp);
+    setDirection(direction === 'escape' ? 'unescape' : 'escape');
   };
 
   const handleCopy = async () => {
@@ -171,22 +37,22 @@ export function TextEscape() {
 
   const handleClear = () => {
     setInput('');
-    setOutput('');
-    setError('');
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant={direction === 'escape' ? 'default' : 'outline'}
           onClick={() => setDirection('escape')}
+          aria-pressed={direction === 'escape'}
         >
           Escape
         </Button>
         <Button
           variant={direction === 'unescape' ? 'default' : 'outline'}
           onClick={() => setDirection('unescape')}
+          aria-pressed={direction === 'unescape'}
         >
           Unescape
         </Button>
@@ -227,8 +93,9 @@ export function TextEscape() {
 
           <Textarea
             value={input}
-            onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder={direction === 'escape' ? 'Enter text here...' : 'Enter escaped text here...'}
+            aria-label={direction === 'escape' ? 'Text to escape' : 'Escaped text to unescape'}
             rows={8}
             className="font-mono"
           />
@@ -236,7 +103,7 @@ export function TextEscape() {
       </Card>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -245,7 +112,7 @@ export function TextEscape() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} characters` : 'Result will appear here automatically'}
+            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -253,7 +120,7 @@ export function TextEscape() {
             <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 onClick={handleCopy}
                 disabled={!output}

@@ -1,6 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import {
   Check,
   Copy,
@@ -22,18 +30,17 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useCopyToClipboard } from '@/hooks';
 import { TooltipSimple } from '@/components/ui/tooltip';
-
-type Rgb = {
-  r: number;
-  g: number;
-  b: number;
-};
-
-type Hsl = {
-  h: number;
-  s: number;
-  l: number;
-};
+import {
+  colorValues,
+  generateTheme,
+  pickerPosition,
+  readableTextColor,
+  themeCss,
+  themeDeclaration,
+  tintsAndShades,
+  type ThemeEntry,
+} from '@/lib/tools/color-picker';
+import { hsvToRgb, parseHexColor, rgbToHex, type Hsv, type Rgb } from '@/lib/tools/design-color';
 
 type EyeDropperResult = {
   sRGBHex: string;
@@ -70,147 +77,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-function componentToHex(value: number) {
-  return clamp(value, 0, 255).toString(16).padStart(2, '0').toUpperCase();
-}
-
-function rgbToHex({ r, g, b }: Rgb) {
-  return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
-}
-
-function hexToRgb(value: string): Rgb | null {
-  const trimmed = value.trim();
-  const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(trimmed);
-  if (shorthand) {
-    return {
-      r: parseInt(`${shorthand[1]}${shorthand[1]}`, 16),
-      g: parseInt(`${shorthand[2]}${shorthand[2]}`, 16),
-      b: parseInt(`${shorthand[3]}${shorthand[3]}`, 16),
-    };
-  }
-
-  const full = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(trimmed);
-  if (!full) return null;
-
-  return {
-    r: parseInt(full[1], 16),
-    g: parseInt(full[2], 16),
-    b: parseInt(full[3], 16),
-  };
-}
-
-function rgbToHsl({ r, g, b }: Rgb): Hsl {
-  const red = r / 255;
-  const green = g / 255;
-  const blue = b / 255;
-  const max = Math.max(red, green, blue);
-  const min = Math.min(red, green, blue);
-  const lightness = (max + min) / 2;
-
-  if (max === min) {
-    return { h: 0, s: 0, l: Math.round(lightness * 100) };
-  }
-
-  const delta = max - min;
-  const saturation =
-    lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-  let hue = 0;
-
-  if (max === red) {
-    hue = (green - blue) / delta + (green < blue ? 6 : 0);
-  } else if (max === green) {
-    hue = (blue - red) / delta + 2;
-  } else {
-    hue = (red - green) / delta + 4;
-  }
-
-  return {
-    h: Math.round(hue * 60),
-    s: Math.round(saturation * 100),
-    l: Math.round(lightness * 100),
-  };
-}
-
-function hslToRgb({ h, s, l }: Hsl): Rgb {
-  const hue = h / 360;
-  const saturation = s / 100;
-  const lightness = l / 100;
-
-  if (saturation === 0) {
-    const value = lightness * 255;
-    return { r: value, g: value, b: value };
-  }
-
-  const hueToRgb = (p: number, q: number, t: number) => {
-    let normalized = t;
-    if (normalized < 0) normalized += 1;
-    if (normalized > 1) normalized -= 1;
-    if (normalized < 1 / 6) return p + (q - p) * 6 * normalized;
-    if (normalized < 1 / 2) return q;
-    if (normalized < 2 / 3) return p + (q - p) * (2 / 3 - normalized) * 6;
-    return p;
-  };
-
-  const q =
-    lightness < 0.5
-      ? lightness * (1 + saturation)
-      : lightness + saturation - lightness * saturation;
-  const p = 2 * lightness - q;
-
-  return {
-    r: hueToRgb(p, q, hue + 1 / 3) * 255,
-    g: hueToRgb(p, q, hue) * 255,
-    b: hueToRgb(p, q, hue - 1 / 3) * 255,
-  };
-}
-
-function mixColor(rgb: Rgb, target: 0 | 255, amount: number): Rgb {
-  return {
-    r: rgb.r + (target - rgb.r) * amount,
-    g: rgb.g + (target - rgb.g) * amount,
-    b: rgb.b + (target - rgb.b) * amount,
-  };
-}
-
-function luminance({ r, g, b }: Rgb) {
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-}
-
-function getReadableTextColor(rgb: Rgb) {
-  return luminance(rgb) > 0.62 ? '#111827' : '#FFFFFF';
-}
-
-function getReadableHsl(hsl: Hsl): Hsl {
-  return luminance(hslToRgb(hsl)) > 0.62 ? { h: 0, s: 0, l: 5 } : { h: 0, s: 0, l: 98 };
-}
-
-type ThemeEntry = {
-  variable: string;
-  label: string;
-  hsl: Hsl;
-};
-
-function generateTheme(primary: Hsl): ThemeEntry[] {
-  const { h, s } = primary;
-  const sBg = Math.round(Math.min(s * 0.08, 8));
-  const secondary: Hsl = { h: (h + 180) % 360, s: Math.round(s * 0.5), l: 50 };
-  const accent: Hsl = { h: (h + 30) % 360, s: Math.round(s * 0.75), l: 55 };
-
-  return [
-    { variable: '--background',           label: 'Background',          hsl: { h, s: sBg, l: 98 } },
-    { variable: '--foreground',           label: 'Foreground',          hsl: { h, s: sBg, l: 5 } },
-    { variable: '--primary',              label: 'Primary',             hsl: primary },
-    { variable: '--primary-foreground',   label: 'Primary Foreground',  hsl: getReadableHsl(primary) },
-    { variable: '--secondary',            label: 'Secondary',           hsl: secondary },
-    { variable: '--secondary-foreground', label: 'Secondary Foreground', hsl: getReadableHsl(secondary) },
-    { variable: '--muted',                label: 'Muted',               hsl: { h, s: Math.round(s * 0.12), l: 93 } },
-    { variable: '--muted-foreground',     label: 'Muted Foreground',    hsl: { h, s: sBg, l: 45 } },
-    { variable: '--accent',               label: 'Accent',              hsl: accent },
-    { variable: '--accent-foreground',    label: 'Accent Foreground',   hsl: getReadableHsl(accent) },
-    { variable: '--border',               label: 'Border',              hsl: { h, s: Math.round(s * 0.1), l: 88 } },
-    { variable: '--destructive',          label: 'Destructive',         hsl: { h: 0, s: 72, l: 51 } },
-  ];
-}
+// The EyeDropper API never appears or disappears while the page is open.
+const subscribeToNothing = () => () => {};
+const hasEyeDropper = () => 'EyeDropper' in window;
+const noEyeDropper = () => false;
 
 function ColorValue({
   label,
@@ -249,59 +119,37 @@ function ColorValue({
 }
 
 function useFeedback(duration = 2000) {
-  const [visible, setVisible] = useState(false);
+  // Counts triggers, so a second one while the feedback is still showing
+  // restarts the timer instead of being cut short by the first.
+  const [trigger, setTrigger] = useState(0);
 
   useEffect(() => {
-    if (!visible) return;
-    const id = window.setTimeout(() => setVisible(false), duration);
+    if (trigger === 0) return;
+    const id = window.setTimeout(() => setTrigger(0), duration);
     return () => window.clearTimeout(id);
-  }, [visible, duration]);
+  }, [trigger, duration]);
 
-  return [visible, () => setVisible(true)] as const;
+  return [trigger !== 0, () => setTrigger((count) => count + 1)] as const;
 }
 
 export function ColorPicker() {
   const [rgb, setRgb] = useState<Rgb>(DEFAULT_COLOR);
   const [hexInput, setHexInput] = useState(rgbToHex(DEFAULT_COLOR));
+  // Where the picker handle was last put by hand; see pickerPosition.
+  const [dragged, setDragged] = useState<Hsv | null>(null);
   const [savedColors, setSavedColors] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [saveFeedbackVisible, triggerSaveFeedback] = useFeedback();
   const [pickFeedbackVisible, triggerPickFeedback] = useFeedback();
   const [resetFeedbackVisible, triggerResetFeedback] = useFeedback();
-  const [eyeDropperSupported, setEyeDropperSupported] = useState(false);
-
-  useEffect(() => {
-    setEyeDropperSupported('EyeDropper' in window);
-  }, []);
+  const eyeDropperSupported = useSyncExternalStore(subscribeToNothing, hasEyeDropper, noEyeDropper);
 
   const hex = rgbToHex(rgb);
-  const hsl = useMemo(() => rgbToHsl(rgb), [rgb]);
-  const textColor = getReadableTextColor(rgb);
-  const theme = useMemo(() => generateTheme(hsl), [hsl]);
-
-  const values = [
-    { label: 'HEX', value: hex },
-    { label: 'RGB', value: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` },
-    { label: 'HSL', value: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` },
-    { label: 'CSS Var', value: `--color-picked: ${hex};` },
-  ];
-
-  const palette = useMemo(() => {
-    const variants = [
-      { label: 'Shade 40', rgb: mixColor(rgb, 0, 0.4) },
-      { label: 'Shade 20', rgb: mixColor(rgb, 0, 0.2) },
-      { label: 'Shade 10', rgb: mixColor(rgb, 0, 0.1) },
-      { label: 'Base', rgb },
-      { label: 'Tint 10', rgb: mixColor(rgb, 255, 0.1) },
-      { label: 'Tint 20', rgb: mixColor(rgb, 255, 0.2) },
-      { label: 'Tint 40', rgb: mixColor(rgb, 255, 0.4) },
-    ];
-
-    return variants.map((variant) => ({
-      label: variant.label,
-      hex: rgbToHex(variant.rgb),
-    }));
-  }, [rgb]);
+  const picker = useMemo(() => pickerPosition(rgb, dragged), [rgb, dragged]);
+  const textColor = readableTextColor(rgb);
+  const theme = useMemo(() => generateTheme(rgb), [rgb]);
+  const values = useMemo(() => colorValues(rgb), [rgb]);
+  const palette = useMemo(() => tintsAndShades(rgb), [rgb]);
 
   const setColor = (nextRgb: Rgb) => {
     const normalized = {
@@ -315,41 +163,40 @@ export function ColorPicker() {
     setError('');
   };
 
-  const handleHexChange = (value: string) => {
-    setHexInput(value.toUpperCase());
-    const nextRgb = hexToRgb(value);
+  const movePicker = (next: Hsv) => {
+    setDragged(next);
+    setColor(hsvToRgb(next));
+  };
+
+  const handleHexChange = (field: HTMLInputElement) => {
+    const { value, selectionStart, selectionEnd } = field;
+    const upper = value.toUpperCase();
+
+    // Writing the upper-cased text into the field moves the caret to the end,
+    // which sent letters typed in the middle of the colour to the wrong place.
+    // Writing it here and putting the caret back means React finds the field
+    // already showing the state and leaves it alone.
+    if (upper !== value) {
+      field.value = upper;
+      field.setSelectionRange(selectionStart, selectionEnd);
+    }
+
+    setHexInput(upper);
+    const nextRgb = parseHexColor(value);
 
     if (!nextRgb) {
       setError('Enter a valid HEX color, such as #3B82F6 or #0AF.');
       return;
     }
 
+    // The text stays as typed. Expanding "#3B8" to "#33BB88" on the spot
+    // filled the field, so a six-digit colour could not be typed past it.
     setRgb(nextRgb);
-    setHexInput(rgbToHex(nextRgb));
     setError('');
   };
 
-  const handleHslChange = (key: keyof Hsl, value: number) => {
-    setColor(
-      hslToRgb({
-        ...hsl,
-        [key]: key === 'h' ? clamp(value, 0, 360) : clamp(value, 0, 100),
-      })
-    );
-  };
-
-  const handleHslChangePair = (
-    saturation: number,
-    lightness: number,
-    hue: number = hsl.h
-  ) => {
-    setColor(
-      hslToRgb({
-        h: clamp(hue, 0, 360),
-        s: clamp(saturation, 0, 100),
-        l: clamp(lightness, 0, 100),
-      })
-    );
+  const handleHexBlur = () => {
+    if (parseHexColor(hexInput)) setHexInput(hex);
   };
 
   const handleEyeDropper = async () => {
@@ -360,7 +207,7 @@ export function ColorPicker() {
 
     try {
       const result = await new window.EyeDropper().open();
-      const nextRgb = hexToRgb(result.sRGBHex);
+      const nextRgb = parseHexColor(result.sRGBHex);
       if (nextRgb) {
         setColor(nextRgb);
         triggerPickFeedback();
@@ -390,7 +237,7 @@ export function ColorPicker() {
             Pick a color, tune channels, and copy production-ready values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px),1fr]">
+        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
             <div
               className="flex min-h-48 flex-col justify-end px-6 py-5"
@@ -410,21 +257,22 @@ export function ColorPicker() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Picker
                   </p>
-                  <p className="text-sm font-medium">Drag in the field to choose saturation and lightness.</p>
+                  <p className="text-sm font-medium">Drag in the field to choose saturation and brightness.</p>
                 </div>
 
               </div>
 
               <ColorField
-                hue={hsl.h}
-                saturation={hsl.s}
-                lightness={hsl.l}
-                onChange={(saturation, lightness) =>
-                  handleHslChangePair(saturation, lightness, hsl.h)
+                hue={picker.h}
+                saturation={picker.s}
+                brightness={picker.v}
+                color={hex}
+                onChange={(saturation, brightness) =>
+                  movePicker({ h: picker.h, s: saturation, v: brightness })
                 }
               />
 
-              <HueSlider value={hsl.h} onChange={(value) => handleHslChange('h', value)} />
+              <HueSlider value={picker.h} onChange={(hue) => movePicker({ ...picker, h: hue })} />
 
               <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background px-3">
                 <span
@@ -433,10 +281,13 @@ export function ColorPicker() {
                 />
                 <Input
                   value={hexInput}
-                  onChange={(event) => handleHexChange(event.currentTarget.value)}
+                  onChange={(event) => handleHexChange(event.currentTarget)}
+                  onBlur={handleHexBlur}
                   placeholder="#3B82F6"
                   className="h-14 border-0 bg-transparent px-0 font-mono text-base uppercase shadow-none focus-visible:ring-0"
                   maxLength={7}
+                  aria-label="HEX color"
+                  aria-invalid={parseHexColor(hexInput) === null}
                 />
               </div>
 
@@ -451,7 +302,7 @@ export function ColorPicker() {
                         type="button"
                         className="h-9 rounded-xl border border-border/70 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         style={{ backgroundColor: color }}
-                        onClick={() => setColor(hexToRgb(color) ?? rgb)}
+                        onClick={() => setColor(parseHexColor(color) ?? rgb)}
                         aria-label={`Use preset ${color}`}
                       />
                     </TooltipSimple>
@@ -461,7 +312,10 @@ export function ColorPicker() {
             </div>
 
             {error && (
-              <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div
+                role="status"
+                className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
                 {error}
               </div>
             )}
@@ -573,7 +427,7 @@ export function ColorPicker() {
                 key={item.label}
                 label={item.label}
                 color={item.hex}
-                onClick={() => setColor(hexToRgb(item.hex) ?? rgb)}
+                onClick={() => setColor(parseHexColor(item.hex) ?? rgb)}
               />
             ))}
           </div>
@@ -606,7 +460,7 @@ export function ColorPicker() {
                     type="button"
                     className="group relative h-12 overflow-hidden rounded-2xl border border-border/70 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     style={{ backgroundColor: color }}
-                    onClick={() => setColor(hexToRgb(color) ?? rgb)}
+                    onClick={() => setColor(parseHexColor(color) ?? rgb)}
                     aria-label={`Use saved swatch ${color}`}
                   >
                     <span className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/20 px-2 py-1 text-center font-mono text-[10px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
@@ -632,17 +486,13 @@ export function ColorPicker() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {theme.map((entry) => {
-              const entryHex = rgbToHex(hslToRgb(entry.hsl));
-              return (
-                <ThemeSwatchButton
-                  key={entry.variable}
-                  entry={entry}
-                  hex={entryHex}
-                  onClick={() => setColor(hexToRgb(entryHex) ?? rgb)}
-                />
-              );
-            })}
+            {theme.map((entry) => (
+              <ThemeSwatchButton
+                key={entry.variable}
+                entry={entry}
+                onClick={() => setColor(parseHexColor(entry.hex) ?? rgb)}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -653,19 +503,12 @@ export function ColorPicker() {
 function CopyThemeButton({ theme }: { theme: ThemeEntry[] }) {
   const copy = useCopyToClipboard();
 
-  const handleCopy = () => {
-    const vars = theme
-      .map((e) => `  ${e.variable}: ${e.hsl.h} ${e.hsl.s}% ${e.hsl.l}%;`)
-      .join('\n');
-    copy.copyToClipboard(`:root {\n${vars}\n}`);
-  };
-
   return (
     <Button
       size="sm"
       variant={copy.isCopied ? 'default' : 'outline'}
       className="shrink-0 rounded-xl"
-      onClick={handleCopy}
+      onClick={() => copy.copyToClipboard(themeCss(theme))}
     >
       {copy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       {copy.isCopied ? 'Copied' : 'Copy CSS'}
@@ -673,9 +516,9 @@ function CopyThemeButton({ theme }: { theme: ThemeEntry[] }) {
   );
 }
 
-function ThemeSwatchButton({ entry, hex, onClick }: { entry: ThemeEntry; hex: string; onClick: () => void }) {
+function ThemeSwatchButton({ entry, onClick }: { entry: ThemeEntry; onClick: () => void }) {
   const copy = useCopyToClipboard();
-  const textColor = getReadableTextColor(hslToRgb(entry.hsl));
+  const { hex, textColor } = entry;
 
   return (
     <div className="overflow-hidden rounded-[22px] border border-border/70 bg-card shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
@@ -702,7 +545,7 @@ function ThemeSwatchButton({ entry, hex, onClick }: { entry: ThemeEntry; hex: st
             size="icon"
             variant="ghost"
             className="h-9 w-9 rounded-xl"
-            onClick={() => copy.copyToClipboard(`${entry.variable}: ${entry.hsl.h} ${entry.hsl.s}% ${entry.hsl.l}%;`)}
+            onClick={() => copy.copyToClipboard(themeDeclaration(entry))}
             aria-label={`Copy ${entry.variable}`}
           >
             {copy.isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -726,16 +569,17 @@ function ChannelSlider({
   suffix?: string;
   onChange: (value: number) => void;
 }) {
+  const labelId = useId();
   return (
     <div className="space-y-3 rounded-[22px] border border-border/60 bg-muted/[0.18] px-4 py-4">
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium">{label}</label>
+        <label id={labelId} className="text-sm font-medium">{label}</label>
         <span className="font-mono text-sm text-muted-foreground">
           {value}
           {suffix}
         </span>
       </div>
-      <Slider value={value} min={0} max={max} onChange={onChange} />
+      <Slider aria-labelledby={labelId} value={value} min={0} max={max} onChange={onChange} />
     </div>
   );
 }
@@ -791,17 +635,21 @@ function SwatchButton({
   );
 }
 
-
+// The field is the classic saturation/brightness square: the hue washed out to
+// white on the left and darkened to black at the bottom. Positions are HSV, so
+// the colour under the pointer is the colour that gets picked.
 function ColorField({
   hue,
   saturation,
-  lightness,
+  brightness,
+  color,
   onChange,
 }: {
   hue: number;
   saturation: number;
-  lightness: number;
-  onChange: (saturation: number, lightness: number) => void;
+  brightness: number;
+  color: string;
+  onChange: (saturation: number, brightness: number) => void;
 }) {
   const updateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -811,9 +659,42 @@ function ColorField({
     onChange(x, 100 - y);
   };
 
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 10 : 1;
+    let nextSaturation = saturation;
+    let nextBrightness = brightness;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        nextSaturation -= step;
+        break;
+      case 'ArrowRight':
+        nextSaturation += step;
+        break;
+      case 'ArrowUp':
+        nextBrightness += step;
+        break;
+      case 'ArrowDown':
+        nextBrightness -= step;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    onChange(clamp(nextSaturation, 0, 100), clamp(nextBrightness, 0, 100));
+  };
+
   return (
     <div
-      className="relative h-64 cursor-crosshair overflow-hidden rounded-[24px] border border-border/70 touch-none"
+      role="slider"
+      tabIndex={0}
+      aria-label="Saturation and brightness"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={saturation}
+      aria-valuetext={`Saturation ${saturation}%, brightness ${brightness}%`}
+      className="relative h-64 cursor-crosshair overflow-hidden rounded-[24px] border border-border/70 touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       style={{
         backgroundColor: `hsl(${hue} 100% 50%)`,
         backgroundImage:
@@ -827,13 +708,14 @@ function ColorField({
         if (event.buttons !== 1) return;
         updateFromPointer(event);
       }}
+      onKeyDown={handleKeyDown}
     >
       <div
         className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(15,23,42,0.45)]"
         style={{
           left: `${saturation}%`,
-          top: `${100 - lightness}%`,
-          backgroundColor: `hsl(${hue} ${saturation}% ${lightness}%)`,
+          top: `${100 - brightness}%`,
+          backgroundColor: color,
         }}
       />
     </div>
@@ -847,23 +729,72 @@ function HueSlider({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const labelId = useId();
+
+  const updateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    onChange(clamp(((event.clientX - rect.left) / rect.width) * 360, 0, 360));
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 10 : 1;
+    let next: number;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        next = value - step;
+        break;
+      case 'ArrowRight':
+      case 'ArrowUp':
+        next = value + step;
+        break;
+      case 'PageDown':
+        next = value - 30;
+        break;
+      case 'PageUp':
+        next = value + 30;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = 360;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    onChange(clamp(next, 0, 360));
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium">Hue</label>
+        <span id={labelId} className="text-sm font-medium">Hue</span>
         <span className="font-mono text-sm text-muted-foreground">{value}deg</span>
       </div>
-      <div className="relative h-4 overflow-hidden rounded-full">
+      <div
+        role="slider"
+        tabIndex={0}
+        aria-labelledby={labelId}
+        aria-valuemin={0}
+        aria-valuemax={360}
+        aria-valuenow={value}
+        aria-valuetext={`${value} degrees`}
+        className="relative h-4 cursor-pointer touch-none overflow-hidden rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          updateFromPointer(event);
+        }}
+        onPointerMove={(event) => {
+          if (event.buttons !== 1) return;
+          updateFromPointer(event);
+        }}
+        onKeyDown={handleKeyDown}
+      >
         <div className="absolute inset-0 rounded-full bg-[linear-gradient(90deg,#ff0000_0%,#ffff00_17%,#00ff00_33%,#00ffff_50%,#0000ff_67%,#ff00ff_83%,#ff0000_100%)]" />
-        <input
-          type="range"
-          min={0}
-          max={360}
-          value={value}
-          onChange={(event) => onChange(Number(event.currentTarget.value))}
-          className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent opacity-0"
-          aria-label="Hue"
-        />
         <div
           className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-white bg-transparent shadow-[0_0_0_1px_rgba(15,23,42,0.45)]"
           style={{ left: `${(value / 360) * 100}%` }}

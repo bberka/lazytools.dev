@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
-import { getModifierKey } from '@/lib/utils/keyboard';
+import { PALETTE_SHORTCUTS, detectPlatform, shortcutKeys } from '@/lib/commands';
 
 export function CommandPaletteButton() {
   const { toggle } = useCommandPalette();
@@ -17,7 +17,12 @@ export function CommandPaletteButton() {
     return () => cancelAnimationFrame(handle);
   }, []);
 
-  const modifierKey = mounted ? getModifierKey() : 'Ctrl';
+  // The server cannot tell the platform, so the first render shows the keys of
+  // 'other' and the real ones follow once mounted.
+  const [modifierKey, key] = shortcutKeys(
+    PALETTE_SHORTCUTS.toggle,
+    mounted ? detectPlatform() : 'other'
+  );
 
   return (
     <Button
@@ -32,7 +37,8 @@ export function CommandPaletteButton() {
         aria-hidden="true"
         className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border/40 bg-muted/50 px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex"
       >
-        <span className="text-xs">{modifierKey}</span>K
+        <span className="text-xs">{modifierKey}</span>
+        {key}
       </kbd>
     </Button>
   );

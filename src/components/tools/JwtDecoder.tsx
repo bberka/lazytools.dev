@@ -6,117 +6,42 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Check, Key, Trash2 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { decodeJwt, isJwtExpired, jwtTimes, type DecodedJwt } from '@/lib/tools/jwt-decoder';
 
-interface JwtParts {
-  header: string;
-  payload: string;
-  signature: string;
+function decode(token: string): { decoded: DecodedJwt | null; error: string } {
+  if (!token.trim()) return { decoded: null, error: '' };
+  try {
+    return { decoded: decodeJwt(token), error: '' };
+  } catch (e) {
+    return { decoded: null, error: e instanceof Error ? e.message : 'Invalid JWT token' };
+  }
 }
 
-interface DecodedJwt {
-  header: Record<string, unknown>;
-  payload: Record<string, unknown>;
-  signature: string;
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString();
 }
 
 export function JwtDecoder() {
   const [input, setInput] = useState('');
-  const [decoded, setDecoded] = useState<DecodedJwt | null>(null);
-  const [error, setError] = useState('');
+  // When the token was last edited: the moment its expiry is judged against.
+  const [checkedAt, setCheckedAt] = useState(0);
   const copyHeader = useCopyToClipboard();
   const copyPayload = useCopyToClipboard();
 
-  const base64UrlDecode = (str: string): string => {
-    // Convert base64url to base64
-    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    // Pad with '=' to make length a multiple of 4
-    while (base64.length % 4) {
-      base64 += '=';
-    }
+  const { decoded, error } = useMemo(() => decode(input), [input]);
 
-    try {
-      // Pure JavaScript base64 decoding (works in both browser and SSR)
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-      let result = '';
-
-      for (let i = 0; i < base64.length; i += 4) {
-        const encoded1 = chars.indexOf(base64[i]);
-        const encoded2 = chars.indexOf(base64[i + 1]);
-        const encoded3 = chars.indexOf(base64[i + 2]);
-        const encoded4 = chars.indexOf(base64[i + 3]);
-
-        const byte1 = (encoded1 << 2) | (encoded2 >> 4);
-        const byte2 = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-        const byte3 = ((encoded3 & 3) << 6) | encoded4;
-
-        result += String.fromCharCode(byte1);
-        if (encoded3 !== -1) result += String.fromCharCode(byte2);
-        if (encoded4 !== -1) result += String.fromCharCode(byte3);
-      }
-
-      return decodeURIComponent(
-        result.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      );
-    } catch (e) {
-      throw new Error('Invalid base64url encoding');
-    }
+  const handleInputChange = (value: string) => {
+    setInput(value);
+    setCheckedAt(Date.now());
   };
-
-  const decodeJwt = (token: string) => {
-    if (!token.trim()) {
-      setDecoded(null);
-      setError('');
-      return;
-    }
-
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Invalid JWT format. Expected 3 parts separated by dots.');
-      }
-
-      const [headerB64, payloadB64, signature] = parts;
-
-      const headerJson = base64UrlDecode(headerB64);
-      const payloadJson = base64UrlDecode(payloadB64);
-
-      const header = JSON.parse(headerJson);
-      const payload = JSON.parse(payloadJson);
-
-      setDecoded({
-        header,
-        payload,
-        signature,
-      });
-      setError('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid JWT token');
-      setDecoded(null);
-    }
-  };
-
 
   const handleClear = () => {
     setInput('');
-    setDecoded(null);
-    setError('');
   };
 
-  const formatTimestamp = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString();
-  };
-
-  const issuedAt =
-    typeof decoded?.payload.iat === 'number' ? decoded.payload.iat : null;
-  const expiresAt =
-    typeof decoded?.payload.exp === 'number' ? decoded.payload.exp : null;
-  const isExpired = useMemo(() => {
-    if (expiresAt === null) return false;
-    return expiresAt < Date.now() / 1000;
-  }, [expiresAt]);
-  const notBefore =
-    typeof decoded?.payload.nbf === 'number' ? decoded.payload.nbf : null;
+  const { issuedAt, expiresAt, notBefore } = jwtTimes(decoded?.payload ?? {});
+  const isExpired = isJwtExpired(expiresAt, checkedAt);
 
   return (
     <div className="space-y-4">
@@ -131,12 +56,9 @@ export function JwtDecoder() {
         <CardContent className="space-y-4">
           <Textarea
             value={input}
-            onChange={(e) => {
-              const newValue = (e.target as HTMLTextAreaElement).value;
-              setInput(newValue);
-              decodeJwt(newValue);
-            }}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+            aria-label="JWT token"
             rows={4}
             className="font-mono text-sm"
           />
@@ -147,7 +69,7 @@ export function JwtDecoder() {
           </Button>
 
           {error && (
-            <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
               <strong>Error:</strong> {error}
             </div>
           )}
@@ -196,17 +118,17 @@ export function JwtDecoder() {
               </div>
 
               {/* Show common timestamp fields in human-readable format */}
-              {(issuedAt || expiresAt || notBefore) && (
+              {(issuedAt !== null || expiresAt !== null || notBefore !== null) && (
                 <div className="space-y-2 text-sm">
                   <h4 className="font-semibold">Timestamps:</h4>
-                  {issuedAt && (
-                    <div className="flex gap-2">
+                  {issuedAt !== null && (
+                    <div className="flex flex-wrap gap-x-2">
                       <span className="text-muted-foreground">Issued At (iat):</span>
                       <span>{formatTimestamp(issuedAt)}</span>
                     </div>
                   )}
-                  {expiresAt && (
-                    <div className="flex gap-2">
+                  {expiresAt !== null && (
+                    <div className="flex flex-wrap gap-x-2">
                       <span className="text-muted-foreground">Expires At (exp):</span>
                       <span>{formatTimestamp(expiresAt)}</span>
                       {isExpired && (
@@ -214,8 +136,8 @@ export function JwtDecoder() {
                       )}
                     </div>
                   )}
-                  {notBefore && (
-                    <div className="flex gap-2">
+                  {notBefore !== null && (
+                    <div className="flex flex-wrap gap-x-2">
                       <span className="text-muted-foreground">Not Before (nbf):</span>
                       <span>{formatTimestamp(notBefore)}</span>
                     </div>

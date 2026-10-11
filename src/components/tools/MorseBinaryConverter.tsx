@@ -1,92 +1,34 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useId } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Copy, Check, Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, FileText, Info } from 'lucide-react';
+import { Copy, Check, Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, Info } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import {
+  convertCode,
+  morseTimeline,
+  unsupportedMorseCharacters,
+  type CodeKind,
+  type CodeMode,
+} from '@/lib/tools/morse-binary-converter';
 
-type Mode = 'encode' | 'decode';
-type ToolType = 'morse' | 'binary';
+type Mode = CodeMode;
+type ToolType = CodeKind;
 type BinarySeparator = 'space' | 'none' | 'comma';
 
-const MORSE_MAP: Record<string, string> = {
-  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
-  'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
-  'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-  'Y': '-.--', 'Z': '--..',
-  '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
-  '8': '---..', '9': '----.', '0': '-----',
-  '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.',
-  '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-',
-  '+': '.-.-.', '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
-  ' ': '/'
-};
-
-const REVERSE_MORSE_MAP = Object.fromEntries(
-  Object.entries(MORSE_MAP).map(([k, v]) => [v, k])
-);
-
-function textToMorse(text: string): string {
-  return text
-    .toUpperCase()
-    .split('')
-    .map((char) => MORSE_MAP[char] || '')
-    .filter(Boolean)
-    .join(' ');
-}
-
-function morseToText(morse: string): string {
-  return morse
-    .trim()
-    .split(/\s+/)
-    .map((symbol) => {
-      if (symbol === '/') return ' ';
-      return REVERSE_MORSE_MAP[symbol] || '';
-    })
-    .join('');
-}
-
-function textToBinary(text: string, separator: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(text);
-  const binaryArray: string[] = [];
-  for (let i = 0; i < bytes.length; i++) {
-    binaryArray.push(bytes[i].toString(2).padStart(8, '0'));
-  }
-  return binaryArray.join(separator);
-}
-
-function binaryToText(binary: string, separator: string): string {
-  let clean = binary.trim();
-  if (separator) {
-    clean = clean.split(separator).join('');
-  }
-  clean = clean.replace(/[^01]/g, '');
-  if (clean.length === 0) return '';
-  if (clean.length % 8 !== 0) {
-    throw new Error('Binary data length must be a multiple of 8 bits.');
-  }
-
-  const bytes = new Uint8Array(clean.length / 8);
-  for (let i = 0; i < clean.length; i += 8) {
-    const byteStr = clean.substring(i, i + 8);
-    bytes[i / 8] = parseInt(byteStr, 2);
-  }
-  return new TextDecoder().decode(bytes);
-}
+// How many left-out characters the note under the Morse output names.
+const MAX_SKIPPED_SHOWN = 20;
 
 export function MorseBinaryConverter() {
   const [toolType, setToolType] = useState<ToolType>('morse');
   const [mode, setMode] = useState<Mode>('encode');
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
 
   // Morse Audio Settings
   const [wpm, setWpm] = useState(20);
@@ -97,6 +39,7 @@ export function MorseBinaryConverter() {
   const [binarySeparator, setBinarySeparator] = useState<BinarySeparator>('space');
 
   const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const separatorId = useId();
 
   const activeSeparator = useMemo(() => {
     if (binarySeparator === 'none') return '';
@@ -104,98 +47,73 @@ export function MorseBinaryConverter() {
     return ' ';
   }, [binarySeparator]);
 
+  const { output, error } = useMemo(
+    () => convertCode(input, toolType, mode, activeSeparator),
+    [input, toolType, mode, activeSeparator]
+  );
+
+  // Characters of the plain text that have no Morse code and are missing from the output.
+  const skipped = useMemo(
+    () => (toolType === 'morse' && mode === 'encode' ? unsupportedMorseCharacters(input) : []),
+    [input, toolType, mode]
+  );
+
   const audioRef = useRef<{ audioCtx: AudioContext; osc: OscillatorNode } | null>(null);
 
   // Cleanup audio oscillator on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        try {
-          audioRef.current.osc.stop();
-          audioRef.current.audioCtx.close();
-        } catch {
-          // Ignore
-        }
+      const playing = audioRef.current;
+      if (!playing) return;
+      audioRef.current = null;
+      playing.osc.onended = null;
+      try {
+        playing.osc.stop();
+      } catch {
+        // Ignore
       }
+      playing.audioCtx.close().catch(() => {});
     };
   }, []);
 
-  const convert = (
-    text: string,
-    currentTool: ToolType,
-    currentMode: Mode,
-    sep: string = activeSeparator
-  ) => {
-    if (!text.trim()) {
-      setOutput('');
-      setError('');
-      return;
-    }
-
+  const stopMorseAudio = () => {
+    const playing = audioRef.current;
+    if (!playing) return;
+    audioRef.current = null;
+    playing.osc.onended = null;
     try {
-      if (currentTool === 'morse') {
-        if (currentMode === 'encode') {
-          setOutput(textToMorse(text));
-          setError('');
-        } else {
-          // Basic syntax checking for Morse code input
-          const cleanMorse = text.trim();
-          if (/[a-zA-Z0-9]/.test(cleanMorse.replace(/\//g, ''))) {
-            throw new Error('Morse code inputs should contain only dots (.), dashes (-), spaces, or word breaks (/).');
-          }
-          setOutput(morseToText(cleanMorse));
-          setError('');
-        }
-      } else {
-        if (currentMode === 'encode') {
-          setOutput(textToBinary(text, sep));
-          setError('');
-        } else {
-          setOutput(binaryToText(text, sep));
-          setError('');
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed.');
-      setOutput('');
+      playing.osc.stop();
+    } catch {
+      // Ignore
     }
+    playing.audioCtx.close().catch(() => {});
+    setIsPlaying(false);
   };
 
   const handleInputChange = (val: string) => {
     setInput(val);
     stopMorseAudio();
-    convert(val, toolType, mode);
   };
 
   const handleToolTypeChange = (nextType: ToolType) => {
     setToolType(nextType);
     stopMorseAudio();
     setInput('');
-    setOutput('');
-    setError('');
   };
 
   const handleModeChange = (nextMode: Mode) => {
+    if (nextMode === mode) return;
     setMode(nextMode);
     stopMorseAudio();
-    setInput(output);
-    setOutput(input);
-    convert(output, toolType, nextMode);
+    // The result becomes the new input. Without a result (nothing typed, or
+    // input that failed to convert) the input stays to be read the other way.
+    if (output) setInput(output);
   };
 
-  const handleSwap = () => {
-    const nextMode = mode === 'encode' ? 'decode' : 'encode';
-    setMode(nextMode);
-    stopMorseAudio();
-    setInput(output);
-    setOutput(input);
-    convert(output, toolType, nextMode);
-  };
+  const handleSwap = () => handleModeChange(mode === 'encode' ? 'decode' : 'encode');
 
   const handleClear = () => {
     setInput('');
-    setOutput('');
-    setError('');
     stopMorseAudio();
   };
 
@@ -207,16 +125,20 @@ export function MorseBinaryConverter() {
     }
 
     const morseCode = mode === 'encode' ? output : input;
-    if (!morseCode.trim()) return;
+    const { tones, duration } = morseTimeline(morseCode, wpm);
+    if (tones.length === 0) return;
 
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
+    const AudioContextClass = window.AudioContext || win.webkitAudioContext;
     if (!AudioContextClass) {
-      alert('Web Audio API is not supported in this browser.');
+      // The error box below is labelled for conversion mistakes, so this goes to a toast.
+      toast.error('Web Audio API is not supported in this browser.');
       return;
     }
 
+    let audioCtx: AudioContext | null = null;
     try {
-      const audioCtx = new AudioContextClass();
+      audioCtx = new AudioContextClass();
       const osc = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
@@ -228,64 +150,35 @@ export function MorseBinaryConverter() {
       gainNode.connect(audioCtx.destination);
       osc.start(0);
 
-      const dotDuration = 1.2 / wpm; // dot duration in seconds
-      const dashDuration = dotDuration * 3;
-      const intraCharSpace = dotDuration;
-      const charSpace = dotDuration * 3;
-      const wordSpace = dotDuration * 7;
-
-      let time = audioCtx.currentTime + 0.05;
-
-      const symbols = morseCode.split('');
-      for (let idx = 0; idx < symbols.length; idx++) {
-        const symbol = symbols[idx];
-        if (symbol === '.') {
-          gainNode.gain.setValueAtTime(1, time);
-          time += dotDuration;
-          gainNode.gain.setValueAtTime(0, time);
-          time += intraCharSpace;
-        } else if (symbol === '-') {
-          gainNode.gain.setValueAtTime(1, time);
-          time += dashDuration;
-          gainNode.gain.setValueAtTime(0, time);
-          time += intraCharSpace;
-        } else if (symbol === ' ') {
-          time += charSpace - intraCharSpace;
-        } else if (symbol === '/') {
-          time += wordSpace - intraCharSpace;
-        }
+      const startAt = audioCtx.currentTime + 0.05;
+      for (const tone of tones) {
+        gainNode.gain.setValueAtTime(1, startAt + tone.start);
+        gainNode.gain.setValueAtTime(0, startAt + tone.start + tone.duration);
       }
+      osc.stop(startAt + duration);
 
-      osc.stop(time);
+      const playing = { audioCtx, osc };
+      audioRef.current = playing;
       setIsPlaying(true);
 
-      audioRef.current = { audioCtx, osc };
-
       osc.onended = () => {
-        setIsPlaying(false);
+        // Stop, or a newer playback, may already have taken over.
+        if (audioRef.current !== playing) return;
         audioRef.current = null;
+        setIsPlaying(false);
+        // Every playback opens its own context; release it once the last tone has ended.
+        playing.audioCtx.close().catch(() => {});
       };
     } catch {
-      setIsPlaying(false);
-      audioRef.current = null;
-    }
-  };
-
-  const stopMorseAudio = () => {
-    if (audioRef.current) {
-      try {
-        audioRef.current.osc.stop();
-        audioRef.current.audioCtx.close();
-      } catch {
-        // Ignore
-      }
+      audioCtx?.close().catch(() => {});
       audioRef.current = null;
       setIsPlaying(false);
+      toast.error('Could not start audio playback.');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Category selector */}
       <Tabs
         value={toolType}
@@ -311,10 +204,10 @@ export function MorseBinaryConverter() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
-          <TabsTrigger value="encode" className="flex items-center gap-2">
+          <TabsTrigger value="encode" className="flex items-center gap-2 whitespace-normal">
             Encode Text (Plain to Code)
           </TabsTrigger>
-          <TabsTrigger value="decode" className="flex items-center gap-2">
+          <TabsTrigger value="decode" className="flex items-center gap-2 whitespace-normal">
             Decode Text (Code to Plain)
           </TabsTrigger>
         </TabsList>
@@ -341,7 +234,7 @@ export function MorseBinaryConverter() {
                     Beep Frequency (Pitch): {frequency} Hz
                   </label>
                 </div>
-                <Slider
+                <Slider aria-label="Beep Frequency (Pitch)"
                   value={frequency}
                   min={300}
                   max={900}
@@ -350,14 +243,14 @@ export function MorseBinaryConverter() {
                   className="py-2"
                 />
               </div>
- 
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Speed (Words per Minute): {wpm} WPM
                   </label>
                 </div>
-                <Slider
+                <Slider aria-label="Speed (Words per Minute)"
                   value={wpm}
                   min={10}
                   max={35}
@@ -370,21 +263,17 @@ export function MorseBinaryConverter() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 max-w-xs">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <label
+                  htmlFor={separatorId}
+                  className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                >
                   Binary Separator
                 </label>
                 <Select
                   value={binarySeparator}
-                  onValueChange={(val) => {
-                    const nextSep = val as BinarySeparator;
-                    setBinarySeparator(nextSep);
-                    let tempSep = ' ';
-                    if (nextSep === 'none') tempSep = '';
-                    else if (nextSep === 'comma') tempSep = ',';
-                    convert(input, toolType, mode, tempSep);
-                  }}
+                  onValueChange={(val) => setBinarySeparator(val as BinarySeparator)}
                 >
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger id={separatorId} className="bg-background">
                     <SelectValue placeholder="Separator" />
                   </SelectTrigger>
                   <SelectContent>
@@ -420,10 +309,13 @@ export function MorseBinaryConverter() {
                   ? '.... . .-.. .-.. --- / .-- --- .-. .-.. -..'
                   : '01001000 01100101 01101100 01101100 01101111'
               }
+              aria-label={
+                mode === 'encode' ? 'Plain text input' : toolType === 'morse' ? 'Morse code input' : 'Binary input'
+              }
               rows={10}
               className="flex-1 font-mono text-xs leading-relaxed bg-background"
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button onClick={handleSwap} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap Directions
@@ -439,7 +331,10 @@ export function MorseBinaryConverter() {
               </Button>
             </div>
             {error && (
-              <div className="flex items-start gap-3 rounded-lg bg-destructive/5 text-destructive border-destructive/20 border px-4 py-3 text-xs font-medium">
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg bg-destructive/5 text-destructive border-destructive/20 border px-4 py-3 text-xs font-medium"
+              >
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
                   <strong>Syntax/Formatting Error:</strong> {error}
@@ -460,9 +355,21 @@ export function MorseBinaryConverter() {
               value={output}
               readOnly
               placeholder="Conversion result appears here..."
+              aria-label={
+                mode === 'encode' ? (toolType === 'morse' ? 'Morse code output' : 'Binary output') : 'Plain text output'
+              }
               rows={10}
               className="flex-1 font-mono text-xs leading-relaxed bg-muted/20 border-muted focus-visible:ring-0 cursor-text"
             />
+            {skipped.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Left out, no Morse code for:{' '}
+                <span className="font-mono text-foreground break-all">
+                  {skipped.slice(0, MAX_SKIPPED_SHOWN).join(' ')}
+                </span>
+                {skipped.length > MAX_SKIPPED_SHOWN && ` and ${skipped.length - MAX_SKIPPED_SHOWN} more`}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => copyToClipboard(output)}
@@ -509,10 +416,10 @@ export function MorseBinaryConverter() {
         </Card>
       </div>
 
-      <div className="flex items-start gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-xs text-blue-700 dark:text-blue-400">
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
         <div>
-          <strong className="font-semibold block mb-0.5">Encoders & Signals</strong>
+          <strong className="font-semibold block mb-0.5 text-foreground">Encoders & Signals</strong>
           This tool generates binary representations or audible Morse Code sequences completely inside your browser using the HTML5 Web Audio API, making it a fast utility for offline coding and text translation.
         </div>
       </div>

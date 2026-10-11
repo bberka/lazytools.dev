@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertCircle, Check, Copy, SearchCode, Trash2, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TooltipSimple } from '@/components/ui/tooltip';
@@ -17,12 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCopyToClipboard } from '@/hooks';
-
-interface Match {
-  text: string;
-  index: number;
-  groups: string[];
-}
+import { splitAtMatches } from '@/lib/tools/match-segments';
+import { explainRegex, testRegex, toFlagString, type RegexFlags } from '@/lib/tools/regex-tester';
 
 type BuilderToken = {
   label: string;
@@ -107,319 +103,33 @@ const RECIPES: PatternRecipe[] = [
   },
 ];
 
-interface RegexExplanation {
-  token: string;
-  description: string;
-  category: 'Anchor' | 'Quantifier' | 'Character Class' | 'Group' | 'Literal' | 'Meta';
-}
-
-function explainRegex(pattern: string): RegexExplanation[] {
-  const explanations: RegexExplanation[] = [];
-  if (!pattern) return explanations;
-  
-  let i = 0;
-  while (i < pattern.length) {
-    const char = pattern[i];
-    
-    // 1. Escaped characters
-    if (char === '\\' && i + 1 < pattern.length) {
-      const next = pattern[i + 1];
-      const escaped = '\\' + next;
-      
-      let description = `Literal character "${next}"`;
-      let category: RegexExplanation['category'] = 'Literal';
-      
-      switch (next) {
-        case 'd':
-          description = 'Any digit character (0-9)';
-          category = 'Character Class';
-          break;
-        case 'D':
-          description = 'Any non-digit character';
-          category = 'Character Class';
-          break;
-        case 'w':
-          description = 'Any word character (alphanumeric or underscore)';
-          category = 'Character Class';
-          break;
-        case 'W':
-          description = 'Any non-word character';
-          category = 'Character Class';
-          break;
-        case 's':
-          description = 'Any whitespace character (space, tab, newline)';
-          category = 'Character Class';
-          break;
-        case 'S':
-          description = 'Any non-whitespace character';
-          category = 'Character Class';
-          break;
-        case 'b':
-          description = 'A word boundary edge';
-          category = 'Anchor';
-          break;
-        case 'B':
-          description = 'A non-word boundary edge';
-          category = 'Anchor';
-          break;
-        case 'n':
-          description = 'Newline character';
-          category = 'Literal';
-          break;
-        case 'r':
-          description = 'Carriage return character';
-          category = 'Literal';
-          break;
-        case 't':
-          description = 'Tab character';
-          category = 'Literal';
-          break;
-        default:
-          if (['.', '*', '+', '?', '^', '$', '(', ')', '[', ']', '{', '}', '|', '\\'].includes(next)) {
-            description = `Escaped special meta-character "${next}" (matches literal "${next}")`;
-            category = 'Literal';
-          }
-          break;
-      }
-      
-      explanations.push({ token: escaped, description, category });
-      i += 2;
-      continue;
-    }
-    
-    // 2. Anchors
-    if (char === '^') {
-      explanations.push({ token: '^', description: 'Start of string (or line)', category: 'Anchor' });
-      i++;
-      continue;
-    }
-    if (char === '$') {
-      explanations.push({ token: '$', description: 'End of string (or line)', category: 'Anchor' });
-      i++;
-      continue;
-    }
-    
-    // 3. Dot (Any char)
-    if (char === '.') {
-      explanations.push({ token: '.', description: 'Any character except newline', category: 'Character Class' });
-      i++;
-      continue;
-    }
-    
-    // 4. Quantifiers: *, +, ?
-    if (char === '*') {
-      explanations.push({ token: '*', description: 'Repeat preceding element 0 or more times', category: 'Quantifier' });
-      i++;
-      continue;
-    }
-    if (char === '+') {
-      explanations.push({ token: '+', description: 'Repeat preceding element 1 or more times', category: 'Quantifier' });
-      i++;
-      continue;
-    }
-    if (char === '?') {
-      const prev = explanations[explanations.length - 1];
-      if (prev && prev.category === 'Quantifier') {
-        prev.token += '?';
-        prev.description += ' (lazy/non-greedy match)';
-      } else {
-        explanations.push({ token: '?', description: 'Preceding element is optional (matches 0 or 1 time)', category: 'Quantifier' });
-      }
-      i++;
-      continue;
-    }
-    
-    // 5. Quantifier range: {n}, {min, max}
-    if (char === '{') {
-      const endIdx = pattern.indexOf('}', i);
-      if (endIdx !== -1) {
-        const token = pattern.substring(i, endIdx + 1);
-        const inside = pattern.substring(i + 1, endIdx);
-        let description = `Repeat preceding element: ${inside} times`;
-        const parts = inside.split(',');
-        if (parts.length === 2) {
-          const min = parts[0].trim();
-          const max = parts[1].trim();
-          if (max === '') {
-            description = `Repeat preceding element: ${min} or more times`;
-          } else {
-            description = `Repeat preceding element: between ${min} and ${max} times`;
-          }
-        } else {
-          description = `Repeat preceding element: exactly ${inside} times`;
-        }
-        explanations.push({ token, description, category: 'Quantifier' });
-        i = endIdx + 1;
-        continue;
-      }
-    }
-    
-    // 6. Character sets: [abc], [a-z]
-    if (char === '[') {
-      const endIdx = pattern.indexOf(']', i);
-      if (endIdx !== -1) {
-        const token = pattern.substring(i, endIdx + 1);
-        let content = pattern.substring(i + 1, endIdx);
-        const isNegated = content.startsWith('^');
-        if (isNegated) content = content.substring(1);
-        
-        const desc = isNegated
-          ? `Any single character NOT in set: "${content}"`
-          : `Any single character in set: "${content}"`;
-          
-        explanations.push({ token, description: desc, category: 'Character Class' });
-        i = endIdx + 1;
-        continue;
-      }
-    }
-    
-    // 7. Groups
-    if (char === '(') {
-      if (pattern.startsWith('(?:', i)) {
-        explanations.push({ token: '(?:', description: 'Start of non-capturing group', category: 'Group' });
-        i += 3;
-      } else {
-        explanations.push({ token: '(', description: 'Start of capturing group', category: 'Group' });
-        i++;
-      }
-      continue;
-    }
-    if (char === ')') {
-      explanations.push({ token: ')', description: 'End of group', category: 'Group' });
-      i++;
-      continue;
-    }
-    
-    // 8. Alternation
-    if (char === '|') {
-      explanations.push({ token: '|', description: 'OR match (match left or right expression)', category: 'Meta' });
-      i++;
-      continue;
-    }
-    
-    // 9. Standard literals
-    explanations.push({ token: char, description: `Literal character "${char}"`, category: 'Literal' });
-    i++;
-  }
-  
-  return explanations;
-}
-
 export function RegexTester() {
   const [pattern, setPattern] = useState('');
   const [testString, setTestString] = useState('');
-  const [flags, setFlags] = useState({
+  const [flags, setFlags] = useState<RegexFlags>({
     global: true,
     multiline: false,
     caseInsensitive: false,
     dotAll: false,
     unicode: false,
   });
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [error, setError] = useState('');
-  const [isValid, setIsValid] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState('');
   const copy = useCopyToClipboard();
 
-  useEffect(() => {
-    testRegex();
-  }, [pattern, testString, flags]);
-
-  const flagString = useMemo(() => {
-    let value = '';
-    if (flags.global) value += 'g';
-    if (flags.multiline) value += 'm';
-    if (flags.caseInsensitive) value += 'i';
-    if (flags.dotAll) value += 's';
-    if (flags.unicode) value += 'u';
-    return value;
-  }, [flags]);
-
-  function testRegex() {
-    if (!pattern) {
-      setMatches([]);
-      setError('');
-      setIsValid(false);
-      return;
-    }
-
-    try {
-      const regex = new RegExp(pattern, flagString);
-      setIsValid(true);
-      setError('');
-
-      if (!testString) {
-        setMatches([]);
-        return;
-      }
-
-      const foundMatches: Match[] = [];
-
-      if (flags.global) {
-        let match;
-        while ((match = regex.exec(testString)) !== null) {
-          foundMatches.push({
-            text: match[0],
-            index: match.index,
-            groups: match.slice(1),
-          });
-
-          if (match.index === regex.lastIndex) {
-            regex.lastIndex += 1;
-          }
-        }
-      } else {
-        const match = regex.exec(testString);
-        if (match) {
-          foundMatches.push({
-            text: match[0],
-            index: match.index,
-            groups: match.slice(1),
-          });
-        }
-      }
-
-      setMatches(foundMatches);
-    } catch (regexError) {
-      setIsValid(false);
-      setError(regexError instanceof Error ? regexError.message : 'Invalid regular expression');
-      setMatches([]);
-    }
-  }
-
-  const highlightedText = useMemo(() => {
-    if (!testString || matches.length === 0) {
-      return testString;
-    }
-
-    const parts: { text: string; isMatch: boolean }[] = [];
-    let lastIndex = 0;
-
-    matches.forEach((match) => {
-      if (match.index > lastIndex) {
-        parts.push({
-          text: testString.slice(lastIndex, match.index),
-          isMatch: false,
-        });
-      }
-
-      parts.push({
-        text: match.text,
-        isMatch: true,
-      });
-
-      lastIndex = match.index + match.text.length;
-    });
-
-    if (lastIndex < testString.length) {
-      parts.push({
-        text: testString.slice(lastIndex),
-        isMatch: false,
-      });
-    }
-
-    return parts;
-  }, [matches, testString]);
+  const flagString = toFlagString(flags);
+  const { isValid, error, matches } = useMemo(
+    () => testRegex(pattern, flags, testString),
+    [pattern, flags, testString]
+  );
+  const explanations = useMemo(
+    () => (isValid ? explainRegex(pattern, flags) : []),
+    [isValid, pattern, flags]
+  );
+  const highlightedParts = useMemo(
+    () => splitAtMatches(testString, matches),
+    [matches, testString]
+  );
+  // The recipe list only names a recipe while the pattern still is that recipe.
+  const selectedRecipe = RECIPES.some((recipe) => recipe.value === pattern) ? pattern : '';
 
   const appendSnippet = (snippet: string) => {
     setPattern((current) => current + snippet);
@@ -427,7 +137,6 @@ export function RegexTester() {
 
   const handleRecipeChange = (value: string) => {
     const recipe = RECIPES.find((item) => item.value === value);
-    setSelectedRecipe(value);
     setPattern(value);
     if (recipe) {
       setTestString(recipe.sample);
@@ -437,10 +146,6 @@ export function RegexTester() {
   const handleClear = () => {
     setPattern('');
     setTestString('');
-    setSelectedRecipe('');
-    setMatches([]);
-    setError('');
-    setIsValid(false);
   };
 
   return (
@@ -461,6 +166,8 @@ export function RegexTester() {
                 value={pattern}
                 onChange={(event) => setPattern((event.target as HTMLInputElement).value)}
                 placeholder="Enter regex pattern..."
+                aria-label="Regex pattern"
+                aria-invalid={pattern !== '' && !isValid}
                 className={`min-w-0 flex-1 font-mono ${
                   pattern && !isValid
                     ? 'border-destructive'
@@ -478,9 +185,11 @@ export function RegexTester() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium">Guided recipe</label>
+              <label htmlFor="regex-recipe" className="text-sm font-medium">
+                Guided recipe
+              </label>
               <Select value={selectedRecipe} onValueChange={handleRecipeChange}>
-                <SelectTrigger>
+                <SelectTrigger id="regex-recipe">
                   <SelectValue placeholder="Start from a common pattern..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -532,65 +241,60 @@ export function RegexTester() {
           <div className="space-y-3">
             <div className="text-sm font-medium">Flags</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <label className="flex cursor-pointer items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="regex-flag-g"
                   checked={flags.global}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, global: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => setFlags({ ...flags, global: checked })}
                 />
-                <span className="text-sm">
+                <label htmlFor="regex-flag-g" className="cursor-pointer text-sm">
                   Global (<code className="font-mono">g</code>)
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex cursor-pointer items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="regex-flag-i"
                   checked={flags.caseInsensitive}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, caseInsensitive: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => setFlags({ ...flags, caseInsensitive: checked })}
                 />
-                <span className="text-sm">
+                <label htmlFor="regex-flag-i" className="cursor-pointer text-sm">
                   Case Insensitive (<code className="font-mono">i</code>)
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex cursor-pointer items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="regex-flag-m"
                   checked={flags.multiline}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, multiline: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => setFlags({ ...flags, multiline: checked })}
                 />
-                <span className="text-sm">
+                <label htmlFor="regex-flag-m" className="cursor-pointer text-sm">
                   Multiline (<code className="font-mono">m</code>)
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex cursor-pointer items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="regex-flag-s"
                   checked={flags.dotAll}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, dotAll: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => setFlags({ ...flags, dotAll: checked })}
                 />
-                <span className="text-sm">
+                <label htmlFor="regex-flag-s" className="cursor-pointer text-sm">
                   Dot All (<code className="font-mono">s</code>)
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex cursor-pointer items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Checkbox
+                  id="regex-flag-u"
                   checked={flags.unicode}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, unicode: checked as boolean })
-                  }
+                  onCheckedChange={(checked) => setFlags({ ...flags, unicode: checked })}
                 />
-                <span className="text-sm">
+                <label htmlFor="regex-flag-u" className="cursor-pointer text-sm">
                   Unicode (<code className="font-mono">u</code>)
-                </span>
-              </label>
+                </label>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -609,7 +313,7 @@ export function RegexTester() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto scrollbar-thin bg-background">
-              {explainRegex(pattern).map((exp, idx) => (
+              {explanations.map((exp, idx) => (
                 <div key={idx} className="grid grid-cols-[100px_1fr] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors">
                   <div className="font-mono bg-muted px-1.5 py-0.5 rounded text-center break-all select-all font-semibold shrink-0 text-primary">
                     {exp.token}
@@ -672,6 +376,7 @@ export function RegexTester() {
             value={testString}
             onChange={(event) => setTestString((event.target as HTMLTextAreaElement).value)}
             placeholder="Enter test string..."
+            aria-label="Test string"
             rows={8}
             className="font-mono text-sm"
           />
@@ -690,16 +395,14 @@ export function RegexTester() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="break-words rounded-md bg-muted p-4 font-mono text-sm whitespace-pre-wrap">
-              {typeof highlightedText === 'string'
-                ? highlightedText
-                : highlightedText.map((part, index) => (
-                    <span
-                      key={`${part.text}-${index}`}
-                      className={part.isMatch ? 'bg-yellow-300 dark:bg-yellow-600' : ''}
-                    >
-                      {part.text}
-                    </span>
-                  ))}
+              {highlightedParts.map((part, index) => (
+                <span
+                  key={index}
+                  className={part.isMatch ? 'bg-yellow-300 dark:bg-yellow-600' : ''}
+                >
+                  {part.text}
+                </span>
+              ))}
             </div>
 
             {matches.length > 0 && (

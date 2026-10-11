@@ -2,18 +2,25 @@
 
 import { useEffect } from 'react';
 
+// The part of the global Tauri API this component uses.
+interface TauriGlobal {
+  window: {
+    getCurrentWindow: () => { show: () => Promise<void> };
+  };
+}
+
 export function TauriWindowHandler() {
   useEffect(() => {
     // Check if we are running inside Tauri
-    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+    const tauri = (window as Window & { __TAURI__?: TauriGlobal }).__TAURI__;
+    if (tauri) {
       try {
-        const { getCurrentWindow } = (window as any).__TAURI__.window;
-        const appWindow = getCurrentWindow();
-        
+        const appWindow = tauri.window.getCurrentWindow();
+
         // Wait a small frame for React DOM hydration/layout to paint, then show window
         requestAnimationFrame(() => {
           setTimeout(() => {
-            appWindow.show().catch((err: any) => {
+            appWindow.show().catch((err: unknown) => {
               console.error('Failed to show window via show() promise:', err);
             });
           }, 100);

@@ -9,107 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-
-type MatchInfo = {
-  index: number;
-  text: string;
-};
-
-type ReplaceResult = {
-  matches: MatchInfo[];
-  output: string;
-  error: string;
-};
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildPattern(findText: string, useRegex: boolean, wholeWord: boolean): string {
-  const source = useRegex ? findText : escapeRegExp(findText);
-  return wholeWord ? `\\b(?:${source})\\b` : source;
-}
-
-function runReplace(
-  input: string,
-  findText: string,
-  replaceText: string,
-  caseSensitive: boolean,
-  wholeWord: boolean,
-  useRegex: boolean,
-  replaceAll: boolean
-): ReplaceResult {
-  if (!findText) {
-    return {
-      matches: [],
-      output: input,
-      error: '',
-    };
-  }
-
-  try {
-    const pattern = buildPattern(findText, useRegex, wholeWord);
-    const matchFlags = `${caseSensitive ? '' : 'i'}g`;
-    const replaceFlags = `${caseSensitive ? '' : 'i'}${replaceAll ? 'g' : ''}`;
-    const matchRegex = new RegExp(pattern, matchFlags);
-    const replaceRegex = new RegExp(pattern, replaceFlags);
-
-    const matches = Array.from(input.matchAll(matchRegex)).map((match) => ({
-      index: match.index ?? 0,
-      text: match[0],
-    }));
-
-    const output = useRegex
-      ? input.replace(replaceRegex, replaceText)
-      : input.replace(replaceRegex, () => replaceText);
-
-    return {
-      matches,
-      output,
-      error: '',
-    };
-  } catch (error) {
-    return {
-      matches: [],
-      output: input,
-      error: error instanceof Error ? error.message : 'Invalid search pattern',
-    };
-  }
-}
-
-function getHighlightedSegments(input: string, matches: MatchInfo[]) {
-  if (!input || matches.length === 0) {
-    return [{ text: input, isMatch: false }];
-  }
-
-  const segments: Array<{ text: string; isMatch: boolean }> = [];
-  let lastIndex = 0;
-
-  matches.forEach((match) => {
-    if (match.index > lastIndex) {
-      segments.push({
-        text: input.slice(lastIndex, match.index),
-        isMatch: false,
-      });
-    }
-
-    segments.push({
-      text: match.text,
-      isMatch: true,
-    });
-
-    lastIndex = match.index + match.text.length;
-  });
-
-  if (lastIndex < input.length) {
-    segments.push({
-      text: input.slice(lastIndex),
-      isMatch: false,
-    });
-  }
-
-  return segments;
-}
+import { findAndReplace } from '@/lib/tools/find-and-replace';
+import { splitAtMatches } from '@/lib/tools/match-segments';
+import { countCharacters } from '@/lib/tools/word-counter';
 
 export function FindAndReplace() {
   const [input, setInput] = useState('');
@@ -123,22 +25,24 @@ export function FindAndReplace() {
 
   const result = useMemo(
     () =>
-      runReplace(
-        input,
-        findText,
-        replaceText,
+      findAndReplace(input, {
+        find: findText,
+        replace: replaceText,
         caseSensitive,
         wholeWord,
         useRegex,
-        replaceAll
-      ),
+        replaceAll,
+      }),
     [caseSensitive, findText, input, replaceAll, replaceText, useRegex, wholeWord]
   );
 
   const highlightedSegments = useMemo(
-    () => getHighlightedSegments(input, result.matches),
+    () => splitAtMatches(input, result.matches),
     [input, result.matches]
   );
+
+  // Visible characters, so an emoji in the output counts once.
+  const outputCharacters = useMemo(() => countCharacters(result.output), [result.output]);
 
   const handleCopy = async () => {
     await copyToClipboard(result.output);
@@ -157,10 +61,6 @@ export function FindAndReplace() {
     setUseRegex(false);
     setReplaceAll(true);
   };
-
-  const replacementsPlanned = replaceAll
-    ? result.matches.length
-    : Math.min(result.matches.length, findText ? 1 : 0);
 
   return (
     <div className="space-y-4">
@@ -215,13 +115,13 @@ export function FindAndReplace() {
 
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline">
-              Matches: {result.error ? 0 : result.matches.length.toLocaleString()}
+              Matches: {result.matches.length.toLocaleString()}
             </Badge>
             <Badge variant="outline">
-              Replacements: {result.error ? 0 : replacementsPlanned.toLocaleString()}
+              Replacements: {result.replacements.toLocaleString()}
             </Badge>
             <Badge variant="outline">
-              Output chars: {result.output.length.toLocaleString()}
+              Output chars: {outputCharacters.toLocaleString()}
             </Badge>
           </div>
         </CardContent>
@@ -237,6 +137,7 @@ export function FindAndReplace() {
             value={input}
             onChange={(event) => setInput((event.target as HTMLTextAreaElement).value)}
             placeholder="Paste text here..."
+            aria-label="Input text"
             rows={12}
             className="font-mono text-sm"
           />
@@ -267,7 +168,7 @@ export function FindAndReplace() {
           <div className="min-h-[180px] whitespace-pre-wrap rounded-md border bg-muted/30 p-4 font-mono text-sm break-words">
             {highlightedSegments.map((segment, index) => (
               <span
-                key={`${segment.text}-${index}`}
+                key={index}
                 className={segment.isMatch ? 'rounded bg-yellow-300/70 px-0.5 text-black' : ''}
               >
                 {segment.text}
@@ -289,6 +190,7 @@ export function FindAndReplace() {
           <Textarea
             value={result.output}
             readOnly
+            aria-label="Result"
             rows={12}
             className="font-mono text-sm"
           />

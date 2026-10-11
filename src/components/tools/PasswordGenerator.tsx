@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -17,6 +17,16 @@ import {
 } from '../ui/select';
 import { Copy, Check, RefreshCw, Shield, KeyRound } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import {
+  clampInteger,
+  countCharacterTypes,
+  generatePassword,
+  separatorCharacter,
+  type Generated,
+  type GenerationMode,
+  type GeneratorSettings,
+  type PassphraseSeparator,
+} from '@/lib/tools/password-generator';
 
 interface ZxcvbnResult {
   score: number;
@@ -34,73 +44,19 @@ interface ZxcvbnResult {
 
 let isZxcvbnInitialized = false;
 
-type GenerationMode = 'random' | 'pin' | 'passphrase';
-type StrengthTone = 'text-red-500' | 'text-yellow-500' | 'text-green-500';
+// Estimating the strength of a long password takes long enough to stall the
+// page (about a second at 256 characters). Above this length the estimate
+// waits until the password has stopped changing, so dragging the length slider
+// does not run it on every step.
+const SLOW_ESTIMATE_LENGTH = 32;
+const SLOW_ESTIMATE_DELAY_MS = 250;
 
-const CHARACTER_GROUPS = {
-  uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-  lowercase: 'abcdefghijklmnopqrstuvwxyz',
-  numbers: '0123456789',
-  special: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-} as const;
-
-const AMBIGUOUS_PATTERN = /[0Ol1iI]/g;
-const PASSPHRASE_WORDS = [
-  'anchor', 'april', 'arrow', 'atom', 'autumn', 'beacon', 'berry', 'beyond', 'binary', 'breeze',
-  'cactus', 'cannon', 'carbon', 'castle', 'cedar', 'circle', 'cloud', 'cobalt', 'coffee', 'comet',
-  'coral', 'cosmos', 'crystal', 'dawn', 'delta', 'desert', 'drift', 'echo', 'ember', 'falcon',
-  'feather', 'forest', 'fossil', 'galaxy', 'garden', 'glacier', 'golden', 'harbor', 'hazel', 'helium',
-  'horizon', 'island', 'jungle', 'lantern', 'legend', 'lilac', 'lotus', 'lunar', 'marble', 'matrix',
-  'meadow', 'meteor', 'mint', 'monsoon', 'nebula', 'nickel', 'nova', 'oasis', 'ocean', 'onyx',
-  'orchid', 'paper', 'pearl', 'pepper', 'phoenix', 'pioneer', 'planet', 'prism', 'quantum', 'quartz',
-  'radar', 'raven', 'rocket', 'saffron', 'sailor', 'shadow', 'signal', 'silver', 'solar', 'sonic',
-  'spruce', 'summit', 'sunset', 'thunder', 'timber', 'topaz', 'torrent', 'valley', 'velvet', 'violet',
-  'voyage', 'willow', 'winter', 'wisdom', 'zenith',
-];
-
-function getRandomInt(max: number) {
-  if (max <= 0) return 0;
-  const values = new Uint32Array(1);
-  crypto.getRandomValues(values);
-  return values[0] % max;
-}
-
-function pickRandom<T>(items: T[]) {
-  return items[getRandomInt(items.length)];
-}
-
-function shuffle<T>(items: T[]) {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = getRandomInt(index + 1);
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-  return copy;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function safeNumber(value: number, min: number, max: number) {
-  if (!Number.isFinite(value)) return min;
-  return clamp(Math.floor(value), min, max);
-}
-
-function getPasswordCounts(value: string) {
-  return {
-    uppercase: (value.match(/[A-Z]/g) ?? []).length,
-    lowercase: (value.match(/[a-z]/g) ?? []).length,
-    numbers: (value.match(/\d/g) ?? []).length,
-    special: (value.match(/[^A-Za-z0-9\s]/g) ?? []).length,
-  };
-}
-
-function formatSeparator(separator: string) {
-  if (separator === 'space') return ' ';
-  if (separator === 'dot') return '.';
-  if (separator === 'underscore') return '_';
-  return '-';
+/** What is on screen: a result together with the settings that produced it. */
+interface Output {
+  settings: GeneratorSettings;
+  result: Generated;
+  /** Which press of "Generate now" this came from. */
+  refresh: number;
 }
 
 export function PasswordGenerator() {
@@ -125,11 +81,11 @@ export function PasswordGenerator() {
   const [pinLength, setPinLength] = useState(6);
   const [pinGrouping, setPinGrouping] = useState(3);
   const [wordCount, setWordCount] = useState(4);
-  const [separator, setSeparator] = useState('hyphen');
+  const [separator, setSeparator] = useState<PassphraseSeparator>('hyphen');
   const [capitalizeWords, setCapitalizeWords] = useState(true);
   const [includePassphraseNumber, setIncludePassphraseNumber] = useState(true);
   const [includePassphraseSymbol, setIncludePassphraseSymbol] = useState(false);
-  const [manualPassword, setManualPassword] = useState('');
+  const [manualOutput, setManualOutput] = useState<Output | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
@@ -137,78 +93,42 @@ export function PasswordGenerator() {
     setMounted(true);
   }, []);
 
-  const buildRandomPassword = useCallback(() => {
-    const sets = [
-      {
-        key: 'uppercase',
-        enabled: uppercase,
-        chars: excludeAmbiguous
-          ? CHARACTER_GROUPS.uppercase.replace(AMBIGUOUS_PATTERN, '')
-          : CHARACTER_GROUPS.uppercase,
-        max: limitUppercase ? safeNumber(maxUppercase, 0, length) : length,
-      },
-      {
-        key: 'lowercase',
-        enabled: lowercase,
-        chars: excludeAmbiguous
-          ? CHARACTER_GROUPS.lowercase.replace(AMBIGUOUS_PATTERN, '')
-          : CHARACTER_GROUPS.lowercase,
-        max: limitLowercase ? safeNumber(maxLowercase, 0, length) : length,
-      },
-      {
-        key: 'numbers',
-        enabled: numbers,
-        chars: excludeAmbiguous
-          ? CHARACTER_GROUPS.numbers.replace(AMBIGUOUS_PATTERN, '')
-          : CHARACTER_GROUPS.numbers,
-        max: limitNumbers ? safeNumber(maxNumbers, 0, length) : length,
-      },
-      {
-        key: 'special',
-        enabled: special,
-        chars: CHARACTER_GROUPS.special,
-        max: limitSpecial ? safeNumber(maxSpecial, 0, length) : length,
-      },
-    ].filter((set) => set.enabled && set.chars.length > 0 && set.max > 0);
-
-    if (sets.length === 0) {
-      return 'Enable at least one character set with a max count above zero.';
+  const settings = useMemo<GeneratorSettings>(() => {
+    if (mode === 'pin') {
+      return { mode, length: pinLength, groupSize: pinGrouping };
     }
 
-    if (ensureEveryEnabledSet && sets.length > length) {
-      return 'Length is too short to include every enabled character set.';
+    if (mode === 'passphrase') {
+      return {
+        mode,
+        wordCount,
+        separator,
+        capitalize: capitalizeWords,
+        appendNumber: includePassphraseNumber,
+        appendSymbol: includePassphraseSymbol,
+      };
     }
 
-    const totalCapacity = sets.reduce((sum, set) => sum + set.max, 0);
-    if (totalCapacity < length) {
-      return 'Increase the max counts or reduce the password length.';
-    }
-
-    const chars: string[] = [];
-    const usage = new Map(sets.map((set) => [set.key, 0]));
-
-    if (ensureEveryEnabledSet) {
-      for (const set of sets) {
-        chars.push(set.chars[getRandomInt(set.chars.length)]);
-        usage.set(set.key, (usage.get(set.key) ?? 0) + 1);
-      }
-    }
-
-    while (chars.length < length) {
-      const availableSets = sets.filter((set) => (usage.get(set.key) ?? 0) < set.max);
-      if (availableSets.length === 0) {
-        return 'The current limits cannot fill the requested length.';
-      }
-
-      const chosenSet = pickRandom(availableSets);
-      chars.push(chosenSet.chars[getRandomInt(chosenSet.chars.length)]);
-      usage.set(chosenSet.key, (usage.get(chosenSet.key) ?? 0) + 1);
-    }
-
-    return shuffle(chars).join('');
+    return {
+      mode,
+      length,
+      uppercase,
+      lowercase,
+      numbers,
+      special,
+      excludeAmbiguous,
+      requireEachSet: ensureEveryEnabledSet,
+      maxUppercase: limitUppercase ? maxUppercase : undefined,
+      maxLowercase: limitLowercase ? maxLowercase : undefined,
+      maxNumbers: limitNumbers ? maxNumbers : undefined,
+      maxSpecial: limitSpecial ? maxSpecial : undefined,
+    };
   }, [
+    capitalizeWords,
     ensureEveryEnabledSet,
     excludeAmbiguous,
+    includePassphraseNumber,
+    includePassphraseSymbol,
     length,
     limitLowercase,
     limitNumbers,
@@ -219,68 +139,27 @@ export function PasswordGenerator() {
     maxNumbers,
     maxSpecial,
     maxUppercase,
+    mode,
     numbers,
+    pinGrouping,
+    pinLength,
+    separator,
     special,
     uppercase,
-  ]);
-
-  const buildPin = useCallback(() => {
-    const groups: string[] = [];
-    let remaining = pinLength;
-
-    while (remaining > 0) {
-      const size = Math.min(pinGrouping, remaining);
-      let segment = '';
-      for (let index = 0; index < size; index += 1) {
-        segment += CHARACTER_GROUPS.numbers[getRandomInt(CHARACTER_GROUPS.numbers.length)];
-      }
-      groups.push(segment);
-      remaining -= size;
-    }
-
-    return groups.join('-');
-  }, [pinGrouping, pinLength]);
-
-  const buildPassphrase = useCallback(() => {
-    const words = Array.from({ length: wordCount }, () => {
-      const word = pickRandom(PASSPHRASE_WORDS);
-      return capitalizeWords ? `${word[0].toUpperCase()}${word.slice(1)}` : word;
-    });
-
-    const separatorValue = formatSeparator(separator);
-    let result = words.join(separatorValue);
-
-    if (includePassphraseNumber) {
-      result += `${separatorValue}${100 + getRandomInt(900)}`;
-    }
-
-    if (includePassphraseSymbol) {
-      result += `${separatorValue}${pickRandom(['!', '@', '#', '$', '%', '&'])}`;
-    }
-
-    return result;
-  }, [
-    capitalizeWords,
-    includePassphraseNumber,
-    includePassphraseSymbol,
-    separator,
     wordCount,
   ]);
 
-  const livePassword = useMemo(() => {
-    if (!mounted) return '';
-    const refreshToken = refreshNonce;
-    const generated =
-      mode === 'pin'
-        ? buildPin()
-        : mode === 'passphrase'
-          ? buildPassphrase()
-          : buildRandomPassword();
+  const liveOutput = useMemo<Output | null>(() => {
+    if (!mounted) return null;
+    return { settings, result: generatePassword(settings), refresh: refreshNonce };
+  }, [mounted, refreshNonce, settings]);
 
-    return refreshToken >= 0 ? generated : generated;
-  }, [buildPassphrase, buildPin, buildRandomPassword, mode, refreshNonce, mounted]);
-
-  const password = mounted ? (autoGenerate ? livePassword : manualPassword || livePassword) : '';
+  // With auto-generate off the output stays as it is until "Generate now", so
+  // it is described by the settings it was made with, not the current ones.
+  const output = autoGenerate ? liveOutput : (manualOutput ?? liveOutput);
+  const password = output?.result.ok ? output.result.value : '';
+  const errorMessage = output && !output.result.ok ? output.result.error : '';
+  const hasError = errorMessage !== '';
 
   const handleGenerateNow = () => {
     if (autoGenerate) {
@@ -288,33 +167,18 @@ export function PasswordGenerator() {
       return;
     }
 
-    if (mode === 'pin') {
-      setManualPassword(buildPin());
-      return;
-    }
-
-    if (mode === 'passphrase') {
-      setManualPassword(buildPassphrase());
-      return;
-    }
-
-    setManualPassword(buildRandomPassword());
+    setManualOutput({ settings, result: generatePassword(settings), refresh: refreshNonce });
   };
 
   const handleCopy = async () => {
     await copyToClipboard(password);
   };
 
-  const counts = useMemo(() => getPasswordCounts(password), [password]);
-
-  const hasError =
-    password.includes('Increase') ||
-    password.includes('Enable') ||
-    password.includes('Length is') ||
-    password.includes('cannot fill');
+  const counts = useMemo(() => countCharacterTypes(password), [password]);
 
   const [strengthAnalysis, setStrengthAnalysis] = useState<ZxcvbnResult | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [strengthFailed, setStrengthFailed] = useState(false);
 
   useEffect(() => {
     if (!password || hasError) {
@@ -323,7 +187,9 @@ export function PasswordGenerator() {
     }
 
     let isCurrent = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setIsEvaluating(true);
+    setStrengthFailed(false);
 
     const evaluate = async () => {
       try {
@@ -366,6 +232,11 @@ export function PasswordGenerator() {
         });
       } catch (e) {
         console.error('zxcvbn evaluation failed', e);
+        // The estimate still on screen belongs to an earlier password.
+        if (isCurrent) {
+          setStrengthAnalysis(null);
+          setStrengthFailed(true);
+        }
       } finally {
         if (isCurrent) {
           setIsEvaluating(false);
@@ -373,10 +244,15 @@ export function PasswordGenerator() {
       }
     };
 
-    void evaluate();
+    if (password.length > SLOW_ESTIMATE_LENGTH) {
+      timer = setTimeout(() => void evaluate(), SLOW_ESTIMATE_DELAY_MS);
+    } else {
+      void evaluate();
+    }
 
     return () => {
       isCurrent = false;
+      clearTimeout(timer);
     };
   }, [password, hasError]);
 
@@ -397,7 +273,7 @@ export function PasswordGenerator() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Generation mode</label>
               <Select value={mode} onValueChange={(value) => setMode(value as GenerationMode)}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Generation mode">
                   <SelectValue placeholder="Select a mode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -415,10 +291,11 @@ export function PasswordGenerator() {
               </div>
               <Switch
                 checked={autoGenerate}
+                aria-label="Auto-generate"
                 onCheckedChange={(checked) => {
                   setAutoGenerate(checked);
                   if (!checked) {
-                    setManualPassword(password);
+                    setManualOutput(output);
                   }
                 }}
               />
@@ -429,7 +306,7 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Length: {length}</label>
-                <Slider value={length} onChange={setLength} min={4} max={256} step={1} />
+                <Slider aria-label="Length" value={length} onChange={setLength} min={4} max={256} step={1} />
               </div>
 
               <div className="space-y-3">
@@ -507,13 +384,13 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">PIN length: {pinLength}</label>
-                <Slider value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
+                <Slider aria-label="PIN length" value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
               </div>
               <div>
                 <label className="mb-3 block text-sm font-medium">Digits per group: {pinGrouping}</label>
-                <Slider
+                <Slider aria-label="Digits per group"
                   value={pinGrouping}
-                  onChange={(value) => setPinGrouping(safeNumber(value, 2, 6))}
+                  onChange={(value) => setPinGrouping(clampInteger(value, 2, 6))}
                   min={2}
                   max={6}
                   step={1}
@@ -526,14 +403,14 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Word count: {wordCount}</label>
-                <Slider value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
+                <Slider aria-label="Word count" value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Separator</label>
-                  <Select value={separator} onValueChange={setSeparator}>
-                    <SelectTrigger>
+                  <Select value={separator} onValueChange={(value) => setSeparator(value as PassphraseSeparator)}>
+                    <SelectTrigger aria-label="Separator">
                       <SelectValue placeholder="Choose a separator" />
                     </SelectTrigger>
                     <SelectContent>
@@ -581,7 +458,7 @@ export function PasswordGenerator() {
         </CardContent>
       </Card>
 
-      {password && (
+      {output && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
@@ -592,9 +469,11 @@ export function PasswordGenerator() {
               <CardDescription>
                 {hasError
                   ? 'Adjust the settings below to make this combination possible.'
-                  : isEvaluating
-                    ? 'Evaluating strength...'
-                    : `Estimated entropy: ${strengthAnalysis?.entropyBits ?? 0} bits`}
+                  : strengthFailed
+                    ? 'Strength estimate unavailable'
+                    : isEvaluating || !strengthAnalysis
+                      ? 'Evaluating strength...'
+                      : `Estimated entropy: ${strengthAnalysis.entropyBits} bits`}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -640,7 +519,7 @@ export function PasswordGenerator() {
             <div
               className={`rounded-md p-4 font-mono text-lg break-all ${hasError ? 'bg-destructive/10 text-destructive' : 'bg-muted'}`}
             >
-              {password}
+              {hasError ? errorMessage : password}
             </div>
 
             {/* Strength Progress Bar */}
@@ -704,7 +583,7 @@ export function PasswordGenerator() {
               </div>
             )}
 
-            {!hasError && mode === 'random' && (
+            {!hasError && output.settings.mode === 'random' && (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard label="Uppercase" value={counts.uppercase} />
                 <StatCard label="Lowercase" value={counts.lowercase} />
@@ -713,11 +592,21 @@ export function PasswordGenerator() {
               </div>
             )}
 
-            {!hasError && mode === 'passphrase' && (
+            {!hasError && output.settings.mode === 'passphrase' && (
               <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard label="Words" value={wordCount} />
-                <StatCard label="Separator" value={formatSeparator(separator) === ' ' ? 'space' : formatSeparator(separator)} />
-                <StatCard label="Suffixes" value={`${includePassphraseNumber ? '123' : '-'} ${includePassphraseSymbol ? '+ !' : ''}`.trim()} />
+                <StatCard label="Words" value={output.settings.wordCount} />
+                <StatCard
+                  label="Separator"
+                  value={
+                    separatorCharacter(output.settings.separator) === ' '
+                      ? 'space'
+                      : separatorCharacter(output.settings.separator)
+                  }
+                />
+                <StatCard
+                  label="Suffixes"
+                  value={`${output.settings.appendNumber ? '123' : '-'} ${output.settings.appendSymbol ? '+ !' : ''}`.trim()}
+                />
               </div>
             )}
           </CardContent>
@@ -760,7 +649,8 @@ function LimitInput({
         max={max}
         value={value}
         disabled={inputDisabled}
-        onChange={(event) => onChange(safeNumber(Number(event.currentTarget.value), 0, max))}
+        aria-label={`${label} count`}
+        onChange={(event) => onChange(clampInteger(Number(event.currentTarget.value), 0, max))}
       />
     </div>
   );

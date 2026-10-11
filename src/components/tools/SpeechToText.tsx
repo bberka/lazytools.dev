@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
@@ -18,6 +18,14 @@ import {
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils/cn';
+import { downloadText } from '@/lib/files';
+import {
+  appendTranscript,
+  describeRecognitionError,
+  readRecognitionResults,
+  transcriptFileName,
+  type TranscriptFormat,
+} from '@/lib/tools/speech-to-text';
 
 // Language definition type
 interface LanguageOption {
@@ -86,15 +94,33 @@ interface SpeechRecognitionInstance {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
+// One press of Start Recording: the recognizer and whether its results still count.
+interface ListeningSession {
+  recognition: SpeechRecognitionInstance;
+  /** Set by Clear and on unmount: whatever the recognizer still reports is dropped. */
+  discarded: boolean;
+}
+
+function getSpeechRecognitionClass(): SpeechRecognitionConstructor | null {
+  if (typeof window === 'undefined') return null;
+  const win = window as unknown as Record<string, unknown>;
+  return ((win.SpeechRecognition || win.webkitSpeechRecognition) as SpeechRecognitionConstructor) || null;
+}
+
+// Whether the browser can recognize speech never changes while the page is open, so there is nothing to subscribe to.
+const subscribeToNothing = () => () => {};
+const canRecognizeSpeech = () => getSpeechRecognitionClass() !== null;
+
 export function SpeechToText() {
-  // Check SpeechRecognition support synchronously during state initialization to avoid set-state-in-effect
-  const [isSupported] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const win = window as unknown as Record<string, unknown>;
-    return !!(win.SpeechRecognition || win.webkitSpeechRecognition);
-  });
+  // The prerendered page cannot know the browser, so it counts as supported
+  // there and the real answer follows once the page is live. A useState
+  // initializer gave a first client render that differed from the prerendered
+  // HTML in every browser without speech recognition.
+  const isSupported = useSyncExternalStore(subscribeToNothing, canRecognizeSpeech, () => true);
 
   const [isListening, setIsListening] = useState(false);
+  // From the press of Start Recording until the recognizer reports that it is running.
+  const [isStarting, setIsStarting] = useState(false);
   const [selectedLang, setSelectedLang] = useState('en-US');
   const [isContinuous, setIsContinuous] = useState(true);
 
@@ -106,7 +132,8 @@ export function SpeechToText() {
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Web Speech & Web Audio Refs
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const sessionRef = useRef<ListeningSession | null>(null);
+  const startingRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -128,10 +155,11 @@ export function SpeechToText() {
     }
     if (audioCtxRef.current) {
       if (audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close();
+        audioCtxRef.current.close().catch(() => {});
       }
       audioCtxRef.current = null;
     }
+    analyserRef.current = null;
     
     // Draw horizontal rest line on canvas
     const canvas = canvasRef.current;
@@ -201,11 +229,18 @@ export function SpeechToText() {
     draw();
   };
 
-  const startAudioVisualization = async () => {
+  const startAudioVisualization = async (session: ListeningSession) => {
     try {
       if (typeof window === 'undefined') return;
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Cleared or left while the permission prompt was open: give the
+      // microphone back instead of keeping it open for a session that is gone.
+      if (sessionRef.current !== session) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
 
       const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
@@ -228,80 +263,110 @@ export function SpeechToText() {
     }
   };
 
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+  // Puts the controls back to idle and releases the microphone.
+  const resetListeningUi = () => {
+    startingRef.current = false;
+    setIsStarting(false);
     setIsListening(false);
     setInterim('');
     stopAudioVisualization();
   };
 
-  const startListening = async () => {
-    setError('');
-    const win = window as unknown as Record<string, unknown>;
-    const SpeechRecognitionClass = win
-      ? (win.SpeechRecognition || win.webkitSpeechRecognition) as SpeechRecognitionConstructor
-      : null;
+  const stopListening = () => {
+    // stop() lets the recognizer deliver what it has heard so far before it ends.
+    sessionRef.current?.recognition.stop();
+    resetListeningUi();
+  };
 
+  // Ends the session and drops whatever it has not delivered yet.
+  const discardSession = () => {
+    const session = sessionRef.current;
+    sessionRef.current = null;
+    if (session) {
+      session.discarded = true;
+      session.recognition.abort();
+    }
+    resetListeningUi();
+  };
+
+  const startListening = async () => {
+    // A second press while the microphone prompt is still open must not start a second session.
+    if (startingRef.current) return;
+
+    const SpeechRecognitionClass = getSpeechRecognitionClass();
     if (!SpeechRecognitionClass) return;
+
+    setError('');
+    startingRef.current = true;
+    setIsStarting(true);
+
+    let session: ListeningSession | null = null;
 
     try {
       const recognition = new SpeechRecognitionClass();
-      recognitionRef.current = recognition;
+      const startedSession: ListeningSession = { recognition, discarded: false };
+      session = startedSession;
+      sessionRef.current = startedSession;
+
+      // A recognizer keeps reporting after it has been stopped or replaced.
+      // Only the session in sessionRef may change the controls.
+      const isCurrent = () => sessionRef.current === startedSession;
+      const lang = selectedLang;
 
       recognition.continuous = isContinuous;
       recognition.interimResults = true;
-      recognition.lang = selectedLang;
+      recognition.lang = lang;
 
       recognition.onstart = () => {
+        if (!isCurrent()) return;
+        startingRef.current = false;
+        setIsStarting(false);
         setIsListening(true);
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+        // The last words of a stopped session are still wanted; those of a cleared one are not.
+        if (startedSession.discarded) return;
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalTranscript += result[0].transcript;
-          } else {
-            interimTranscript += result[0].transcript;
-          }
-        }
+        const { finalText, interimText } = readRecognitionResults(event, lang);
 
-        if (finalTranscript) {
-          setTranscript((prev) => {
-            const separator = prev.endsWith(' ') || !prev ? '' : ' ';
-            return prev + separator + finalTranscript;
-          });
+        if (finalText) {
+          setTranscript((prev) => appendTranscript(prev, finalText, lang));
         }
-        setInterim(interimTranscript);
+        if (isCurrent()) setInterim(interimText);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event.error);
-        if (event.error === 'not-allowed') {
-          setError('Microphone access blocked. Please enable mic permissions in your browser.');
-        } else {
-          setError(`Recognition error: ${event.error || 'Unknown error'}`);
+        if (!isCurrent()) return;
+
+        const message = describeRecognitionError(event.error);
+        if (message) {
+          console.error('Speech recognition error:', event.error);
+          setError(message);
         }
         stopListening();
       };
 
       recognition.onend = () => {
-        setIsListening(false);
-        setInterim('');
-        stopAudioVisualization();
+        if (!isCurrent()) return;
+        sessionRef.current = null;
+        resetListeningUi();
       };
 
       // Start audio waveform render and speech recognition concurrently
-      await startAudioVisualization();
+      await startAudioVisualization(startedSession);
+
+      // Cleared or left while the microphone prompt was open.
+      if (!isCurrent()) return;
       recognition.start();
     } catch (err) {
+      // Nothing to report for a session that was cleared in the meantime.
+      if (session && sessionRef.current !== session) return;
+
+      sessionRef.current = null;
+      // Also closes the microphone that the waveform had already opened.
+      resetListeningUi();
       setError(err instanceof Error ? err.message : 'Failed to start microphone');
-      setIsListening(false);
     }
   };
 
@@ -315,22 +380,18 @@ export function SpeechToText() {
   };
 
   const handleClear = () => {
-    stopListening();
+    // Not stopListening(): a stopped recognizer still delivers its last words,
+    // and they would show up again in the transcript that was just cleared.
+    discardSession();
     setTranscript('');
     setInterim('');
     setError('');
   };
 
   // Export File Options
-  const handleDownloadFile = (format: 'txt' | 'md') => {
+  const handleDownloadFile = (format: TranscriptFormat) => {
     if (!transcript) return;
-    const element = document.createElement('a');
-    const file = new Blob([transcript], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `transcript-${new Date().toISOString().slice(0, 10)}.${format}`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    downloadText(transcript, transcriptFileName(format, new Date()));
   };
 
   // Handle auto-scrolling transcript when text changes
@@ -343,10 +404,13 @@ export function SpeechToText() {
   // Clean up audio streams and SpeechRecognition on unmount
   useEffect(() => {
     return () => {
-      stopAudioVisualization();
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+      const session = sessionRef.current;
+      sessionRef.current = null;
+      if (session) {
+        session.discarded = true;
+        session.recognition.abort();
       }
+      stopAudioVisualization();
     };
   }, []);
 
@@ -401,7 +465,7 @@ export function SpeechToText() {
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mic className="h-5 w-5 text-indigo-500" />
+              <Mic className="h-5 w-5 text-primary" />
               Settings
             </CardTitle>
             <CardDescription>Configure the dictation preferences</CardDescription>
@@ -409,9 +473,15 @@ export function SpeechToText() {
           <CardContent className="space-y-5">
             {/* Language Selection */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Spoken Language</label>
-              <Select value={selectedLang} onValueChange={setSelectedLang} disabled={isListening}>
-                <SelectTrigger className="w-full bg-background font-medium">
+              <label htmlFor="stt-language" className="text-sm font-medium">
+                Spoken Language
+              </label>
+              <Select
+                value={selectedLang}
+                onValueChange={setSelectedLang}
+                disabled={isListening || isStarting}
+              >
+                <SelectTrigger id="stt-language" className="w-full bg-background font-medium">
                   <SelectValue placeholder="Select Language..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
@@ -427,24 +497,31 @@ export function SpeechToText() {
             {/* Continuous Mode Toggle */}
             <div className="flex items-center justify-between py-2 border-y border-muted/50">
               <div className="space-y-0.5 pr-2">
-                <label className="text-sm font-medium">Continuous Listening</label>
+                <label htmlFor="stt-continuous" className="text-sm font-medium">
+                  Continuous Listening
+                </label>
                 <p className="text-[10px] text-muted-foreground leading-normal">
                   Keep recording until manually stopped. If off, stops automatically after silence.
                 </p>
               </div>
               <Switch
+                id="stt-continuous"
                 checked={isContinuous}
                 onCheckedChange={setIsContinuous}
-                disabled={isListening}
+                disabled={isListening || isStarting}
               />
             </div>
 
             {/* Audio Waveform Canvas */}
             <div className="space-y-2.5">
-              <label className="text-sm font-medium">Voice Input Waveform</label>
+              <label id="stt-waveform-label" className="text-sm font-medium">
+                Voice Input Waveform
+              </label>
               <div className="relative h-20 w-full rounded-lg border bg-gradient-to-br from-indigo-950/20 to-purple-950/20 dark:from-indigo-950/40 dark:to-purple-950/40 p-1 border-indigo-500/10 overflow-hidden">
                 <canvas
                   ref={canvasRef}
+                  role="img"
+                  aria-labelledby="stt-waveform-label"
                   width={400}
                   height={80}
                   className="w-full h-full"
@@ -467,7 +544,10 @@ export function SpeechToText() {
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
-              <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm border border-destructive/20 flex items-start gap-2.5">
+              <div
+                role="alert"
+                className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm border border-destructive/20 flex items-start gap-2.5"
+              >
                 <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div className="font-medium">{error}</div>
               </div>
@@ -491,7 +571,9 @@ export function SpeechToText() {
                 <span className="text-muted-foreground italic text-sm">
                   {isListening
                     ? 'Listening... Start speaking into your microphone.'
-                    : 'Click "Start Recording" and speak to see the live transcript here.'}
+                    : isStarting
+                      ? 'Waiting for access to your microphone...'
+                      : 'Click "Start Recording" and speak to see the live transcript here.'}
                 </span>
               )}
             </div>
@@ -499,14 +581,15 @@ export function SpeechToText() {
             {/* Action Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t">
               {/* Recording Controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   onClick={handleToggleListening}
+                  disabled={isStarting}
+                  aria-busy={isStarting}
+                  variant={isListening ? 'destructive' : 'default'}
                   className={cn(
                     'font-semibold shadow-sm transition-all duration-300',
-                    isListening
-                      ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    isListening && 'animate-pulse'
                   )}
                 >
                   {isListening ? (

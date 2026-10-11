@@ -5,6 +5,9 @@ import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Input } from './input';
 import { cn } from '@/lib/utils';
+import { fieldPositionOf, hsvAtFieldPoint } from '@/lib/tools/color-field';
+import { pickerPosition } from '@/lib/tools/color-picker';
+import { hsvToRgb, parseHexColor, rgbToHex, rgbToHsv, type Hsv } from '@/lib/tools/design-color';
 
 interface ColorPickerProps {
   value: string;
@@ -12,6 +15,8 @@ interface ColorPickerProps {
   className?: string;
   showText?: boolean;
   disabled?: boolean;
+  /** What the colour is for ("Foreground"). The trigger is named "<label>: <colour>". */
+  label?: string;
 }
 
 const PRESET_COLORS = [
@@ -33,130 +38,35 @@ const PRESET_COLORS = [
   '#4b5563', // Dark Gray
 ];
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, Math.round(value)));
-}
-
-function componentToHex(value: number) {
-  return clamp(value, 0, 255).toString(16).padStart(2, '0').toUpperCase();
-}
-
-function rgbToHex({ r, g, b }: { r: number; g: number; b: number }) {
-  return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
-}
-
-function hexToRgb(value: string): { r: number; g: number; b: number } | null {
-  const trimmed = value.trim();
-  const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(trimmed);
-  if (shorthand) {
-    return {
-      r: parseInt(`${shorthand[1]}${shorthand[1]}`, 16),
-      g: parseInt(`${shorthand[2]}${shorthand[2]}`, 16),
-      b: parseInt(`${shorthand[3]}${shorthand[3]}`, 16),
-    };
-  }
-
-  const full = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(trimmed);
-  if (!full) return null;
-
-  return {
-    r: parseInt(full[1], 16),
-    g: parseInt(full[2], 16),
-    b: parseInt(full[3], 16),
-  };
-}
-
-function rgbToHsl({ r, g, b }: { r: number; g: number; b: number }) {
-  const red = r / 255;
-  const green = g / 255;
-  const blue = b / 255;
-  const max = Math.max(red, green, blue);
-  const min = Math.min(red, green, blue);
-  const lightness = (max + min) / 2;
-
-  if (max === min) {
-    return { h: 0, s: 0, l: Math.round(lightness * 100) };
-  }
-
-  const delta = max - min;
-  const saturation =
-    lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-  let hue = 0;
-
-  if (max === red) {
-    hue = (green - blue) / delta + (green < blue ? 6 : 0);
-  } else if (max === green) {
-    hue = (blue - red) / delta + 2;
-  } else {
-    hue = (red - green) / delta + 4;
-  }
-
-  return {
-    h: Math.round(hue * 60),
-    s: Math.round(saturation * 100),
-    l: Math.round(lightness * 100),
-  };
-}
-
-function hslToRgb({ h, s, l }: { h: number; s: number; l: number }) {
-  const hue = h / 360;
-  const saturation = s / 100;
-  const lightness = l / 100;
-
-  if (saturation === 0) {
-    const value = lightness * 255;
-    return { r: value, g: value, b: value };
-  }
-
-  const hueToRgb = (p: number, q: number, t: number) => {
-    let normalized = t;
-    if (normalized < 0) normalized += 1;
-    if (normalized > 1) normalized -= 1;
-    if (normalized < 1 / 6) return p + (q - p) * 6 * normalized;
-    if (normalized < 1 / 2) return q;
-    if (normalized < 2 / 3) return p + (q - p) * (2 / 3 - normalized) * 6;
-    return p;
-  };
-
-  const q =
-    lightness < 0.5
-      ? lightness * (1 + saturation)
-      : lightness + saturation - lightness * saturation;
-  const p = 2 * lightness - q;
-
-  return {
-    r: hueToRgb(p, q, hue + 1 / 3) * 255,
-    g: hueToRgb(p, q, hue) * 255,
-    b: hueToRgb(p, q, hue - 1 / 3) * 255,
-  };
-}
-
 interface ColorFieldProps {
-  hue: number;
-  saturation: number;
-  lightness: number;
-  onChange: (saturation: number, lightness: number) => void;
+  hsv: Hsv;
+  onChange: (saturation: number, value: number) => void;
 }
 
-function ColorField({
-  hue,
-  saturation,
-  lightness,
-  onChange,
-}: ColorFieldProps) {
+/**
+ * The saturation/brightness square: the pure hue washed to white on the left
+ * and to black at the bottom. Positions are HSV, which is what is painted.
+ */
+function ColorField({ hsv, onChange }: ColorFieldProps) {
   const updateFromPointer = (event: React.PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
-    const y = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+    const { s, v } = hsvAtFieldPoint(
+      hsv.h,
+      (event.clientX - rect.left) / rect.width,
+      (event.clientY - rect.top) / rect.height
+    );
 
-    onChange(x, 100 - y);
+    onChange(s, v);
   };
+
+  const marker = fieldPositionOf(hsv);
+  const { r, g, b } = hsvToRgb(hsv);
 
   return (
     <div
       className="relative h-32 cursor-crosshair overflow-hidden rounded-xl border border-border/70 touch-none"
       style={{
-        backgroundColor: `hsl(${hue} 100% 50%)`,
+        backgroundColor: `hsl(${hsv.h} 100% 50%)`,
         backgroundImage:
           'linear-gradient(to top, hsl(0 0% 0% / 1), hsl(0 0% 0% / 0)), linear-gradient(to right, hsl(0 0% 100% / 1), hsl(0 0% 100% / 0))',
       }}
@@ -172,9 +82,9 @@ function ColorField({
       <div
         className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(15,23,42,0.45)]"
         style={{
-          left: `${saturation}%`,
-          top: `${100 - lightness}%`,
-          backgroundColor: `hsl(${hue} ${saturation}% ${lightness}%)`,
+          left: `${marker.left}%`,
+          top: `${marker.top}%`,
+          backgroundColor: `rgb(${r} ${g} ${b})`,
         }}
       />
     </div>
@@ -207,7 +117,8 @@ function HueSlider({ value, onChange }: HueSliderProps) {
   );
 }
 
-const DEFAULT_HSL = { h: 217, s: 91, l: 60 };
+// Where the handle starts when the value is not a colour ("none"): the blue the picker used to open on.
+const DEFAULT_HSV: Hsv = rgbToHsv({ r: 59, g: 130, b: 246 });
 
 export function ColorPicker({
   value,
@@ -215,6 +126,7 @@ export function ColorPicker({
   className,
   showText = true,
   disabled = false,
+  label,
 }: ColorPickerProps) {
   const [inputValue, setInputValue] = React.useState(value);
   const [rgbInputValue, setRgbInputValue] = React.useState('');
@@ -223,7 +135,7 @@ export function ColorPicker({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(value);
 
-    const rgb = hexToRgb(value);
+    const rgb = parseHexColor(value);
     if (rgb) {
       setRgbInputValue(`${rgb.r}, ${rgb.g}, ${rgb.b}`);
     } else if (value === 'none') {
@@ -231,33 +143,18 @@ export function ColorPicker({
     }
   }, [value]);
 
-  const parsed = React.useMemo(() => {
-    if (value === 'none' || !value) return null;
-    const rgb = hexToRgb(value);
-    if (!rgb) return null;
-    return rgbToHsl(rgb);
-  }, [value]);
+  // Where the handle was last put by hand. Black, white and the greys have no hue
+  // of their own, so while it still describes the value it keeps the hue steady.
+  const [dragged, setDragged] = React.useState<Hsv | null>(null);
 
-  const [hsl, setHsl] = React.useState(DEFAULT_HSL);
+  const hsv = React.useMemo(() => {
+    const rgb = value === 'none' || !value ? null : parseHexColor(value);
+    return rgb ? pickerPosition(rgb, dragged) : (dragged ?? DEFAULT_HSV);
+  }, [value, dragged]);
 
-  React.useEffect(() => {
-    if (parsed) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHsl((currentHsl) => {
-        const currentHex = rgbToHex(hslToRgb(currentHsl));
-        const incomingHex = rgbToHex(hslToRgb(parsed));
-        if (currentHex.toLowerCase() !== incomingHex.toLowerCase()) {
-          return parsed;
-        }
-        return currentHsl;
-      });
-    }
-  }, [parsed]);
-
-  const updateHsl = (newHsl: { h: number; s: number; l: number }) => {
-    setHsl(newHsl);
-    const hexValue = rgbToHex(hslToRgb(newHsl));
-    onChange(hexValue);
+  const updateHsv = (next: Hsv) => {
+    setDragged(next);
+    onChange(rgbToHex(hsvToRgb(next)));
   };
 
   const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,6 +189,8 @@ export function ColorPicker({
     onChange(color);
   };
 
+  const triggerName = label ? `${label}: ${value || 'none'}` : undefined;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -304,6 +203,7 @@ export function ColorPicker({
               className
             )}
             disabled={disabled}
+            aria-label={triggerName}
           >
             <div className="flex w-full items-center gap-2">
               <div
@@ -323,23 +223,16 @@ export function ColorPicker({
             style={{ backgroundColor: value === 'none' ? 'transparent' : value }}
             disabled={disabled}
             title={value}
+            aria-label={triggerName}
           />
         )}
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3 space-y-3" align="start">
         {/* Custom SAT/VAL picker field (smaller version) */}
-        <ColorField
-          hue={hsl.h}
-          saturation={hsl.s}
-          lightness={hsl.l}
-          onChange={(s, l) => updateHsl({ h: hsl.h, s, l })}
-        />
+        <ColorField hsv={hsv} onChange={(s, v) => updateHsv({ h: hsv.h, s, v })} />
 
         {/* Hue Slider */}
-        <HueSlider
-          value={hsl.h}
-          onChange={(h) => updateHsl({ h, s: hsl.s, l: hsl.l })}
-        />
+        <HueSlider value={hsv.h} onChange={(h) => updateHsv({ h, s: hsv.s, v: hsv.v })} />
 
         <div className="border-t border-border/60 my-2" />
 

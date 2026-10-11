@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { TOOLS, getToolById, TAGS } from '@/lib/utils/tools-config';
-import { getToolComponentLoader } from '@/lib/utils/tool-registry';
+import { toolCatalog } from '@/lib/catalog';
+import { TAGS } from '@/lib/tags';
 import { ToolPageClient } from '@/components/ToolPageClient';
 
 interface ToolPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Generate static paths for all tools
+// Generate static paths for all tools, hidden ones included
 export async function generateStaticParams() {
-  return TOOLS.map((tool) => ({
+  return toolCatalog.all().map((tool) => ({
     slug: tool.id,
   }));
 }
@@ -20,7 +20,7 @@ export async function generateMetadata({
   params,
 }: ToolPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const tool = getToolById(slug);
+  const tool = toolCatalog.get(slug)?.tool;
 
   if (!tool) {
     return {
@@ -28,8 +28,7 @@ export async function generateMetadata({
     };
   }
 
-  const toolTags = tool.tags.map((tagId) => TAGS[tagId]).filter(Boolean);
-  const tagNames = toolTags.map((tag) => tag.name);
+  const tagNames = tool.tags.map((tagId) => TAGS[tagId].name);
   const keywords = [
     tool.name,
     ...(tool.keywords || []),
@@ -67,23 +66,16 @@ export async function generateMetadata({
 
 export default async function ToolPage({ params }: ToolPageProps) {
   const { slug } = await params;
-  const tool = getToolById(slug);
+  const entry = toolCatalog.get(slug);
 
-  if (!tool) {
+  if (!entry) {
     notFound();
   }
 
-  const resolvedTool = tool;
-  const loadToolComponent = getToolComponentLoader(resolvedTool.id);
-
-  if (!loadToolComponent) {
-    notFound();
-  }
-
-  const ToolComponent = await loadToolComponent();
+  const ToolComponent = await entry.load();
 
   return (
-    <ToolPageClient tool={resolvedTool}>
+    <ToolPageClient tool={entry.tool}>
       <ToolComponent />
     </ToolPageClient>
   );

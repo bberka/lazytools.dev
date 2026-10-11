@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -17,33 +17,35 @@ export interface UseActionButtonReturn {
  */
 export function useActionButton(resetDelay = 2000): UseActionButtonReturn {
   const [status, setStatus] = useState<ActionStatus>('idle');
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
 
   const executeAction = useCallback(
     async (action: () => Promise<void> | void) => {
+      // A reset still pending from an earlier run must not cut this one short.
+      clearTimeout(resetTimer.current);
       setStatus('loading');
 
       try {
         await action();
         setStatus('success');
-
-        // Reset status after delay
-        setTimeout(() => {
-          setStatus('idle');
-        }, resetDelay);
       } catch (error) {
         console.error('Action failed:', error);
         setStatus('error');
-
-        // Reset error after delay
-        setTimeout(() => {
-          setStatus('idle');
-        }, resetDelay);
       }
+
+      // Reset status after delay
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => {
+        setStatus('idle');
+      }, resetDelay);
     },
     [resetDelay]
   );
 
   const reset = useCallback(() => {
+    clearTimeout(resetTimer.current);
     setStatus('idle');
   }, []);
 

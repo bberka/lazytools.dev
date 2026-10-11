@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
@@ -15,96 +15,53 @@ import {
 import { Copy, Check, Server, Loader2, Search } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
 import { TooltipSimple } from '../ui/tooltip';
-
-type RecordType = 'A' | 'AAAA' | 'MX' | 'TXT' | 'NS' | 'CNAME' | 'SOA';
-
-interface DnsRecord {
-  name: string;
-  type: number;
-  TTL: number;
-  data: string;
-}
-
-interface DnsResponse {
-  Status: number;
-  TC: boolean;
-  RD: boolean;
-  RA: boolean;
-  AD: boolean;
-  CD: boolean;
-  Question?: Array<{ name: string; type: number }>;
-  Answer?: DnsRecord[];
-  Authority?: DnsRecord[];
-}
+import {
+  DNS_RECORD_TYPES,
+  describeDnsRecords,
+  formatTtl,
+  lookupDns,
+  sameDnsName,
+  type DnsLookupResult,
+  type DnsRecordType,
+} from '@/lib/tools/dns-lookup';
 
 export function DnsLookup() {
   const [domain, setDomain] = useState('');
-  const [recordType, setRecordType] = useState<RecordType>('A');
-  const [dnsResponse, setDnsResponse] = useState<DnsResponse | null>(null);
+  const [recordType, setRecordType] = useState<DnsRecordType>('A');
+  // Holds the name and type that were queried, so the results keep describing
+  // that lookup while the fields above are edited for the next one.
+  const [dnsResult, setDnsResult] = useState<DnsLookupResult | null>(null);
   const [error, setError] = useState('');
-  const [copiedItem, setCopiedItem] = useState<string | null>(null);
+  const [lastCopied, setLastCopied] = useState<string | null>(null);
 
-  const { copyToClipboard } = useCopyToClipboard();
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
   const { executeAction: executeLookup, isLoading } = useActionButton();
 
-  const recordTypes: RecordType[] = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA'];
+  // The lookup in flight, so that Clear and leaving the page can cancel it.
+  const activeLookup = useRef<AbortController | null>(null);
 
-  const recordTypeMap: Record<RecordType, number> = {
-    A: 1,
-    AAAA: 28,
-    MX: 15,
-    TXT: 16,
-    NS: 2,
-    CNAME: 5,
-    SOA: 6,
-  };
+  useEffect(() => () => activeLookup.current?.abort(), []);
 
-  const isValidDomain = (domain: string): boolean => {
-    const domainPattern = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/i;
-    return domainPattern.test(domain);
-  };
+  // The check mark follows the hook's status: it shows only after a copy that
+  // worked, and the hook's one timer takes it away again.
+  const copiedItem = isCopied ? lastCopied : null;
 
   const lookupDNS = async () => {
+    activeLookup.current?.abort();
+    const controller = new AbortController();
+    activeLookup.current = controller;
+
     setError('');
-    setDnsResponse(null);
+    setDnsResult(null);
 
-    const domainToLookup = domain.trim();
+    // Using Google's DNS-over-HTTPS API
+    const outcome = await lookupDns(domain, recordType, { signal: controller.signal });
+    if (controller.signal.aborted) return;
 
-    if (!domainToLookup) {
-      setError('Please enter a domain name');
-      return;
-    }
-
-    if (!isValidDomain(domainToLookup)) {
-      setError('Invalid domain name format');
-      return;
-    }
-
-    try {
-      // Using Google's DNS-over-HTTPS API
-      const typeNum = recordTypeMap[recordType];
-      const url = `https://dns.google/resolve?name=${encodeURIComponent(domainToLookup)}&type=${typeNum}`;
-
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to query DNS records');
-      }
-
-      const data: DnsResponse = await response.json();
-
-      if (data.Status !== 0) {
-        setError(`DNS query failed with status: ${data.Status}`);
-        return;
-      }
-
-      if (!data.Answer || data.Answer.length === 0) {
-        setError(`No ${recordType} records found for ${domainToLookup}`);
-        return;
-      }
-
-      setDnsResponse(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to lookup DNS records');
+    if (outcome.ok) {
+      setDnsResult(outcome.result);
+    } else {
+      setError(outcome.error);
     }
   };
 
@@ -112,39 +69,27 @@ export function DnsLookup() {
     await executeLookup(lookupDNS);
   };
 
-  const handleCopy = async (text: string, itemId: string) => {
-    try {
-      await copyToClipboard(text);
-      setCopiedItem(itemId);
-      setTimeout(() => {
-        setCopiedItem(null);
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-    }
+  const handleCopy = (text: string, itemId: string) => {
+    if (!text) return;
+    setLastCopied(itemId);
+    void copyToClipboard(text);
   };
 
   const handleClear = () => {
+    activeLookup.current?.abort();
     setDomain('');
-    setDnsResponse(null);
+    setDnsResult(null);
     setError('');
   };
 
-  const formatTTL = (ttl: number): string => {
-    if (ttl < 60) return `${ttl}s`;
-    if (ttl < 3600) return `${Math.floor(ttl / 60)}m`;
-    if (ttl < 86400) return `${Math.floor(ttl / 3600)}h`;
-    return `${Math.floor(ttl / 86400)}d`;
-  };
-
   const copyAllRecords = () => {
-    if (!dnsResponse?.Answer) return;
-    const text = dnsResponse.Answer.map(r => r.data).join('\n');
+    if (!dnsResult) return;
+    const text = dnsResult.records.map(r => r.data).join('\n');
     handleCopy(text, 'all-records');
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Input */}
       <Card>
         <CardHeader>
@@ -163,6 +108,7 @@ export function DnsLookup() {
               value={domain}
               onChange={(e) => setDomain((e.target as HTMLInputElement).value)}
               placeholder="e.g., google.com"
+              aria-label="Domain name"
               className="flex-1 font-mono"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isLoading) {
@@ -170,13 +116,13 @@ export function DnsLookup() {
                 }
               }}
             />
-            <Select value={recordType} onValueChange={(value) => setRecordType(value as RecordType)}>
+            <Select value={recordType} onValueChange={(value) => setRecordType(value as DnsRecordType)}>
               <SelectTrigger className="w-full sm:w-32" aria-label="Record Type">
                 <SelectValue placeholder="Record type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {recordTypes.map((type) => (
+                  {DNS_RECORD_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
                     </SelectItem>
@@ -210,20 +156,18 @@ export function DnsLookup() {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {/* Results */}
-      {dnsResponse?.Answer && dnsResponse.Answer.length > 0 && (
+      {dnsResult && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
               <CardTitle>DNS Records</CardTitle>
-              <CardDescription>
-                Found {dnsResponse.Answer.length} {recordType} record{dnsResponse.Answer.length !== 1 ? 's' : ''}
-              </CardDescription>
+              <CardDescription>{describeDnsRecords(dnsResult)}</CardDescription>
             </div>
             <TooltipSimple content="Copy all records">
               <Button
@@ -238,7 +182,7 @@ export function DnsLookup() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {dnsResponse.Answer.map((record, index) => (
+              {dnsResult.records.map((record, index) => (
                 <div
                   key={index}
                   className="p-3 rounded-md bg-muted border border-input space-y-2"
@@ -246,8 +190,14 @@ export function DnsLookup() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
+                        {/* An alias answers with its CNAME records as well; those are marked as such. */}
+                        {record.type !== dnsResult.type && (
+                          <span className="rounded bg-background px-1.5 py-0.5 text-xs font-medium">
+                            {record.type}
+                          </span>
+                        )}
                         <span className="text-xs font-medium text-muted-foreground">
-                          TTL: {formatTTL(record.TTL)}
+                          TTL: {formatTtl(record.ttl)}
                         </span>
                       </div>
                       <code className="block p-2 rounded bg-background font-mono text-sm break-all">
@@ -266,7 +216,7 @@ export function DnsLookup() {
                       </Button>
                     </TooltipSimple>
                   </div>
-                  {record.name && record.name !== domain && (
+                  {record.name && !sameDnsName(record.name, dnsResult.name) && (
                     <div className="text-xs text-muted-foreground">
                       Name: {record.name}
                     </div>
@@ -279,11 +229,11 @@ export function DnsLookup() {
       )}
 
       {/* Record Type Information */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
-        <CardContent className="pt-6">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
-            <div className="text-blue-600 dark:text-blue-500">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-primary">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

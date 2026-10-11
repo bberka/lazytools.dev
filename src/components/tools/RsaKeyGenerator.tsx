@@ -14,87 +14,34 @@ import {
 } from '../ui/select';
 import { Copy, Check, KeyRound, Download, Loader2 } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
+import { downloadText } from '@/lib/files';
+import {
+  generateRsaKeyPair,
+  rsaKeyFileName,
+  type RsaKeyFormat,
+  type RsaKeyPair,
+  type RsaKeySize,
+} from '@/lib/tools/rsa-key-generator';
 
-type KeySize = 2048 | 3072 | 4096;
-type KeyFormat = 'PEM' | 'PKCS8' | 'JWK';
-
-interface KeyPair {
-  publicKey: string;
-  privateKey: string;
-}
+type KeySize = RsaKeySize;
+type KeyFormat = RsaKeyFormat;
 
 export function RsaKeyGenerator() {
   const [keySize, setKeySize] = useState<KeySize>(2048);
   const [keyFormat, setKeyFormat] = useState<KeyFormat>('PEM');
-  const [keyPair, setKeyPair] = useState<KeyPair | null>(null);
+  const [keyPair, setKeyPair] = useState<RsaKeyPair | null>(null);
   const [error, setError] = useState('');
 
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
-  const [copiedKey, setCopiedKey] = useState<'public' | 'private' | null>(null);
+  // One copy state per key, so copying one key never ends the other's feedback early.
+  const copyPublic = useCopyToClipboard();
+  const copyPrivate = useCopyToClipboard();
   const { executeAction, isLoading } = useActionButton();
-
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-  };
-
-  const formatPEM = (key: string, type: 'PUBLIC' | 'PRIVATE'): string => {
-    const label = type === 'PUBLIC' ? 'PUBLIC KEY' : 'PRIVATE KEY';
-    const formatted = key.match(/.{1,64}/g)?.join('\n') || key;
-    return `-----BEGIN ${label}-----\n${formatted}\n-----END ${label}-----`;
-  };
 
   const generateKeyPair = async () => {
     setError('');
 
     try {
-      // Generate key pair using Web Crypto API
-      const keyPair = await crypto.subtle.generateKey(
-        {
-          name: 'RSA-OAEP',
-          modulusLength: keySize,
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: 'SHA-256',
-        },
-        true,
-        ['encrypt', 'decrypt']
-      );
-
-      // Export keys
-      let publicKeyStr = '';
-      let privateKeyStr = '';
-
-      if (keyFormat === 'JWK') {
-        const publicJWK = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
-        const privateJWK = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
-        publicKeyStr = JSON.stringify(publicJWK, null, 2);
-        privateKeyStr = JSON.stringify(privateJWK, null, 2);
-      } else {
-        // Export as SPKI (public) and PKCS8 (private)
-        const publicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
-        const privateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-
-        const publicKeyBase64 = arrayBufferToBase64(publicKey);
-        const privateKeyBase64 = arrayBufferToBase64(privateKey);
-
-        if (keyFormat === 'PEM') {
-          publicKeyStr = formatPEM(publicKeyBase64, 'PUBLIC');
-          privateKeyStr = formatPEM(privateKeyBase64, 'PRIVATE');
-        } else {
-          // PKCS8 format
-          publicKeyStr = publicKeyBase64;
-          privateKeyStr = privateKeyBase64;
-        }
-      }
-
-      setKeyPair({
-        publicKey: publicKeyStr,
-        privateKey: privateKeyStr,
-      });
+      setKeyPair(await generateRsaKeyPair(keySize, keyFormat));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate key pair');
       setKeyPair(null);
@@ -107,43 +54,27 @@ export function RsaKeyGenerator() {
 
   const handleCopyPublic = async () => {
     if (keyPair?.publicKey) {
-      await copyToClipboard(keyPair.publicKey);
-      setCopiedKey('public');
-      setTimeout(() => setCopiedKey(null), 2000);
+      await copyPublic.copyToClipboard(keyPair.publicKey);
     }
   };
 
   const handleCopyPrivate = async () => {
     if (keyPair?.privateKey) {
-      await copyToClipboard(keyPair.privateKey);
-      setCopiedKey('private');
-      setTimeout(() => setCopiedKey(null), 2000);
+      await copyPrivate.copyToClipboard(keyPair.privateKey);
     }
   };
 
-  const downloadKey = (key: string, filename: string) => {
-    const blob = new Blob([key], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
+  // The file is named after the format the keys on screen were generated in,
+  // which need not be the format selected right now.
   const handleDownloadPublic = () => {
     if (keyPair?.publicKey) {
-      const ext = keyFormat === 'JWK' ? 'json' : 'pem';
-      downloadKey(keyPair.publicKey, `public_key.${ext}`);
+      downloadText(keyPair.publicKey, rsaKeyFileName('public', keyPair.format));
     }
   };
 
   const handleDownloadPrivate = () => {
     if (keyPair?.privateKey) {
-      const ext = keyFormat === 'JWK' ? 'json' : 'pem';
-      downloadKey(keyPair.privateKey, `private_key.${ext}`);
+      downloadText(keyPair.privateKey, rsaKeyFileName('private', keyPair.format));
     }
   };
 
@@ -227,7 +158,7 @@ export function RsaKeyGenerator() {
           </Button>
 
           {error && (
-            <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
               <strong>Error:</strong> {error}
             </div>
           )}
@@ -248,12 +179,12 @@ export function RsaKeyGenerator() {
               <div className="flex gap-2">
                 <TooltipSimple content="Copy public key">
                   <Button
-                    variant={copiedKey === 'public' ? 'default' : 'ghost'}
+                    variant={copyPublic.isCopied ? 'default' : 'ghost'}
                     size="icon"
                     onClick={handleCopyPublic}
                     aria-label="Copy public key"
                   >
-                    {copiedKey === 'public' ? (
+                    {copyPublic.isCopied ? (
                       <Check className="h-4 w-4" />
                     ) : (
                       <Copy className="h-4 w-4" />
@@ -291,12 +222,12 @@ export function RsaKeyGenerator() {
               <div className="flex gap-2">
                 <TooltipSimple content="Copy private key">
                   <Button
-                    variant={copiedKey === 'private' ? 'default' : 'ghost'}
+                    variant={copyPrivate.isCopied ? 'default' : 'ghost'}
                     size="icon"
                     onClick={handleCopyPrivate}
                     aria-label="Copy private key"
                   >
-                    {copiedKey === 'private' ? (
+                    {copyPrivate.isCopied ? (
                       <Check className="h-4 w-4" />
                     ) : (
                       <Copy className="h-4 w-4" />

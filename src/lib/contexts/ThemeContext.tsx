@@ -1,9 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getTheme, setTheme as setThemeStorage } from '@/lib/utils/storage';
-
-type Theme = 'light' | 'dark';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
+import { preferences, usePreference } from '@/lib/preferences/client';
+import type { Theme } from '@/lib/preferences/store';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,27 +13,21 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const theme = usePreference('theme');
 
-  // Initialize theme on mount (avoid hydration mismatch)
-  useEffect(() => {
-    setThemeState(getTheme());
-
-    // Listen for cross-tab changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'dev-toolbox:theme') {
-        const newTheme = getTheme();
-        setThemeState(newTheme);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  // Keep the <html> class in step with every theme change, including ones
+  // made in another tab. The first paint is handled by the inline script in
+  // layout.tsx, so nothing is applied on mount.
+  useEffect(
+    () =>
+      preferences.subscribe('theme', () => {
+        document.documentElement.classList.toggle('dark', preferences.get('theme') === 'dark');
+      }),
+    []
+  );
 
   const setTheme = useCallback((newTheme: Theme) => {
-    setThemeStorage(newTheme);
-    setThemeState(newTheme);
+    preferences.set('theme', newTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {

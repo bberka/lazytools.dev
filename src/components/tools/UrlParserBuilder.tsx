@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useRef, useId } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Copy, Check, Trash2, Plus, RefreshCw, ExternalLink, Link2, Code, ArrowRight } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { decodeUrlComponent, encodeUrlComponent } from '@/lib/tools/url-encoder';
+import { buildUrl, parseUrl } from '@/lib/tools/url-parser-builder';
 
 interface QueryParam {
   id: string;
@@ -15,222 +18,103 @@ interface QueryParam {
   enabled: boolean;
 }
 
-function parseURLString(input: string) {
-  let protocol = '';
-  let host = '';
-  let path = '';
-  let hash = '';
-  const params: QueryParam[] = [];
-
-  const working = input.trim();
-  if (!working) {
-    return { protocol, host, path, hash, params };
-  }
-
-  // Handle fake protocol if missing to utilize URL constructor
-  let parsedUrl: URL | null = null;
-  let hasFakeProtocol = false;
-  let urlToParse = working;
-
-  if (!/^[a-zA-Z]+:\/\//.test(working)) {
-    urlToParse = 'https://' + working;
-    hasFakeProtocol = true;
-  }
-
-  try {
-    parsedUrl = new URL(urlToParse);
-    protocol = hasFakeProtocol ? '' : parsedUrl.protocol;
-    host = parsedUrl.host;
-    path = parsedUrl.pathname;
-    hash = parsedUrl.hash;
-    
-    let index = 0;
-    parsedUrl.searchParams.forEach((value, key) => {
-      params.push({
-        id: `param-${index++}-${Date.now()}`,
-        key,
-        value,
-        enabled: true,
-      });
-    });
-  } catch (e) {
-    // Fallback parser for partial or malformed paths
-    const hashParts = working.split('#');
-    hash = hashParts[1] ? '#' + hashParts[1] : '';
-    const searchParts = hashParts[0].split('?');
-    const search = searchParts[1] || '';
-
-    const pathHost = searchParts[0];
-    const protoMatch = pathHost.match(/^([a-zA-Z]+:\/\/)/);
-    if (protoMatch) {
-      protocol = protoMatch[1];
-      const rest = pathHost.substring(protocol.length);
-      const slashIdx = rest.indexOf('/');
-      if (slashIdx !== -1) {
-        host = rest.substring(0, slashIdx);
-        path = rest.substring(slashIdx);
-      } else {
-        host = rest;
-        path = '';
-      }
-    } else {
-      protocol = '';
-      const slashIdx = pathHost.indexOf('/');
-      if (slashIdx !== -1) {
-        host = pathHost.substring(0, slashIdx);
-        path = pathHost.substring(slashIdx);
-      } else {
-        host = pathHost;
-        path = '';
-      }
-    }
-
-    if (search) {
-      search.split('&').forEach((part, index) => {
-        if (!part) return;
-        const eqIdx = part.indexOf('=');
-        if (eqIdx !== -1) {
-          params.push({
-            id: `param-${index}-${Date.now()}`,
-            key: decodeURIComponent(part.substring(0, eqIdx)),
-            value: decodeURIComponent(part.substring(eqIdx + 1)),
-            enabled: true,
-          });
-        } else {
-          params.push({
-            id: `param-${index}-${Date.now()}`,
-            key: decodeURIComponent(part),
-            value: '',
-            enabled: true,
-          });
-        }
-      });
-    }
-  }
-
-  return { protocol, host, path, hash, params };
+interface FormState {
+  protocol: string;
+  host: string;
+  path: string;
+  hash: string;
+  params: QueryParam[];
 }
+
+const EMPTY_FORM: FormState = { protocol: 'https:', host: '', path: '', hash: '', params: [] };
 
 export function UrlParserBuilder() {
   const [rawInput, setRawInput] = useState('');
-  const [protocol, setProtocol] = useState('https:');
-  const [host, setHost] = useState('');
-  const [path, setPath] = useState('');
-  const [hash, setHash] = useState('');
-  const [params, setParams] = useState<QueryParam[]>([]);
-  const [isUpdatingFromInput, setIsUpdatingFromInput] = useState(false);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const nextParamId = useRef(0);
 
   const copyResult = useCopyToClipboard();
 
-  // Parse raw URL changes and sync components
-  useEffect(() => {
-    if (isUpdatingFromInput) return;
+  const protocolId = useId();
+  const hostId = useId();
+  const pathId = useId();
+  const hashId = useId();
 
-    const parsed = parseURLString(rawInput);
-    setProtocol(parsed.protocol || 'https:');
-    setHost(parsed.host);
-    setPath(parsed.path || '/');
-    setHash(parsed.hash);
-    setParams(parsed.params);
-  }, [rawInput, isUpdatingFromInput]);
+  const rebuiltUrl = useMemo(() => buildUrl(form), [form]);
+  const canOpen = /^https?:\/\//i.test(rebuiltUrl);
 
-  // Rebuild URL when component states change
-  const rebuiltUrl = useMemo(() => {
-    let result = '';
-    if (protocol) {
-      result += protocol.endsWith('//') ? protocol : (protocol.endsWith(':') ? `${protocol}//` : `${protocol}://`);
-    } else if (host) {
-      result += 'https://';
-    }
+  const newParamId = () => `param-${nextParamId.current++}`;
 
-    result += host;
-    result += path;
-
-    const activeParams = params.filter((p) => p.enabled && p.key.trim() !== '');
-    if (activeParams.length > 0) {
-      const searchParams = new URLSearchParams();
-      activeParams.forEach((p) => {
-        searchParams.append(p.key, p.value);
-      });
-      result += '?' + searchParams.toString();
-    }
-
-    if (hash) {
-      result += hash.startsWith('#') ? hash : '#' + hash;
-    }
-
-    return result;
-  }, [protocol, host, path, params, hash]);
-
+  // Typing in the source field sets the parts below it.
   const handleRawInputChange = (value: string) => {
-    setIsUpdatingFromInput(false);
     setRawInput(value);
-  };
-
-  const handleComponentChange = () => {
-    setIsUpdatingFromInput(true);
-  };
-
-  // Synchronize the raw input field with rebuilt output when custom edits are performed
-  useEffect(() => {
-    if (isUpdatingFromInput) {
-      setRawInput(rebuiltUrl);
+    if (!value.trim()) {
+      setForm(EMPTY_FORM);
+      return;
     }
-  }, [rebuiltUrl, isUpdatingFromInput]);
+
+    const parsed = parseUrl(value);
+    setForm({
+      // An address without a scheme is taken to be https, as the rebuilt URL will be.
+      protocol: parsed.protocol || (parsed.host ? 'https:' : ''),
+      host: parsed.host,
+      path: parsed.path,
+      hash: parsed.hash,
+      params: parsed.params.map((param) => ({
+        id: newParamId(),
+        key: param.key,
+        value: param.value,
+        enabled: true,
+      })),
+    });
+  };
+
+  // Editing a part rewrites the source field with the rebuilt URL.
+  const updateForm = (changes: Partial<FormState>) => {
+    const next = { ...form, ...changes };
+    setForm(next);
+    setRawInput(buildUrl(next));
+  };
 
   const addParamRow = () => {
-    handleComponentChange();
-    setParams((prev) => [
-      ...prev,
-      {
-        id: `param-${prev.length}-${Date.now()}`,
-        key: '',
-        value: '',
-        enabled: true,
-      },
-    ]);
+    updateForm({ params: [...form.params, { id: newParamId(), key: '', value: '', enabled: true }] });
   };
 
-  const updateParamRow = (id: string, field: 'key' | 'value' | 'enabled', value: string | boolean) => {
-    handleComponentChange();
-    setParams((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
-    );
+  const updateParamRow = (id: string, changes: Partial<Omit<QueryParam, 'id'>>) => {
+    updateForm({ params: form.params.map((p) => (p.id === id ? { ...p, ...changes } : p)) });
   };
 
   const deleteParamRow = (id: string) => {
-    handleComponentChange();
-    setParams((prev) => prev.filter((p) => p.id !== id));
+    updateForm({ params: form.params.filter((p) => p.id !== id) });
   };
 
-  const urlEncodeField = (id: string, field: 'key' | 'value') => {
-    const target = params.find((p) => p.id === id);
-    if (!target) return;
+  const urlEncodeField = (param: QueryParam, field: 'key' | 'value') => {
     try {
-      updateParamRow(id, field, encodeURIComponent(target[field]));
-    } catch (e) {}
+      const encoded = encodeUrlComponent(param[field]);
+      updateParamRow(param.id, field === 'key' ? { key: encoded } : { value: encoded });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'This text cannot be URL-encoded.');
+    }
   };
 
-  const urlDecodeField = (id: string, field: 'key' | 'value') => {
-    const target = params.find((p) => p.id === id);
-    if (!target) return;
+  const urlDecodeParam = (param: QueryParam) => {
     try {
-      updateParamRow(id, field, decodeURIComponent(target[field]));
-    } catch (e) {}
+      updateParamRow(param.id, {
+        key: decodeUrlComponent(param.key),
+        value: decodeUrlComponent(param.value),
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'This parameter is not valid percent-encoding.');
+    }
   };
 
   const handleClear = () => {
-    setIsUpdatingFromInput(false);
     setRawInput('');
-    setProtocol('https:');
-    setHost('');
-    setPath('/');
-    setHash('');
-    setParams([]);
+    setForm(EMPTY_FORM);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Raw Input Card */}
       <Card>
         <CardHeader>
@@ -244,12 +128,13 @@ export function UrlParserBuilder() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
+            aria-label="Source URL"
             value={rawInput}
-            onChange={(e) => handleRawInputChange((e.target as HTMLInputElement).value)}
+            onChange={(e) => handleRawInputChange(e.target.value)}
             placeholder="e.g., https://example.com/api/search?q=query&limit=10#results"
             className="font-mono text-sm"
           />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
@@ -270,57 +155,61 @@ export function UrlParserBuilder() {
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+            <label
+              htmlFor={protocolId}
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1"
+            >
               Protocol
             </label>
             <Input
-              value={protocol}
-              onChange={(e) => {
-                handleComponentChange();
-                setProtocol((e.target as HTMLInputElement).value);
-              }}
+              id={protocolId}
+              value={form.protocol}
+              onChange={(e) => updateForm({ protocol: e.target.value })}
               placeholder="e.g., https:"
               className="font-mono text-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+            <label
+              htmlFor={hostId}
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1"
+            >
               Host / Domain
             </label>
             <Input
-              value={host}
-              onChange={(e) => {
-                handleComponentChange();
-                setHost((e.target as HTMLInputElement).value);
-              }}
+              id={hostId}
+              value={form.host}
+              onChange={(e) => updateForm({ host: e.target.value })}
               placeholder="e.g., example.com"
               className="font-mono text-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+            <label
+              htmlFor={pathId}
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1"
+            >
               Path
             </label>
             <Input
-              value={path}
-              onChange={(e) => {
-                handleComponentChange();
-                setPath((e.target as HTMLInputElement).value);
-              }}
+              id={pathId}
+              value={form.path}
+              onChange={(e) => updateForm({ path: e.target.value })}
               placeholder="e.g., /search"
               className="font-mono text-sm"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+            <label
+              htmlFor={hashId}
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1"
+            >
               Hash / Anchor
             </label>
             <Input
-              value={hash}
-              onChange={(e) => {
-                handleComponentChange();
-                setHash((e.target as HTMLInputElement).value);
-              }}
+              id={hashId}
+              value={form.hash}
+              onChange={(e) => updateForm({ hash: e.target.value })}
               placeholder="e.g., #results"
               className="font-mono text-sm"
             />
@@ -330,35 +219,33 @@ export function UrlParserBuilder() {
 
       {/* Query Parameters Grid */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              Query Parameters ({params.length})
+              Query Parameters ({form.params.length})
             </CardTitle>
             <CardDescription className="text-xs">
               Configure, enable, or encode specific parameters.
             </CardDescription>
           </div>
-          <Button onClick={addParamRow} size="sm" className="h-8 gap-1.5">
+          <Button onClick={addParamRow} size="sm" className="h-8 gap-1.5 shrink-0">
             <Plus className="h-4 w-4" />
             Add Param
           </Button>
         </CardHeader>
         <CardContent className="space-y-3 pt-4 border-t">
-          {params.length === 0 ? (
-            <div className="text-center py-6 text-sm text-muted-foreground italic">
+          {form.params.length === 0 ? (
+            <div className="text-center py-4 sm:py-6 text-sm text-muted-foreground italic">
               No query parameters found. Click Add Param to create one.
             </div>
           ) : (
             <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin pr-1">
-              {params.map((param) => (
+              {form.params.map((param) => (
                 <div key={param.id} className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-2 shrink-0">
                     <Checkbox
                       checked={param.enabled}
-                      onCheckedChange={(checked) =>
-                        updateParamRow(param.id, 'enabled', checked as boolean)
-                      }
+                      onCheckedChange={(checked) => updateParamRow(param.id, { enabled: checked })}
                       aria-label="Enable parameter"
                     />
                     <span className="text-xs text-muted-foreground sm:hidden font-medium">Active</span>
@@ -368,19 +255,19 @@ export function UrlParserBuilder() {
                     <div className="flex gap-1.5 items-center">
                       <Input
                         value={param.key}
-                        onChange={(e) =>
-                          updateParamRow(param.id, 'key', (e.target as HTMLInputElement).value)
-                        }
+                        onChange={(e) => updateParamRow(param.id, { key: e.target.value })}
                         placeholder="Key"
+                        aria-label="Parameter key"
                         className="font-mono text-xs h-8 flex-1"
                         disabled={!param.enabled}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => urlEncodeField(param.id, 'key')}
+                        onClick={() => urlEncodeField(param, 'key')}
                         className="h-7 w-7 text-muted-foreground"
                         title="URL Encode Key"
+                        aria-label="URL Encode Key"
                         disabled={!param.enabled || !param.key}
                       >
                         <Code className="h-3 w-3" />
@@ -390,19 +277,19 @@ export function UrlParserBuilder() {
                     <div className="flex gap-1.5 items-center">
                       <Input
                         value={param.value}
-                        onChange={(e) =>
-                          updateParamRow(param.id, 'value', (e.target as HTMLInputElement).value)
-                        }
+                        onChange={(e) => updateParamRow(param.id, { value: e.target.value })}
                         placeholder="Value"
+                        aria-label="Parameter value"
                         className="font-mono text-xs h-8 flex-1"
                         disabled={!param.enabled}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => urlEncodeField(param.id, 'value')}
+                        onClick={() => urlEncodeField(param, 'value')}
                         className="h-7 w-7 text-muted-foreground"
                         title="URL Encode Value"
+                        aria-label="URL Encode Value"
                         disabled={!param.enabled || !param.value}
                       >
                         <Code className="h-3 w-3" />
@@ -414,9 +301,10 @@ export function UrlParserBuilder() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => urlDecodeField(param.id, 'key')}
+                      onClick={() => urlDecodeParam(param)}
                       className="h-8 w-8 text-muted-foreground"
                       title="URL Decode Key/Value"
+                      aria-label="URL Decode Key/Value"
                       disabled={!param.enabled}
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
@@ -427,6 +315,7 @@ export function UrlParserBuilder() {
                       onClick={() => deleteParamRow(param.id)}
                       className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       title="Delete Parameter"
+                      aria-label="Delete Parameter"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -477,8 +366,8 @@ export function UrlParserBuilder() {
                 variant="outline"
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-                onClick={() => window.open(rebuiltUrl, '_blank')}
-                disabled={!rebuiltUrl.startsWith('http')}
+                onClick={() => window.open(rebuiltUrl, '_blank', 'noopener,noreferrer')}
+                disabled={!canOpen}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open Link

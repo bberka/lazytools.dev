@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useId, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,104 +12,101 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Image as ImageIcon, Upload, Download, Trash2, Eye } from 'lucide-react';
-
-type BlindnessType =
-  | 'normal'
-  | 'protanopia'
-  | 'protanomaly'
-  | 'deuteranopia'
-  | 'deuteranomaly'
-  | 'tritanopia'
-  | 'tritanomaly'
-  | 'achromatopsia'
-  | 'achromatomaly';
-
-const BLINDNESS_TYPES: Record<BlindnessType, { name: string; description: string }> = {
-  normal: { name: 'Normal Vision', description: 'Standard color vision' },
-  protanopia: { name: 'Protanopia', description: 'Red-blind (1% of males)' },
-  protanomaly: { name: 'Protanomaly', description: 'Red-weak (1% of males)' },
-  deuteranopia: { name: 'Deuteranopia', description: 'Green-blind (1% of males)' },
-  deuteranomaly: { name: 'Deuteranomaly', description: 'Green-weak (6% of males)' },
-  tritanopia: { name: 'Tritanopia', description: 'Blue-blind (<1% of population)' },
-  tritanomaly: { name: 'Tritanomaly', description: 'Blue-weak (<1% of population)' },
-  achromatopsia: { name: 'Achromatopsia', description: 'Total color-blind (very rare)' },
-  achromatomaly: { name: 'Achromatomaly', description: 'Total color-weak (very rare)' },
-};
+import { Image as ImageIcon, Download, Loader2, Trash2, Eye } from 'lucide-react';
+import { FileDropzone } from '@/components/FileDropzone';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { downloadBlob, formatBytes, loadImage, readFileAsDataUrl } from '@/lib/files';
+import {
+  BLINDNESS_TYPES,
+  colorMatrixValues,
+  simulateColorBlindness,
+  type BlindnessType,
+} from '@/lib/tools/color-blindness-simulator';
+import { canvasToBlob } from '@/lib/tools/image-canvas';
 
 export function ColorBlindnessSimulator() {
+  const id = useId();
   const [image, setImage] = useState<string | null>(null);
   const [originalFile, setOriginalFile] = useState<File | null>(null);
   const [type, setType] = useState<BlindnessType>('deuteranopia');
   const [processing, setProcessing] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Each chosen file gets a number; a file that is no longer the latest is dropped.
+  const loadRef = useRef(0);
 
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const loadImageFile = async (file: File) => {
+    loadRef.current += 1;
+    const load = loadRef.current;
 
-  const loadImageFile = (file: File) => {
-    if (!file) return;
+    let dataUrl: string;
+    try {
+      dataUrl = await readFileAsDataUrl(file);
+    } catch {
+      if (load === loadRef.current) toast.error('Failed to read file');
+      return;
+    }
+    if (load !== loadRef.current) return;
+
     setOriginalFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImage(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    setError('');
+    setImage(dataUrl);
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      loadImageFile(file);
-    }
+  const intake = useFileIntake({ accept: 'image/*', onFiles: ([file]) => loadImageFile(file) });
+
+  // A file the browser cannot decode would leave two broken pictures on screen.
+  const handlePreviewError = () => {
+    setImage(null);
+    setError('Unable to load the selected image.');
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
+  const handleDownload = async () => {
+    if (!image) return;
 
-  const handleDragLeave = () => {
-    setDragging(false);
-  };
+    setProcessing(true);
+    setError('');
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      loadImageFile(file);
-    }
-  };
+    try {
+      const img = await loadImage(image);
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) throw new Error('Canvas is not available in this browser.');
 
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !image) return;
-
-    const img = new Image();
-    img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Apply filter based on type
-      ctx.filter = getFilterString(type);
+      if (!canvas.width || !canvas.height) {
+        throw new Error('This image has no pixel size, so it cannot be exported.');
+      }
       ctx.drawImage(img, 0, 0);
 
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = `${type}-simulation.png`;
-      link.click();
-    };
-    img.src = image;
+      // The same matrix as the preview filter, applied to the pixels directly:
+      // not every browser can run a filter on a canvas.
+      if (BLINDNESS_TYPES[type].matrix) {
+        let frame: ImageData;
+        try {
+          frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        } catch {
+          throw new Error('The image is too large to process in this browser.');
+        }
+        simulateColorBlindness(frame.data, type);
+        ctx.putImageData(frame, 0, 0);
+      }
+
+      downloadBlob(await canvasToBlob(canvas, 'image/png'), `${type}-simulation.png`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'The simulation could not be exported.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleClear = () => {
+    loadRef.current += 1;
+    setImage(null);
+    setOriginalFile(null);
+    setError('');
+    intake.reset();
   };
 
   const getFilterString = (blindnessType: BlindnessType) => {
@@ -116,83 +114,29 @@ export function ColorBlindnessSimulator() {
     return `url(#${blindnessType})`;
   };
 
+  // Shown next to what failed: under the drop area for a bad file, under the buttons for a failed export.
+  const errorAlert = error && (
+    <div
+      role="alert"
+      className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+    >
+      {error}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {/* SVG Filters for Color Blindness Simulation */}
       <svg className="hidden">
         <defs>
-          <filter id="protanopia">
-            <feColorMatrix
-              type="matrix"
-              values="0.567, 0.433, 0, 0, 0
-                      0.558, 0.442, 0, 0, 0
-                      0, 0.242, 0.758, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="protanomaly">
-            <feColorMatrix
-              type="matrix"
-              values="0.817, 0.183, 0, 0, 0
-                      0.333, 0.667, 0, 0, 0
-                      0, 0.125, 0.875, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="deuteranopia">
-            <feColorMatrix
-              type="matrix"
-              values="0.625, 0.375, 0, 0, 0
-                      0.7, 0.3, 0, 0, 0
-                      0, 0.3, 0.7, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="deuteranomaly">
-            <feColorMatrix
-              type="matrix"
-              values="0.8, 0.2, 0, 0, 0
-                      0.258, 0.742, 0, 0, 0
-                      0, 0.142, 0.858, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="tritanopia">
-            <feColorMatrix
-              type="matrix"
-              values="0.95, 0.05, 0, 0, 0
-                      0, 0.433, 0.567, 0, 0
-                      0, 0.475, 0.525, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="tritanomaly">
-            <feColorMatrix
-              type="matrix"
-              values="0.967, 0.033, 0, 0, 0
-                      0, 0.733, 0.267, 0, 0
-                      0, 0.183, 0.817, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="achromatopsia">
-            <feColorMatrix
-              type="matrix"
-              values="0.299, 0.587, 0.114, 0, 0
-                      0.299, 0.587, 0.114, 0, 0
-                      0.299, 0.587, 0.114, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
-          <filter id="achromatomaly">
-            <feColorMatrix
-              type="matrix"
-              values="0.618, 0.320, 0.062, 0, 0
-                      0.163, 0.775, 0.062, 0, 0
-                      0.163, 0.320, 0.516, 0, 0
-                      0, 0, 0, 1, 0"
-            />
-          </filter>
+          {Object.entries(BLINDNESS_TYPES).map(
+            ([filterId, { matrix }]) =>
+              matrix && (
+                <filter key={filterId} id={filterId} colorInterpolationFilters="linearRGB">
+                  <feColorMatrix type="matrix" values={colorMatrixValues(matrix)} />
+                </filter>
+              )
+          )}
         </defs>
       </svg>
 
@@ -206,35 +150,21 @@ export function ColorBlindnessSimulator() {
           </CardTitle>
           <CardDescription>Visualize how images appear to individuals with different types of color blindness</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div
-            className={`border-2 border-dashed rounded-xl p-4 sm:p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:bg-slate-50 dark:hover:bg-slate-900/40'
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-semibold">Drag & drop an image here or click to browse</p>
-            <p className="text-xs text-muted-foreground mt-1">Files remain local on your machine</p>
-            {originalFile && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium border border-primary/20" onClick={(e) => e.stopPropagation()}>
-                <ImageIcon className="h-3.5 w-3.5" />
-                {originalFile.name} ({formatSize(originalFile.size)})
-              </div>
-            )}
-          </div>
+        <CardContent className="space-y-4">
+          <FileDropzone
+            intake={intake}
+            label="Drag & drop an image here or click to browse"
+            hint="Files remain local on your machine"
+            selected={
+              originalFile && (
+                <>
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  {originalFile.name} ({formatBytes(originalFile.size)})
+                </>
+              )
+            }
+          />
+          {!image && errorAlert}
         </CardContent>
       </Card>
 
@@ -246,15 +176,15 @@ export function ColorBlindnessSimulator() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Type of Color Blindness</label>
+                <label id={`${id}-type-label`} className="text-sm font-medium">Type of Color Blindness</label>
                 <Select value={type} onValueChange={(v) => setType(v as BlindnessType)}>
-                  <SelectTrigger>
+                  <SelectTrigger id={`${id}-type`} aria-labelledby={`${id}-type-label ${id}-type`}>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {Object.entries(BLINDNESS_TYPES).map(([id, { name }]) => (
-                        <SelectItem key={id} value={id}>
+                      {Object.entries(BLINDNESS_TYPES).map(([typeId, { name }]) => (
+                        <SelectItem key={typeId} value={typeId}>
                           {name}
                         </SelectItem>
                       ))}
@@ -265,16 +195,21 @@ export function ColorBlindnessSimulator() {
                   {BLINDNESS_TYPES[type].description}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleDownload} variant="outline" className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleDownload} disabled={processing} variant="outline" className="flex-1">
+                  {processing ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
                   Download Simulation
                 </Button>
-                <Button variant="ghost" onClick={() => setImage(null)}>
+                <Button variant="ghost" onClick={handleClear}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Clear
                 </Button>
               </div>
+              {errorAlert}
             </CardContent>
           </Card>
 
@@ -289,13 +224,13 @@ export function ColorBlindnessSimulator() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium mb-2 text-center">Original</p>
-                  <div className="border rounded-md overflow-hidden bg-slate-50 dark:bg-slate-900">
-                    <img src={image} alt="Original" className="w-full h-auto" />
+                  <div className="border rounded-md overflow-hidden bg-muted/50">
+                    <img src={image} alt="Original" className="w-full h-auto" onError={handlePreviewError} />
                   </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium mb-2 text-center">{BLINDNESS_TYPES[type].name}</p>
-                  <div className="border rounded-md overflow-hidden bg-slate-50 dark:bg-slate-900">
+                  <div className="border rounded-md overflow-hidden bg-muted/50">
                     <img
                       src={image}
                       alt="Simulated"

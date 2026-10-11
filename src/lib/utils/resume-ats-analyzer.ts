@@ -406,12 +406,35 @@ const LANGUAGE_PROFILES: Record<ResumeLanguage, LanguageProfile> = {
     locale: 'en-US',
     stopWords: EN_STOP_WORDS,
     sections: {
-      Summary: ['summary', 'professional summary', 'profile', 'about me'],
-      Experience: ['experience', 'work history', 'employment', 'professional experience'],
+      Summary: [
+        'summary',
+        'professional summary',
+        'career summary',
+        'profile',
+        'professional profile',
+        'about me',
+        'objective',
+        'career objective',
+      ],
+      Experience: [
+        'experience',
+        'work experience',
+        'work history',
+        'employment',
+        'employment history',
+        'professional experience',
+        'relevant experience',
+      ],
       Education: ['education', 'academic background', 'qualifications'],
-      Skills: ['skills', 'technical skills', 'core competencies', 'toolkit'],
-      Projects: ['projects', 'selected projects', 'project experience'],
-      Certifications: ['certifications', 'licenses', 'certificates'],
+      Skills: ['skills', 'key skills', 'technical skills', 'core competencies', 'toolkit'],
+      Projects: ['projects', 'selected projects', 'personal projects', 'project experience'],
+      Certifications: [
+        'certifications',
+        'licenses',
+        'certificates',
+        'licenses and certifications',
+        'licenses & certifications',
+      ],
     },
     sectionLabels: ENGLISH_SECTION_LABELS,
     actionVerbs: [
@@ -610,6 +633,23 @@ const COMPOUND_TOKEN_PATTERN = /[\p{L}\p{N}]+(?:[-‐‑‒–—][\p{L}\p{N}]+)
 const LOCATION_PATTERN =
   /(?:^|[^\p{L}])(?:\p{Lu}[\p{Ll}\p{M}]{1,})(?:\s+\p{Lu}[\p{Ll}\p{M}]{1,})?,\s*(?:\p{Lu}{2,}|\p{Lu}[\p{Ll}\p{M}]{1,})(?:$|[^\p{L}])/mu;
 
+// A list marker at the start of a line. Besides the ASCII ones these are the
+// glyphs word processors use: discs, circles, squares, diamonds, arrows, check
+// marks, dashes and middle dots, and the private-use code points that Symbol
+// and Wingdings bullets keep when a PDF does not map them to Unicode.
+const BULLET_PATTERN =
+  /^[\s]*[-*•‣⁃◦●○■□▪▫◆◇▶▸►➢➤✓✔–—·∙]\s+/gm;
+
+// A run of digits and the separators used inside phone numbers, on one line.
+const PHONE_CANDIDATE_PATTERN = /\+?\(?\d[\d \t()./-]*\d/g;
+
+const YEAR_PATTERN = /^(?:19|20)\d{2}$/;
+
+// A one- or two-digit day or month joined to a four-digit year, in either
+// order: "03/2019", "2019-03", and both halves of "15.03.1990".
+const DATE_PART_PATTERN =
+  /(?:^|\D)\d{1,2}[./-](?:19|20)\d{2}(?:\D|$)|(?:^|\D)(?:19|20)\d{2}[./-]\d{1,2}(?:\D|$)/;
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -674,7 +714,10 @@ function getKeywordTokens(text: string, profile: LanguageProfile) {
     .filter((word) => {
       const lettersAndNumbers = word.replace(/[^\p{L}\p{N}]/gu, '');
       return (
-        (lettersAndNumbers.length >= 3 || isTechnicalToken(word)) && !profile.stopWords.has(word)
+        // Years, date ranges, phone groups and amounts are not keywords; "web3" and "h264" are.
+        /\p{L}/u.test(word) &&
+        (lettersAndNumbers.length >= 3 || isTechnicalToken(word)) &&
+        !profile.stopWords.has(word)
       );
     });
 }
@@ -801,6 +844,28 @@ function countTermOccurrences(text: string, terms: readonly string[], profile: L
   });
 
   return count;
+}
+
+/**
+ * True when the text holds something that reads as a phone number: at least
+ * seven digits, optionally grouped by spaces, dots, hyphens, slashes or
+ * brackets, spanning nine characters or more.
+ *
+ * Employment dates are the other long digit runs in a résumé, so a run with
+ * two years in it ("2019 - 2022", "01.2019 - 03.2022") or with a date in it
+ * ("15.03.1990", "2019-03") does not count.
+ */
+function hasPhoneNumber(text: string) {
+  return (text.match(PHONE_CANDIDATE_PATTERN) ?? []).some((candidate) => {
+    const groups = candidate.match(/\d+/g) ?? [];
+    const digitCount = groups.reduce((sum, group) => sum + group.length, 0);
+    const span = candidate.replace(/^[+(]+/, '').length;
+
+    if (digitCount < 7 || span < 9) return false;
+
+    const yearCount = groups.filter((group) => YEAR_PATTERN.test(group)).length;
+    return yearCount < 2 && !DATE_PART_PATTERN.test(candidate);
+  });
 }
 
 function detectLanguage(text: string) {
@@ -941,7 +1006,7 @@ export function analyzeResumeText(
   const profile = languageResolution.profile;
   const words = getWords(normalizedText, profile.locale);
   const sentences = getSentences(normalizedText, profile.locale);
-  const bulletCount = (normalizedText.match(/^[\s]*[-*•‣▪◦]\s+/gm) ?? []).length;
+  const bulletCount = (normalizedText.match(BULLET_PATTERN) ?? []).length;
   const readability = calculateReadability(words, sentences, profile);
 
   const requestedJobDescriptionLanguage =
@@ -965,7 +1030,7 @@ export function analyzeResumeText(
 
   const contactChecks = {
     email: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(normalizedText),
-    phone: /(?:\+?\d[\d\s().-]{7,}\d)/.test(normalizedText),
+    phone: hasPhoneNumber(normalizedText),
     linkedin: /linkedin\.com\/|linkedin/i.test(normalizedText),
     website: /https?:\/\/|www\.|portfolio|portföy|github\.com\/|gitlab\.com\//i.test(
       normalizedText

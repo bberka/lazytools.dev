@@ -13,28 +13,25 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Switch } from './ui/switch';
-import { useFavorites } from '@/lib/contexts/FavoritesContext';
-import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
-import { useSettings } from '@/lib/contexts/SettingsContext';
-import { useTheme } from '@/lib/contexts/ThemeContext';
+import { APP_COMMANDS, detectPlatform, shortcutLabel, type Shortcut } from '@/lib/commands';
+import { useAppCommands } from '@/lib/commands/client';
 import { TooltipSimple } from './ui/tooltip';
 
+const { toggleTheme, toggleCompactMode, toggleFullWidth, clearFavorites, clearRecentTools } =
+  APP_COMMANDS;
+
+function ShortcutHint({ shortcut }: { shortcut: Shortcut }) {
+  return (
+    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded border">
+      {shortcutLabel(shortcut, detectPlatform(), ' + ')}
+    </kbd>
+  );
+}
+
 export function SettingsDialog() {
-  const { theme, toggleTheme } = useTheme();
-  const { compactMode, setCompactMode, fullWidth, setFullWidth } = useSettings();
-  const { favorites, clearFavorites } = useFavorites();
-  const { recentTools, clearRecentTools } = useRecentTools();
+  const { state, run } = useAppCommands();
+  const { theme } = state;
   const titleRef = useRef<HTMLHeadingElement>(null);
-
-  const handleClearFavorites = () => {
-    clearFavorites();
-    toast.success('Favorites cleared');
-  };
-
-  const handleClearRecents = () => {
-    clearRecentTools();
-    toast.success('Recent tools cleared');
-  };
 
   return (
     <Dialog>
@@ -59,6 +56,8 @@ export function SettingsDialog() {
           </DialogDescription>
         </DialogHeader>
 
+        {/* The three appearance controls show their own change, so they run
+            their command without its toast. The two clear buttons show it. */}
         <div className="space-y-6">
           <section className="space-y-3">
             <h3 className="text-sm font-medium">Appearance</h3>
@@ -73,7 +72,7 @@ export function SettingsDialog() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={toggleTheme}
+                  onClick={() => run(toggleTheme)}
                   aria-label="Toggle theme"
                 >
                   {theme === 'dark' ? (
@@ -89,17 +88,15 @@ export function SettingsDialog() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">Compact Mode</p>
-                  <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded border">
-                    Alt + C
-                  </kbd>
+                  <ShortcutHint shortcut={toggleCompactMode.shortcut} />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Show more tools by trimming descriptions and spacing.
                 </p>
               </div>
               <Switch
-                checked={compactMode}
-                onCheckedChange={setCompactMode}
+                checked={state.compactMode}
+                onCheckedChange={() => run(toggleCompactMode)}
                 aria-label="Toggle compact mode"
               />
             </div>
@@ -108,17 +105,15 @@ export function SettingsDialog() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">Full Width Mode</p>
-                  <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground rounded border">
-                    Alt + W
-                  </kbd>
+                  <ShortcutHint shortcut={toggleFullWidth.shortcut} />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Expand container to fill the screen width.
                 </p>
               </div>
               <Switch
-                checked={fullWidth}
-                onCheckedChange={setFullWidth}
+                checked={state.fullWidth}
+                onCheckedChange={() => run(toggleFullWidth)}
                 aria-label="Toggle full width mode"
               />
             </div>
@@ -129,15 +124,15 @@ export function SettingsDialog() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
-                onClick={handleClearFavorites}
-                disabled={favorites.length === 0}
+                onClick={() => toast.success(run(clearFavorites))}
+                disabled={clearFavorites.nothingToDo(state) !== null}
               >
                 Clear Favorites
               </Button>
               <Button
                 variant="outline"
-                onClick={handleClearRecents}
-                disabled={recentTools.length === 0}
+                onClick={() => toast.success(run(clearRecentTools))}
+                disabled={clearRecentTools.nothingToDo(state) !== null}
               >
                 Clear Recents
               </Button>

@@ -1,155 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
 import { Copy, Check, MapPin, Loader2, Search, Globe, Wifi } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
 import { TooltipSimple } from '../ui/tooltip';
-
-interface IpInfo {
-  ip: string;
-  city?: string;
-  region?: string;
-  country?: string;
-  loc?: string; // latitude,longitude
-  org?: string; // ISP/Organization
-  postal?: string;
-  timezone?: string;
-  hostname?: string;
-  anycast?: boolean;
-  bogon?: boolean;
-}
+import { lookupIp, type IpInfo } from '@/lib/tools/ip-lookup';
 
 export function IpLookup() {
   const [ipAddress, setIpAddress] = useState('');
   const [ipInfo, setIpInfo] = useState<IpInfo | null>(null);
   const [error, setError] = useState('');
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [lastCopied, setLastCopied] = useState<string | null>(null);
 
-  const { copyToClipboard } = useCopyToClipboard();
+  const { copyToClipboard, isCopied } = useCopyToClipboard();
   const { executeAction: executeLookup, isLoading } = useActionButton();
 
-  const isValidIP = (ip: string): boolean => {
-    // IPv4 pattern
-    const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-    // IPv6 pattern (simplified)
-    const ipv6Pattern = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+  // The lookup in flight, so that Clear and leaving the page can cancel it.
+  const activeLookup = useRef<AbortController | null>(null);
 
-    if (ipv4Pattern.test(ip)) {
-      const parts = ip.split('.');
-      return parts.every(part => {
-        const num = parseInt(part, 10);
-        return num >= 0 && num <= 255;
-      });
-    }
+  useEffect(() => () => activeLookup.current?.abort(), []);
 
-    return ipv6Pattern.test(ip);
-  };
+  // The check mark follows the hook's status: it shows only after a copy that
+  // worked, and the hook's one timer takes it away again.
+  const copiedField = isCopied ? lastCopied : null;
 
-  const fetchIPInfo = async (ip: string): Promise<IpInfo> => {
-    // 1. Try ipinfo.io
-    try {
-      const url = ip ? `https://ipinfo.io/${ip}/json` : 'https://ipinfo.io/json';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        return data as IpInfo;
-      }
-    } catch (e) {
-      console.warn('ipinfo.io query failed, trying freeipapi.com fallback...', e);
-    }
+  // `query` is passed in, not read from state: "My IP" clears the field and
+  // looks up in the same click, before the cleared value has been rendered.
+  const lookupIP = async (query: string) => {
+    activeLookup.current?.abort();
+    const controller = new AbortController();
+    activeLookup.current = controller;
 
-    // 2. Try freeipapi.com
-    try {
-      const url = ip ? `https://freeipapi.com/api/json/${ip}` : 'https://freeipapi.com/api/json';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          ip: data.ipAddress || data.ip || ip || '',
-          city: data.cityName,
-          region: data.regionName,
-          country: data.countryName,
-          loc: data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : undefined,
-          org: data.isp || data.organization,
-          postal: data.zipCode,
-          timezone: data.timeZone,
-        };
-      }
-    } catch (e) {
-      console.warn('freeipapi.com query failed, trying ipapi.co fallback...', e);
-    }
-
-    // 3. Try ipapi.co
-    try {
-      const url = ip ? `https://ipapi.co/${ip}/json/` : 'https://ipapi.co/json/';
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          ip: data.ip || ip || '',
-          city: data.city,
-          region: data.region,
-          country: data.country_name,
-          loc: data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : undefined,
-          org: data.org,
-          postal: data.postal,
-          timezone: data.timezone,
-        };
-      }
-    } catch (e) {
-      console.warn('ipapi.co query failed', e);
-    }
-
-    throw new Error('All IP geolocation lookup APIs failed. Please check your connection or try again later.');
-  };
-
-  const lookupIP = async () => {
     setError('');
     setIpInfo(null);
 
-    const ipToLookup = ipAddress.trim();
+    const outcome = await lookupIp(query, { signal: controller.signal });
+    if (controller.signal.aborted) return;
 
-    // Validate IP format if entered
-    if (ipToLookup && !isValidIP(ipToLookup)) {
-      setError('Invalid IP address format');
+    if (!outcome.ok) {
+      setError(outcome.error);
       return;
     }
 
-    try {
-      const data = await fetchIPInfo(ipToLookup);
-
-      if (data.bogon) {
-        setError('This is a private/reserved IP address (bogon)');
-        setIpInfo(data);
-        return;
-      }
-
-      setIpInfo(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to lookup IP address');
+    if (outcome.info.bogon) {
+      setError('This is a private/reserved IP address (bogon)');
     }
+    setIpInfo(outcome.info);
   };
 
   const handleLookup = async () => {
-    await executeLookup(lookupIP);
+    await executeLookup(() => lookupIP(ipAddress));
   };
 
-  const handleCopy = async (text: string, fieldId: string) => {
-    try {
-      await copyToClipboard(text);
-      setCopiedField(fieldId);
-      setTimeout(() => {
-        setCopiedField(null);
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
-    }
+  const handleCopy = (text: string, fieldId: string) => {
+    if (!text) return;
+    setLastCopied(fieldId);
+    void copyToClipboard(text);
   };
 
   const handleClear = () => {
+    activeLookup.current?.abort();
     setIpAddress('');
     setIpInfo(null);
     setError('');
@@ -157,11 +70,11 @@ export function IpLookup() {
 
   const handleGetMyIP = async () => {
     setIpAddress('');
-    await handleLookup();
+    await executeLookup(() => lookupIP(''));
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Input */}
       <Card>
         <CardHeader>
@@ -180,6 +93,7 @@ export function IpLookup() {
               value={ipAddress}
               onChange={(e) => setIpAddress((e.target as HTMLInputElement).value)}
               placeholder="e.g., 8.8.8.8 or leave empty for your IP"
+              aria-label="IP address"
               className="flex-1 font-mono"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isLoading) {
@@ -217,7 +131,7 @@ export function IpLookup() {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -389,11 +303,11 @@ export function IpLookup() {
       )}
 
       {/* Information Card */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
-        <CardContent className="pt-6">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
-            <div className="text-blue-600 dark:text-blue-500">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-primary">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -405,7 +319,7 @@ export function IpLookup() {
             <div className="text-sm space-y-2">
               <p className="font-medium">About IP Lookup</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Uses ipinfo.io API for geolocation data</li>
+                <li>Uses the ipinfo.io API for geolocation data, with freeipapi.com and ipapi.co as fallbacks</li>
                 <li>Leave the input empty to check your current public IP</li>
                 <li>Private IP addresses (10.x.x.x, 192.168.x.x, etc.) will show limited information</li>
                 <li>Supports both IPv4 and IPv6 addresses</li>

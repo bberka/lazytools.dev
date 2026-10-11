@@ -1,74 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Input } from '../ui/input';
 import { ColorPicker } from '../ui/color-picker';
 import { Eye, Check, X, ArrowLeftRight } from 'lucide-react';
+import { checkContrast, type ContrastLevel } from '@/lib/tools/color-contrast-checker';
 
-interface ContrastResult {
-  ratio: number;
-  passAANormal: boolean;
-  passAALarge: boolean;
-  passAAANormal: boolean;
-  passAAALarge: boolean;
+const LEVEL_COLORS: Record<ContrastLevel, string> = {
+  AAA: 'text-green-600 dark:text-green-500',
+  AA: 'text-green-600 dark:text-green-500',
+  'AA Large': 'text-yellow-600 dark:text-yellow-500',
+  Fail: 'text-red-600 dark:text-red-500',
+};
+
+function PassFailIcon({ pass }: { pass: boolean }) {
+  return pass ? (
+    <>
+      <Check className="h-5 w-5 text-green-600 dark:text-green-500" aria-hidden="true" />
+      <span className="sr-only">Pass</span>
+    </>
+  ) : (
+    <>
+      <X className="h-5 w-5 text-red-600 dark:text-red-500" aria-hidden="true" />
+      <span className="sr-only">Fail</span>
+    </>
+  );
 }
 
 export function ColorContrastChecker() {
   const [foreground, setForeground] = useState('#000000');
   const [background, setBackground] = useState('#FFFFFF');
-  const [contrastResult, setContrastResult] = useState<ContrastResult | null>(null);
 
-  const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : null;
-  };
-
-  const getLuminance = (r: number, g: number, b: number): number => {
-    const [rs, gs, bs] = [r, g, b].map((c) => {
-      c = c / 255;
-      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-  };
-
-  const getContrastRatio = (fg: string, bg: string): number => {
-    const fgRgb = hexToRgb(fg);
-    const bgRgb = hexToRgb(bg);
-
-    if (!fgRgb || !bgRgb) return 0;
-
-    const fgLum = getLuminance(fgRgb.r, fgRgb.g, fgRgb.b);
-    const bgLum = getLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
-
-    const lighter = Math.max(fgLum, bgLum);
-    const darker = Math.min(fgLum, bgLum);
-
-    return (lighter + 0.05) / (darker + 0.05);
-  };
-
-  const calculateContrast = () => {
-    const ratio = getContrastRatio(foreground, background);
-
-    setContrastResult({
-      ratio,
-      passAANormal: ratio >= 4.5,
-      passAALarge: ratio >= 3,
-      passAAANormal: ratio >= 7,
-      passAAALarge: ratio >= 4.5,
-    });
-  };
-
-  useEffect(() => {
-    calculateContrast();
-  }, [foreground, background]);
+  const contrast = useMemo(() => checkContrast(foreground, background), [foreground, background]);
+  const contrastResult = contrast.result;
 
   const handleSwap = () => {
     const temp = foreground;
@@ -79,20 +45,6 @@ export function ColorContrastChecker() {
   const handleClear = () => {
     setForeground('#000000');
     setBackground('#FFFFFF');
-  };
-
-  const getContrastLevel = (ratio: number): string => {
-    if (ratio >= 7) return 'AAA';
-    if (ratio >= 4.5) return 'AA';
-    if (ratio >= 3) return 'AA Large';
-    return 'Fail';
-  };
-
-  const getContrastLevelColor = (ratio: number): string => {
-    if (ratio >= 7) return 'text-green-600 dark:text-green-500';
-    if (ratio >= 4.5) return 'text-green-600 dark:text-green-500';
-    if (ratio >= 3) return 'text-yellow-600 dark:text-yellow-500';
-    return 'text-red-600 dark:text-red-500';
   };
 
   return (
@@ -114,7 +66,8 @@ export function ColorContrastChecker() {
               <label className="text-sm font-medium">Foreground Color (Text)</label>
               <div className="flex gap-2">
                 <ColorPicker
-                  value={foreground}
+                  label="Foreground color"
+                  value={contrast.foreground ?? foreground}
                   onChange={setForeground}
                   showText={false}
                   className="w-16 h-10 rounded border"
@@ -126,6 +79,8 @@ export function ColorContrastChecker() {
                   placeholder="#000000"
                   className="flex-1 font-mono uppercase"
                   maxLength={7}
+                  aria-label="Foreground color HEX"
+                  aria-invalid={contrast.foreground === null}
                 />
               </div>
             </div>
@@ -133,7 +88,8 @@ export function ColorContrastChecker() {
               <label className="text-sm font-medium">Background Color</label>
               <div className="flex gap-2">
                 <ColorPicker
-                  value={background}
+                  label="Background color"
+                  value={contrast.background ?? background}
                   onChange={setBackground}
                   showText={false}
                   className="w-16 h-10 rounded border"
@@ -145,6 +101,8 @@ export function ColorContrastChecker() {
                   placeholder="#FFFFFF"
                   className="flex-1 font-mono uppercase"
                   maxLength={7}
+                  aria-label="Background color HEX"
+                  aria-invalid={contrast.background === null}
                 />
               </div>
             </div>
@@ -172,7 +130,10 @@ export function ColorContrastChecker() {
         <CardContent className="space-y-4">
           <div
             className="p-4 sm:p-8 rounded-md border border-input"
-            style={{ backgroundColor: background, color: foreground }}
+            style={{
+              backgroundColor: contrast.background ?? undefined,
+              color: contrast.foreground ?? undefined,
+            }}
           >
             <p className="text-base mb-2">Normal text (16px)</p>
             <p className="text-lg font-bold">Large text (18px bold / 24px normal)</p>
@@ -181,19 +142,19 @@ export function ColorContrastChecker() {
       </Card>
 
       {/* Contrast Result */}
-      {contrastResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Contrast Ratio</CardTitle>
-            <CardDescription>WCAG 2.1 compliance assessment</CardDescription>
-          </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Contrast Ratio</CardTitle>
+          <CardDescription>WCAG 2.1 compliance assessment</CardDescription>
+        </CardHeader>
+        {contrastResult ? (
           <CardContent className="space-y-4">
             <div className="text-center">
-              <div className={`text-4xl font-bold sm:text-5xl ${getContrastLevelColor(contrastResult.ratio)}`}>
-                {contrastResult.ratio.toFixed(2)}:1
+              <div className={`text-4xl font-bold sm:text-5xl ${LEVEL_COLORS[contrastResult.level]}`}>
+                {contrastResult.ratioLabel}
               </div>
-              <div className={`mt-2 text-base font-medium sm:text-lg ${getContrastLevelColor(contrastResult.ratio)}`}>
-                {getContrastLevel(contrastResult.ratio)}
+              <div className={`mt-2 text-base font-medium sm:text-lg ${LEVEL_COLORS[contrastResult.level]}`}>
+                {contrastResult.level}
               </div>
             </div>
 
@@ -206,19 +167,11 @@ export function ColorContrastChecker() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-md border border-input">
                     <span className="text-sm">AA (4.5:1)</span>
-                    {contrastResult.passAANormal ? (
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-600 dark:text-red-500" />
-                    )}
+                    <PassFailIcon pass={contrastResult.passAANormal} />
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-md border border-input">
                     <span className="text-sm">AAA (7:1)</span>
-                    {contrastResult.passAAANormal ? (
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-600 dark:text-red-500" />
-                    )}
+                    <PassFailIcon pass={contrastResult.passAAANormal} />
                   </div>
                 </div>
               </div>
@@ -231,26 +184,24 @@ export function ColorContrastChecker() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-md border border-input">
                     <span className="text-sm">AA (3:1)</span>
-                    {contrastResult.passAALarge ? (
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-600 dark:text-red-500" />
-                    )}
+                    <PassFailIcon pass={contrastResult.passAALarge} />
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-md border border-input">
                     <span className="text-sm">AAA (4.5:1)</span>
-                    {contrastResult.passAAALarge ? (
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-red-600 dark:text-red-500" />
-                    )}
+                    <PassFailIcon pass={contrastResult.passAAALarge} />
                   </div>
                 </div>
               </div>
             </div>
           </CardContent>
-        </Card>
-      )}
+        ) : (
+          <CardContent>
+            <div role="status" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+              {contrast.error}
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       {/* Information Card */}
       <Card className="border-blue-500/20 bg-blue-500/5">

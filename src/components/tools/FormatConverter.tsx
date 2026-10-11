@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,9 +15,13 @@ import {
 } from '@/components/ui/select';
 import { Copy, Check, Code, Trash2, ArrowRightLeft } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
-
-type Format = 'json' | 'yaml' | 'xml' | 'csv' | 'toml';
-type Delimiter = ',' | ';' | '\t' | '|';
+import {
+  convertData,
+  type ConvertError,
+  type CsvDelimiter as Delimiter,
+  type DataFormat as Format,
+} from '@/lib/tools/format-converter';
+import { describeLineCount } from '@/lib/tools/formatter-output';
 
 const DELIMITER_OPTIONS: Array<{ value: Delimiter; label: string }> = [
   { value: ',', label: 'Comma (,)' },
@@ -25,148 +29,6 @@ const DELIMITER_OPTIONS: Array<{ value: Delimiter; label: string }> = [
   { value: '\t', label: 'Tab' },
   { value: '|', label: 'Pipe (|)' },
 ];
-
-function escapeCsvValue(value: unknown, delimiter: Delimiter): string {
-  const text = value == null ? '' : String(value);
-  const needsQuotes =
-    text.includes('"') || text.includes('\n') || text.includes('\r') || text.includes(delimiter);
-
-  if (!needsQuotes) {
-    return text;
-  }
-
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
-function parseCsv(input: string, delimiter: Delimiter): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let value = '';
-  let insideQuotes = false;
-
-  for (let index = 0; index < input.length; index += 1) {
-    const character = input[index];
-    const nextCharacter = input[index + 1];
-
-    if (character === '"') {
-      if (insideQuotes && nextCharacter === '"') {
-        value += '"';
-        index += 1;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-
-      continue;
-    }
-
-    if (!insideQuotes && character === delimiter) {
-      row.push(value);
-      value = '';
-      continue;
-    }
-
-    if (!insideQuotes && (character === '\n' || character === '\r')) {
-      if (character === '\r' && nextCharacter === '\n') {
-        index += 1;
-      }
-
-      row.push(value);
-      rows.push(row);
-      row = [];
-      value = '';
-      continue;
-    }
-
-    value += character;
-  }
-
-  if (insideQuotes) {
-    throw new Error('CSV contains an unclosed quoted field.');
-  }
-
-  if (value.length > 0 || row.length > 0) {
-    row.push(value);
-    rows.push(row);
-  }
-
-  return rows.filter((currentRow) => currentRow.length > 1 || currentRow[0] !== '');
-}
-
-function convertCsvToIntermediate(input: string, delimiter: Delimiter, useHeaders: boolean): unknown {
-  const rows = parseCsv(input, delimiter);
-
-  if (rows.length === 0) {
-    return [];
-  }
-
-  if (!useHeaders) {
-    return rows;
-  }
-
-  const [headers, ...dataRows] = rows;
-  const normalizedHeaders = headers.map((header, index) => header.trim() || `column_${index + 1}`);
-  const objects = dataRows.map((currentRow) =>
-    Object.fromEntries(
-      normalizedHeaders.map((header, index) => [header, currentRow[index] ?? ''])
-    )
-  );
-
-  return objects;
-}
-
-function convertIntermediateToCsv(intermediate: unknown, delimiter: Delimiter, useHeaders: boolean): string {
-  if (intermediate === null || intermediate === undefined) {
-    return '';
-  }
-
-  let parsed: unknown = intermediate;
-  if (typeof parsed === 'string') {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      // Keep it as is
-    }
-  }
-
-  if (!Array.isArray(parsed)) {
-    if (parsed && typeof parsed === 'object') {
-      parsed = [parsed];
-    } else {
-      throw new Error('Data must be an array of objects or arrays to convert to CSV.');
-    }
-  }
-
-  const arrayData = parsed as unknown[];
-  if (arrayData.length === 0) {
-    return '';
-  }
-
-  if (arrayData.every((item) => Array.isArray(item))) {
-    return arrayData
-      .map((row) => (row as unknown[]).map((cell) => escapeCsvValue(cell, delimiter)).join(delimiter))
-      .join('\n');
-  }
-
-  if (!arrayData.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
-    throw new Error('CSV conversion requires items to all be objects or all be arrays.');
-  }
-
-  const objects = arrayData as Array<Record<string, unknown>>;
-  const headers = Array.from(new Set(objects.flatMap((item) => Object.keys(item))));
-  const lines: string[] = [];
-
-  if (useHeaders) {
-    lines.push(headers.map((header) => escapeCsvValue(header, delimiter)).join(delimiter));
-  }
-
-  objects.forEach((item) => {
-    lines.push(
-      headers.map((header) => escapeCsvValue(item[header] ?? '', delimiter)).join(delimiter)
-    );
-  });
-
-  return lines.join('\n');
-}
 
 const getPlaceholder = (format: Format) => {
   switch (format) {
@@ -186,24 +48,22 @@ const getPlaceholder = (format: Format) => {
 export function FormatConverter() {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<ConvertError | null>(null);
   const [inputFormat, setInputFormat] = useState<Format>('json');
   const [outputFormat, setOutputFormat] = useState<Format>('yaml');
-  
+
   // Format-specific settings
   const [delimiter, setDelimiter] = useState<Delimiter>(',');
   const [useHeaders, setUseHeaders] = useState(true);
   const [jsonIndentation, setJsonIndentation] = useState('2');
 
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
+  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
-  const outputSummary = useMemo(() => {
-    if (!output) {
-      return 'Output will appear here';
-    }
-    const lines = output.split('\n').length;
-    return `${lines} line${lines === 1 ? '' : 's'}`;
-  }, [output]);
+  // Conversions are async because the parsers load on demand. Each one takes
+  // a number, and only the newest may write its result.
+  const latestRequest = useRef(0);
+
+  const outputSummary = output ? describeLineCount(output) : 'Output will appear here';
 
   const convert = async (
     text: string,
@@ -213,99 +73,26 @@ export function FormatConverter() {
     headersVal: boolean = useHeaders,
     indentVal: string = jsonIndentation
   ) => {
+    latestRequest.current += 1;
+    const request = latestRequest.current;
+
     if (!text.trim()) {
       setOutput('');
-      setError('');
+      setError(null);
       return;
     }
 
-    if (fromFormat === toFormat) {
-      setOutput(text);
-      setError('');
-      return;
-    }
+    const result = await convertData(text, fromFormat, toFormat, {
+      delimiter: delim,
+      useHeaders: headersVal,
+      jsonIndent: indentVal === 'tab' ? '\t' : Number(indentVal),
+    });
 
-    try {
-      const [yaml, xml, toml] = await Promise.all([
-        fromFormat === 'yaml' || toFormat === 'yaml' ? import('js-yaml') : Promise.resolve(null),
-        fromFormat === 'xml' || toFormat === 'xml' ? import('xml-js') : Promise.resolve(null),
-        fromFormat === 'toml' || toFormat === 'toml' ? import('@iarna/toml') : Promise.resolve(null),
-      ]);
-      let intermediate: unknown;
+    // A newer conversion, or Clear, has started since: drop this result.
+    if (request !== latestRequest.current) return;
 
-      // Parse input to intermediate object
-      switch (fromFormat) {
-        case 'json':
-          intermediate = JSON.parse(text);
-          break;
-        case 'yaml':
-          intermediate = yaml?.load(text);
-          break;
-        case 'xml': {
-          if (!xml) {
-            throw new Error('XML converter failed to load');
-          }
-          const jsonStr = xml.xml2json(text, { compact: true, spaces: 2 });
-          intermediate = JSON.parse(jsonStr);
-          break;
-        }
-        case 'csv':
-          intermediate = convertCsvToIntermediate(text, delim, headersVal);
-          break;
-        case 'toml': {
-          if (!toml) {
-            throw new Error('TOML converter failed to load');
-          }
-          intermediate = toml.parse(text);
-          break;
-        }
-      }
-
-      // Convert intermediate to output format
-      let result: string;
-      switch (toFormat) {
-        case 'json': {
-          const spaces = indentVal === 'tab' ? '\t' : Number(indentVal);
-          result = JSON.stringify(intermediate, null, spaces);
-          break;
-        }
-        case 'yaml':
-          result = yaml?.dump(intermediate, { indent: 2, lineWidth: -1 }) ?? '';
-          break;
-        case 'xml': {
-          if (!xml) {
-            throw new Error('XML converter failed to load');
-          }
-          const jsonForXml = JSON.stringify(intermediate);
-          result = xml.json2xml(jsonForXml, { compact: true, spaces: 2 });
-          break;
-        }
-        case 'csv':
-          result = convertIntermediateToCsv(intermediate, delim, headersVal);
-          break;
-        case 'toml': {
-          if (!toml) {
-            throw new Error('TOML converter failed to load');
-          }
-          let tomlObject = intermediate;
-          if (Array.isArray(tomlObject)) {
-            tomlObject = { items: tomlObject };
-          } else if (typeof tomlObject !== 'object' || tomlObject === null) {
-            tomlObject = { value: tomlObject };
-          }
-          result = toml.stringify(tomlObject as any);
-          break;
-        }
-        default:
-          result = '';
-      }
-
-      setOutput(result);
-      setError('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : `Invalid ${fromFormat.toUpperCase()}`);
-      setOutput('');
-    }
+    setOutput(result.output);
+    setError(result.error);
   };
 
   const handleInputChange = (text: string) => {
@@ -313,20 +100,26 @@ export function FormatConverter() {
     void convert(text, inputFormat, outputFormat);
   };
 
+  // The output on screen was converted between the old pair of formats. A new
+  // pair may need a parser that is still downloading, and until it answers the
+  // old text must not sit under the new heading, ready to be copied.
   const handleInputFormatChange = (format: Format) => {
     setInputFormat(format);
+    setOutput('');
     void convert(input, format, outputFormat);
   };
 
   const handleOutputFormatChange = (format: Format) => {
     setOutputFormat(format);
+    setOutput('');
     void convert(input, inputFormat, format);
   };
 
   const handleClear = () => {
+    latestRequest.current += 1;
     setInput('');
     setOutput('');
-    setError('');
+    setError(null);
   };
 
   const swapFormats = () => {
@@ -335,21 +128,32 @@ export function FormatConverter() {
     setInputFormat(tempOutput);
     setOutputFormat(tempInput);
 
-    const nextInput = output || getPlaceholder(tempOutput);
+    // The converted output becomes the new input. When nothing was converted,
+    // keep what was typed (it may have been pasted the wrong way round); with
+    // nothing typed either, start from an example.
+    const nextInput = output || input || getPlaceholder(tempOutput);
     setInput(nextInput);
+    setOutput('');
     void convert(nextInput, tempOutput, tempInput);
   };
 
   const showOptions = inputFormat === 'csv' || outputFormat === 'csv' || outputFormat === 'json';
+
+  const errorHeading =
+    error?.stage === 'parse'
+      ? `Error parsing ${inputFormat.toUpperCase()}:`
+      : error?.stage === 'write'
+        ? `Cannot convert to ${outputFormat.toUpperCase()}:`
+        : 'Converter unavailable:';
 
   return (
     <div className="space-y-4">
       {/* Format selector toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className="text-sm font-medium text-muted-foreground">From:</span>
+          <label htmlFor="convert-from" className="text-sm font-medium text-muted-foreground">From:</label>
           <Select value={inputFormat} onValueChange={(value) => handleInputFormatChange(value as Format)}>
-            <SelectTrigger className="w-full sm:w-[140px]">
+            <SelectTrigger id="convert-from" className="w-full sm:w-[140px]">
               <SelectValue placeholder="From format" />
             </SelectTrigger>
             <SelectContent>
@@ -364,14 +168,21 @@ export function FormatConverter() {
           </Select>
         </div>
 
-        <Button onClick={swapFormats} variant="outline" size="sm" className="min-h-11 self-stretch sm:min-h-9 sm:self-auto hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200">
+        <Button
+          onClick={swapFormats}
+          variant="outline"
+          size="sm"
+          aria-label="Swap input and output formats"
+          title="Swap input and output formats"
+          className="min-h-11 self-stretch sm:min-h-9 sm:self-auto hover:bg-accent/50 hover:text-accent-foreground transition-all duration-200"
+        >
           <ArrowRightLeft className="h-4 w-4" />
         </Button>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className="text-sm font-medium text-muted-foreground">To:</span>
+          <label htmlFor="convert-to" className="text-sm font-medium text-muted-foreground">To:</label>
           <Select value={outputFormat} onValueChange={(value) => handleOutputFormatChange(value as Format)}>
-            <SelectTrigger className="w-full sm:w-[140px]">
+            <SelectTrigger id="convert-to" className="w-full sm:w-[140px]">
               <SelectValue placeholder="To format" />
             </SelectTrigger>
             <SelectContent>
@@ -392,7 +203,7 @@ export function FormatConverter() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-muted/40 rounded-lg border transition-all duration-300">
           {(inputFormat === 'csv' || outputFormat === 'csv') && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CSV Delimiter</label>
+              <label htmlFor="convert-csv-delimiter" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CSV Delimiter</label>
               <Select
                 value={delimiter}
                 onValueChange={(val) => {
@@ -401,7 +212,7 @@ export function FormatConverter() {
                   void convert(input, inputFormat, outputFormat, nextDelimiter, useHeaders, jsonIndentation);
                 }}
               >
-                <SelectTrigger className="w-full bg-background">
+                <SelectTrigger id="convert-csv-delimiter" className="w-full bg-background">
                   <SelectValue placeholder="Select delimiter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -419,7 +230,7 @@ export function FormatConverter() {
 
           {outputFormat === 'json' && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">JSON Indentation</label>
+              <label htmlFor="convert-json-indentation" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">JSON Indentation</label>
               <Select
                 value={jsonIndentation}
                 onValueChange={(val) => {
@@ -427,7 +238,7 @@ export function FormatConverter() {
                   void convert(input, inputFormat, outputFormat, delimiter, useHeaders, val);
                 }}
               >
-                <SelectTrigger className="w-full bg-background">
+                <SelectTrigger id="convert-json-indentation" className="w-full bg-background">
                   <SelectValue placeholder="Indentation" />
                 </SelectTrigger>
                 <SelectContent>
@@ -473,6 +284,7 @@ export function FormatConverter() {
               value={input}
               onChange={(e) => handleInputChange((e.target as HTMLTextAreaElement).value)}
               placeholder={getPlaceholder(inputFormat)}
+              aria-label={`${inputFormat.toUpperCase()} input`}
               rows={14}
               className="flex-1 font-mono text-xs leading-relaxed resize-y focus-visible:ring-1 bg-background"
             />
@@ -485,8 +297,8 @@ export function FormatConverter() {
             </div>
 
             {error && (
-              <div className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-xs leading-normal font-medium mt-2">
-                <strong>Error parsing {inputFormat.toUpperCase()}:</strong> {error}
+              <div className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-xs leading-normal font-medium mt-2 break-words">
+                <strong>{errorHeading}</strong> {error.message}
               </div>
             )}
           </CardContent>
@@ -502,6 +314,7 @@ export function FormatConverter() {
               value={output}
               readOnly
               placeholder={`Converted ${outputFormat.toUpperCase()} will appear here...`}
+              aria-label={`${outputFormat.toUpperCase()} output`}
               rows={14}
               className="flex-1 font-mono text-xs leading-relaxed resize-y bg-muted/30 focus-visible:ring-0 cursor-text"
             />
@@ -521,7 +334,7 @@ export function FormatConverter() {
               ) : (
                 <>
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy to Clipboard
+                  {copyFailed ? 'Copy failed' : 'Copy to Clipboard'}
                 </>
               )}
             </Button>

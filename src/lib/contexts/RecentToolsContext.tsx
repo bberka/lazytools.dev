@@ -1,10 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import {
-  getRecentTools,
-  addRecentTool as addRecentToolStorage,
-} from '@/lib/utils/storage';
+import { createContext, useCallback, useContext, useMemo } from 'react';
+import { preferences, usePreference } from '@/lib/preferences/client';
 
 interface RecentToolsContextType {
   recentTools: string[];
@@ -21,45 +18,14 @@ export function RecentToolsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [recentTools, setRecentTools] = useState<string[]>([]);
-
-  const syncRecentTools = useCallback(() => {
-    const nextRecentTools = getRecentTools();
-    setRecentTools((currentRecentTools) => {
-      if (
-        currentRecentTools.length === nextRecentTools.length &&
-        currentRecentTools.every((toolId, index) => toolId === nextRecentTools[index])
-      ) {
-        return currentRecentTools;
-      }
-
-      return nextRecentTools;
-    });
-  }, []);
-
-  useEffect(() => {
-    syncRecentTools();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'dev-toolbox:recent') {
-        syncRecentTools();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [syncRecentTools]);
+  const recentTools = usePreference('recentTools');
 
   const addRecentTool = useCallback((toolId: string) => {
-    addRecentToolStorage(toolId);
-    syncRecentTools();
-  }, [syncRecentTools]);
+    preferences.addRecentTool(toolId);
+  }, []);
 
   const clearRecentTools = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('dev-toolbox:recent');
-      setRecentTools([]);
-    }
+    preferences.reset('recentTools');
   }, []);
 
   const value = useMemo(

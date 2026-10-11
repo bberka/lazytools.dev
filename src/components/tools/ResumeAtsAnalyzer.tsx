@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
+import { useFileIntake } from '@/hooks/useFileIntake';
+import { formatBytes, type FormatBytesOptions } from '@/lib/files';
 import {
   analyzeResumeText,
   RESUME_LANGUAGE_OPTIONS,
@@ -29,75 +31,26 @@ import {
   type ResumeAnalysis,
   type ResumeLanguage,
 } from '@/lib/utils/resume-ats-analyzer';
-
-type PdfTextExtractor = {
-  getDocument: (source: { data: Uint8Array }) => {
-    promise: Promise<{
-      numPages: number;
-      getPage: (page: number) => Promise<{
-        getTextContent: () => Promise<{
-          items: Array<{ str?: string; hasEOL?: boolean; transform?: number[] }>;
-        }>;
-      }>;
-    }>;
-  };
-  GlobalWorkerOptions: { workerSrc: string };
-};
+import { PDF_MIME_TYPE, openPdf } from '@/lib/pdf';
 
 async function extractPdfText(file: File) {
-  const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as PdfTextExtractor;
+  const pdf = await openPdf(file);
 
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString();
+  try {
+    // Keep line breaks: the analyzer finds section headings by matching whole lines.
+    const pages = await pdf.text('lines');
+
+    return {
+      pageCount: pdf.pageCount,
+      text: pages.join('\n\n'),
+    };
+  } finally {
+    await pdf.destroy();
   }
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const document = await pdfjs.getDocument({ data: bytes }).promise;
-  const pages: string[] = [];
-
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    let currentLine = '';
-    let lastY: number | null = null;
-    const lines: string[] = [];
-
-    textContent.items.forEach((item) => {
-      const value = item.str?.trim();
-      if (!value) return;
-
-      const y = Math.round(item.transform?.[5] ?? 0);
-
-      if (lastY !== null && Math.abs(y - lastY) > 2 && currentLine.trim()) {
-        lines.push(currentLine.trim());
-        currentLine = '';
-      }
-
-      currentLine += `${value} `;
-
-      if (item.hasEOL) {
-        lines.push(currentLine.trim());
-        currentLine = '';
-      }
-
-      lastY = y;
-    });
-
-    if (currentLine.trim()) {
-      lines.push(currentLine.trim());
-    }
-
-    pages.push(lines.join('\n'));
-  }
-
-  return {
-    pageCount: document.numPages,
-    text: pages.join('\n\n'),
-  };
 }
+
+// The size next to the file name is always in whole kilobytes: "0 KB", "245 KB", "2458 KB".
+const SIZE_FORMAT: FormatBytesOptions = { decimals: 0, minUnit: 'KB', maxUnit: 'KB' };
 
 function getScoreTone(score: number) {
   if (score >= 80) return 'text-green-600 dark:text-green-400';
@@ -126,17 +79,29 @@ export function ResumeAtsAnalyzer() {
   const [error, setError] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [extractedText, setExtractedText] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    setResumeFile(file);
-    setAnalysis(null);
-    setExtractedText('');
-    setError('');
+  // Counts the analyses started and abandoned. Reading a large PDF takes a
+  // while; a result that arrives after another file was chosen, or after
+  // Clear, belongs to an older number and is dropped.
+  const analysisRunRef = useRef(0);
+
+  const abandonAnalysis = () => {
+    analysisRunRef.current += 1;
+    setIsAnalyzing(false);
   };
+
+  // The intake only passes PDFs on; anything else is reported under the picker.
+  const intake = useFileIntake({
+    accept: PDF_MIME_TYPE,
+    onFiles: ([file]) => {
+      abandonAnalysis();
+      setResumeFile(file);
+      setAnalysis(null);
+      setExtractedText('');
+      setError('');
+    },
+  });
 
   const handleAnalyze = async () => {
     if (!resumeFile) {
@@ -144,11 +109,16 @@ export function ResumeAtsAnalyzer() {
       return;
     }
 
+    analysisRunRef.current += 1;
+    const run = analysisRunRef.current;
+    const isCurrentRun = () => analysisRunRef.current === run;
+
     setIsAnalyzing(true);
     setError('');
 
     try {
       const { pageCount, text } = await extractPdfText(resumeFile);
+      if (!isCurrentRun()) return;
 
       if (!text.trim()) {
         throw new Error('No selectable text was found in this PDF. Try a PDF with a text layer.');
@@ -162,17 +132,20 @@ export function ResumeAtsAnalyzer() {
         })
       );
     } catch (analysisError) {
+      if (!isCurrentRun()) return;
+
       setAnalysis(null);
       setExtractedText('');
       setError(
         analysisError instanceof Error ? analysisError.message : 'The PDF could not be analyzed.'
       );
     } finally {
-      setIsAnalyzing(false);
+      if (isCurrentRun()) setIsAnalyzing(false);
     }
   };
 
   const handleClear = () => {
+    abandonAnalysis();
     setResumeFile(null);
     setJobDescription('');
     setResumeLanguage('auto');
@@ -180,9 +153,7 @@ export function ResumeAtsAnalyzer() {
     setAnalysis(null);
     setExtractedText('');
     setError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    intake.reset();
   };
 
   const handleCopyText = async () => {
@@ -202,13 +173,31 @@ export function ResumeAtsAnalyzer() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:bg-primary/90"
-          />
+          {/* Stands in for a native file input: a button, the chosen file's name, and files can be dropped on it. */}
+          <div
+            onDragOver={intake.dropzoneProps.onDragOver}
+            onDragLeave={intake.dropzoneProps.onDragLeave}
+            onDrop={intake.dropzoneProps.onDrop}
+            className="flex items-center gap-4 text-sm text-muted-foreground"
+          >
+            <input {...intake.inputProps} aria-label="Upload PDF resume" />
+            <Button
+              type="button"
+              onClick={intake.open}
+              aria-label="Choose File, PDF resume"
+              className="shrink-0 font-semibold shadow-none"
+            >
+              Choose File
+            </Button>
+            <span className="min-w-0 truncate">
+              {resumeFile ? resumeFile.name : 'No file chosen'}
+            </span>
+          </div>
+          {intake.error && (
+            <p role="alert" className="text-sm font-medium text-destructive">
+              {intake.error}
+            </p>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -297,7 +286,7 @@ export function ResumeAtsAnalyzer() {
               <span className="font-medium">{resumeFile.name}</span>
               <span className="text-muted-foreground">
                 {' '}
-                · {(resumeFile.size / 1024).toFixed(0)} KB
+                · {formatBytes(resumeFile.size, SIZE_FORMAT)}
               </span>
             </div>
           )}
@@ -305,7 +294,7 @@ export function ResumeAtsAnalyzer() {
       </Card>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -429,14 +418,20 @@ export function ResumeAtsAnalyzer() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Missing opportunities</p>
                   <div className="flex flex-wrap gap-2">
-                    {analysis.localizedMissingSections.map((section) => (
-                      <span
-                        key={section}
-                        className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
-                      >
-                        {section}
+                    {analysis.localizedMissingSections.length > 0 ? (
+                      analysis.localizedMissingSections.map((section) => (
+                        <span
+                          key={section}
+                          className="rounded-full border border-dashed px-3 py-1 text-xs text-muted-foreground"
+                        >
+                          {section}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        None. Every standard section was found.
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -487,13 +482,21 @@ export function ResumeAtsAnalyzer() {
                   title="Matched"
                   tone="success"
                   items={analysis.matchedKeywords}
-                  emptyLabel="Add a job description to evaluate keyword alignment."
+                  emptyLabel={
+                    analysis.jobKeywords.length > 0
+                      ? 'None of the job description keywords were found in the resume.'
+                      : 'Add a job description to evaluate keyword alignment.'
+                  }
                 />
                 <KeywordGroup
                   title="Missing / Underrepresented"
                   tone="muted"
                   items={analysis.missingJobKeywords.slice(0, 12)}
-                  emptyLabel="No missing job keywords detected in the sampled keyword set."
+                  emptyLabel={
+                    analysis.jobKeywords.length > 0
+                      ? 'No missing job keywords detected in the sampled keyword set.'
+                      : 'Add a job description to see which of its keywords are missing.'
+                  }
                 />
               </CardContent>
             </Card>
@@ -506,12 +509,17 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {analysis.suggestions.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No priority improvements were found for this resume.
+                  </p>
+                )}
                 {analysis.suggestions.map((suggestion) => (
                   <div
                     key={suggestion}
                     className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-3"
                   >
-                    <AlertCircle className="mt-0.5 h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
                     <p className="text-sm">{suggestion}</p>
                   </div>
                 ))}
@@ -520,7 +528,7 @@ export function ResumeAtsAnalyzer() {
           </div>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
               <div>
                 <CardTitle>Extracted Text Preview</CardTitle>
                 <CardDescription>
