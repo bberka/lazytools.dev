@@ -111,8 +111,25 @@ function createYamlTools(yaml: typeof JsYaml): YamlTools {
     represent: (data: unknown) => (data as number | bigint).toString(10),
   });
 
-  // The default schema with the integer type swapped for the lossless one.
-  const schema = yaml.DEFAULT_SCHEMA.extend({ implicit: [losslessInteger] });
+  // A timestamp is written back the way it was typed. Left to js-yaml, the date
+  // 2024-01-01 would come out as the date-time 2024-01-01T00:00:00.000Z.
+  const builtInTimestamp = (yaml as unknown as { types: { timestamp: JsYaml.Type } }).types.timestamp;
+  const writtenAs = new WeakMap<Date, string>();
+
+  const sourceTimestamp = new yaml.Type('tag:yaml.org,2002:timestamp', {
+    kind: 'scalar',
+    resolve: (data: unknown) => builtInTimestamp.resolve(data),
+    construct: (data: string): Date => {
+      const date = builtInTimestamp.construct(data) as Date;
+      writtenAs.set(date, data);
+      return date;
+    },
+    instanceOf: Date,
+    represent: (data: object) => writtenAs.get(data as Date) ?? (data as Date).toISOString(),
+  });
+
+  // The default schema with the integer and timestamp types swapped for ours.
+  const schema = yaml.DEFAULT_SCHEMA.extend({ implicit: [losslessInteger, sourceTimestamp] });
 
   const parseDocuments = (text: string): unknown[] => {
     const documents = yaml.loadAll(text, null, { schema });

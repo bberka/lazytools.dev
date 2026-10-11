@@ -4,6 +4,7 @@ import {
   describeTreeNode,
   type TreeVocabulary,
 } from '@/lib/tools/formatter-output';
+import { ExactNumber } from '@/lib/tools/json-formatter';
 
 const JSON_WORDS: TreeVocabulary = { list: 'Array', map: 'Object', member: 'key', empty: 'null' };
 const XML_WORDS: TreeVocabulary = { list: 'List', map: 'Element', member: 'node', empty: 'empty' };
@@ -53,6 +54,14 @@ test.describe('describeTreeNode leaves', () => {
       kind: 'leaf',
       type: 'number',
       text: '9007199254740993',
+    });
+  });
+
+  test('prints a number a double cannot hold as written, not as an empty container', () => {
+    expect(describeTreeNode(new ExactNumber('1e400'), JSON_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'number',
+      text: '1e400',
     });
   });
 

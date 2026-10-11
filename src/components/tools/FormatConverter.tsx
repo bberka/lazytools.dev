@@ -100,13 +100,18 @@ export function FormatConverter() {
     void convert(text, inputFormat, outputFormat);
   };
 
+  // The output on screen was converted between the old pair of formats. A new
+  // pair may need a parser that is still downloading, and until it answers the
+  // old text must not sit under the new heading, ready to be copied.
   const handleInputFormatChange = (format: Format) => {
     setInputFormat(format);
+    setOutput('');
     void convert(input, format, outputFormat);
   };
 
   const handleOutputFormatChange = (format: Format) => {
     setOutputFormat(format);
+    setOutput('');
     void convert(input, inputFormat, format);
   };
 
@@ -128,6 +133,7 @@ export function FormatConverter() {
     // nothing typed either, start from an example.
     const nextInput = output || input || getPlaceholder(tempOutput);
     setInput(nextInput);
+    setOutput('');
     void convert(nextInput, tempOutput, tempInput);
   };
 

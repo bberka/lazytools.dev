@@ -362,6 +362,43 @@ test.describe('XML', () => {
     );
   });
 
+  // {"a b":1,"a_b":2} was written as <a_b>2</a_b>: the value of "a b" was lost.
+  test('gives keys that become the same name different names, none of them lost', async () => {
+    expect(await output('{"a b":1,"a_b":2}', 'json', 'xml')).toBe(
+      '<root>\n  <a_b_2>1</a_b_2>\n  <a_b>2</a_b>\n</root>'
+    );
+    expect(await output('{"a b":1,"a/b":2,"a_b":3,"a_b_2":4}', 'json', 'xml')).toBe(
+      '<root>\n  <a_b_3>1</a_b_3>\n  <a_b_4>2</a_b_4>\n  <a_b>3</a_b>\n  <a_b_2>4</a_b_2>\n</root>'
+    );
+    // A key that is not a name never takes the name that means text content.
+    expect(await output('{"?text":"x","_text":"y"}', 'json', 'xml')).toBe(
+      '<root>\n  <_text_2>x</_text_2>y\n</root>'
+    );
+  });
+
+  // {"og:title":"x"} was written as <og:title>, a prefix nothing declares, which
+  // XML parsers reject.
+  test('does not write a colon that would make an undeclared namespace prefix', async () => {
+    expect(await output('{"og:title":"x"}', 'json', 'xml')).toBe('<og_title>x</og_title>');
+    expect(await output('{"a":{"x:y:z":1,":q":2,"p:":3}}', 'json', 'xml')).toBe(
+      '<a>\n  <x_y_z>1</x_y_z>\n  <_q>2</_q>\n  <p_>3</p_>\n</a>'
+    );
+  });
+
+  test('keeps a colon after a prefix that an element above declares', async () => {
+    const xml = '<feed xmlns:atom="http://www.w3.org/2005/Atom">\n  <atom:link rel="self"/>\n  <xml:note>x</xml:note>\n</feed>';
+
+    expect(await output(await output(xml, 'xml', 'json'), 'json', 'xml')).toBe(xml);
+    // The element that declares the prefix may use it itself.
+    expect(await output('{"atom:feed":{"_attributes":{"xmlns:atom":"u"},"atom:id":"1"}}', 'json', 'xml')).toBe(
+      '<atom:feed xmlns:atom="u">\n  <atom:id>1</atom:id>\n</atom:feed>'
+    );
+    // Declared further down, it does not cover what is above or beside it.
+    expect(
+      await output('{"top":{"og:a":1,"child":{"_attributes":{"xmlns:og":"u"},"og:b":2}}}', 'json', 'xml')
+    ).toBe('<top>\n  <og_a>1</og_a>\n  <child xmlns:og="u">\n    <og:b>2</og:b>\n  </child>\n</top>');
+  });
+
   test('escapes markup characters in text', async () => {
     expect(await output('{"a":"x < y & z > w"}', 'json', 'xml')).toBe('<a>x &lt; y &amp; z &gt; w</a>');
   });

@@ -5,9 +5,36 @@
  * `JSON.parse` turns every number into a double, so an integer above 2^53 - 1
  * (a 64-bit database id, a snowflake) silently changes value when it is
  * formatted. `parseJson` hands those integers back as `bigint` instead and
- * `stringifyJson` writes them out digit for digit. Everything here is pure,
- * so it runs in Node and in the browser.
+ * `stringifyJson` writes them out digit for digit. A formatter that must not
+ * touch the document can ask for the same care for decimals and exponents a
+ * double cannot hold (`1e400`, `0.1234567890123456789`), which come back as
+ * `ExactNumber`. Everything here is pure, so it runs in Node and in the browser.
  */
+
+/**
+ * A number a double cannot hold, kept exactly as it was written. The text is
+ * a private field so that it is not a key: the value looks like an empty
+ * object to anything that walks properties.
+ */
+export class ExactNumber {
+  readonly #literal: string;
+
+  constructor(literal: string) {
+    this.#literal = literal;
+  }
+
+  toString(): string {
+    return this.#literal;
+  }
+}
+
+export interface JsonParseOptions {
+  /**
+   * Keep a decimal or exponent that a double would round, overflow or flush to
+   * zero as an `ExactNumber`. Default: false, they become plain numbers.
+   */
+  exactNumbers?: boolean;
+}
 
 export interface JsonValidation {
   valid: boolean;
@@ -54,6 +81,54 @@ function holdsUnsafeInteger(text: string): boolean {
   return false;
 }
 
+/**
+ * A number literal that may not survive a double: sixteen or more characters
+ * of digits, or any with an exponent. Anything shorter and plain keeps up to
+ * fifteen significant digits. Like `LONG_INTEGER` it may match inside a string,
+ * which only costs a slower read.
+ */
+const NUMBER_CANDIDATE = /-?\d[\d.]{15,}(?:[eE][+-]?\d+)?|-?\d[\d.]*[eE][+-]?\d+/g;
+const DECIMAL_LITERAL = /^-?(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/;
+
+/** A decimal as its significant digits and the power of ten they are scaled by. */
+function decimalParts(literal: string): { digits: string; exponent: number } | null {
+  const match = DECIMAL_LITERAL.exec(literal);
+  if (!match) return null;
+
+  const fraction = match[2] ?? '';
+  const digits = `${match[1]}${fraction}`.replace(/^0+/, '');
+  const significant = digits.replace(/0+$/, '');
+  if (!significant) return { digits: '', exponent: 0 };
+
+  return {
+    digits: significant,
+    exponent: Number(match[3] ?? 0) - fraction.length + (digits.length - significant.length),
+  };
+}
+
+/** True when a double holds the literal's value: it prints back as the same decimal. */
+function survivesDouble(literal: string): boolean {
+  const value = Number(literal);
+  if (!Number.isFinite(value)) return false;
+
+  const written = decimalParts(literal);
+  const read = decimalParts(String(value));
+  return (
+    written !== null &&
+    read !== null &&
+    written.digits === read.digits &&
+    written.exponent === read.exponent
+  );
+}
+
+/** True when the text holds a number that `JSON.parse` would round, overflow or flush to zero. */
+function holdsInexactNumber(text: string): boolean {
+  for (const match of text.matchAll(NUMBER_CANDIDATE)) {
+    if (!survivesDouble(match[0])) return true;
+  }
+  return false;
+}
+
 function isNumberCharacter(code: number): boolean {
   // 0-9 + - . E e
   return (
@@ -71,7 +146,7 @@ function isNumberCharacter(code: number): boolean {
  * not fit a double as `bigint`. It reports nothing useful on bad input, which
  * is why the native parser always runs first.
  */
-function readLossless(text: string): unknown {
+function readLossless(text: string, exactNumbers: boolean): unknown {
   let position = 0;
 
   const skipWhitespace = () => {
@@ -99,17 +174,17 @@ function readLossless(text: string): unknown {
       : text.slice(start + 1, position - 1);
   };
 
-  const readNumber = (): number | bigint => {
+  const readNumber = (): number | bigint | ExactNumber => {
     const start = position;
     while (position < text.length && isNumberCharacter(text.charCodeAt(position))) {
       position += 1;
     }
     const literal = text.slice(start, position);
     const value = Number(literal);
-    if (Number.isSafeInteger(value) || !INTEGER_LITERAL.test(literal)) {
-      return value;
+    if (INTEGER_LITERAL.test(literal)) {
+      return Number.isSafeInteger(value) ? value : BigInt(literal);
     }
-    return BigInt(literal);
+    return exactNumbers && !survivesDouble(literal) ? new ExactNumber(literal) : value;
   };
 
   const readValue = (): unknown => {
@@ -192,21 +267,24 @@ function readLossless(text: string): unknown {
 
 /**
  * `JSON.parse` that does not round large integers: one too big for a double
- * comes back as a `bigint`. Throws the native `SyntaxError` on invalid text.
+ * comes back as a `bigint`. With `exactNumbers`, a decimal or exponent a
+ * double cannot hold comes back as an `ExactNumber`. Throws the native
+ * `SyntaxError` on invalid text.
  */
-export function parseJson(text: string): unknown {
+export function parseJson(text: string, options: JsonParseOptions = {}): unknown {
   // A byte order mark survives a paste from some editors and is not JSON.
   const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const value: unknown = JSON.parse(source);
+  const exactNumbers = options.exactNumbers ?? false;
 
   // The native result is exact for almost every document; only re-read the
   // text when it would otherwise lose digits.
-  if (!holdsUnsafeInteger(source)) {
+  if (!holdsUnsafeInteger(source) && !(exactNumbers && holdsInexactNumber(source))) {
     return value;
   }
 
   try {
-    return readLossless(source);
+    return readLossless(source, exactNumbers);
   } catch {
     // Nested deeper than the call stack allows: keep the native result.
     return value;
@@ -218,17 +296,18 @@ export function parseJson(text: string): unknown {
 // ---------------------------------------------------------------------------
 
 /**
- * `JSON.stringify` that writes a `bigint` as a plain integer instead of
- * throwing. Everything else, including `toJSON` and the indent argument,
- * behaves as it does natively. A value with no JSON form at all gives "null".
+ * `JSON.stringify` that writes a `bigint` or an `ExactNumber` as a plain
+ * number instead of throwing or rounding it. Everything else, including
+ * `toJSON` and the indent argument, behaves as it does natively. A value with
+ * no JSON form at all gives "null".
  */
 export function stringifyJson(value: unknown, indent?: number | string): string {
-  let hasBigInt = false;
+  let hasExactNumber = false;
   const plain = JSON.stringify(
     value,
     (_key, member: unknown) => {
-      if (typeof member === 'bigint') {
-        hasBigInt = true;
+      if (typeof member === 'bigint' || member instanceof ExactNumber) {
+        hasExactNumber = true;
         return member.toString();
       }
       return member;
@@ -237,10 +316,10 @@ export function stringifyJson(value: unknown, indent?: number | string): string 
   ) as string | undefined;
 
   if (plain === undefined) return 'null';
-  if (!hasBigInt) return plain;
+  if (!hasExactNumber) return plain;
 
-  // Wrap each bigint in a marker that occurs nowhere else in the output, then
-  // drop the quotes around it.
+  // Wrap each such number in a marker that occurs nowhere else in the output,
+  // then drop the quotes around it.
   let marker = '@bigint@';
   while (plain.includes(marker)) {
     marker += '@';
@@ -249,11 +328,13 @@ export function stringifyJson(value: unknown, indent?: number | string): string 
   const marked = JSON.stringify(
     value,
     (_key, member: unknown) =>
-      typeof member === 'bigint' ? `${marker}${member.toString()}${marker}` : member,
+      typeof member === 'bigint' || member instanceof ExactNumber
+        ? `${marker}${member.toString()}${marker}`
+        : member,
     indent
   );
 
-  return marked.replace(new RegExp(`"${marker}(-?\\d+)${marker}"`, 'g'), '$1');
+  return marked.replace(new RegExp(`"${marker}(-?[\\d.eE+-]+)${marker}"`, 'g'), '$1');
 }
 
 // ---------------------------------------------------------------------------
@@ -269,6 +350,10 @@ function summarize(value: unknown): string {
     return `Array with ${plural(value.length, 'item')}`;
   }
 
+  if (value instanceof ExactNumber) {
+    return 'Primitive (number)';
+  }
+
   if (value && typeof value === 'object') {
     return `Object with ${plural(Object.keys(value).length, 'key')}`;
   }
@@ -277,12 +362,15 @@ function summarize(value: unknown): string {
   return `Primitive (${type})`;
 }
 
-/** Validates JSON text. Blank text is neither valid nor invalid: null. */
+/**
+ * Validates JSON text. Blank text is neither valid nor invalid: null. Numbers
+ * are kept exactly as written (see `parseJson`), since the value is shown back.
+ */
 export function validateJson(text: string): JsonValidation | null {
   if (!text.trim()) return null;
 
   try {
-    const value = parseJson(text);
+    const value = parseJson(text, { exactNumbers: true });
     return { valid: true, value, summary: summarize(value), error: '' };
   } catch (error) {
     return {

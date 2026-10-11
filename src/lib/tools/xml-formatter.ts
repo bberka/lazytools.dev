@@ -286,7 +286,10 @@ export function minifyXml(xml: string): string {
 
 /** The part of a parsed XML document that validation reads. */
 export interface XmlDocumentLike {
-  querySelector(selectors: string): { textContent: string | null } | null;
+  getElementsByTagNameNS(
+    namespace: string,
+    localName: string
+  ): ArrayLike<{ textContent: string | null }>;
   getElementsByTagName(name: string): { length: number };
 }
 
@@ -296,6 +299,16 @@ export interface XmlValidation {
   summary: string;
   error: string;
 }
+
+/**
+ * Where browsers put the `<parsererror>` element they insert for text that is
+ * not well-formed: Chrome and Safari in XHTML, Firefox in a namespace of its
+ * own. A `<parsererror>` in the document itself has no such namespace.
+ */
+const PARSER_ERROR_NAMESPACES = [
+  'http://www.w3.org/1999/xhtml',
+  'http://www.mozilla.org/newlayout/xml/parsererror.xml',
+];
 
 const FIREFOX_ERROR = /^XML Parsing Error:\s*([^\n]+?)\s*\nLocation:[^\n]*\nLine Number (\d+), Column (\d+)/;
 
@@ -332,7 +345,9 @@ export function validateXml(
 
   try {
     const document = parse(text);
-    const parserError = document.querySelector('parsererror');
+    const parserError = PARSER_ERROR_NAMESPACES.map(
+      (namespace) => document.getElementsByTagNameNS(namespace, 'parsererror')[0]
+    ).find(Boolean);
     if (parserError) {
       return {
         valid: false,

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import {
+  ExactNumber,
   parseJson,
   queryJson,
   renderJson,
@@ -89,6 +90,56 @@ test.describe('parseJson', () => {
       pi: 3.141592653589793,
       id: BigInt(UNSAFE),
     });
+  });
+
+  test('rounds a decimal or exponent a double cannot hold unless asked to keep it', () => {
+    expect(parseJson('{"big":1e400,"ratio":0.1234567890123456789}')).toEqual({
+      big: Infinity,
+      ratio: 0.12345678901234568,
+    });
+  });
+
+  test('keeps a number a double cannot hold exactly as written when asked to', () => {
+    const exact = { exactNumbers: true };
+    const parsed = parseJson(
+      '{"big":1e400,"ratio":0.1234567890123456789,"tiny":-1E-400,"pi":3.14159265358979323846}',
+      exact
+    ) as Record<string, unknown>;
+
+    for (const [key, literal] of [
+      ['big', '1e400'],
+      ['ratio', '0.1234567890123456789'],
+      ['tiny', '-1E-400'],
+      ['pi', '3.14159265358979323846'],
+    ]) {
+      expect(parsed[key]).toBeInstanceOf(ExactNumber);
+      expect(String(parsed[key])).toBe(literal);
+    }
+  });
+
+  test('leaves numbers a double does hold as numbers when asked to keep exact ones', () => {
+    const exact = { exactNumbers: true };
+
+    expect(
+      parseJson('[1.5, 1e30, 1.0000000000000000, 0.30000000000000004, 5e-324, 1E5, -0.5e+2, 1234567890123456]', exact)
+    ).toEqual([1.5, 1e30, 1, 0.30000000000000004, 5e-324, 100000, -50, 1234567890123456]);
+    // Digits that only look like a number, inside a string, stay a string.
+    expect(parseJson('{"id":"1234567890123456789012","e":"1.5e3"}', exact)).toEqual({
+      id: '1234567890123456789012',
+      e: '1.5e3',
+    });
+  });
+
+  test('still returns a bigint for a large integer next to an exact number', () => {
+    expect(parseJson(`[${UNSAFE},1e400]`, { exactNumbers: true })).toEqual([BigInt(UNSAFE), new ExactNumber('1e400')]);
+  });
+
+  test('keeps an exact number as the whole document and inside nesting', () => {
+    const exact = { exactNumbers: true };
+
+    expect(String(parseJson('1e400', exact))).toBe('1e400');
+    const nested = parseJson('{"a":[{"b":[0.1234567890123456789]}]}', exact) as { a: Array<{ b: unknown[] }> };
+    expect(String(nested.a[0].b[0])).toBe('0.1234567890123456789');
   });
 
   test('finds a large integer wherever JSON allows a value', () => {
@@ -206,6 +257,27 @@ test.describe('stringifyJson', () => {
     );
   });
 
+  test('writes an exact number as written, next to a bigint and a quoted look-alike', () => {
+    const value = {
+      big: new ExactNumber('1e400'),
+      ratio: new ExactNumber('-0.1234567890123456789'),
+      id: BigInt(UNSAFE),
+      text: '1e400',
+    };
+
+    expect(stringifyJson(value)).toBe(
+      `{"big":1e400,"ratio":-0.1234567890123456789,"id":${UNSAFE},"text":"1e400"}`
+    );
+    expect(stringifyJson([new ExactNumber('2.5E-400')], 2)).toBe('[\n  2.5E-400\n]');
+    expect(stringifyJson(new ExactNumber('1e400'))).toBe('1e400');
+  });
+
+  test('round-trips numbers a double cannot hold when they are read exactly', () => {
+    const text = '{"big":1e400,"ratio":0.1234567890123456789,"id":9007199254740993,"ok":1.5}';
+
+    expect(stringifyJson(parseJson(text, { exactNumbers: true }))).toBe(text);
+  });
+
   test('gives "null" for a value with no JSON form', () => {
     expect(stringifyJson(undefined)).toBe('null');
   });
@@ -238,6 +310,12 @@ test.describe('validateJson', () => {
 
   test('calls a large integer a number', () => {
     expect(validateJson(UNSAFE)).toMatchObject({ valid: true, summary: 'Primitive (number)' });
+  });
+
+  test('keeps a number a double cannot hold, and calls it a number', () => {
+    expect(validateJson('1e400')).toMatchObject({ valid: true, summary: 'Primitive (number)' });
+    expect(validateJson('{"big":1e400}')).toMatchObject({ valid: true, summary: 'Object with 1 key' });
+    expect((validateJson('[0.1234567890123456789]')?.value as unknown[])[0]).toBeInstanceOf(ExactNumber);
   });
 
   test('reports the parser message for invalid JSON', () => {
@@ -417,6 +495,20 @@ test.describe('renderJson', () => {
     );
     expect(renderJson(parsed?.value, { minify: true }).text).toBe(`{"id":${UNSAFE},"ids":[${UNSAFE}]}`);
     expect(renderJson(parsed?.value, { path: 'ids[0]' }).text).toBe(UNSAFE);
+  });
+
+  // Formatting used to turn 1e400 into null and cut the digits of a long decimal.
+  test('formats, minifies and queries a number a double cannot hold without changing it', () => {
+    const parsed = validateJson('{"big": 1e400, "list": [0.1234567890123456789, 2.50]}');
+
+    expect(renderJson(parsed?.value, { indent: 2 }).text).toBe(
+      '{\n  "big": 1e400,\n  "list": [\n    0.1234567890123456789,\n    2.5\n  ]\n}'
+    );
+    expect(renderJson(parsed?.value, { minify: true }).text).toBe('{"big":1e400,"list":[0.1234567890123456789,2.5]}');
+    expect(renderJson(parsed?.value, { path: 'list[0]' }).text).toBe('0.1234567890123456789');
+    expect(renderJson(parsed?.value, { path: 'big' }).text).toBe('1e400');
+    // The number is a value, not an object with members to follow.
+    expect(renderJson(parsed?.value, { path: 'big.literal' }).error).toContain('No matching properties');
   });
 
   test('writes null for array items a mapped key did not find', () => {

@@ -248,27 +248,85 @@ function dataToCsv(data: unknown, delimiter: CsvDelimiter, useHeaders: boolean):
 const XML_PROLOG_KEYS = new Set(['_declaration', '_instruction', '_doctype', '_comment']);
 const XML_SPECIAL_KEYS = new Set([...XML_PROLOG_KEYS, '_attributes', '_text', '_cdata']);
 
-/** Makes a key usable as an element name: no spaces, no leading digit. */
-function xmlName(key: string): string {
-  const name = key.replace(/[^\p{L}\p{N}_.:-]/gu, '_');
+/** The prefixes that the `xmlns:prefix` attributes of an element (or a list of them) declare. */
+function declaredPrefixes(value: unknown, inherited: ReadonlySet<string>): ReadonlySet<string> {
+  let declared: Set<string> | null = null;
+
+  for (const element of Array.isArray(value) ? value : [value]) {
+    const attributes = (element as { _attributes?: unknown } | null | undefined)?._attributes;
+    if (attributes === null || typeof attributes !== 'object') continue;
+
+    for (const name of Object.keys(attributes)) {
+      if (name.startsWith('xmlns:')) {
+        declared ??= new Set(inherited);
+        declared.add(name.slice('xmlns:'.length));
+      }
+    }
+  }
+
+  return declared ?? inherited;
+}
+
+/** One part of a name: no spaces or punctuation, and no leading digit. */
+function xmlNamePart(text: string): string {
+  const name = text.replace(/[^\p{L}\p{N}_.-]/gu, '_');
   return /^[\p{L}_]/u.test(name) ? name : `_${name}`;
 }
 
-function toXmlNode(value: unknown): unknown {
+/**
+ * Makes a key usable as an element name. One colon stays when the text before
+ * it is a namespace prefix that an element above declares (or "xml"); any
+ * other colon would make an undeclared prefix, which XML parsers reject.
+ */
+function xmlName(key: string, prefixes: ReadonlySet<string>): string {
+  const colon = key.indexOf(':');
+  const prefix = key.slice(0, colon);
+  if (colon > 0 && key.indexOf(':', colon + 1) === -1 && (prefix === 'xml' || prefixes.has(prefix))) {
+    return `${prefix}:${xmlNamePart(key.slice(colon + 1))}`;
+  }
+  return xmlNamePart(key);
+}
+
+/** `name`, or the first of name_2, name_3 ... that is still free. */
+function freeName(name: string, taken: Set<string>): string {
+  let free = name;
+  for (let copy = 2; taken.has(free); copy += 1) {
+    free = `${name}_${copy}`;
+  }
+  taken.add(free);
+  return free;
+}
+
+function toXmlNode(value: unknown, prefixes: ReadonlySet<string> = new Set()): unknown {
   if (value === null || value === undefined) return {};
   if (typeof value === 'bigint') return value.toString();
   if (value instanceof Date) return dateText(value);
 
   if (Array.isArray(value)) {
     // A list inside a list has no element name of its own; call it "item".
-    return value.map((item) => (Array.isArray(item) ? { item: toXmlNode(item) } : toXmlNode(item)));
+    return value.map((item) =>
+      Array.isArray(item) ? { item: toXmlNode(item, prefixes) } : toXmlNode(item, prefixes)
+    );
   }
 
   if (typeof value === 'object') {
+    const entries = Object.entries(value);
+    // This element's own declarations cover the elements inside it.
+    const scope = declaredPrefixes(value, prefixes);
+    const names = entries.map(([key, member]) =>
+      XML_SPECIAL_KEYS.has(key) ? key : xmlName(key, declaredPrefixes(member, scope))
+    );
+    // A key that is already a name keeps it. Two keys must not end up with
+    // one name, or one value would be lost: the one that had to change takes
+    // a free name instead.
+    const taken = new Set(entries.map(([key]) => key).filter((key, index) => names[index] === key));
+
     return Object.fromEntries(
-      Object.entries(value).map(([key, member]) =>
-        XML_SPECIAL_KEYS.has(key) ? [key, member] : [xmlName(key), toXmlNode(member)]
-      )
+      entries.map(([key, member], index) => {
+        if (XML_SPECIAL_KEYS.has(key)) return [key, member];
+        const name = names[index] === key ? key : freeName(names[index], taken);
+        return [name, toXmlNode(member, scope)];
+      })
     );
   }
 

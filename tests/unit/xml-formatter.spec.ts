@@ -7,20 +7,28 @@ import {
   type XmlDocumentLike,
 } from '@/lib/tools/xml-formatter';
 
+const XHTML = 'http://www.w3.org/1999/xhtml';
+const FIREFOX = 'http://www.mozilla.org/newlayout/xml/parsererror.xml';
+
+/** The elements named parsererror in a document, by namespace ("" for none). */
+type ParserErrors = Record<string, Array<{ textContent: string | null }>>;
+
+function document(elements: number, parserErrors: ParserErrors = {}): XmlDocumentLike {
+  return {
+    getElementsByTagNameNS: (namespace, localName) =>
+      localName === 'parsererror' ? (parserErrors[namespace] ?? []) : [],
+    getElementsByTagName: () => ({ length: elements }),
+  };
+}
+
 /** Stands in for DOMParser: a well-formed document with `elements` elements. */
 function wellFormed(elements: number): () => XmlDocumentLike {
-  return () => ({
-    querySelector: () => null,
-    getElementsByTagName: () => ({ length: elements }),
-  });
+  return () => document(elements);
 }
 
 /** Stands in for DOMParser reporting a syntax error the way browsers do. */
-function malformed(errorText: string | null): () => XmlDocumentLike {
-  return () => ({
-    querySelector: (selectors) => (selectors === 'parsererror' ? { textContent: errorText } : null),
-    getElementsByTagName: () => ({ length: 0 }),
-  });
+function malformed(errorText: string | null, namespace = XHTML): () => XmlDocumentLike {
+  return () => document(0, { [namespace]: [{ textContent: errorText }] });
 }
 
 test.describe('formatXml', () => {
@@ -208,6 +216,21 @@ test.describe('validateXml', () => {
       valid: false,
       summary: '',
       error: 'error on line 1 at column 11: Opening and ending tag mismatch: b line 1 and a',
+    });
+  });
+
+  test('finds the error element in the namespace Firefox uses', () => {
+    expect(validateXml('<a', malformed('XML Parsing Error: junk', FIREFOX))?.valid).toBe(false);
+  });
+
+  // The browser's own error element is in a namespace; one the document holds is not.
+  test('accepts a document that has an element named parsererror of its own', () => {
+    const parse = () => document(2, { '': [{ textContent: 'disk full' }] });
+
+    expect(validateXml('<log><parsererror>disk full</parsererror></log>', parse)).toEqual({
+      valid: true,
+      summary: 'XML Document with 2 elements',
+      error: '',
     });
   });
 

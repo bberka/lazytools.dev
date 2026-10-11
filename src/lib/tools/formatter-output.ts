@@ -4,6 +4,8 @@
  * collapsible tree view. Pure, so it runs in Node and in the browser.
  */
 
+import { ExactNumber } from './json-formatter';
+
 /**
  * "1 line", "12 lines". A final newline ends the last line rather than
  * starting an empty one, so YAML and TOML output is not counted one too high.
@@ -59,7 +61,7 @@ export function describeTreeNode(value: unknown, vocabulary: TreeVocabulary): Tr
     return { kind: 'leaf', type: 'boolean', text: value ? 'true' : 'false' };
   }
 
-  if (typeof value === 'number' || typeof value === 'bigint') {
+  if (typeof value === 'number' || typeof value === 'bigint' || value instanceof ExactNumber) {
     return { kind: 'leaf', type: 'number', text: String(value) };
   }
 

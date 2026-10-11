@@ -176,10 +176,41 @@ test.describe('render', () => {
   test('writes timestamps and special floats', () => {
     const parsed = yaml.parseDocuments('at: 2024-01-01\ninf: .inf\nnan: .nan');
 
-    expect(yaml.render(parsed).text).toBe('at: 2024-01-01T00:00:00.000Z\ninf: .inf\nnan: .nan\n');
+    expect(yaml.render(parsed).text).toBe('at: 2024-01-01\ninf: .inf\nnan: .nan\n');
+    // JSON has no date type: there a timestamp is its ISO text.
     expect(yaml.render(parsed, { minify: true }).text).toBe(
       '{"at":"2024-01-01T00:00:00.000Z","inf":null,"nan":null}'
     );
+  });
+
+  // A date came out as a date-time at midnight UTC: "released: 2024-01-01"
+  // was rewritten as "released: 2024-01-01T00:00:00.000Z".
+  test('writes a timestamp the way it was typed', () => {
+    const source = [
+      'date: 2024-01-01',
+      'utc: 2024-01-01T10:00:00Z',
+      'offset: 2001-12-14t21:59:43.10-05:00',
+      'spaced: 2001-12-14 21:59:43.10 -5',
+      'list:',
+      '  - 2002-12-14',
+      '',
+    ].join('\n');
+    const parsed = yaml.parseDocuments(source);
+
+    expect(parsed[0]).toMatchObject({ date: new Date('2024-01-01T00:00:00Z') });
+    expect(yaml.render(parsed).text).toBe(source);
+    expect(yaml.dump(parsed[0])).toBe(source);
+  });
+
+  test('writes a timestamp that was not typed in YAML as ISO text', () => {
+    expect(yaml.dump({ at: new Date('2024-01-01T10:00:00Z') })).toBe('at: 2024-01-01T10:00:00.000Z\n');
+  });
+
+  test('does not treat a quoted date as a timestamp', () => {
+    const parsed = yaml.parseDocuments('a: "2024-01-01"');
+
+    expect(parsed).toEqual([{ a: '2024-01-01' }]);
+    expect(yaml.dump(parsed[0])).toBe("a: '2024-01-01'\n");
   });
 
   test('explains why a self-referencing document has no JSON form', () => {
