@@ -1170,4 +1170,18 @@ export const TOOL_REGISTRY = {
         (module) => module.UlidGenerator
       ),
   },
+  'chmod-calculator': {
+    name: 'Chmod Calculator',
+    description: 'Convert Unix file permissions: octal, symbolic and checkboxes',
+    tags: ['utilities', 'calculators'],
+    icon: 'FolderLock',
+    keywords: [
+      'chmod', 'unix permissions', 'file permissions', 'octal', 'symbolic',
+      'rwx', 'setuid', 'setgid', 'sticky bit', 'linux',
+    ],
+    component: () =>
+      import('@/components/tools/ChmodCalculator').then(
+        (module) => module.ChmodCalculator
+      ),
+  },
 } as const satisfies Record<string, ToolRegistryEntry>;
