@@ -35,6 +35,8 @@ import {
   Printer,
   Trash2,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { saveSnapshotPdf } from '@/lib/export/snapshot-pdf';
 
 type ExportFormat = 'pdf' | 'md' | 'html' | 'txt';
 type PageSize = 'A4' | 'Letter' | 'Legal';
@@ -608,89 +610,24 @@ export function HtmlConverter() {
       return;
     }
 
-    setExportProgress('Capturing preview...');
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
-      import('jspdf'),
-      import('html2canvas'),
-    ]);
-    const canvas = await html2canvas(previewDocumentElement, {
-      scale,
-      backgroundColor,
-      logging: false,
-      useCORS: true,
-      windowWidth: previewDocumentElement.scrollWidth,
-      windowHeight: previewDocumentElement.scrollHeight,
-    });
-
-    setExportProgress('Composing PDF...');
-
-    const pdf = new jsPDF({
-      orientation,
-      unit: 'mm',
-      format: pageFormats[pageSize],
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const usableWidth = pdfWidth - margin * 2;
-    const usableHeight = pdfHeight - margin * 2;
-    const imgWidth = usableWidth;
-    const pageHeightInImage = (usableHeight * canvas.width) / usableWidth;
-
-    let sourceY = 0;
-    let pageNumber = 0;
-
-    while (sourceY < canvas.height) {
-      if (pageNumber > 0) {
-        pdf.addPage();
-      }
-
-      const sliceHeight = Math.min(pageHeightInImage, canvas.height - sourceY);
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = sliceHeight;
-      const context = pageCanvas.getContext('2d');
-
-      if (context) {
-        context.fillStyle = backgroundColor;
-        context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        context.drawImage(
-          canvas,
-          0,
-          sourceY,
-          canvas.width,
-          sliceHeight,
-          0,
-          0,
-          canvas.width,
-          sliceHeight
-        );
-      }
-
-      const sliceData = pageCanvas.toDataURL('image/png');
-      const slicePdfHeight = (sliceHeight * imgWidth) / canvas.width;
-      pdf.addImage(sliceData, 'PNG', margin, margin, imgWidth, slicePdfHeight);
-
-      sourceY += sliceHeight;
-      pageNumber++;
+    try {
+      await saveSnapshotPdf(previewDocumentElement, {
+        fileName: `${safeFilename}.pdf`,
+        pageFormat: pageFormats[pageSize],
+        orientation,
+        marginMm: margin,
+        scale,
+        backgroundColor,
+        pageNumbers: includePageNumbers,
+        theme: pdfTheme,
+        onProgress: setExportProgress,
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Error exporting PDF. Please try again.');
+    } finally {
+      setExportProgress('');
     }
-
-    if (includePageNumbers) {
-      const totalPages = pdf.getNumberOfPages();
-      for (let page = 1; page <= totalPages; page++) {
-        pdf.setPage(page);
-        pdf.setFontSize(9);
-        pdf.setTextColor(pdfTheme === 'dark' ? 180 : 90);
-        pdf.text(`Page ${page} of ${totalPages}`, pdfWidth / 2, pdfHeight - 6, {
-          align: 'center',
-        });
-      }
-    }
-
-    setExportProgress('Saving file...');
-    pdf.save(`${safeFilename}.pdf`);
   };
 
   const handleExport = async () => {

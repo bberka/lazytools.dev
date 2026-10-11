@@ -27,7 +27,7 @@ import {
   Minus,
   Loader2,
 } from 'lucide-react';
-import MarkdownIt from 'markdown-it';
+import { createMarkdownParser } from '@/lib/markdown/parser';
 
 // Define options structure
 interface StyleOptions {
@@ -169,12 +169,13 @@ interface MarkdownBlock {
   spacingAfter?: number;
 }
 
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true,
-});
+// The shared Markdown syntax, so a document splits into the same blocks and
+// inline runs here as in the Markdown preview. The preview's maths plugin is
+// left off on purpose: Word cannot show KaTeX markup, and the walkers below
+// have no case for maths tokens, so `$...$` would vanish from the document
+// instead of staying as text. Highlighting is left off too; code is exported
+// in a single colour and the HTML preview should match it.
+const md = createMarkdownParser();
 
 const defaultMarkdown = `# Project Implementation Plan
 
@@ -301,7 +302,7 @@ const compileInlineTokens = (
 const parseMarkdownToBlocks = (markdownText: string): MarkdownBlock[] => {
   if (typeof window === 'undefined') return [];
   try {
-    const tokens = md.parse(markdownText, {});
+    const tokens = md.parse(markdownText);
     const parsedBlocks: MarkdownBlock[] = [];
     let currentBlock: MarkdownBlock | null = null;
     let depth = 0;

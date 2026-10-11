@@ -16,321 +16,32 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { FileText, Download, Eye, Trash2, Loader2, Printer } from 'lucide-react';
-import MarkdownIt from 'markdown-it';
-import hljs from 'highlight.js/lib/core';
-import bash from 'highlight.js/lib/languages/bash';
-import css from 'highlight.js/lib/languages/css';
-import javascript from 'highlight.js/lib/languages/javascript';
-import json from 'highlight.js/lib/languages/json';
-import markdownLanguage from 'highlight.js/lib/languages/markdown';
-import typescript from 'highlight.js/lib/languages/typescript';
-import xml from 'highlight.js/lib/languages/xml';
+import { toast } from 'sonner';
+import { saveSnapshotPdf } from '@/lib/export/snapshot-pdf';
+import {
+  MARKDOWN_PREVIEW_CSS,
+  buildStandaloneHtml,
+  previewMarkdown,
+  sourceLineOffset,
+} from '@/lib/markdown';
+import { firstHeadingText, scrollTextareaToOffset, sourceLineAt } from '@/lib/markdown/dom';
+// Styles for the markup `previewMarkdown` emits: highlighted code and KaTeX maths.
 import 'highlight.js/styles/github-dark.css';
-import texmath from 'markdown-it-texmath';
-import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 type ExportFormat = 'pdf' | 'html' | 'txt' | 'png' | 'jpg';
 type PageSize = 'A4' | 'Letter';
 type Orientation = 'portrait' | 'landscape';
 
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-const getFirstHeader = (htmlContent: string): string => {
-  if (typeof window === 'undefined') return '';
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    const header = doc.querySelector('h1, h2, h3, h4, h5, h6');
-    return header ? (header.textContent?.trim() || '') : '';
-  } catch (_) {
-    return '';
-  }
-};
-
 const getSafeFilename = (htmlContent: string, defaultName: string): string => {
-  const firstHeader = getFirstHeader(htmlContent);
+  const firstHeader = firstHeadingText(htmlContent);
   if (!firstHeader) return defaultName;
   return firstHeader.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim() || defaultName;
 };
 
-hljs.registerLanguage('bash', bash);
-hljs.registerLanguage('css', css);
-hljs.registerLanguage('html', xml);
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('json', json);
-hljs.registerLanguage('markdown', markdownLanguage);
-hljs.registerLanguage('typescript', typescript);
-hljs.registerLanguage('xml', xml);
-
-const markdown = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true,
-  highlight(str, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value}</code></pre>`;
-      } catch (_) {}
-    }
-    return `<pre class="hljs"><code>${escapeHtml(str)}</code></pre>`;
-  },
-});
-
-// Inject source line mapping plugin into markdown-it
-markdown.core.ruler.push('inject_line_numbers', (state) => {
-  state.tokens.forEach((token) => {
-    if (token.map && token.nesting >= 0) {
-      const line = token.map[0];
-      token.attrSet('data-source-line', String(line));
-    }
-  });
-});
-
-const md = markdown.use(texmath, {
-  engine: katex,
-  delimiters: 'dollars',
-  katexOptions: { macros: { '\\RR': '\\mathbb{R}' } },
-});
-
-function getCaretYOffset(textarea: HTMLTextAreaElement, charIndex: number): number {
-  if (typeof window === 'undefined') return 0;
-  const styles = window.getComputedStyle(textarea);
-  const div = document.createElement('div');
-  
-  const propertiesToCopy = [
-    'direction',
-    'box-sizing',
-    'width',
-    'height',
-    'overflow-x',
-    'overflow-y',
-    'border-width',
-    'border-style',
-    'padding-top',
-    'padding-right',
-    'padding-bottom',
-    'padding-left',
-    'font-family',
-    'font-size',
-    'font-weight',
-    'font-style',
-    'font-variant',
-    'text-transform',
-    'word-spacing',
-    'letter-spacing',
-    'line-height',
-    'text-indent',
-  ];
-
-  propertiesToCopy.forEach((prop) => {
-    const value = styles.getPropertyValue(prop);
-    div.style.setProperty(prop, value);
-  });
-
-  div.style.position = 'absolute';
-  div.style.left = '-9999px';
-  div.style.top = '0';
-  div.style.whiteSpace = 'pre-wrap';
-  div.style.wordBreak = 'break-word';
-  div.style.width = `${textarea.clientWidth}px`;
-
-  const text = textarea.value;
-  const beforeText = text.substring(0, charIndex);
-  
-  const textNode = document.createTextNode(beforeText);
-  div.appendChild(textNode);
-
-  const span = document.createElement('span');
-  span.textContent = '|';
-  div.appendChild(span);
-
-  document.body.appendChild(div);
-  const offsetTop = span.offsetTop;
-  document.body.removeChild(div);
-
-  return offsetTop;
-}
-
-const scrollToLineInTextarea = (
-  textarea: HTMLTextAreaElement,
-  lineIndex: number,
-  charIndex: number
-) => {
-  textarea.focus();
-  textarea.setSelectionRange(charIndex, charIndex);
-
-  const caretYOffset = getCaretYOffset(textarea, charIndex);
-  const isScrollable = textarea.scrollHeight > textarea.clientHeight;
-  
-  if (isScrollable) {
-    const targetScrollTop = Math.max(0, caretYOffset - textarea.clientHeight / 3);
-    try {
-      textarea.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-    } catch {
-      textarea.scrollTop = targetScrollTop;
-    }
-  }
-
-  setTimeout(() => {
-    const textareaRect = textarea.getBoundingClientRect();
-    const currentScrollTop = textarea.scrollTop;
-    const caretDocTop = window.scrollY + textareaRect.top + (caretYOffset - currentScrollTop);
-    const targetWindowScrollTop = caretDocTop - window.innerHeight / 3;
-
-    window.scrollTo({
-      top: Math.max(0, targetWindowScrollTop),
-      behavior: 'smooth',
-    });
-  }, 50);
-};
-
-const previewCss = `
-.markdown-print-preview {
-  background: #ffffff;
-  color: #111827;
-  color-scheme: light;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
-  box-sizing: border-box;
-}
-
-.markdown-print-preview * {
-  box-sizing: border-box;
-}
-
-.markdown-print-preview h1,
-.markdown-print-preview h2,
-.markdown-print-preview h3,
-.markdown-print-preview h4,
-.markdown-print-preview h5,
-.markdown-print-preview h6 {
-  color: #111827;
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.2;
-  margin: 1.35em 0 0.6em;
-}
-
-.markdown-print-preview h1 {
-  font-size: 2rem;
-}
-
-.markdown-print-preview h2 {
-  font-size: 1.5rem;
-}
-
-.markdown-print-preview p,
-.markdown-print-preview ul,
-.markdown-print-preview ol,
-.markdown-print-preview blockquote,
-.markdown-print-preview table,
-.markdown-print-preview pre {
-  margin: 0 0 1rem;
-}
-
-.markdown-print-preview a {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-.markdown-print-preview blockquote {
-  border-left: 4px solid #d1d5db;
-  color: #4b5563;
-  margin-left: 0;
-  padding-left: 1rem;
-}
-
-.markdown-print-preview code,
-.markdown-print-preview pre {
-  border-radius: 0.375rem;
-}
-
-.markdown-print-preview :not(pre) > code {
-  background: #f3f4f6;
-  padding: 0.125rem 0.25rem;
-}
-
-.markdown-print-preview pre {
-  overflow-x: auto;
-  padding: 1rem;
-}
-
-.markdown-print-preview table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.markdown-print-preview th,
-.markdown-print-preview td {
-  border: 1px solid #d1d5db;
-  padding: 0.5rem 0.65rem;
-  text-align: left;
-}
-
-.markdown-print-preview th {
-  background: #f9fafb;
-}
-
-/* Dark theme overrides */
-.markdown-print-preview.dark-pdf {
-  color: #ffffff;
-  color-scheme: dark;
-}
-
-.markdown-print-preview.dark-pdf h1,
-.markdown-print-preview.dark-pdf h2,
-.markdown-print-preview.dark-pdf h3,
-.markdown-print-preview.dark-pdf h4,
-.markdown-print-preview.dark-pdf h5,
-.markdown-print-preview.dark-pdf h6 {
-  color: #ffffff;
-}
-
-.markdown-print-preview.dark-pdf a {
-  color: #60a5fa;
-}
-
-.markdown-print-preview.dark-pdf blockquote {
-  border-left-color: #4b5563;
-  color: #9ca3af;
-}
-
-.markdown-print-preview.dark-pdf :not(pre) > code {
-  background: #1f2937;
-  color: #f3f4f6;
-}
-
-.markdown-print-preview.dark-pdf pre {
-  background: #111827;
-}
-
-.markdown-print-preview.dark-pdf th,
-.markdown-print-preview.dark-pdf td {
-  border-color: #374151;
-}
-
-.markdown-print-preview.dark-pdf th {
-  background: #1f2937;
-}
-`;
-
 const pageFormats: Record<PageSize, [number, number]> = {
   A4: [210, 297],
   Letter: [215.9, 279.4],
-};
-
-const pageLabels: Record<PageSize, string> = {
-  A4: 'A4',
-  Letter: 'Letter',
 };
 
 const defaultMarkdown = `# Document Title
@@ -361,7 +72,7 @@ function greet(name) {
 
 export function MarkdownConverter() {
   const [input, setInput] = useState(defaultMarkdown);
-  const [html, setHtml] = useState(() => md.render(defaultMarkdown));
+  const [html, setHtml] = useState(() => previewMarkdown.render(defaultMarkdown));
   const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
   const [pageSize, setPageSize] = useState<PageSize>('A4');
   const [orientation, setOrientation] = useState<Orientation>('portrait');
@@ -387,25 +98,11 @@ export function MarkdownConverter() {
   const printFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const handlePreviewDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    const blockElement = target.closest('[data-source-line]');
-    if (!blockElement) return;
-
-    const lineAttr = blockElement.getAttribute('data-source-line');
-    if (lineAttr === null) return;
-
-    const lineIndex = parseInt(lineAttr, 10);
+    const line = sourceLineAt(e.target as HTMLElement);
     const textarea = textareaRef.current;
-    if (!textarea) return;
+    if (line === null || !textarea) return;
 
-    // Calculate char index in textarea
-    const lines = input.split('\n');
-    let charIndex = 0;
-    for (let i = 0; i < Math.min(lineIndex, lines.length); i++) {
-      charIndex += lines[i].length + 1; // +1 for '\n'
-    }
-
-    scrollToLineInTextarea(textarea, lineIndex, charIndex);
+    scrollTextareaToOffset(textarea, sourceLineOffset(input, line));
   };
 
   const renderMarkdown = (text: string) => {
@@ -415,8 +112,8 @@ export function MarkdownConverter() {
     }
 
     try {
-      setHtml(md.render(text));
-    } catch (_) {
+      setHtml(previewMarkdown.render(text));
+    } catch {
       setHtml('<div style="color:#dc2626">Error rendering markdown</div>');
     }
   };
@@ -437,54 +134,14 @@ export function MarkdownConverter() {
   };
 
   const exportPrintPdf = () => {
-    const firstHeader = getFirstHeader(html);
-    const pageRule = `${pageLabels[pageSize]} ${orientation}`;
-    const highlightThemeUrl = pdfTheme === 'dark'
-      ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-      : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-    const printDocument = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${firstHeader}</title>
-  <link rel="stylesheet" href="${highlightThemeUrl}">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css">
-  <style>
-    @page {
-      size: ${pageRule};
-      margin: ${margin}mm;
-    }
-
-    html,
-    body {
-      margin: 0;
-      background: ${backgroundColor};
-      min-height: 100%;
-    }
-
-    .markdown-print-preview {
-      min-height: auto;
-      padding: 0;
-    }
-
-    ${previewCss}
-
-    @media print {
-      html,
-      body {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-      }
-    }
-  </style>
-</head>
-<body>
-  <main class="markdown-print-preview ${pdfTheme === 'dark' ? 'dark-pdf' : ''}">
-    ${html}
-  </main>
-</body>
-</html>`;
+    const firstHeader = firstHeadingText(html);
+    const printDocument = buildStandaloneHtml({
+      bodyHtml: html,
+      title: firstHeader,
+      theme: pdfTheme,
+      backgroundColor,
+      page: { size: pageSize, orientation, marginMm: margin },
+    });
 
     const existingFrame = printFrameRef.current;
     if (existingFrame) {
@@ -541,38 +198,12 @@ export function MarkdownConverter() {
   };
 
   const exportHtml = () => {
-    const firstHeader = getFirstHeader(html);
-    const highlightThemeUrl = pdfTheme === 'dark'
-      ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-      : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-    const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${firstHeader || 'Markdown Export'}</title>
-  <link rel="stylesheet" href="${highlightThemeUrl}">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css">
-  <style>
-    body {
-      font-family: Georgia, 'Times New Roman', serif;
-      line-height: 1.65;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-      color: ${pdfTheme === 'dark' ? '#ffffff' : '#111827'};
-      background: ${backgroundColor};
-    }
-
-    ${previewCss}
-  </style>
-</head>
-<body>
-  <main class="markdown-print-preview ${pdfTheme === 'dark' ? 'dark-pdf' : ''}">
-    ${html}
-  </main>
-</body>
-</html>`;
+    const fullHtml = buildStandaloneHtml({
+      bodyHtml: html,
+      title: firstHeadingText(html) || 'Markdown Export',
+      theme: pdfTheme,
+      backgroundColor,
+    });
 
     const blob = new Blob([fullHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -641,102 +272,22 @@ export function MarkdownConverter() {
   const exportSnapshotPdf = async () => {
     if (!previewRef.current) return;
 
-    setExportProgress('Capturing preview...');
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
-        import('jspdf'),
-        import('html2canvas'),
-      ]);
-      const canvas = await html2canvas(previewRef.current, {
-        scale,
-        useCORS: true,
-        logging: false,
-        backgroundColor,
-        windowWidth: previewRef.current.scrollWidth,
-        windowHeight: previewRef.current.scrollHeight,
-      });
-
-      setExportProgress('Generating PDF...');
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const firstHeader = getFirstHeader(html);
-      const pdf = new jsPDF({
+      await saveSnapshotPdf(previewRef.current, {
+        fileName: `${getSafeFilename(html, 'markdown-export')}.pdf`,
+        title: firstHeadingText(html),
+        pageFormat: pageFormats[pageSize],
         orientation,
-        unit: 'mm',
-        format: pageFormats[pageSize],
+        marginMm: margin,
+        scale,
+        backgroundColor,
+        pageNumbers: includePageNumbers,
+        theme: pdfTheme,
+        onProgress: setExportProgress,
       });
-
-      pdf.setProperties({
-        title: firstHeader || '',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const usableWidth = pdfWidth - margin * 2;
-      const usableHeight = pdfHeight - margin * 2;
-      const imgWidth = usableWidth;
-      const pageHeightInImage = (usableHeight * canvas.width) / usableWidth;
-
-      let sourceY = 0;
-      let pageNumber = 0;
-
-      while (sourceY < canvas.height) {
-        if (pageNumber > 0) {
-          pdf.addPage();
-        }
-
-        const sliceHeight = Math.min(pageHeightInImage, canvas.height - sourceY);
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sliceHeight;
-        const context = pageCanvas.getContext('2d');
-
-        if (context) {
-          context.fillStyle = backgroundColor;
-          context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          context.drawImage(
-            canvas,
-            0,
-            sourceY,
-            canvas.width,
-            sliceHeight,
-            0,
-            0,
-            canvas.width,
-            sliceHeight
-          );
-        }
-
-        const sliceData = pageCanvas.toDataURL('image/png');
-        const slicePdfHeight = (sliceHeight * imgWidth) / canvas.width;
-        pdf.addImage(sliceData, 'PNG', margin, margin, imgWidth, slicePdfHeight);
-
-        sourceY += sliceHeight;
-        pageNumber++;
-      }
-
-      if (includePageNumbers) {
-        const totalPages = pdf.getNumberOfPages();
-        for (let page = 1; page <= totalPages; page++) {
-          pdf.setPage(page);
-          pdf.setFontSize(9);
-          pdf.setTextColor(pdfTheme === 'dark' ? 180 : 90);
-          pdf.text(`Page ${page} of ${totalPages}`, pdfWidth / 2, pdfHeight - 6, {
-            align: 'center',
-          });
-        }
-      }
-
-      setExportProgress('Saving file...');
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      const filename = getSafeFilename(html, 'markdown-export');
-      pdf.save(`${filename}.pdf`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Error exporting PDF. Please try again.');
+      toast.error('Error exporting PDF. Please try again.');
     } finally {
       setExportProgress('');
     }
@@ -959,7 +510,7 @@ export function MarkdownConverter() {
         </CardHeader>
         <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
           <div className="flex-1 rounded-md border bg-muted/30 p-3 sm:p-4">
-            <style>{previewCss}</style>
+            <style>{MARKDOWN_PREVIEW_CSS}</style>
             <div
               ref={previewRef}
               className="markdown-print-preview mx-auto w-full overflow-hidden bg-white p-4 shadow-sm sm:p-6 lg:p-8 cursor-pointer select-text"
