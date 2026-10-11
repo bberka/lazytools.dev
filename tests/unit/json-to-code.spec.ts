@@ -212,6 +212,27 @@ test.describe('TypeScript', () => {
     expect(code).toContain("  '???': SubObject;");
     expect(code).toContain('  RootObject: RootObject1;');
   });
+
+  // Dropping the last letter gave Companie, Addresse and Categorie.
+  test('names the items of a plural key with its singular', () => {
+    const itemTypeOf = (key: string) => {
+      const code = typescript({ [key]: [{ id: 1 }] });
+      return code.match(new RegExp(`${key}: (\\w+)\\[\\];`))?.[1];
+    };
+
+    expect(itemTypeOf('users')).toBe('User');
+    expect(itemTypeOf('companies')).toBe('Company');
+    expect(itemTypeOf('categories')).toBe('Category');
+    expect(itemTypeOf('addresses')).toBe('Address');
+    expect(itemTypeOf('boxes')).toBe('Box');
+    expect(itemTypeOf('matches')).toBe('Match');
+    expect(itemTypeOf('movies')).toBe('Movie');
+    expect(itemTypeOf('responses')).toBe('Response');
+    expect(itemTypeOf('ties')).toBe('Tie');
+    // Singular already, or the same word for one and many.
+    expect(itemTypeOf('address')).toBe('AddressItem');
+    expect(itemTypeOf('series')).toBe('SeriesItem');
+  });
 });
 
 test.describe('Zod', () => {
@@ -457,6 +478,31 @@ test.describe('Java', () => {
     expect(code).toContain('    private long default_;');
     expect(code).toContain('    private boolean _2fa;');
   });
+
+  // Gson reads a field under its own name, so "first-name" was never filled in.
+  test('maps a renamed field back to its key', () => {
+    expect(generate({ 'first-name': 'Ada', id: 1 }, 'java')).toContain(
+      lines(
+        'import com.google.gson.annotations.SerializedName;',
+        '',
+        'public class RootObject {',
+        '    @SerializedName("first-name")',
+        '    private String firstName;',
+        '    private long id;'
+      )
+    );
+    // With a list as well, the imports sit together.
+    expect(
+      generate({ class: 'a', tags: ['x'] }, 'java').startsWith(
+        lines(
+          'import com.google.gson.annotations.SerializedName;',
+          'import java.util.List;',
+          '',
+          'public class RootObject {'
+        )
+      )
+    ).toBe(true);
+  });
 });
 
 test.describe('C#', () => {
@@ -485,7 +531,36 @@ test.describe('C#', () => {
   // A property named like its class is error CS0542.
   test('does not name a property after its class', () => {
     const code = generate({ data: { data: [1] } }, 'csharp');
-    expect(code).toContain(lines('public class Data', '{', '    public List<long> Data2 { get; set; }'));
+    expect(code).toContain(
+      lines(
+        'public class Data',
+        '{',
+        '    [JsonPropertyName("data")]',
+        '    public List<long> Data2 { get; set; }'
+      )
+    );
+  });
+
+  // System.Text.Json looks for a property called "FirstName" and finds no such key.
+  test('maps a property whose name is more than a capitalised key', () => {
+    expect(generate({ 'first-name': 'Ada', id: 1 }, 'csharp')).toBe(
+      lines(
+        'using System.Text.Json.Serialization;',
+        '',
+        'public class RootObject',
+        '{',
+        '    [JsonPropertyName("first-name")]',
+        '    public string FirstName { get; set; }',
+        '    public long Id { get; set; }',
+        '}'
+      )
+    );
+    // With a list as well, the usings sit together.
+    expect(
+      generate({ tags: ['a'], 'user id': 1 }, 'csharp').startsWith(
+        lines('using System.Collections.Generic;', 'using System.Text.Json.Serialization;', '')
+      )
+    ).toBe(true);
   });
 });
 
@@ -572,8 +647,32 @@ test.describe('Swift', () => {
     expect(code).toContain('typealias Users = [User]');
     expect(code).toContain('    let nickname: String?');
     expect(code).toContain('    let email: String?');
-    expect(generate({ nothing: null, empty: [] }, 'swift')).toContain(
-      lines('    let nothing: Any?', '    let empty: [Any]')
+  });
+
+  // `Any` is not Codable, so a struct with an Any property does not compile.
+  test('uses a Codable JSONValue where no single type fits', () => {
+    const code = generate({ id: 1, deletedAt: null, tags: [], mixed: [1, 'a'] }, 'swift');
+    expect(code.startsWith('struct RootObject: Codable {')).toBe(true);
+    expect(code).toContain(
+      lines(
+        '    let id: Int',
+        '    let deletedAt: JSONValue',
+        '    let tags: [JSONValue]',
+        '    let mixed: [JSONValue]',
+        '}'
+      )
+    );
+    expect(code).toContain('enum JSONValue: Codable {');
+    expect(code.match(/enum JSONValue/g)).toHaveLength(1);
+    expect(code).not.toMatch(/\bAny\b/);
+
+    // A key missing from some objects is still optional.
+    expect(generate([{ a: null }, {}], 'swift')).toContain('    let a: JSONValue?');
+    // A sample with nothing unknown needs no helper.
+    expect(generate(PROFILE, 'swift')).not.toContain('JSONValue');
+    // A type of the sample's own is not mistaken for the helper.
+    expect(generate({ JSONValue: { a: 1 }, other: null }, 'swift')).toContain(
+      'struct JSONValue1: Codable {'
     );
   });
 });
@@ -615,6 +714,20 @@ test.describe('Kotlin', () => {
     expect(code).toContain('    val score: Double,');
     expect(code).toContain('    val nickname: String?,');
     expect(code).toContain('    val email: String?,');
+  });
+
+  test('maps a renamed property back to its key', () => {
+    expect(generate({ 'first-name': 'Ada', id: 1, 'price$': 2 }, 'kotlin')).toBe(
+      lines(
+        'import com.google.gson.annotations.SerializedName',
+        '',
+        'data class RootObject(',
+        '    @SerializedName("first-name") val firstName: String,',
+        '    val id: Long,',
+        '    @SerializedName("price\\$") val price: Long,',
+        ')'
+      )
+    );
   });
 });
 

@@ -17,6 +17,7 @@ import {
   CURL_TARGET_LANGUAGES,
   generateRequestCode,
   parseCurl,
+  snippetNotes,
   type CurlTargetLanguage,
 } from '@/lib/tools/curl-to-code';
 
@@ -32,7 +33,10 @@ export function CurlConverter() {
     [request, activeLanguage]
   );
 
-  const warnings = request?.warnings ?? [];
+  const warnings = useMemo(
+    () => (request ? snippetNotes(request, activeLanguage) : []),
+    [request, activeLanguage]
+  );
 
   const handleClear = () => {
     setInput('');

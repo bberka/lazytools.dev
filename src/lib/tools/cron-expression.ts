@@ -418,24 +418,40 @@ function daysInMonth(year: number, month: number): number {
   return [4, 6, 9, 11].includes(month) ? 30 : 31;
 }
 
-function instantAt(
+/**
+ * The moments a wall-clock time falls on: one in UTC, and in local time none
+ * when a daylight-saving jump skips it or two when clocks go back and it
+ * happens twice. Like Vixie cron, a job with a wildcard minute or hour
+ * (`repeats`) runs on both occurrences, so an every-15-minutes job keeps its
+ * rhythm through the repeated hour; any other job runs once, on the first.
+ */
+function instantsAt(
   year: number,
   month: number,
   day: number,
   hour: number,
   minute: number,
-  timezone: CronTimezone
-): Date | null {
+  timezone: CronTimezone,
+  repeats: boolean
+): Date[] {
   if (timezone === 'utc') {
-    return new Date(Date.UTC(year, month - 1, day, hour, minute));
+    return [new Date(Date.UTC(year, month - 1, day, hour, minute))];
   }
 
-  const local = new Date(year, month - 1, day, hour, minute);
-  // A local time skipped by a daylight-saving jump does not exist; the Date
-  // constructor would quietly move it to another hour.
-  const exists =
-    local.getDate() === day && local.getHours() === hour && local.getMinutes() === minute;
-  return exists ? local : null;
+  const isThatTime = (date: Date) =>
+    date.getDate() === day && date.getHours() === hour && date.getMinutes() === minute;
+
+  // The Date constructor takes the first occurrence of a repeated time. For a
+  // skipped time it quietly moves to another hour, which is caught here.
+  const first = new Date(year, month - 1, day, hour, minute);
+  if (!isThatTime(first)) return [];
+  if (!repeats) return [first];
+
+  // Clocks go back by an hour, or by half an hour in a few places.
+  const second = [30, 60]
+    .map((minutes) => new Date(first.getTime() + minutes * 60_000))
+    .find(isThatTime);
+  return second ? [first, second] : [first];
 }
 
 export interface NextCronRunsOptions {
@@ -461,6 +477,7 @@ export function nextCronRuns(schedule: CronSchedule, options: NextCronRunsOption
   const monthDays = new Set(fields.dayOfMonth.values);
   const weekDays = new Set(fields.dayOfWeek.values);
   const eitherDay = runsOnEitherDayField(fields);
+  const repeats = fields.minute.text.startsWith('*') || fields.hour.text.startsWith('*');
 
   // Walk the calendar a day at a time; only matching days cost a Date.
   let year = utc ? after.getUTCFullYear() : after.getFullYear();
@@ -484,9 +501,13 @@ export function nextCronRuns(schedule: CronSchedule, options: NextCronRunsOption
 
       if (eitherDay ? onMonthDay || onWeekDay : onMonthDay && onWeekDay) {
         for (const hour of fields.hour.values) {
-          for (const minute of fields.minute.values) {
-            const run = instantAt(year, month, day, hour, minute, timezone);
-            if (run && run.getTime() > after.getTime() && runs.length < count) {
+          // The second pass through a repeated hour comes after its first, so
+          // the hour's runs are put in order before they are taken.
+          const hourRuns = fields.minute.values
+            .flatMap((minute) => instantsAt(year, month, day, hour, minute, timezone, repeats))
+            .sort((a, b) => a.getTime() - b.getTime());
+          for (const run of hourRuns) {
+            if (run.getTime() > after.getTime() && runs.length < count) {
               runs.push(run);
             }
           }

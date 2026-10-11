@@ -214,9 +214,21 @@ const HAS_LETTER_OR_DIGIT = /[\p{L}\p{Nd}]/u;
 const upperFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
-/** The key under which the items of the array at `key` are named: "users" gives "user". */
+/** Plurals of a word in "-ie": "-ies" would wrongly turn them into a "y". */
+const IE_PLURAL = /(?:movie|cookie|selfie|zombie|calorie)s$/i;
+
+/**
+ * The key under which the items of the array at `key` are named: "users" gives
+ * "user", "companies" gives "company" and "addresses" gives "address".
+ */
 function itemKeyOf(key: string): string {
   if (key === DEFAULT_ROOT_NAME) return `${DEFAULT_ROOT_NAME}Item`;
+  // Already singular ("address"), or the same word for one and for many.
+  if (/ss$|^(?:series|species)$/.test(key)) return `${key}Item`;
+  if (key.length > 4 && key.endsWith('ies') && !IE_PLURAL.test(key)) {
+    return `${key.slice(0, -3)}y`;
+  }
+  if (/(?:ss|x|ch|sh)es$/.test(key)) return key.slice(0, -2);
   if (key.endsWith('s') && key.length > 1) return key.slice(0, -1);
   return `${key}Item`;
 }
@@ -606,6 +618,7 @@ function generateJava(root: Shape, rootName: string): string {
   const claim = typeNamer(JS_STYLE, ['String', 'Object', 'List', 'Long', 'Double', 'Boolean']);
   const definitions: string[] = [];
   let usesList = false;
+  let usesSerializedName = false;
 
   // `boxed` asks for Long instead of long: inside a List, or where null is possible.
   const typeOf = (shape: Shape, key: string, boxed: boolean): string => {
@@ -627,10 +640,19 @@ function generateJava(root: Shape, rootName: string): string {
         const name = claim(key);
         const nameField = fieldNamer(javaFieldName);
         const members = Array.from(shape.fields, ([fieldKey, field]) => ({
+          key: fieldKey,
           name: nameField(fieldKey),
           type: typeOf(field.shape, fieldKey, field.shape.nullable || field.optional),
         }));
-        const fields = members.map((member) => `    private ${member.type} ${member.name};`);
+        const fields = members.map((member) => {
+          // Gson matches fields to keys by name, so a renamed one has to be mapped.
+          let mapping = '';
+          if (member.name !== member.key) {
+            mapping = `    @SerializedName(${doubleQuoted(member.key)})\n`;
+            usesSerializedName = true;
+          }
+          return `${mapping}    private ${member.type} ${member.name};`;
+        });
         const accessors = members.map((member) => {
           const suffix = upperFirst(member.name);
           return `    public ${member.type} get${suffix}() { return ${member.name}; }\n    public void set${suffix}(${member.type} ${member.name}) { this.${member.name} = ${member.name}; }`;
@@ -653,7 +675,12 @@ function generateJava(root: Shape, rootName: string): string {
     rootNote = `// Root value: ${typeOf(root, rootName, true)}`;
   }
 
-  return blocks(usesList ? 'import java.util.List;' : '', rootNote, ...rootFirst(definitions));
+  const imports = [
+    usesSerializedName ? 'import com.google.gson.annotations.SerializedName;' : '',
+    usesList ? 'import java.util.List;' : '',
+  ].filter(Boolean);
+
+  return blocks(imports.join('\n'), rootNote, ...rootFirst(definitions));
 }
 
 // ── C# ────────────────────────────────────────────────────────────────────────
@@ -666,6 +693,7 @@ function generateCsharp(root: Shape, rootName: string): string {
   const claim = typeNamer(PLAIN_STYLE, ['List']);
   const definitions: string[] = [];
   let usesList = false;
+  let usesJsonPropertyName = false;
 
   const typeOf = (shape: Shape, key: string, optional = false): string => {
     const maybe = shape.nullable || optional ? '?' : '';
@@ -686,11 +714,18 @@ function generateCsharp(root: Shape, rootName: string): string {
         const name = claim(key);
         // A member cannot have the name of the class it is in.
         const nameProperty = fieldNamer(csharpPropertyName, [name]);
-        const lines = Array.from(
-          shape.fields,
-          ([fieldKey, field]) =>
-            `    public ${typeOf(field.shape, fieldKey, field.optional)} ${nameProperty(fieldKey)} { get; set; }`
-        );
+        const lines = Array.from(shape.fields, ([fieldKey, field]) => {
+          const type = typeOf(field.shape, fieldKey, field.optional);
+          const property = nameProperty(fieldKey);
+          // Only a rename beyond capitalisation is mapped, so the usual "id" to
+          // "Id" stays plain (it matches when the serializer ignores case).
+          let mapping = '';
+          if (property.toLowerCase() !== fieldKey.toLowerCase()) {
+            mapping = `    [JsonPropertyName(${doubleQuoted(fieldKey)})]\n`;
+            usesJsonPropertyName = true;
+          }
+          return `${mapping}    public ${type} ${property} { get; set; }`;
+        });
         definitions.push(`public class ${name}\n{\n${lines.join('\n')}\n}`);
         return name;
       }
@@ -705,11 +740,12 @@ function generateCsharp(root: Shape, rootName: string): string {
     rootNote = `// Root value: ${typeOf(root, rootName)}`;
   }
 
-  return blocks(
+  const usings = [
     usesList ? 'using System.Collections.Generic;' : '',
-    rootNote,
-    ...rootFirst(definitions)
-  );
+    usesJsonPropertyName ? 'using System.Text.Json.Serialization;' : '',
+  ].filter(Boolean);
+
+  return blocks(usings.join('\n'), rootNote, ...rootFirst(definitions));
 }
 
 // ── Rust ──────────────────────────────────────────────────────────────────────
@@ -785,6 +821,48 @@ function swiftFieldName(key: string): string {
   return SWIFT_NEVER_ESCAPED.has(name) ? `${name}_` : name;
 }
 
+/**
+ * What a struct uses for a value of no single type (null, an empty array, mixed
+ * kinds). `Any` is not Codable, so a struct holding one would not compile.
+ */
+const SWIFT_JSON_VALUE = `enum JSONValue: Codable {
+    case null
+    case bool(Bool)
+    case number(Double)
+    case string(String)
+    case array([JSONValue])
+    case object([String: JSONValue])
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() {
+            self = .null
+        } else if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .number(value)
+        } else if let value = try? container.decode(String.self) {
+            self = .string(value)
+        } else if let value = try? container.decode([JSONValue].self) {
+            self = .array(value)
+        } else {
+            self = .object(try container.decode([String: JSONValue].self))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .null: try container.encodeNil()
+        case .bool(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .string(let value): try container.encode(value)
+        case .array(let value): try container.encode(value)
+        case .object(let value): try container.encode(value)
+        }
+    }
+}`;
+
 function generateSwift(root: Shape, rootName: string): string {
   const claim = typeNamer(PLAIN_STYLE, [
     'String',
@@ -794,20 +872,26 @@ function generateSwift(root: Shape, rootName: string): string {
     'Any',
     'Codable',
     'CodingKeys',
+    'JSONValue',
   ]);
   const definitions: string[] = [];
+  let usesJsonValue = false;
   const escape = (name: string) => (SWIFT_KEYWORDS.has(name) ? `\`${name}\`` : name);
 
   const typeOf = (shape: Shape, key: string, optional = false): string => {
     const base = baseOf(shape, key);
-    return shape.nullable || optional ? `${base}?` : base;
+    // JSONValue has a case for null; only a missing key needs the optional.
+    const isValue = shape.kind === 'unknown' || shape.kind === 'union';
+    const wrap = isValue ? optional : shape.nullable || optional;
+    return wrap ? `${base}?` : base;
   };
 
   const baseOf = (shape: Shape, key: string): string => {
     switch (shape.kind) {
       case 'unknown':
       case 'union':
-        return 'Any';
+        usesJsonValue = true;
+        return 'JSONValue';
       case 'string':
         return 'String';
       case 'number':
@@ -851,14 +935,18 @@ function generateSwift(root: Shape, rootName: string): string {
     alias = `typealias ${name} = ${typeOf(root, rootName)}`;
   }
 
-  return blocks(alias, ...rootFirst(definitions));
+  return blocks(alias, ...rootFirst(definitions), usesJsonValue ? SWIFT_JSON_VALUE : '');
 }
 
 // ── Kotlin ────────────────────────────────────────────────────────────────────
 
+/** A double-quoted Kotlin string; `$` would start a template. */
+const kotlinString = (text: string) => doubleQuoted(text).replace(/\$/g, () => '\\$');
+
 function generateKotlin(root: Shape, rootName: string): string {
   const claim = typeNamer(PLAIN_STYLE, ['String', 'Long', 'Double', 'Boolean', 'List', 'Any']);
   const definitions: string[] = [];
+  let usesSerializedName = false;
   const escape = (name: string) => (KOTLIN_KEYWORDS.has(name) ? `\`${name}\`` : name);
 
   const typeOf = (shape: Shape, key: string, optional = false): string => {
@@ -882,11 +970,16 @@ function generateKotlin(root: Shape, rootName: string): string {
       case 'object': {
         const name = claim(key);
         const nameField = fieldNamer((fieldKey) => camelOf(fieldKey, PLAIN_STYLE));
-        const lines = Array.from(
-          shape.fields,
-          ([fieldKey, field]) =>
-            `    val ${escape(nameField(fieldKey))}: ${typeOf(field.shape, fieldKey, field.optional)},`
-        );
+        const lines = Array.from(shape.fields, ([fieldKey, field]) => {
+          const fieldName = nameField(fieldKey);
+          // Gson matches properties to keys by name, so a renamed one has to be mapped.
+          let mapping = '';
+          if (fieldName !== fieldKey) {
+            mapping = `@SerializedName(${kotlinString(fieldKey)}) `;
+            usesSerializedName = true;
+          }
+          return `    ${mapping}val ${escape(fieldName)}: ${typeOf(field.shape, fieldKey, field.optional)},`;
+        });
         // A data class needs at least one property.
         definitions.push(
           lines.length ? `data class ${name}(\n${lines.join('\n')}\n)` : `class ${name}`
@@ -904,7 +997,11 @@ function generateKotlin(root: Shape, rootName: string): string {
     alias = `typealias ${name} = ${typeOf(root, rootName)}`;
   }
 
-  return blocks(alias, ...rootFirst(definitions));
+  return blocks(
+    usesSerializedName ? 'import com.google.gson.annotations.SerializedName' : '',
+    alias,
+    ...rootFirst(definitions)
+  );
 }
 
 // ── Dart ──────────────────────────────────────────────────────────────────────

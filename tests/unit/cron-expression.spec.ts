@@ -329,6 +329,54 @@ test.describe('nextCronRuns', () => {
       });
     }
   });
+
+  // At 02:00 EDT on 1 November 2026 New York's clocks return to 01:00 EST, so
+  // local times 01:00-01:59 happen twice, an hour apart.
+  test.describe('when clocks go back', () => {
+    const after = new Date('2026-11-01T05:10:00Z'); // 01:10 EDT
+    const localRuns = (expression: string, count = 5) =>
+      nextCronRuns(schedule(expression), { after, count, timezone: 'local' }).map((run) =>
+        run.toISOString().slice(0, 16)
+      );
+
+    /** Runs `body` with the process time zone set to New York. */
+    function inNewYork(body: () => void) {
+      const previous = process.env.TZ;
+      process.env.TZ = 'America/New_York';
+      try {
+        // Fails loudly instead of testing the wrong zone.
+        expect(new Date(2026, 10, 1, 1, 0).toISOString()).toBe('2026-11-01T05:00:00.000Z');
+        body();
+      } finally {
+        if (previous === undefined) delete process.env.TZ;
+        else process.env.TZ = previous;
+      }
+    }
+
+    test('a wildcard job keeps its rhythm through the repeated hour', () => {
+      inNewYork(() => {
+        expect(localRuns('*/15 * * * *')).toEqual([
+          '2026-11-01T05:15',
+          '2026-11-01T05:30',
+          '2026-11-01T05:45',
+          '2026-11-01T06:00',
+          '2026-11-01T06:15',
+        ]);
+        // Hourly: 01:00 EST is the hour after 01:00 EDT, not a duplicate.
+        expect(localRuns('0 * * * *', 3)).toEqual([
+          '2026-11-01T06:00',
+          '2026-11-01T07:00',
+          '2026-11-01T08:00',
+        ]);
+      });
+    });
+
+    test('a job at a fixed time runs once, on the first occurrence', () => {
+      inNewYork(() => {
+        expect(localRuns('30 1 * * *', 2)).toEqual(['2026-11-01T05:30', '2026-11-02T06:30']);
+      });
+    });
+  });
 });
 
 test.describe('formatTimeUntil', () => {

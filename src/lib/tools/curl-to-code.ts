@@ -1039,16 +1039,39 @@ function generateCsharpHttpClient(request: CurlRequest): string {
   return code;
 }
 
+/** The methods `Net::HTTP` has a request class for (`Net::HTTP::Get`, `Net::HTTP::Propfind`). */
+const RUBY_METHOD_CLASSES = new Set([
+  'GET',
+  'HEAD',
+  'POST',
+  'PUT',
+  'DELETE',
+  'OPTIONS',
+  'TRACE',
+  'PATCH',
+  'PROPFIND',
+  'PROPPATCH',
+  'MKCOL',
+  'COPY',
+  'MOVE',
+  'LOCK',
+  'UNLOCK',
+]);
+
 function generateRubyNetHttp(request: CurlRequest): string {
   const { url, method, headers, data } = request;
   const headerKeys = Object.keys(headers);
+  // Any other method (PURGE, say) goes through the generic request class.
+  const requestObject = RUBY_METHOD_CLASSES.has(method)
+    ? `Net::HTTP::${capitalize(method)}.new(uri.request_uri)`
+    : `Net::HTTPGenericRequest.new(${quote(method, 'ruby')}, ${data ? 'true' : 'false'}, true, uri.request_uri)`;
   let code = `require 'net/http'\n`;
   code += `require 'uri'\n`;
   code += `require 'json'\n\n`;
   code += `uri = URI.parse(${quote(url, 'ruby')})\n`;
   code += `http = Net::HTTP.new(uri.host, uri.port)\n`;
   code += `http.use_ssl = uri.scheme == 'https'\n\n`;
-  code += `request = Net::HTTP::${capitalize(method)}.new(uri.request_uri)\n`;
+  code += `request = ${requestObject}\n`;
   headerKeys.forEach((k) => {
     code += `request[${quote(k, 'ruby')}] = ${quote(headers[k], 'ruby')}\n`;
   });
@@ -1179,4 +1202,38 @@ const GENERATORS: Record<CurlTargetLanguage, (request: CurlRequest) => string> =
 /** Writes the request as a runnable snippet in the given language. */
 export function generateRequestCode(request: CurlRequest, language: CurlTargetLanguage): string {
   return GENERATORS[language](request);
+}
+
+/** The methods `HttpURLConnection.setRequestMethod` accepts. */
+const HTTP_URL_CONNECTION_METHODS = new Set([
+  'GET',
+  'POST',
+  'HEAD',
+  'OPTIONS',
+  'PUT',
+  'DELETE',
+  'TRACE',
+]);
+
+/**
+ * What to tell the user about the snippet in this language: whatever the
+ * command asked for that no snippet carries over (`request.warnings`), then
+ * what the language's HTTP client cannot do for this request.
+ */
+export function snippetNotes(request: CurlRequest, language: CurlTargetLanguage): string[] {
+  const { method, data } = request;
+  const notes = [...request.warnings];
+
+  if (language === 'js-fetch' && data && (method === 'GET' || method === 'HEAD')) {
+    notes.push(
+      `fetch cannot send a body with ${method}, so this snippet throws a TypeError. Put the data in the URL's query string, or use another client.`
+    );
+  }
+  if (language === 'java-httpurlconnection' && !HTTP_URL_CONNECTION_METHODS.has(method)) {
+    notes.push(
+      `HttpURLConnection does not accept ${method}: setRequestMethod(${quote(method)}) throws a ProtocolException. Use OkHttp or java.net.http.HttpClient for this method.`
+    );
+  }
+
+  return notes;
 }

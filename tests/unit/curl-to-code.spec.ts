@@ -4,6 +4,7 @@ import {
   PLACEHOLDER_URL,
   generateRequestCode,
   parseCurl,
+  snippetNotes,
   type CurlTargetLanguage,
 } from '@/lib/tools/curl-to-code';
 
@@ -480,6 +481,24 @@ test.describe('generateRequestCode', () => {
     );
   });
 
+  // Net::HTTP::Purge does not exist, so the snippet was a NameError.
+  test('builds a generic Ruby request for a method Net::HTTP has no class for', () => {
+    const purge = convert('curl -X PURGE https://x.test/cache', 'ruby-net-http');
+    expect(purge).toContain(
+      'request = Net::HTTPGenericRequest.new("PURGE", false, true, uri.request_uri)'
+    );
+    expect(purge).not.toContain('Net::HTTP::Purge');
+
+    const report = convert(`curl -X REPORT https://x.test/c -d '<x/>'`, 'ruby-net-http');
+    expect(report).toContain(
+      'request = Net::HTTPGenericRequest.new("REPORT", true, true, uri.request_uri)'
+    );
+
+    expect(convert('curl -X PROPFIND https://x.test', 'ruby-net-http')).toContain(
+      'request = Net::HTTP::Propfind.new(uri.request_uri)'
+    );
+  });
+
   test('keeps backticks and carriage returns intact in a Go body', () => {
     expect(convert('curl https://x.test -d \'a`b\'', 'go-http')).toContain(
       'payload := strings.NewReader(`a` + "`" + `b`)'
@@ -487,5 +506,47 @@ test.describe('generateRequestCode', () => {
     expect(convert(String.raw`curl https://x.test --data-raw $'a\r\nb'`, 'go-http')).toContain(
       String.raw`payload := strings.NewReader("a\r\nb")`
     );
+  });
+});
+
+test.describe('snippetNotes', () => {
+  const notesFor = (command: string, language: CurlTargetLanguage) =>
+    snippetNotes(parseCurl(command), language);
+
+  test('starts with what the command asked for that no snippet carries over', () => {
+    expect(notesFor('curl -k https://x.test', 'python-requests')).toEqual(
+      parseCurl('curl -k https://x.test').warnings
+    );
+    expect(notesFor('curl https://x.test', 'js-fetch')).toEqual([]);
+  });
+
+  // new Request(url, { method: 'GET', body }) throws a TypeError.
+  test('says fetch cannot send a body with GET or HEAD', () => {
+    const search = `curl -X GET localhost:9200/_search -d '{"query":{"match_all":{}}}'`;
+    expect(notesFor(search, 'js-fetch')).toEqual([
+      expect.stringContaining('fetch cannot send a body with GET'),
+    ]);
+    expect(notesFor('curl -X HEAD https://x.test -d a=1', 'js-fetch')).toEqual([
+      expect.stringContaining('fetch cannot send a body with HEAD'),
+    ]);
+
+    // Other clients, and requests without a body or with another method, are fine.
+    expect(notesFor(search, 'python-requests')).toEqual([]);
+    expect(notesFor('curl https://x.test -d a=1', 'js-fetch')).toEqual([]);
+    expect(notesFor('curl -G https://x.test -d a=1', 'js-fetch')).toEqual([]);
+  });
+
+  // setRequestMethod("PATCH") throws a ProtocolException.
+  test('says HttpURLConnection refuses a method it does not support', () => {
+    const patch = `curl -X PATCH https://x.test/items/7 -d '{"a":1}'`;
+    expect(notesFor(patch, 'java-httpurlconnection')).toEqual([
+      expect.stringContaining('setRequestMethod("PATCH") throws a ProtocolException'),
+    ]);
+    expect(notesFor('curl -X PURGE https://x.test', 'java-httpurlconnection')).toHaveLength(1);
+
+    expect(notesFor(patch, 'java-okhttp')).toEqual([]);
+    for (const method of ['GET', 'POST', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE']) {
+      expect(notesFor(`curl -X ${method} https://x.test`, 'java-httpurlconnection')).toEqual([]);
+    }
   });
 });
