@@ -651,7 +651,7 @@ export function PdfEditor() {
             <Card className="border-border/60 shadow shadow-md">
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-semibold flex justify-between items-center">
-                  Page Layout ({pages.length} Pages)
+                  Page Layout ({pages.length} {pages.length === 1 ? 'Page' : 'Pages'})
                   <span className="text-xs font-normal text-muted-foreground">Reorder and rotate</span>
                 </CardTitle>
               </CardHeader>
