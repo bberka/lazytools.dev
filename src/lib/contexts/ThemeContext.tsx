@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { preferences, usePreference } from '@/lib/preferences/client';
 import type { Theme } from '@/lib/preferences/store';
 
@@ -15,15 +15,19 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = usePreference('theme');
 
+  // Keep the <html> class in step with every theme change, including ones
+  // made in another tab. The first paint is handled by the inline script in
+  // layout.tsx, so nothing is applied on mount.
+  useEffect(
+    () =>
+      preferences.subscribe('theme', () => {
+        document.documentElement.classList.toggle('dark', preferences.get('theme') === 'dark');
+      }),
+    []
+  );
+
   const setTheme = useCallback((newTheme: Theme) => {
     preferences.set('theme', newTheme);
-
-    // Update DOM
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, []);
 
   const toggleTheme = useCallback(() => {
