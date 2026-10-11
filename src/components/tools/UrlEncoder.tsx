@@ -1,43 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
 import { Copy, Check, Trash2, ArrowLeftRight, Link, Unlink } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { convertUrlComponent, type UrlCodecMode } from '@/lib/tools/url-encoder';
+
+type Mode = UrlCodecMode;
 
 export function UrlEncoder() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [mode, setMode] = useState<'encode' | 'decode'>('encode');
-  const [error, setError] = useState('');
+  const [mode, setMode] = useState<Mode>('encode');
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  useEffect(() => {
-    handleConvert();
-  }, [input, mode]);
-
-  const handleConvert = () => {
-    if (!input.trim()) {
-      setOutput('');
-      setError('');
-      return;
-    }
-
-    try {
-      if (mode === 'encode') {
-        setOutput(encodeURIComponent(input));
-      } else {
-        setOutput(decodeURIComponent(input));
-      }
-      setError('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Conversion failed');
-      setOutput('');
-    }
-  };
+  const { output, error } = useMemo(() => convertUrlComponent(input, mode), [input, mode]);
 
   const handleCopy = async () => {
     if (output) {
@@ -52,14 +31,12 @@ export function UrlEncoder() {
 
   const handleClear = () => {
     setInput('');
-    setOutput('');
-    setError('');
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Mode Toggle */}
-      <Tabs value={mode} onValueChange={(val) => setMode(val as 'encode' | 'decode')} className="w-full">
+      <Tabs value={mode} onValueChange={(val) => setMode(val as Mode)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2">
             <Link className="h-4 w-4" />
@@ -83,8 +60,9 @@ export function UrlEncoder() {
         <CardContent>
           <Textarea
             value={input}
-            onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder={mode === 'encode' ? 'https://example.com/search?q=hello world' : 'https%3A%2F%2Fexample.com'}
+            aria-label={mode === 'encode' ? 'URL to encode' : 'Encoded URL to decode'}
             rows={8}
             className="font-mono"
           />
@@ -92,7 +70,7 @@ export function UrlEncoder() {
       </Card>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -110,7 +88,7 @@ export function UrlEncoder() {
             <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 onClick={handleCopy}
                 disabled={!output}
