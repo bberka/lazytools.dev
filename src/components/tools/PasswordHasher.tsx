@@ -57,7 +57,8 @@ export function PasswordHasher() {
 
   // Client-side redirect if accessed via /tools/bcrypt-hasher
   useEffect(() => {
-    if (pathname && pathname.endsWith('/bcrypt-hasher')) {
+    // The static export serves every route with a trailing slash.
+    if (pathname && pathname.replace(/\/+$/, '').endsWith('/bcrypt-hasher')) {
       router.replace('/tools/password-hasher');
     }
   }, [pathname, router]);
