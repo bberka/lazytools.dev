@@ -8,6 +8,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { PWARegister } from '@/components/PWARegister';
 import { MainLayout } from '@/components/MainLayout';
 import { TauriWindowHandler } from '@/components/TauriWindowHandler';
+import { PREFERENCE_STORAGE_KEYS } from '@/lib/preferences/store';
 import '@/styles/globals.css';
 
 const outfit = Outfit({
@@ -120,14 +121,14 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('dev-toolbox:theme') ||
+                  const theme = localStorage.getItem('${PREFERENCE_STORAGE_KEYS.theme}') ||
                     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
                   } else {
                     document.documentElement.classList.remove('dark');
                   }
-                  localStorage.setItem('dev-toolbox:theme', theme);
+                  localStorage.setItem('${PREFERENCE_STORAGE_KEYS.theme}', theme);
                 } catch (e) {}
               })();
             `,

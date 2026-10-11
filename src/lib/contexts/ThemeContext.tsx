@@ -1,9 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getTheme, setTheme as setThemeStorage } from '@/lib/utils/storage';
-
-type Theme = 'light' | 'dark';
+import { createContext, useCallback, useContext, useMemo } from 'react';
+import { preferences, usePreference } from '@/lib/preferences/client';
+import type { Theme } from '@/lib/preferences/store';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,27 +13,17 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
-
-  // Initialize theme on mount (avoid hydration mismatch)
-  useEffect(() => {
-    setThemeState(getTheme());
-
-    // Listen for cross-tab changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'dev-toolbox:theme') {
-        const newTheme = getTheme();
-        setThemeState(newTheme);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const theme = usePreference('theme');
 
   const setTheme = useCallback((newTheme: Theme) => {
-    setThemeStorage(newTheme);
-    setThemeState(newTheme);
+    preferences.set('theme', newTheme);
+
+    // Update DOM
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {

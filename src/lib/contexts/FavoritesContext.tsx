@@ -1,11 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import {
-  getFavorites,
-  setFavorites,
-  toggleFavorite as toggleFavoriteStorage,
-} from '@/lib/utils/storage';
+import { createContext, useCallback, useContext, useMemo } from 'react';
+import { preferences, usePreference } from '@/lib/preferences/client';
 
 interface FavoritesContextType {
   favorites: string[];
@@ -19,25 +15,10 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(
 );
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavoritesState] = useState<string[]>([]);
-
-  useEffect(() => {
-    setFavoritesState(getFavorites());
-
-    // Listen for cross-tab changes
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'dev-toolbox:favorites') {
-        setFavoritesState(getFavorites());
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const favorites = usePreference('favorites');
 
   const toggleFavorite = useCallback((toolId: string) => {
-    toggleFavoriteStorage(toolId);
-    setFavoritesState(getFavorites());
+    preferences.toggleFavorite(toolId);
   }, []);
 
   const isFavorite = useCallback(
@@ -46,8 +27,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const clearFavorites = useCallback(() => {
-    setFavorites([]);
-    setFavoritesState([]);
+    preferences.set('favorites', []);
   }, []);
 
   const value = useMemo(
