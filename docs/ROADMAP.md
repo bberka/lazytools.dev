@@ -5,9 +5,11 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 ## Immediate / quality of life
 
 - [x] Add route coverage tests (every catalog entry renders)
-- [x] Add focused tests for pure transform helpers (`npm run test:unit`, specs in `tests/unit/`)
+- [x] Add focused tests for pure transform helpers (`pnpm run test:unit`, specs in `tests/unit/`)
 - [x] Add Playwright smoke tests for search, favorites, command palette, and a tool page
 - [ ] Add generated Open Graph images
+- [x] Move to pnpm and Vite+ (Oxlint, Oxfmt, Vitest) with `vp check` in CI
+- [x] Layout test that opens every tool at phone, tablet and desktop sizes with touch emulation
 - [x] Support full desktop multi-platform release wrapper (Tauri v2)
 
 ## Tool expansion backlog
