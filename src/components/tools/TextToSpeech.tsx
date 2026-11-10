@@ -523,7 +523,7 @@ export function TextToSpeech() {
                   // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a scrolling list of sentences, not a group of form controls
                   role="group"
                   aria-label="Sentences"
-                  className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto scrollbar-thin font-sans text-base leading-relaxed select-text flex flex-col gap-1.5"
+                  className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto font-sans text-base leading-relaxed select-text flex flex-col gap-1.5"
                 >
                   {sentences.length === 0 ? (
                     <span className="text-muted-foreground italic text-sm">

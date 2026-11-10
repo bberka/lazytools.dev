@@ -439,7 +439,7 @@ export function CommandPalette() {
           {/* Results */}
           <Command.List
             ref={listRef}
-            className="flex-1 overflow-y-auto p-2 scrollbar-thin"
+            className="flex-1 overflow-y-auto p-2"
             style={{
               scrollPaddingBlockStart: '0.5rem',
               scrollPaddingBlockEnd: '0.5rem',

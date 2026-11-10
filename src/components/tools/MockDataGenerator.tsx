@@ -174,7 +174,7 @@ export function MockDataGenerator() {
                 Fields list
               </span>
 
-              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                 {fields.map((field, index) => {
                   const fieldLabel = field.name.trim() || `field ${index + 1}`;
                   return (

@@ -286,7 +286,7 @@ export function JsonFormatter() {
               <div className="min-w-0 break-words">{outputResult.error}</div>
             </div>
           ) : viewMode === 'tree' && outputResult.value !== null ? (
-            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
+            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text">
               <TreeNode value={outputResult.value} depth={0} />
             </div>
           ) : (

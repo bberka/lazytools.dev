@@ -78,7 +78,7 @@ export function HtmlEncoder() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">

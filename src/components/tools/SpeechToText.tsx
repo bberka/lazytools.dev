@@ -538,7 +538,7 @@ export function SpeechToText() {
             {/* Transcription Output Container */}
             <div
               ref={scrollContainerRef}
-              className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto scrollbar-thin font-sans text-base leading-relaxed select-text whitespace-pre-wrap flex flex-col justify-start"
+              className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto font-sans text-base leading-relaxed select-text whitespace-pre-wrap flex flex-col justify-start"
             >
               {transcript || interim ? (
                 <div>

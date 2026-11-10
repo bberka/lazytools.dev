@@ -570,7 +570,7 @@ export function GlassmorphismGenerator() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative group">
-                <pre className="overflow-x-auto scrollbar-thin rounded-xl border border-border bg-muted/40 p-4 font-mono text-xs text-foreground leading-relaxed min-h-36">
+                <pre className="overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 font-mono text-xs text-foreground leading-relaxed min-h-36">
                   {exportTab === 'css' && output.css}
                   {exportTab === 'tailwind' && output.tailwind}
                   {exportTab === 'react' && output.react}

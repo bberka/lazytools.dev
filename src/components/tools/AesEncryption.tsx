@@ -295,7 +295,7 @@ export function AesEncryption() {
             </TooltipSimple>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[100px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[100px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output}
             </pre>
           </CardContent>

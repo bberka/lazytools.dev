@@ -118,7 +118,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
               <CardContent className="space-y-6">
                 {/* Error Box */}
-                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive/90 text-sm font-mono overflow-x-auto scrollbar-thin whitespace-pre-wrap">
+                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive/90 text-sm font-mono overflow-x-auto whitespace-pre-wrap">
                   <span className="font-bold">Error:</span>{' '}
                   {error.message || 'System crash details unavailable.'}
                 </div>
@@ -188,7 +188,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                             <Copy className="h-3.5 w-3.5" />
                           )}
                         </button>
-                        <div className="overflow-x-auto max-h-60 scrollbar-thin pr-10 whitespace-pre">
+                        <div className="overflow-x-auto max-h-60 pr-10 whitespace-pre">
                           <div className="text-foreground font-semibold mb-1">
                             {error.name}: {error.message}
                           </div>

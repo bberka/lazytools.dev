@@ -160,7 +160,7 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
                       <Copy className="h-3.5 w-3.5" />
                     )}
                   </button>
-                  <div className="overflow-x-auto max-h-60 scrollbar-thin pr-10 whitespace-pre">
+                  <div className="overflow-x-auto max-h-60 pr-10 whitespace-pre">
                     <div className="text-foreground font-semibold mb-1">
                       {error.name}: {error.message}
                     </div>

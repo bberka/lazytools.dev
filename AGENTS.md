@@ -99,6 +99,7 @@ For normal code changes, at minimum run `pnpm run typecheck` and the most releva
 - Avoid using static large grid/flexbox gaps (like `gap-6` or `gap-8`) which cause excessive empty space when elements stack vertically on mobile. Instead, use responsive spacing like `gap-4 sm:gap-6` or `gap-4 sm:gap-8`.
 - For large padding containers (e.g., drag-and-drop file dropzones or result previews), use responsive paddings like `p-4 sm:p-8` instead of a static `p-8` class.
 - Keep empty state placeholders and instructions compact on mobile using responsive vertical paddings (like `py-4 sm:py-8` or `py-6 sm:py-12`) instead of hardcoded tall paddings like `py-8` or `py-12`.
+- Scrollbars are styled once, globally, in `src/styles/globals.css` (thin, no arrow buttons, no track fill). Do not add per-component scrollbar classes; `ScrollArea` matches the same look.
 - Avoid horizontal overflow. Action rows should wrap or stack on small screens.
 - Avoid nested full cards unless the grouping genuinely needs it; prefer lighter bordered panels inside cards.
 - Use real-time processing for lightweight converters, encoders, formatters, and text transforms.

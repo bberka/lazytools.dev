@@ -460,7 +460,7 @@ export function PasswordHasher() {
             </TooltipSimple>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[60px] p-4 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input leading-relaxed selection:bg-primary/20">
+            <pre className="w-full min-h-[60px] p-4 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input leading-relaxed selection:bg-primary/20">
               {hash}
             </pre>
           </CardContent>

@@ -242,7 +242,7 @@ export function UrlParserBuilder() {
               No query parameters found. Click Add Param to create one.
             </div>
           ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin pr-1">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
               {form.params.map((param) => (
                 <div
                   key={param.id}

@@ -286,7 +286,7 @@ export function SvgPathEditor() {
             </div>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[60px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[60px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {optimizedPath}
             </pre>
           </CardContent>

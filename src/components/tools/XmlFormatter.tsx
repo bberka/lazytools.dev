@@ -289,7 +289,7 @@ export function XmlFormatter() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {viewMode === 'tree' && validation?.valid && treeData !== null ? (
-            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
+            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text">
               <TreeNode value={treeData} depth={0} />
             </div>
           ) : (

@@ -1289,7 +1289,7 @@ export function BoxShadowVisualizer() {
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
                   />
                 </div>
-                <pre className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin whitespace-pre">
+                <pre className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto whitespace-pre">
                   {shadowOutput.css}
                 </pre>
               </div>
@@ -1308,7 +1308,7 @@ export function BoxShadowVisualizer() {
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
                   />
                 </div>
-                <div className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin break-all">
+                <div className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto break-all">
                   {shadowOutput.tailwind}
                 </div>
               </div>

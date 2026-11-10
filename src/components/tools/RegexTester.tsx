@@ -301,7 +301,7 @@ export function RegexTester() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto scrollbar-thin bg-background">
+            <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto bg-background">
               {explanations.map((exp, idx) => (
                 <div
                   key={idx}

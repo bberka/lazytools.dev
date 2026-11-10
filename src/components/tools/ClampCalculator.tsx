@@ -270,7 +270,7 @@ export function ClampCalculator() {
             </Button>
           </TooltipSimple>
         </div>
-        <div className="overflow-x-auto scrollbar-thin whitespace-nowrap rounded bg-muted/50 p-2 font-mono text-sm font-medium text-foreground">
+        <div className="overflow-x-auto whitespace-nowrap rounded bg-muted/50 p-2 font-mono text-sm font-medium text-foreground">
           {text || '-'}
         </div>
       </div>

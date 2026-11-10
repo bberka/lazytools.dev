@@ -300,7 +300,7 @@ export function YamlValidator() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {showTree ? (
-            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
+            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text">
               {documents.length === 1 ? (
                 <TreeNode value={documents[0]} depth={0} />
               ) : (

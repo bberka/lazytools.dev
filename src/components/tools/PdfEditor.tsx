@@ -738,7 +738,7 @@ export function PdfEditor() {
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-3 max-h-[600px] overflow-y-auto scrollbar-thin space-y-3">
+              <CardContent className="p-3 max-h-[600px] overflow-y-auto space-y-3">
                 {pages.map((p, index) => (
                   // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- clicking the row is a pointer shortcut; keyboard users select the page with the thumbnail button inside it
                   <div
@@ -970,7 +970,7 @@ export function PdfEditor() {
                 </div>
 
                 {/* Workspace Canvas Layer. The page keeps its size and the area scrolls; auto margins centre it without cutting off its left side when it is wider than the area. */}
-                <div className="p-4 bg-muted/30 flex overflow-auto scrollbar-thin min-h-[450px]">
+                <div className="p-4 bg-muted/30 flex overflow-auto min-h-[450px]">
                   <div
                     ref={workspaceRef}
                     className="relative m-auto shrink-0 bg-white shadow-md rounded border border-border overflow-hidden select-none"
