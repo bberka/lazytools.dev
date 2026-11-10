@@ -163,7 +163,7 @@ export function MimeTypesReference() {
         {results.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground sm:py-12">
             <SearchX className="h-8 w-8" />
-            <p className="font-medium text-foreground">
+            <p className="max-w-full break-words font-medium text-foreground">
               {query.trim() ? `No file types match "${query.trim()}"` : 'No file types match'}
             </p>
             <p className="text-sm">Try an extension such as png, or a type such as video/.</p>

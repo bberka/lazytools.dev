@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * End-to-end flows for the AI Metadata Cleaner: text mode (invisible
@@ -116,7 +117,7 @@ test.describe('AI Metadata Cleaner', () => {
     // The page is pre-rendered; a click before React attaches its handlers opens nothing, so it is repeated.
     const area = page.getByRole('button', { name: 'Drag & drop JPEG, PNG or WebP images or click to browse' });
     await expect(async () => {
-      const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 2_000 }), area.click()]);
+      const chooser = await openFileChooser(page, () => area.click(), { timeout: 2_000 });
       await chooser.setFiles({ name: 'cat.png', mimeType: 'image/png', buffer: original });
     }).toPass({ timeout: 20_000 });
 
@@ -148,7 +149,7 @@ test.describe('AI Metadata Cleaner', () => {
     await openTool(page, SLUG, 'AI Metadata Cleaner');
     const area = page.getByRole('button', { name: 'Drag & drop JPEG, PNG or WebP images or click to browse' });
     await expect(async () => {
-      const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 2_000 }), area.click()]);
+      const chooser = await openFileChooser(page, () => area.click(), { timeout: 2_000 });
       await chooser.setFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('this is not a picture') });
     }).toPass({ timeout: 20_000 });
 

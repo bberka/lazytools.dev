@@ -63,7 +63,7 @@ export function BasicAuthGenerator() {
           <CardDescription>Credentials are UTF-8 encoded, then Base64 encoded (RFC 7617).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="basic-auth-username" className="text-sm font-medium">
                 Username

@@ -212,7 +212,7 @@ export function BmiCalculator() {
           </div>
 
           {result.category && (
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="rounded-md border bg-card p-4">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                   <Scale className="h-3.5 w-3.5" />

@@ -103,7 +103,7 @@ export function EmailNormalizer() {
           <CardTitle className="text-base">Rules</CardTitle>
           <CardDescription>The domain is always lower-cased, because domain names ignore case.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <Checkbox
             label="Lower-case the part before the @"
             checked={options.lowercaseLocal}

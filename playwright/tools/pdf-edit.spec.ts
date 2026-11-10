@@ -13,6 +13,7 @@ import {
   degrees,
   type PDFPage,
 } from 'pdf-lib';
+import { openFileChooser } from '../support/file-chooser';
 
 // End-to-end flows of the PDF editing tools: Edit Pages, Merge, Split,
 // Compress and Watermark. Every fixture is built in memory and every result is
@@ -216,9 +217,8 @@ function makeNoisePng(width: number, height: number): Buffer {
 
 /** Picks files through the drop area's file chooser, the way a click does. */
 async function chooseFiles(page: Page, opener: Locator, files: Upload | Upload[]) {
-  const chooser = page.waitForEvent('filechooser');
-  await opener.click();
-  await (await chooser).setFiles(files);
+  const chooser = await openFileChooser(page, () => opener.click());
+  await chooser.setFiles(files);
 }
 
 /** Drops files on an element, as a drag from the file manager does. */

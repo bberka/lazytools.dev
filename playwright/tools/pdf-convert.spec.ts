@@ -4,6 +4,7 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import JSZip from 'jszip';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
+import { openFileChooser } from '../support/file-chooser';
 
 // End-to-end flows of the PDF Converter page (/tools/pdf-tools) and its four
 // tools: PDF to Image, PDF to Word, Word to PDF and Image to PDF. Every fixture
@@ -487,17 +488,14 @@ test.describe('PDF conversion tools', () => {
       const dropzone = panel.getByRole('button', { name: 'Click to upload a PDF' });
       const buffer = await textPdf(['One page']);
 
-      const clicked = page.waitForEvent('filechooser');
-      await dropzone.click();
-      const picker = await clicked;
+      const picker = await openFileChooser(page, () => dropzone.click());
       expect(picker.isMultiple()).toBe(false);
       await picker.setFiles({ name: 'clicked.pdf', mimeType: PDF_MIME, buffer });
       await expect(panel.getByText('clicked.pdf')).toBeVisible();
 
       await dropzone.focus();
-      const keyed = page.waitForEvent('filechooser');
-      await page.keyboard.press('Enter');
-      await (await keyed).setFiles({ name: 'keyboard.pdf', mimeType: PDF_MIME, buffer });
+      const keyed = await openFileChooser(page, () => page.keyboard.press('Enter'));
+      await keyed.setFiles({ name: 'keyboard.pdf', mimeType: PDF_MIME, buffer });
       await expect(panel.getByText('keyboard.pdf')).toBeVisible();
       await expect(panel.getByText('clicked.pdf')).toBeHidden();
 
@@ -924,9 +922,9 @@ test.describe('PDF conversion tools', () => {
     test('puts the chosen images into one PDF, one page each, in the order shown', async ({ page }) => {
       const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
 
-      const chosen = page.waitForEvent('filechooser');
-      await panel.getByRole('button', { name: 'Click to upload JPEG or PNG images' }).click();
-      const picker = await chosen;
+      const picker = await openFileChooser(page, () =>
+        panel.getByRole('button', { name: 'Click to upload JPEG or PNG images' }).click()
+      );
       expect(picker.isMultiple()).toBe(true);
       await picker.setFiles([
         { name: 'red.png', mimeType: 'image/png', buffer: solidPng(40, 20, [255, 0, 0]) },

@@ -261,7 +261,7 @@ export function PasswordGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Generation mode</label>
               <Select value={mode} onValueChange={(value) => setMode(value as GenerationMode)}>
@@ -309,7 +309,7 @@ export function PasswordGenerator() {
                 <Checkbox checked={special} onChange={setSpecial} label="Special (!@#$...)" />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Checkbox
                   checked={excludeAmbiguous}
                   onChange={setExcludeAmbiguous}
@@ -325,7 +325,7 @@ export function PasswordGenerator() {
               <div className="space-y-3">
                 <p className="text-sm font-medium">Maximum characters by type</p>
                 <div className="rounded-xl border border-border/70 p-4 space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <LimitInput
                       label="Max uppercase"
                       checked={limitUppercase}
@@ -398,7 +398,7 @@ export function PasswordGenerator() {
                 <Slider aria-label="Word count" value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Separator</label>
                   <Select value={separator} onValueChange={(value) => setSeparator(value as PassphraseSeparator)}>
@@ -559,7 +559,7 @@ export function PasswordGenerator() {
 
             {/* Estimated time-to-crack metrics */}
             {!hasError && !isEvaluating && strengthAnalysis && (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fast Crack (Offline)</p>
                   <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.offlineFastHashing1e10PerSecond}</p>
@@ -576,7 +576,7 @@ export function PasswordGenerator() {
             )}
 
             {!hasError && output.settings.mode === 'random' && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard label="Uppercase" value={counts.uppercase} />
                 <StatCard label="Lowercase" value={counts.lowercase} />
                 <StatCard label="Numbers" value={counts.numbers} />
@@ -585,7 +585,7 @@ export function PasswordGenerator() {
             )}
 
             {!hasError && output.settings.mode === 'passphrase' && (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatCard label="Words" value={output.settings.wordCount} />
                 <StatCard
                   label="Separator"

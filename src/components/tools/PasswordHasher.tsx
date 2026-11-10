@@ -199,7 +199,7 @@ export function PasswordHasher() {
             <CardDescription>Adjust the strength and performance factors</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Hashing Algorithm</label>
                 <Select
@@ -263,7 +263,7 @@ export function PasswordHasher() {
             </div>
 
             {algorithm !== 'bcrypt' && (
-              <div className="grid gap-4 sm:grid-cols-3 pt-2 border-t border-border">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2 border-t border-border">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Memory Size</label>
                   <Select
@@ -504,7 +504,7 @@ export function PasswordHasher() {
       )}
 
       {/* Information Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="border border-blue-500/20 bg-blue-500/5 dark:bg-blue-950/10 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">

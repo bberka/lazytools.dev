@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * Flows of the speech tools and the resume analyzer, run against the built app.
@@ -422,9 +423,10 @@ function pdfFile(name: string, buffer: Buffer): UploadFile {
 
 /** Picks a file the way a user does: through the Choose File button and the file dialog. */
 async function chooseResume(page: Page, file: UploadFile) {
-  const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Choose File, PDF resume' }).click();
-  await (await chooser).setFiles(file);
+  const chooser = await openFileChooser(page, () =>
+    page.getByRole('button', { name: 'Choose File, PDF resume' }).click()
+  );
+  await chooser.setFiles(file);
 }
 
 async function analyze(page: Page) {

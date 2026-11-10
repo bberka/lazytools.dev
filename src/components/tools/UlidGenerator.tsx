@@ -175,7 +175,7 @@ export function UlidGenerator() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
         {/* Options */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -188,7 +188,7 @@ export function UlidGenerator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="ulid-count" className="text-sm font-medium">
                   How many (1 to {MAX_COUNT})
@@ -350,7 +350,7 @@ export function UlidGenerator() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Decoder */}
         <Card>
           <CardHeader>

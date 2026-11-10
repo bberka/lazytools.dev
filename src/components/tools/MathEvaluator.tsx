@@ -200,7 +200,7 @@ export function MathEvaluator() {
               <div role="alert" className="space-y-2">
                 <div className="flex items-start gap-1.5 text-sm text-destructive">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{live.error.message}</span>
+                  <span className="min-w-0 break-words">{live.error.message}</span>
                 </div>
                 <div aria-hidden="true" className="overflow-x-auto">
                   <pre className="w-fit font-mono text-xs">
@@ -257,7 +257,7 @@ export function MathEvaluator() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">

@@ -134,7 +134,7 @@ export function MockDataGenerator() {
   const previewRows = dataset.rows.slice(0, 10);
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left Panel: Configuration */}
       <div className="space-y-4 lg:col-span-2">
         <Card>

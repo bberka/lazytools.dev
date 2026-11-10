@@ -73,7 +73,7 @@ export function ListConverter() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: Input & Config */}
       <div className="space-y-4 lg:col-span-2">
         <Card>

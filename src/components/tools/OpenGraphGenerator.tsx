@@ -86,7 +86,7 @@ export function OpenGraphGenerator() {
   const host = displayHost(fields.url) || fields.siteName.trim();
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
       <div className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
@@ -138,7 +138,7 @@ export function OpenGraphGenerator() {
             <Field id="og-image-alt" label="Image alt text">
               <Input id="og-image-alt" value={fields.imageAlt} onChange={(e) => set('imageAlt', e.target.value)} />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field id="og-site-name" label="Site name">
                 <Input id="og-site-name" value={fields.siteName} onChange={(e) => set('siteName', e.target.value)} />
               </Field>

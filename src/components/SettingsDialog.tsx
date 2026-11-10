@@ -121,7 +121,7 @@ export function SettingsDialog() {
 
           <section className="space-y-3">
             <h3 className="text-sm font-medium">Local Data</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
                 onClick={() => toast.success(run(clearFavorites))}

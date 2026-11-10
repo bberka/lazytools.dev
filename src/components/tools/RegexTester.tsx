@@ -301,7 +301,7 @@ export function RegexTester() {
           <CardContent>
             <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto scrollbar-thin bg-background">
               {explanations.map((exp, idx) => (
-                <div key={idx} className="grid grid-cols-[100px_1fr] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors">
+                <div key={idx} className="grid grid-cols-[100px_minmax(0,1fr)] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors">
                   <div className="font-mono bg-muted px-1.5 py-0.5 rounded text-center break-all select-all font-semibold shrink-0 text-primary">
                     {exp.token}
                   </div>

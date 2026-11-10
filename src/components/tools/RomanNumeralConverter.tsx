@@ -77,7 +77,7 @@ export function RomanNumeralConverter() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
       <div className="space-y-4 md:col-span-2">
         <Card>
           <CardHeader>
@@ -90,7 +90,7 @@ export function RomanNumeralConverter() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Decimal Input */}
               <div className="space-y-2">
                 <label htmlFor="roman-decimal" className="text-sm font-medium">

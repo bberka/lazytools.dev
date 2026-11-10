@@ -552,16 +552,16 @@ export function BoxShadowVisualizer() {
           {activeLayer && (
             <Card className="border-border/60 shadow-sm">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sliders className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Sliders className="h-5 w-5 shrink-0 text-primary" />
+                    <CardTitle className="min-w-0 break-words text-lg">
                       Properties: <span className="text-primary font-semibold">{activeLayer.name}</span>
                     </CardTitle>
                   </div>
                   
                   {/* Layer Name Rename */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
                     <Input
                       value={activeLayer.name}
                       onChange={(e) => updateSelectedLayer('name', e.target.value)}

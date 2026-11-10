@@ -96,7 +96,7 @@ export function Ipv4RangeExpander() {
         <div className="space-y-3">
           <ErrorNote>{expanded.error}</ErrorNote>
           {expanded.count !== undefined && expanded.first && expanded.last && (
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Stat label="Addresses" value={expanded.count.toLocaleString('en-US')} />
               <Stat label="First" value={expanded.first} />
               <Stat label="Last" value={expanded.last} />
@@ -111,7 +111,7 @@ export function Ipv4RangeExpander() {
             <CardTitle>Address list</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Stat label="Addresses" value={expanded.count.toLocaleString('en-US')} />
               <Stat label="First" value={expanded.first} />
               <Stat label="Last" value={expanded.last} />
@@ -153,7 +153,7 @@ export function Ipv4RangeExpander() {
             <CardTitle>Minimal CIDR blocks</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Stat label="Addresses covered" value={collapsed.count.toLocaleString('en-US')} />
               <Stat label="CIDR blocks" value={collapsed.blocks.length.toLocaleString('en-US')} />
             </div>

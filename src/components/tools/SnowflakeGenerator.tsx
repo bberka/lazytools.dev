@@ -420,7 +420,7 @@ export function SnowflakeGenerator() {
       </Tabs>
 
       {activeTab === 'generate' && (
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
           {/* Generator settings */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="shadow-lg border-border/60">
@@ -454,7 +454,7 @@ export function SnowflakeGenerator() {
                   <div className="grid grid-cols-2 gap-y-1">
                     <div>Timestamp Epoch:</div>
                     <TooltipSimple content={formatEpochLabel(layout.epoch)}>
-                      <div className="font-mono text-[11px] text-right truncate">
+                      <div className="font-mono text-[11px] text-right break-words">
                         {formatEpochLabel(layout.epoch)}
                       </div>
                     </TooltipSimple>
@@ -781,7 +781,7 @@ export function SnowflakeGenerator() {
 
               {/* Custom decoder parameters if custom is selected */}
               {decoderPreset === 'custom' && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4 rounded-xl border border-border/80 bg-muted/10">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4 rounded-xl border border-border/80 bg-muted/10">
                   <div className="space-y-1">
                     <label htmlFor="snowflake-dec-timestamp-bits" className="text-xs font-semibold">Timestamp Bits</label>
                     <Input
@@ -876,23 +876,51 @@ export function SnowflakeGenerator() {
                         Binary Bit Breakdown (64-bit)
                       </CardTitle>
                       <CardDescription>
-                        Visual color-coded bit distribution. Hover over bits to view specific bit values.
+                        Visual color-coded bit distribution. Hover, tap or focus a bit to view its value.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Grid representation */}
-                      <div className="flex flex-wrap gap-[3px] sm:gap-[5px] justify-center p-4 bg-muted/30 rounded-xl border">
+                      <div
+                        role="group"
+                        aria-label="64 bits, most significant first"
+                        className="grid grid-cols-8 gap-1 p-4 bg-muted/30 rounded-xl border sm:flex sm:flex-wrap sm:justify-center sm:gap-[5px]"
+                        onKeyDown={(e) => {
+                          // One tab stop for the whole grid; the arrow keys move between bits.
+                          const step =
+                            e.key === 'ArrowRight' || e.key === 'ArrowDown'
+                              ? 1
+                              : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+                                ? -1
+                                : e.key === 'Home'
+                                  ? -64
+                                  : e.key === 'End'
+                                    ? 64
+                                    : 0;
+                          if (step === 0) return;
+                          e.preventDefault();
+                          const current = hoveredBitIndex ?? 0;
+                          const next = Math.max(0, Math.min(63, current + step));
+                          setHoveredBitIndex(next);
+                          e.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
+                        }}
+                      >
                         {bitSlices.map((bit, idx) => (
-                          <div
+                          <button
+                            type="button"
                             key={idx}
+                            aria-label={`Bit ${63 - idx}: ${bit.val}`}
+                            tabIndex={idx === (hoveredBitIndex ?? 0) ? 0 : -1}
                             onMouseEnter={() => setHoveredBitIndex(idx)}
                             onMouseLeave={() => setHoveredBitIndex(null)}
-                            className={`w-[13px] h-7 sm:w-5 sm:h-9 rounded-[2px] border flex items-center justify-center text-[9px] sm:text-xs font-bold cursor-crosshair select-none transition-all ${
+                            onFocus={() => setHoveredBitIndex(idx)}
+                            onClick={() => setHoveredBitIndex(idx)}
+                            className={`h-9 w-full sm:w-5 rounded-[2px] border flex items-center justify-center text-xs font-bold cursor-crosshair select-none transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                               bit.color
                             } ${hoveredBitIndex === idx ? 'ring-2 ring-primary scale-110' : ''}`}
                           >
                             {bit.val}
-                          </div>
+                          </button>
                         ))}
                       </div>
 
@@ -924,7 +952,7 @@ export function SnowflakeGenerator() {
                         ) : (
                           <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-1.5">
                             <Info className="h-4 w-4 stroke-[1.5]" />
-                            Hover over any bit block in the layout above to inspect details.
+                            Hover over, tap or focus any bit block in the layout above to inspect details.
                           </div>
                         )}
                       </div>

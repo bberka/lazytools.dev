@@ -197,7 +197,7 @@ export function MarkdownToDocx() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Left pane: Editor & Settings */}
         <Card className="flex flex-col border shadow-sm">
           <Tabs value={activeLeftTab} onValueChange={(val: string) => setActiveLeftTab(val as 'layout' | 'typography' | 'breaks')} className="w-full flex flex-col flex-1">

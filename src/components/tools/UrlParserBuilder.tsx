@@ -152,7 +152,7 @@ export function UrlParserBuilder() {
             Edit the protocol, host, and path details directly.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div>
             <label
               htmlFor={protocolId}

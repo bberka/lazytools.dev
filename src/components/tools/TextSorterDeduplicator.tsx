@@ -69,7 +69,7 @@ export function TextSorterDeduplicator() {
           <CardTitle className="text-base">Options</CardTitle>
           <CardDescription>Lines are trimmed, filtered and deduplicated first, then sorted.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           <div className="space-y-2">
             <label htmlFor="sorter-order" className="text-sm font-medium">
               Sort order

@@ -226,7 +226,7 @@ export function ColorPicker() {
             Pick a color, tune channels, and copy production-ready values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
+        <CardContent className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
             <div
               className="flex min-h-48 flex-col justify-end px-6 py-5"
@@ -309,7 +309,7 @@ export function ColorPicker() {
               </div>
             )}
 
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <TooltipSimple
                 content={
                   eyeDropperSupported
@@ -397,7 +397,7 @@ export function ColorPicker() {
           <CardTitle>Copy Values</CardTitle>
           <CardDescription>Use the selected color in code or design tools.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {values.map((item) => (
             <ColorValue key={item.label} label={item.label} value={item.value} />
           ))}
@@ -452,7 +452,7 @@ export function ColorPicker() {
                     onClick={() => setColor(parseHexColor(color) ?? rgb)}
                     aria-label={`Use saved swatch ${color}`}
                   >
-                    <span className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/20 px-2 py-1 text-center font-mono text-[10px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                    <span className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/20 px-2 py-1 text-center font-mono text-[10px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100">
                       {color}
                     </span>
                   </button>

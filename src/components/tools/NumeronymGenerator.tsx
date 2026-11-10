@@ -71,7 +71,7 @@ export function NumeronymGenerator() {
         <CardHeader>
           <CardTitle className="text-base">Options</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           <div className="space-y-2">
             <label htmlFor="numeronym-mode" className="text-sm font-medium">
               Shorten

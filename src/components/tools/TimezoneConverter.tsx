@@ -331,7 +331,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <TimeZonePicker
               label="From"
               value={sourceTimeZone}
@@ -394,7 +394,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
           </div>
 
           {converted && (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Source time

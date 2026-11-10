@@ -61,6 +61,8 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   return (
     <TooltipSimple content={tag.name}>
       <span
+        role="img"
+        aria-label={tag.name}
         className={cn(
           "inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105",
           styles.bg,

@@ -404,7 +404,7 @@ export function ExifViewerRemover() {
               />
 
               {file && (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-md border bg-card p-4">
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">
                       File
@@ -531,7 +531,7 @@ export function ExifViewerRemover() {
                             return (
                               <div
                                 key={fieldKey}
-                                className="grid gap-2 px-4 py-3 sm:grid-cols-[180px_1fr_auto] sm:items-start"
+                                className="grid grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[180px_minmax(0,1fr)_auto] sm:items-start"
                               >
                                 <div className="text-sm font-medium">{field.label}</div>
                                 <div className="break-all font-mono text-sm text-muted-foreground">

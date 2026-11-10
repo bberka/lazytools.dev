@@ -275,7 +275,7 @@ export function JwtSigner() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <div className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
@@ -469,7 +469,7 @@ export function JwtSigner() {
               </div>
 
               {timeClaims.length > 0 && (
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md border bg-muted/40 p-3 text-xs">
+                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-md border bg-muted/40 p-3 text-xs">
                   {timeClaims.map(({ claim, iso }) => (
                     <div key={claim} className="contents">
                       <dt className="font-mono font-semibold">{claim}</dt>

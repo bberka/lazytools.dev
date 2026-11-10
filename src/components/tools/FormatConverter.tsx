@@ -199,7 +199,7 @@ export function FormatConverter() {
 
       {/* Conditional Configuration Panel */}
       {showOptions && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-muted/40 rounded-lg border transition-all duration-300">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-muted/40 rounded-lg border transition-all duration-300">
           {(inputFormat === 'csv' || outputFormat === 'csv') && (
             <div className="space-y-1.5">
               <label htmlFor="convert-csv-delimiter" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CSV Delimiter</label>
@@ -269,7 +269,7 @@ export function FormatConverter() {
       )}
 
       {/* Main Panels */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">

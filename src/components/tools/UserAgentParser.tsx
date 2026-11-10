@@ -165,7 +165,7 @@ export function UserAgentParser() {
   const failure = outcome.ok ? null : outcome;
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: input */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -269,7 +269,7 @@ export function UserAgentParser() {
                 </div>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Panel
                   title={result.kind === 'bot' ? 'Bot' : result.kind === 'http-client' ? 'Client' : 'Browser'}
                   icon={

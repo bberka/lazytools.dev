@@ -231,7 +231,7 @@ export function JsonDiff() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <JsonSide
               id="json-diff-left"
               label="Original (left)"

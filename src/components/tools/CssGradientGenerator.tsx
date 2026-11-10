@@ -256,7 +256,7 @@ export function CssGradientGenerator() {
         : '';
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 lg:items-start">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:items-start">
       {/* Preview */}
       <Card className="lg:col-start-2 lg:row-start-1">
         <CardHeader>
@@ -388,7 +388,7 @@ export function CssGradientGenerator() {
             )}
 
             {usesPosition && (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <SliderField
                   label="Position X"
                   valueLabel={`${formatNumber(clampPercent(model.positionX))}%`}

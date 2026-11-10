@@ -82,7 +82,7 @@ export function MarkdownTableGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="overflow-x-auto rounded-md border">
+          <div className="relative overflow-x-auto rounded-md border">
             <table className="w-full border-collapse text-sm">
               <caption className="sr-only">Table cells</caption>
               <thead>
@@ -206,7 +206,7 @@ export function MarkdownTableGenerator() {
             spellCheck={false}
             className="font-mono text-sm"
           />
-          <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
             <div className="space-y-2">
               <label htmlFor="table-delimiter" className="text-sm font-medium">
                 Separator
@@ -264,7 +264,7 @@ export function MarkdownTableGenerator() {
           <CardDescription>Updates as you edit. Works on GitHub, GitLab and most Markdown editors.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <Checkbox
               label="Pad columns so the raw text lines up"
               checked={options.pad}

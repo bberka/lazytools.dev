@@ -136,7 +136,7 @@ export function SqlFormatter() {
             className="font-mono text-sm"
           />
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
               <label htmlFor="sql-dialect" className="text-sm font-medium">SQL dialect</label>
               <Select

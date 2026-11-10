@@ -1,6 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { deflateSync } from 'node:zlib';
 import JSZip from 'jszip';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * End-to-end flows for the image tools: Image Converter & Editor, SVG to PNG
@@ -257,7 +258,7 @@ async function openTool(page: Page, slug: string, name: string): Promise<void> {
 async function chooseFiles(page: Page, dropzone: string, files: Upload | Upload[]): Promise<void> {
   const area = page.getByRole('button', { name: dropzone });
   await expect(async () => {
-    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 2_000 }), area.click()]);
+    const chooser = await openFileChooser(page, () => area.click(), { timeout: 2_000 });
     await chooser.setFiles(files);
   }).toPass({ timeout: 20_000 });
 }
@@ -1635,10 +1636,7 @@ test.describe('Image tools', () => {
       // The drop area is a button: Enter opens the file picker.
       await expect(async () => {
         await area.focus();
-        const [chooser] = await Promise.all([
-          page.waitForEvent('filechooser', { timeout: 2_000 }),
-          page.keyboard.press('Enter'),
-        ]);
+        const chooser = await openFileChooser(page, () => page.keyboard.press('Enter'), { timeout: 2_000 });
         await chooser.setFiles(BROKEN_PNG);
       }).toPass({ timeout: 20_000 });
       await expect(alerts(page)).toHaveText(UNREADABLE_IMAGE);

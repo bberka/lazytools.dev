@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * Browser flows for the encoder and decoder tools: Base64, Hex, HTML entities,
@@ -176,9 +177,7 @@ test.describe('Encoder and decoder tools', () => {
       const output = page.getByRole('textbox', { name: 'Base64 output' });
 
       // Clicking the drop area opens the file picker.
-      const chooserOpened = page.waitForEvent('filechooser');
-      await dropzone.click();
-      const chooser = await chooserOpened;
+      const chooser = await openFileChooser(page, () => dropzone.click());
       await chooser.setFiles({ name: 'hello.txt', mimeType: 'text/plain', buffer: Buffer.from('Hello, World!') });
 
       await expect(page.getByText('hello.txt', { exact: true })).toBeVisible();
@@ -232,9 +231,7 @@ test.describe('Encoder and decoder tools', () => {
 
       // Enter on the focused drop area opens the picker too.
       await dropzone.focus();
-      const chooserOpened = page.waitForEvent('filechooser');
-      await page.keyboard.press('Enter');
-      const chooser = await chooserOpened;
+      const chooser = await openFileChooser(page, () => page.keyboard.press('Enter'));
       await chooser.setFiles({ name: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.alloc(0) });
 
       await expect(page.getByText('text/plain · 0 B')).toBeVisible();

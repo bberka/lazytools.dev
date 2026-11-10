@@ -198,6 +198,9 @@ export function PdfEditor() {
   const isDrawing = useRef(false);
   const currentPathPoints = useRef<Point[]>([]);
   const dragStartOffset = useRef({ x: 0, y: 0 });
+  // Where the press on a text box began, and whether it travelled: a touch press that
+  // stays put is a tap, which opens the box for editing as a double-click does.
+  const dragOrigin = useRef({ x: 0, y: 0, moved: false });
 
   // Releases the opened document and its worker. Called when another file
   // replaces the document, when the tool is cleared and when it unmounts.
@@ -494,6 +497,7 @@ export function PdfEditor() {
     const pointerX = e.clientX - rect.left;
     const pointerY = e.clientY - rect.top;
 
+    dragOrigin.current = { x: e.clientX, y: e.clientY, moved: false };
     dragStartOffset.current = {
       x: pointerX - currentX * rect.width,
       y: pointerY - currentY * rect.height,
@@ -504,6 +508,9 @@ export function PdfEditor() {
     if (draggingTextId && selectedPageId) {
       const workspace = workspaceRef.current;
       if (!workspace) return;
+      if (Math.hypot(e.clientX - dragOrigin.current.x, e.clientY - dragOrigin.current.y) > 6) {
+        dragOrigin.current.moved = true;
+      }
       const rect = workspace.getBoundingClientRect();
       const pointerX = e.clientX - rect.left;
       const pointerY = e.clientY - rect.top;
@@ -527,9 +534,68 @@ export function PdfEditor() {
     }
   };
 
-  const handleWorkspacePointerUp = () => {
+  const handleWorkspacePointerUp = (e: React.PointerEvent) => {
     if (draggingTextId) {
+      if (e.type === 'pointerup' && e.pointerType === 'touch' && !dragOrigin.current.moved) {
+        setEditingTextId(draggingTextId);
+      }
       setDraggingTextId(null);
+    }
+  };
+
+  // Keyboard equivalent of dragging: arrow keys nudge a box by 1% of the page, shift by 5%.
+  const nudgeText = (textId: string, dx: number, dy: number) => {
+    if (!selectedPageId) return;
+    setPages((prev) =>
+      prev.map((p) => {
+        if (p.id !== selectedPageId) return p;
+        return {
+          ...p,
+          texts: p.texts.map((t) =>
+            t.id === textId
+              ? {
+                  ...t,
+                  x: Math.max(0.01, Math.min(t.x + dx, 0.95)),
+                  y: Math.max(0.01, Math.min(t.y + dy, 0.95)),
+                }
+              : t
+          ),
+        };
+      })
+    );
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent, textId: string) => {
+    // Keys typed in the edit field, or on the remove button, are theirs.
+    if (e.target !== e.currentTarget) return;
+    const step = e.shiftKey ? 0.05 : 0.01;
+    switch (e.key) {
+      case 'Enter':
+      case 'F2':
+        e.preventDefault();
+        setEditingTextId(textId);
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        nudgeText(textId, -step, 0);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        nudgeText(textId, step, 0);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        nudgeText(textId, 0, -step);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        nudgeText(textId, 0, step);
+        break;
+      case 'Delete':
+      case 'Backspace':
+        e.preventDefault();
+        removeText(textId);
+        break;
     }
   };
 
@@ -925,6 +991,10 @@ export function PdfEditor() {
                             draggingTextId === t.id ? "border-primary bg-primary/5" : "border-transparent"
                           )}
                           onPointerDown={(e) => startTextDrag(e, t.id, t.x, t.y)}
+                          tabIndex={0}
+                          role="group"
+                          aria-label={`Move or edit note: ${t.text}`}
+                          onKeyDown={(e) => handleTextKeyDown(e, t.id)}
                         >
                           {editingTextId === t.id ? (
                             <input
@@ -958,7 +1028,7 @@ export function PdfEditor() {
                             aria-label="Remove text"
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={() => removeText(t.id)}
-                            className="absolute left-full top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-4 h-4 bg-destructive text-destructive-foreground rounded-full text-[9px] font-bold opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 hover:bg-destructive/90 hover:scale-110 transition-all cursor-pointer pointer-events-auto"
+                            className="absolute left-full top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-4 h-4 pointer-coarse:w-6 pointer-coarse:h-6 bg-destructive text-destructive-foreground rounded-full text-[9px] pointer-coarse:text-xs font-bold opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 hover:bg-destructive/90 hover:scale-110 transition-all cursor-pointer pointer-events-auto"
                           >
                             ×
                           </button>
@@ -969,7 +1039,7 @@ export function PdfEditor() {
                 </div>
 
                 <div className="border-t bg-muted/20 px-4 py-2 text-[11px] text-muted-foreground flex flex-wrap justify-between items-center gap-x-3">
-                  <span>Double-click text boxes to edit. Drag to position.</span>
+                  <span>Double-click or tap a text box to edit. Drag or use the arrow keys to position.</span>
                   {selectedPage.drawPaths.length > 0 && (
                     <span>Drawings: {selectedPage.drawPaths.length} stroke(s)</span>
                   )}

@@ -70,7 +70,7 @@ export function FindAndReplace() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="find-text" className="text-sm font-medium">
                 Find
@@ -97,7 +97,7 @@ export function FindAndReplace() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Checkbox
               checked={caseSensitive}
               onCheckedChange={setCaseSensitive}

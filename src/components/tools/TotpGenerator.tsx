@@ -222,7 +222,7 @@ export function TotpGenerator() {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label htmlFor="totp-algorithm" className="text-sm font-medium">
                 Algorithm
@@ -433,7 +433,7 @@ export function TotpGenerator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="totp-issuer" className="text-sm font-medium">
                 Issuer (optional)
@@ -461,7 +461,7 @@ export function TotpGenerator() {
           </div>
 
           {uri ? (
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-w-0 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">otpauth:// link</span>

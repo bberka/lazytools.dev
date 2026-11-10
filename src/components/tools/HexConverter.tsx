@@ -90,7 +90,7 @@ export function HexConverter() {
           <CardDescription>Configure prefixes, delimiters, and text cases.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <label
                 htmlFor={delimiterId}
@@ -186,7 +186,7 @@ export function HexConverter() {
       </Card>
 
       {/* Main Panels */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">

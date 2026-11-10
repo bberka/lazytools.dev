@@ -91,7 +91,7 @@ export function WordCounter() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {statCards.map((stat) => {
           const Icon = stat.icon;
 
@@ -121,7 +121,7 @@ export function WordCounter() {
             Lightweight estimates for reading, speaking, and text complexity.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {insights.map((insight) => (
             <div
               key={insight.label}

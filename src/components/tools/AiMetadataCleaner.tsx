@@ -293,7 +293,7 @@ function TextCleaner() {
             spellCheck={false}
             className="font-mono text-sm"
           />
-          <ul aria-label="Cleanup categories" className="grid gap-2 sm:grid-cols-2">
+          <ul aria-label="Cleanup categories" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {TEXT_CATEGORIES.map((category) => {
               const info = TEXT_CATEGORY_INFO[category];
               const count = result.found[category];

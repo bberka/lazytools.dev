@@ -123,7 +123,7 @@ export function NatoAlphabet() {
         <CardHeader>
           <CardTitle className="text-base">Options</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           {encoding ? (
             <>
               <div className="space-y-2">
@@ -206,7 +206,7 @@ export function NatoAlphabet() {
             The ICAO code words. Digits have their own pronunciations so they cannot be mistaken on a bad line.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid items-start gap-4 sm:grid-cols-2 sm:gap-6">
+        <CardContent className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-6">
           <ReferenceTable caption="NATO phonetic alphabet letters" entries={NATO_LETTERS} />
           <ReferenceTable caption="ICAO digit pronunciations" entries={NATO_DIGITS} />
         </CardContent>

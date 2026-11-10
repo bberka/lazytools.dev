@@ -148,6 +148,12 @@ export function HttpStatusCodes() {
             </Button>
           ))}
         </div>
+        {/* The class summary was a title-only tooltip, which touch and keyboard users never see. */}
+        {statusClass !== 'all' && (
+          <p className="text-sm text-muted-foreground">
+            {STATUS_CLASSES.find((info) => info.id === statusClass)?.summary}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <p role="status">
@@ -167,7 +173,7 @@ export function HttpStatusCodes() {
         {results.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center text-muted-foreground sm:py-12">
             <SearchX className="h-8 w-8" />
-            <p className="font-medium text-foreground">
+            <p className="max-w-full break-words font-medium text-foreground">
               {query.trim() ? `No status codes match "${query.trim()}"` : 'No status codes match'}
             </p>
             <p className="text-sm">
@@ -190,7 +196,7 @@ export function HttpStatusCodes() {
               return (
                 <li
                   key={entry.code}
-                  className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border p-3 sm:p-4"
+                  className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg border p-3 sm:p-4"
                 >
                   <Button
                     type="button"

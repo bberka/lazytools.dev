@@ -175,20 +175,24 @@ export function SvgPathEditor() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-center items-center p-4 sm:p-8 bg-muted rounded-md">
-              <svg
-                viewBox={viewBoxValid ? viewBox : undefined}
-                className="max-w-full h-auto border border-input"
-                style={{ maxHeight: '400px' }}
-                role="img"
-                aria-label="Path preview"
-              >
-                <path
-                  d={pathData}
-                  stroke={strokeColor}
-                  strokeWidth={strokeWidth}
-                  fill={fillColor}
-                />
-              </svg>
+              {error ? (
+                <p className="text-sm text-muted-foreground">Fix the path data to see the preview.</p>
+              ) : (
+                <svg
+                  viewBox={viewBoxValid ? viewBox : undefined}
+                  className="max-w-full h-auto border border-input"
+                  style={{ maxHeight: '400px' }}
+                  role="img"
+                  aria-label="Path preview"
+                >
+                  <path
+                    d={pathData}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    fill={fillColor}
+                  />
+                </svg>
+              )}
             </div>
           </CardContent>
         </Card>

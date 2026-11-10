@@ -84,7 +84,7 @@ export function CompoundInterestCalculator() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function CompoundInterestCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="ci-currency" className="text-sm font-medium">
                   Currency
@@ -281,7 +281,7 @@ export function CompoundInterestCalculator() {
                   </div>
                 </div>
 
-                <dl className="grid gap-3 sm:grid-cols-2">
+                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Stat label="Total contributed" value={formatMoney(result.totalContributed)} />
                   <Stat label="Interest earned" value={formatMoney(result.interestEarned)} />
                 </dl>

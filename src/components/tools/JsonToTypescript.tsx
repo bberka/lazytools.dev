@@ -65,7 +65,7 @@ export function JsonToTypescript() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <label
                 htmlFor="json-code-language"
@@ -158,7 +158,7 @@ export function JsonToTypescript() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Input area */}
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">

@@ -113,7 +113,7 @@ export function UnitConverter() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <div>
               <label htmlFor="unit-from" className="mb-2 block text-sm font-medium">
                 From
