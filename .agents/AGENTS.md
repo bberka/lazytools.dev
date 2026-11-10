@@ -14,23 +14,26 @@ This guide is for coding agents working in this repository. It reflects the curr
 
 ## Commands
 
-- Install: `npm install`
-- Dev server: `npm run dev`
-- Production static build: `npm run build`
-- Typecheck: `npm run typecheck`
-- Lint: `npm run lint`
-- Fix lint: `npm run lint:fix`
-- Format: `npm run format`
-- Unit tests: `npm run test:unit`
-- E2E tests: `npm run test:e2e`
-- E2E tests against the static export: `npm run build && npm run test:e2e:export`
-- E2E UI runner: `npm run test:e2e:ui`
-- Install Playwright browsers: `npm run test:e2e:install`
-- Bundle analysis: `npm run analyze`
-- Desktop dev: `npm run desktop:dev`
-- Desktop build: `npm run desktop:build`
+The package manager is pnpm, pinned in `package.json`. Vite+ (`vp`, from the `vite-plus` dev dependency) runs lint, format and unit tests; Next.js still builds and serves the app. A pre-commit hook runs `vp check --fix` on staged files.
 
-For normal code changes, at minimum run `npm run typecheck` and the most relevant focused verification. Before considering a change complete, prefer `npm run build`; docs explicitly call this out as the completion gate.
+- Install: `pnpm install`
+- Dev server: `pnpm run dev`
+- Production static build: `pnpm run build`
+- Typecheck: `pnpm run typecheck`
+- Lint: `pnpm run lint`
+- Fix lint: `pnpm run lint:fix`
+- Format: `pnpm run format` (check only: `pnpm run format:check`)
+- Format, lint and type check in one go: `pnpm run check` (`vp check`; `vp check --fix` applies fixes)
+- Unit tests: `pnpm run test:unit` (single run); `pnpm run test:unit:watch` for watch mode
+- E2E tests: `pnpm run test:e2e`
+- E2E tests against the static export: `pnpm run build && pnpm run test:e2e:export`
+- E2E UI runner: `pnpm run test:e2e:ui`
+- Install Playwright browsers: `pnpm run test:e2e:install`
+- Bundle analysis: `pnpm run analyze`
+- Desktop dev: `pnpm run desktop:dev`
+- Desktop build: `pnpm run desktop:build`
+
+For normal code changes, at minimum run `pnpm run typecheck` and the most relevant focused verification. Before considering a change complete, prefer `pnpm run build`; docs explicitly call this out as the completion gate.
 
 ## High-value docs
 
@@ -82,7 +85,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 6. Lazy-load heavy libraries inside the tool when practical, especially PDF, image, crypto, OCR, parser, or export dependencies.
 7. Put logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. Use the shared file, PDF, and Markdown modules rather than private copies.
 8. Verify `/tools/<slug>` in dev, home search, tag filtering, favorites, recents, and command palette navigation.
-9. Run `npm run typecheck`, `npm run test:unit`, and `npm run build`; add or run Playwright tests for core flows or route behavior when relevant.
+9. Run `pnpm run typecheck`, `pnpm run test:unit`, and `pnpm run build`; add or run Playwright tests for core flows or route behavior when relevant.
 
 ## UI and UX conventions
 
@@ -124,24 +127,24 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 
 - `public/sw.js` implements static asset caching, route precache loading, network-first navigation, and stale-while-revalidate static assets.
 - `src/app/sw-precache.js/route.ts` is a static route handler that emits `/sw-precache.js` from the registry during `next build`, the same way the sitemap is emitted.
-- If tool routes change, `npm run build` regenerates the precache list. There is no separate generation script.
+- If tool routes change, `pnpm run build` regenerates the precache list. There is no separate generation script.
 - Do not add a `public/sw-precache.js` file; it would conflict with the route.
 
 ## Desktop and release
 
 - Tauri config lives in `src-tauri/tauri.conf.json`.
-- Desktop dev uses `devUrl: http://localhost:3000` and `beforeDevCommand: npm run dev`.
-- Desktop build uses `beforeBuildCommand: npm run build` and packages `../out`.
+- Desktop dev uses `devUrl: http://localhost:3000` and `beforeDevCommand: pnpm run dev`.
+- Desktop build uses `beforeBuildCommand: pnpm run build` and packages `../out`.
 - Release workflow `.github/workflows/release-desktop.yml` runs on `v*` tags, syncs versions, builds web assets, builds Tauri installers, and drafts a GitHub release.
 - `scripts/sync-version.js` updates `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` from a tag/version argument.
 
 ## Testing
 
-- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `npm run test:unit` (`playwright.unit.config.ts`). They use the Playwright test runner but need no browser and no dev server; import the module under test with the `@/` alias.
+- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `pnpm run test:unit` (`vp test run`). They use Vitest as bundled by Vite+, configured in the `test` block of `vite.config.ts`, and need no browser and no dev server. Import `describe`, `test`, `expect`, `vi` from `vite-plus/test` (not `vitest` or `@playwright/test`) and the module under test with the `@/` alias.
 - Put tool logic that can be a plain function in `src/lib/` and cover it with a unit test rather than an e2e test.
-- Playwright e2e config is in `playwright.config.ts`.
-- `npm run test:e2e` runs against `http://localhost:3000` and starts `npm run dev` automatically.
-- `npm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
+- Playwright is e2e only; its config is `playwright.config.ts` and its specs live in `playwright/`.
+- `pnpm run test:e2e` runs against `http://localhost:3000` and starts `pnpm run dev` automatically.
+- `pnpm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
 - Projects cover Chromium, Firefox, and WebKit; route coverage skips non-Chromium for speed.
 - `playwright/route-coverage.spec.ts` iterates every catalog entry and verifies each tool page renders.
 - `playwright/smoke.spec.ts` covers search, favorites, command palette navigation, and JSON Formatter behavior.
@@ -153,7 +156,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - TypeScript is strict; avoid `any` unless a dynamic API genuinely requires it.
 - Use the `@/*` path aliases from `tsconfig.json`.
 - React components are function components with hooks.
-- ESLint extends Next core web vitals and TypeScript configs, with React hooks immutability, purity, and set-state-in-effect as warnings.
+- Oxlint runs type-aware with the TypeScript, React, Next.js, jsx-a11y and import plugins, configured in `vite.config.ts`. Fix findings; where a rule is a false positive for a deliberate ARIA pattern, disable it on that line with a reason (`// oxlint-disable-next-line <rule> -- <reason>`). Oxfmt formats the code (`pnpm run format`).
 - Keep changes focused. Prefer the smallest correct change over broad refactors.
 - Do not edit generated/build output such as `.next/`, `out/`, `tsconfig.tsbuildinfo`, Playwright reports, or Tauri `target/` unless explicitly requested.
 - Do not include unrelated generated files in commits or PRs.
@@ -173,5 +176,5 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `src/lib/catalog`, and the relevant `src/components/tools/*` and `src/lib/tools/*` files.
 3. Keep privacy-first and static-export compatibility as non-negotiable constraints.
 4. Make minimal targeted edits and avoid touching shared UI primitives for one-off layout fixes.
-5. Run the narrowest useful checks first, then `npm run build` when feasible.
+5. Run the narrowest useful checks first, then `pnpm run build` when feasible.
 6. Report exactly what changed and what was verified.

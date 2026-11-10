@@ -49,7 +49,7 @@ Current behavior:
 
 - `src/lib/catalog` builds the tool catalog from the registry for static routes, search, filtering, grouping, sitemap, and metadata. It owns the hidden policy: hidden tools are left out of discovery and always reachable by id
 - `src/app/tools/[slug]/page.tsx` resolves the selected tool and renders it inside `ToolPageClient`
-- `npm run typecheck` catches missing component loaders and invalid component exports
+- `pnpm run typecheck` catches missing component loaders and invalid component exports
 
 ## Module map
 
@@ -69,7 +69,7 @@ Behaviour that several callers need lives in one module with a small interface, 
 | `src/lib/text`                                                                           | Line splitting and line endings, plurals, typed number fields, shared by tool logic                                           |
 | `src/lib/tools/*`                                                                        | Pure logic of individual tools                                                                                                |
 
-Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests.
+Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests. Unit tests (`tests/unit/`) run on Vitest through `vp test`; Playwright is e2e only.
 
 ## Static export notes
 
@@ -83,8 +83,8 @@ With `output: 'export'`:
 ### Web Build and Deploy
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 Output:
@@ -100,7 +100,7 @@ If deploying with Wrangler, the asset directory should point to `./out`.
 Requires Rust toolchain.
 
 ```bash
-npm run desktop:build
+pnpm run desktop:build
 ```
 
 Outputs:
