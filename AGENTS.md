@@ -1,8 +1,8 @@
 # Agent Guide
 
-This guide is for coding agents working in this repository. It is grounded in the current docs and codebase structure.
+This guide is for coding agents working in this repository. It reflects the current docs and codebase structure.
 
-## Project Snapshot
+## Project snapshot
 
 - Product: LazyTools, a privacy-first collection of browser-side web utilities, developer tools, and productivity helpers.
 - Live site: `https://lazytools.dev/`.
@@ -32,7 +32,7 @@ This guide is for coding agents working in this repository. It is grounded in th
 
 For normal code changes, at minimum run `npm run typecheck` and the most relevant focused verification. Before considering a change complete, prefer `npm run build`; docs explicitly call this out as the completion gate.
 
-## High-Value Docs
+## High-value docs
 
 - `docs/README.md`: product overview, stack, setup, deployment.
 - `docs/ARCHITECTURE.md`: rendering model, static export, route generation, tool wiring.
@@ -40,7 +40,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `docs/ROADMAP.md`: current priorities and tool expansion backlog.
 - `docs/PROPOSED_BACKLOG.md`: detailed proposed tools, client-side implementation notes, library ideas.
 
-## Core Architecture
+## Core architecture
 
 - `src/app/layout.tsx` defines global metadata, font setup, theme flicker prevention, providers, header, footer, PWA registration, Tauri handling, and command palette.
 - `src/app/page.tsx` renders the home page shell.
@@ -62,7 +62,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `src/components/ui/*` contains shadcn-style primitives. Avoid editing these for page-level layout fixes.
 - `src/components/tools/*` contains individual client-side tool implementations.
 
-## Tool Registry Rules
+## Tool registry rules
 
 - Add or edit tool metadata in `src/lib/utils/tool-registry.ts` first.
 - Each registry key is the route slug, for example `/tools/json-formatter` comes from `json-formatter`.
@@ -72,7 +72,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - The catalog (`src/lib/catalog`) is derived from the registry; do not duplicate tool metadata elsewhere.
 - `src/app/tools/[slug]/page.tsx`, sitemap generation, home search/filtering, route coverage tests, and service-worker precache generation all depend on the registry.
 
-## Adding A Tool
+## Adding a tool
 
 1. Create a client component under `src/components/tools/ExampleTool.tsx` with `'use client';` if it uses browser APIs, state, effects, or event handlers.
 2. Export a named component matching the registry import, for example `export function ExampleTool()`.
@@ -84,12 +84,12 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 8. Verify `/tools/<slug>` in dev, home search, tag filtering, favorites, recents, and command palette navigation.
 9. Run `npm run typecheck`, `npm run test:unit`, and `npm run build`; add or run Playwright tests for core flows or route behavior when relevant.
 
-## UI And UX Conventions
+## UI and UX conventions
 
 - Preserve the existing visual language: card-based tool pages, Tailwind utility classes, shadcn-style primitives, Lucide icons, dark mode.
 - Always use the UI components in `src/components/ui/` (e.g., `Select`, `Slider`, `Switch`, `Checkbox`, `Input`, `Button`, `ColorPicker`) instead of browser native inputs (like `<select>`, `<input type="range">`, `<input type="checkbox">`, `<input type="color">`). If a Shadcn UI primitive is needed but doesn't exist, add it to the project rather than using native browser fallbacks.
 - Ensure all custom interactive dropdowns, select menus, search palettes, and key-navigable lists support full keyboard accessibility. Users must be able to use `ArrowUp` and `ArrowDown` to change highlights, and `Enter`/`Space` to select values. Highlight states must match programmatic focus where appropriate.
-- Avoid styling overrides using hardcoded colors (e.g. `bg-blue-500` or `text-slate-900`) for standard elements. Always prefer Tailwind theme variables and semantic classes (`bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`, etc.) to guarantee seamless light/dark mode compatibility.
+- Avoid styling overrides using hardcoded colors (e.g. `bg-blue-500` or `text-slate-900`) for standard elements. Always prefer Tailwind theme variables and semantic classes (`bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`, etc.) so they work in both light and dark mode.
 - Always use the common ColorPicker component (`@/components/ui/color-picker`) when color selection is needed, rather than browser native inputs or custom color fields (unless building a dedicated color picker page).
 - Mobile is the default. Add larger layouts at `sm`, `md`, and up.
 - Keep tool pages compact on phones. The default `<Card>` primitives (headers, contents, and footers) are configured to automatically drop to `p-4` on mobile (screens < `sm`) and scale to `p-6` on desktop. Avoid overriding this to restore larger paddings on small screens. Homepage tool cards are even more compact: they use `p-3 sm:p-5` in normal mode and `p-2 sm:p-4` in compact mode.
@@ -104,7 +104,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Include copy and clear actions for user-facing text output.
 - Preserve light mode, dark mode, compact mode, full-width mode, mobile, and desktop behavior.
 
-## Static Export Constraints
+## Static export constraints
 
 - Do not add request-time server rendering assumptions.
 - Keep route data static-safe.
@@ -113,21 +113,21 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - External lookup tools must call public CORS-enabled HTTPS APIs from the browser and handle failures gracefully.
 - Next image optimization is disabled for static export; use compatible image patterns.
 
-## State And Persistence
+## State and persistence
 
 - Theme, favorites, recent tools, compact mode, and full-width mode use `localStorage` through the preferences store in `src/lib/preferences`. Do not write `dev-toolbox:*` keys anywhere else. There is no per-tool settings storage.
 - Home search/filter/scroll restoration uses `sessionStorage` through `src/lib/home`.
 - Theme initialization is intentionally duplicated early in `layout.tsx` to prevent flicker before hydration.
 - Always guard direct browser storage, DOM, window, navigator, clipboard, canvas, file, audio, and crypto APIs behind client-only execution.
 
-## PWA And Service Worker
+## PWA and service worker
 
 - `public/sw.js` implements static asset caching, route precache loading, network-first navigation, and stale-while-revalidate static assets.
 - `src/app/sw-precache.js/route.ts` is a static route handler that emits `/sw-precache.js` from the registry during `next build`, the same way the sitemap is emitted.
 - If tool routes change, `npm run build` regenerates the precache list. There is no separate generation script.
 - Do not add a `public/sw-precache.js` file; it would conflict with the route.
 
-## Desktop And Release
+## Desktop and release
 
 - Tauri config lives in `src-tauri/tauri.conf.json`.
 - Desktop dev uses `devUrl: http://localhost:3000` and `beforeDevCommand: npm run dev`.
@@ -148,7 +148,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `playwright/tools/*.spec.ts` drive every tool through its main flow and an edge case, one spec per tool group, on Chromium only. A test marked `test.fixme` documents a known open defect; remove the marker when you fix it.
 - For UI changes, manually verify mobile and desktop widths, light/dark mode, compact mode, and full-width mode when affected.
 
-## Code Style
+## Code style
 
 - TypeScript is strict; avoid `any` unless a dynamic API genuinely requires it.
 - Use the `@/*` path aliases from `tsconfig.json`.
@@ -158,7 +158,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Do not edit generated/build output such as `.next/`, `out/`, `tsconfig.tsbuildinfo`, Playwright reports, or Tauri `target/` unless explicitly requested.
 - Do not include unrelated generated files in commits or PRs.
 
-## Common Pitfalls
+## Common pitfalls
 
 - Registry description length outside 40-65 characters will throw at import/build time.
 - Missing or mismatched named exports in tool components are caught by typecheck/build through lazy component loaders.
@@ -167,7 +167,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Browser APIs used during render or in server components will break static/server execution.
 - PWA service workers can create stale behavior during local testing; Playwright blocks service workers by default.
 
-## Agent Workflow
+## Agent workflow
 
 1. Read the relevant docs before changing behavior: start with `docs/ARCHITECTURE.md` and `docs/CONTRIBUTING.md`.
 2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `src/lib/catalog`, and the relevant `src/components/tools/*` and `src/lib/tools/*` files.

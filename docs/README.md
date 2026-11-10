@@ -8,7 +8,7 @@ Live at: **[lazytools.dev](https://lazytools.dev/)**
 
 ## About
 
-A privacy-first static web app and native desktop application for everyday browser-side and offline workflows: converting files, processing PDFs, compressing images, formatting code and data, generating values, editing text, calculating metrics, and managing general utilities — without sending user content to a server. All tool interactions run completely locally (in the browser or native desktop webview); the site is generated at build time.
+A privacy-first static web app and native desktop application for everyday browser-side and offline workflows: converting files, processing PDFs, compressing images, formatting code and data, generating values, editing text, calculating metrics, and managing general utilities. No user content is sent to a server. Tools run locally (in the browser or the native desktop webview), and the site is generated at build time.
 
 ## Features
 
@@ -20,7 +20,7 @@ A privacy-first static web app and native desktop application for everyday brows
 - Native desktop wrapper support (Tauri v2) for Windows, macOS, and Linux
 - Responsive layout for desktop and mobile
 
-## Tool Categories
+## Tool categories
 
 - Converters: 12 tools
 - Encoders & Decoders: 10 tools
@@ -37,10 +37,9 @@ A privacy-first static web app and native desktop application for everyday brows
 
 Counts are the tools listed on the home page under each tag (99 in total); a tool can carry more than one tag. The two PDF pages bundle nine PDF tools as tabs, and the image converter includes resize, crop, compress and icon export.
 
-
 See [ROADMAP.md](./ROADMAP.md) for planned work and expansion backlog.
 
-## Tech Stack
+## Tech stack
 
 - Framework: [Next.js 16 App Router](https://nextjs.org/docs)
 - UI: [React 19](https://react.dev/)
@@ -50,7 +49,7 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and expansion backlog.
 - Static hosting: Cloudflare Pages via `out/`
 - Desktop wrapper: [Tauri v2](https://tauri.app/) (Rust-based native window wrapper)
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
@@ -65,7 +64,7 @@ cd lazytools.dev
 npm install
 ```
 
-### Run Dev Server
+### Run dev server
 
 ```bash
 npm run dev
@@ -73,7 +72,7 @@ npm run dev
 
 App available at `http://localhost:3000`.
 
-### Production Build
+### Production build
 
 ```bash
 npm run build
@@ -81,22 +80,22 @@ npm run build
 
 Static export written to `out/`.
 
-### Desktop Development
+### Desktop development
 
 Requires the Rust toolchain installed.
 
-#### Run Desktop Dev
+#### Run desktop dev
 ```bash
 npm run desktop:dev
 ```
 
-#### Build Desktop Installers
+#### Build desktop installers
 ```bash
 npm run desktop:build
 ```
 Native installers will be written to `src-tauri/target/release/bundle/`.
 
-## Project Structure
+## Project structure
 
 ```text
 src/

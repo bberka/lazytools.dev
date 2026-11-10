@@ -2,7 +2,7 @@
 
 Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 
-## Immediate / Quality of Life
+## Immediate / quality of life
 
 - [x] Add route coverage tests (every catalog entry renders)
 - [x] Add focused tests for pure transform helpers (`npm run test:unit`, specs in `tests/unit/`)
@@ -10,7 +10,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] Add generated Open Graph images
 - [x] Support full desktop multi-platform release wrapper (Tauri v2)
 
-## Tool Expansion Backlog
+## Tool expansion backlog
 
 ### 1. Converters
 - [x] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
@@ -78,7 +78,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 
 ### 8. Networking
 - [ ] **CORS Request Policy Tester**: Test if a given endpoint supports CORS requests directly from the client.
-- [x] **HTTP Status Codes Cheat Sheet**: Fast reference directory of HTTP status codes and specifications.
+- [x] **HTTP Status Codes Cheat Sheet**: Reference directory of HTTP status codes and specifications.
 - [ ] **MAC Address Vendor Lookup**: Identify NIC manufacturers from MAC address OUI prefixes.
 - [x] **IPv4 Address Converter**: Convert IPs between Decimal, Hex, Octal, and Binary formats.
 - [x] **IPv4 Range Expander**: Expand CIDR notations or IP ranges into a full list of IP addresses.

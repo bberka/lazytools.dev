@@ -1,18 +1,18 @@
-# Proposed Tools Backlog
+# Proposed tools backlog
 
-This document serves as a reference catalog for the proposed client-side tools that can be added to the lazytools.dev platform. It complements the high-level roadmap in [ROADMAP.md](./ROADMAP.md) by providing implementation libraries, browser APIs, and features for each proposed tool.
-
----
-
-## Technical Guidelines
-All tools must be:
-- **100% Client-Side**: No user-entered data leaves the browser.
-- **Static Export Compatible**: Next.js static builds are supported. External lookups must use public CORS-enabled HTTPS endpoints.
-- **Lazy Loaded**: Heavy libraries must be loaded dynamically inside the tool's component.
+This is a reference catalog of proposed client-side tools for lazytools.dev. It complements the roadmap in [ROADMAP.md](./ROADMAP.md) with the implementation libraries, browser APIs, and features for each tool.
 
 ---
 
-## Detailed Tool BACKLOG
+## Technical guidelines
+All tools must:
+- Run client-side only: no user-entered data leaves the browser.
+- Work with the Next.js static export. External lookups must use public CORS-enabled HTTPS endpoints.
+- Load heavy libraries dynamically inside the tool's component.
+
+---
+
+## Detailed tool backlog
 
 ### 1. Converters
 
@@ -52,7 +52,7 @@ All tools must be:
 
 #### Punycode Encoder/Decoder (Status: Implemented)
 - **Description**: Translate internationalized domain names (IDN) to/from Punycode.
-- **Key Features**: Encodes special characters (e.g. `münchen` ↔ `xn--mnchen-3ya`).
+- **Key Features**: Encodes special characters (e.g. `münchen` becomes `xn--mnchen-3ya`).
 - **Implementation**: Lightweight `punycode.js` library.
 
 #### Morse Code / Binary Encoder (Status: Implemented)
@@ -233,7 +233,7 @@ All tools must be:
 
 #### MIME Types Reference
 - **Description**: Searchable directory of file extensions and their MIME types.
-- **Key Features**: Fast offline lookup.
+- **Key Features**: Offline lookup.
 - **Implementation**: Static dictionary dataset.
 
 #### User-Agent Parser (Status: Implemented)
@@ -295,7 +295,7 @@ All tools must be:
 - **Implementation**: Native `fetch` with error status inspection.
 
 #### HTTP Status Codes Cheat Sheet (Status: Implemented)
-- **Description**: Fast reference directory of HTTP status codes and specifications.
+- **Description**: Reference directory of HTTP status codes and specifications.
 - **Key Features**: Responsive search filter.
 - **Implementation**: Static dictionary.
 
@@ -335,7 +335,7 @@ All tools must be:
 
 #### CSS Gradient Generator (Status: Implemented)
 - **Description**: Visual multi-stop linear/radial gradient picker producing CSS and Tailwind.
-- **Key Features**: Colorful visual sliders, custom stop additions.
+- **Key Features**: Visual sliders, custom stop additions.
 - **Implementation**: Direct CSS rendering.
 
 #### SVG Waves & Shape Generator
@@ -354,9 +354,9 @@ All tools must be:
 - **Implementation**: Dynamic SVG string generation.
 
 #### Code Snippet Image Generator
-- **Description**: Convert code snippets into beautiful, styled screenshot images.
-- **Key Features**: Rich syntax highlighting for multiple languages, customizable background gradients, macOS-style window controls, padding and typography adjustments, export as PNG.
-- **Implementation**: Client-side rendering utilizing `highlight.js` for syntax highlighting and `html2canvas` for DOM-to-image capture.
+- **Description**: Convert code snippets into styled screenshot images.
+- **Key Features**: Syntax highlighting for multiple languages, customizable background gradients, macOS-style window controls, padding and typography adjustments, export as PNG.
+- **Implementation**: Client-side rendering using `highlight.js` for syntax highlighting and `html2canvas` for DOM-to-image capture.
 
 ---
 
@@ -408,7 +408,7 @@ All tools must be:
 
 #### Compound Interest Calculator
 - **Description**: Project investment growth with monthly contributions and interest graphs.
-- **Key Features**: Clean CSS graphs/charts.
+- **Key Features**: CSS graphs/charts.
 - **Implementation**: Compounding formula models.
 
 #### Math Evaluator
