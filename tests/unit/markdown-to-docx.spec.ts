@@ -647,7 +647,8 @@ test.describe('the exported document', () => {
       '',
       '  indented();',
     ]);
-    expect(document).toContain('<w:shd w:fill="F3F4F6"/>');
+    // Newer docx releases also write w:val="clear" here; the fill is what matters.
+    expect(document).toMatch(/<w:shd w:fill="F3F4F6"[^>]*\/>/);
     expect(document.match(/<w:tbl>/g)).toHaveLength(1);
   });
 
