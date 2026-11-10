@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_DECODE_OPTIONS,
   DEFAULT_ENCODE_OPTIONS,
@@ -19,7 +19,7 @@ const encode = (text: string, changes: Partial<EncodeOptions> = {}) =>
 const decode = (text: string, changes: Partial<DecodeOptions> = {}) =>
   decodeNato(text, { ...DEFAULT_DECODE_OPTIONS, ...changes });
 
-test.describe('reference tables', () => {
+describe('reference tables', () => {
   test('hold 26 letters A to Z and 10 digits 0 to 9, in order', () => {
     expect(NATO_LETTERS.map((entry) => entry.symbol).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
     expect(NATO_DIGITS.map((entry) => entry.symbol).join('')).toBe('0123456789');
@@ -35,7 +35,7 @@ test.describe('reference tables', () => {
   });
 });
 
-test.describe('encodeNato', () => {
+describe('encodeNato', () => {
   test('spells letters, whatever their case', () => {
     expect(encode('Hello')).toBe('Hotel Echo Lima Lima Oscar');
     expect(encode('hELLO')).toBe('Hotel Echo Lima Lima Oscar');
@@ -93,7 +93,7 @@ test.describe('encodeNato', () => {
   });
 });
 
-test.describe('decodeNato', () => {
+describe('decodeNato', () => {
   test('reads letters, digits and word breaks', () => {
     expect(decode('Hotel India / Alfa Wun')).toBe('HI A1');
     expect(decode('Zero Wun Too Tree Fower Fife Six Seven Ait Niner')).toBe('0123456789');

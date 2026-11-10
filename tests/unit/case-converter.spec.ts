@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { CASE_CONVERSIONS } from '@/lib/tools/case-converter';
 
 function convert(text: string, label: string): string {
@@ -18,7 +18,7 @@ const NAMING_CASES = [
   'CONSTANT_CASE',
 ];
 
-test.describe('the conversions on offer', () => {
+describe('the conversions on offer', () => {
   test('lists the ten cases in display order', () => {
     expect(CASE_CONVERSIONS.map((conversion) => conversion.label)).toEqual([
       'camelCase',
@@ -41,7 +41,7 @@ test.describe('the conversions on offer', () => {
   });
 });
 
-test.describe('naming cases', () => {
+describe('naming cases', () => {
   test('give the same result whatever case the input is in', () => {
     const spellings = [
       'Hello World Example',
@@ -122,7 +122,7 @@ test.describe('naming cases', () => {
   });
 });
 
-test.describe('prose cases', () => {
+describe('prose cases', () => {
   test('UPPERCASE and lowercase keep spacing, line breaks and punctuation', () => {
     expect(convert('Hello, World!\n  Second line', 'UPPERCASE')).toBe(
       'HELLO, WORLD!\n  SECOND LINE'

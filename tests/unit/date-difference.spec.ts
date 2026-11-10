@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { DAY_IN_MS, daysInMonth, utcTime } from '@/lib/tools/calendar-date';
 import {
   calculateAge,
@@ -12,7 +12,7 @@ const ymd = (start: string, end: string) => {
   return difference && [difference.years, difference.months, difference.days];
 };
 
-test.describe('calendarDifference', () => {
+describe('calendarDifference', () => {
   test('is zero for the same day', () => {
     expect(calendarDifference('2024-05-10', '2024-05-10')).toEqual({
       years: 0,
@@ -141,7 +141,7 @@ test.describe('calendarDifference', () => {
   });
 });
 
-test.describe('calculateAge', () => {
+describe('calculateAge', () => {
   test('gives the age and the next birthday', () => {
     // 36 years with nine leap days (1992 to 2024) are 13,149 days; 15 June to
     // 11 October is another 118.
@@ -277,7 +277,7 @@ test.describe('calculateAge', () => {
   });
 });
 
-test.describe('formatDuration', () => {
+describe('formatDuration', () => {
   test('uses the singular for one and the plural otherwise', () => {
     expect(formatDuration({ years: 1, months: 1, days: 1 })).toBe('1 year, 1 month, 1 day');
     expect(formatDuration({ years: 0, months: 0, days: 0 })).toBe('0 years, 0 months, 0 days');

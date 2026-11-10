@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MOCK_FIELD_TYPES,
   columnNames,
@@ -26,7 +26,7 @@ function column(dataset: { rows: unknown[][] }, index: number): unknown[] {
   return dataset.rows.map((row) => row[index]);
 }
 
-test.describe('columnNames', () => {
+describe('columnNames', () => {
   test('keeps distinct names as typed', () => {
     expect(columnNames([field('id', 'id_seq'), field('Full Name', 'full_name')])).toEqual([
       'id',
@@ -62,7 +62,7 @@ test.describe('columnNames', () => {
   });
 });
 
-test.describe('generateMockData', () => {
+describe('generateMockData', () => {
   test('makes the requested rows with one value per field', () => {
     const fields = [field('id', 'id_seq'), field('name', 'full_name'), field('active', 'boolean')];
     const dataset = generateMockData(fields, 25, { random: seeded(1) });
@@ -196,11 +196,11 @@ test.describe('generateMockData', () => {
 
     const [header, firstRow] = mockDataToCsv(dataset).split('\n');
     expect(header).toBe('"value","value_2"');
-    expect(firstRow).toBe(`"1","${objects[0].value_2}"`);
+    expect(firstRow).toBe(`"1","${String(objects[0].value_2)}"`);
   });
 });
 
-test.describe('mockDataToJson', () => {
+describe('mockDataToJson', () => {
   test('writes one object per row, keyed by column name in order', () => {
     const json = mockDataToJson({
       columns: ['id', 'name', 'ok'],
@@ -231,7 +231,7 @@ test.describe('mockDataToJson', () => {
   });
 });
 
-test.describe('mockDataToCsv', () => {
+describe('mockDataToCsv', () => {
   test('quotes every field and doubles quotes inside them', () => {
     const csv = mockDataToCsv({
       columns: ['id', 'say "hi"', 'note'],

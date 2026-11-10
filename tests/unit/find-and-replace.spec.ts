@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { findAndReplace, type FindReplaceOptions } from '@/lib/tools/find-and-replace';
 
 const run = (input: string, options: Partial<FindReplaceOptions>) =>
@@ -12,7 +12,7 @@ const run = (input: string, options: Partial<FindReplaceOptions>) =>
     ...options,
   });
 
-test.describe('literal search', () => {
+describe('literal search', () => {
   test('replaces every match and reports where they were', () => {
     const result = run('one cat, two cats, CAT', { find: 'cat', replace: 'dog' });
 
@@ -85,7 +85,7 @@ test.describe('literal search', () => {
   });
 });
 
-test.describe('whole word', () => {
+describe('whole word', () => {
   test('skips matches inside longer words', () => {
     const result = run('cat concat cats cat_1 Cat.', {
       find: 'cat',
@@ -148,7 +148,7 @@ test.describe('whole word', () => {
   });
 });
 
-test.describe('regex search', () => {
+describe('regex search', () => {
   test('expands capture groups in the replacement', () => {
     const result = run('2026-05-03 and 2025-12-31', {
       find: '(\\d{4})-(\\d{2})-(\\d{2})',

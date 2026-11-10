@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { lookupIp, type IpInfo } from '@/lib/tools/ip-lookup';
 import type { FetchLike } from '@/lib/tools/network-fetch';
 
@@ -57,7 +57,7 @@ const IPINFO_GOOGLE = {
   readme: 'https://ipinfo.io/missingauth',
 };
 
-test.describe('lookupIp', () => {
+describe('lookupIp', () => {
   test('returns the details ipinfo.io gives for an address', async () => {
     const { fetchImpl, urls } = network({ ipinfo: json(IPINFO_GOOGLE) });
 
@@ -308,7 +308,7 @@ test.describe('lookupIp', () => {
       });
       expect(
         (await infoFrom('1.2.3.4', fetchImpl)).loc,
-        `${latitude},${longitude}`
+        `${String(latitude)},${String(longitude)}`
       ).toBeUndefined();
     }
   });

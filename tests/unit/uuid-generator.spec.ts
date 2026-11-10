@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { generateIds, uuidV4, type IdSource } from '@/lib/tools/uuid-generator';
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -11,7 +11,7 @@ function fixedSource(now: number, byte: number): IdSource {
 
 const isSorted = (values: string[]) => values.every((value, i) => i === 0 || values[i - 1] < value);
 
-test.describe('uuidV4', () => {
+describe('uuidV4', () => {
   test('sets the version and variant fields whatever the random bytes are', () => {
     expect(uuidV4(fixedSource(0, 0x00))).toBe('00000000-0000-4000-8000-000000000000');
     expect(uuidV4(fixedSource(0, 0xff))).toBe('ffffffff-ffff-4fff-bfff-ffffffffffff');
@@ -20,7 +20,7 @@ test.describe('uuidV4', () => {
   test('does not write into the bytes it was given', () => {
     const shared = new Uint8Array(16).fill(0xff);
     uuidV4({ randomBytes: () => shared });
-    expect(Array.from(shared)).toEqual(new Array(16).fill(0xff));
+    expect(Array.from(shared)).toEqual(Array.from({ length: 16 }, () => 0xff));
   });
 
   test('uses the secure source by default', () => {
@@ -30,7 +30,7 @@ test.describe('uuidV4', () => {
   });
 });
 
-test.describe('generateIds', () => {
+describe('generateIds', () => {
   test('makes as many IDs as asked', () => {
     for (const type of ['v4', 'v7', 'snowflake'] as const) {
       expect(generateIds(type, 1), type).toHaveLength(1);

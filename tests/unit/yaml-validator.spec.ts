@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { beforeAll, describe, expect, test } from 'vite-plus/test';
 import { loadYamlTools, type YamlTools } from '@/lib/tools/yaml-validator';
 
 // 2^53 + 1: the first integer a double cannot hold.
@@ -6,18 +6,18 @@ const UNSAFE = '9007199254740993';
 
 let yaml: YamlTools;
 
-test.beforeAll(async () => {
+beforeAll(async () => {
   yaml = await loadYamlTools();
 });
 
-test.describe('loadYamlTools', () => {
+describe('loadYamlTools', () => {
   test('loads the parser once and hands back the same tools', async () => {
     expect(await loadYamlTools()).toBe(yaml);
     expect(loadYamlTools()).toBe(loadYamlTools());
   });
 });
 
-test.describe('validate', () => {
+describe('validate', () => {
   test('returns null for empty and whitespace-only text', () => {
     expect(yaml.validate('')).toBeNull();
     expect(yaml.validate(' \n\t\n')).toBeNull();
@@ -96,14 +96,14 @@ test.describe('validate', () => {
   });
 });
 
-test.describe('describeError', () => {
+describe('describeError', () => {
   test('falls back for errors that are not from the parser', () => {
     expect(yaml.describeError(new Error('boom'))).toBe('boom');
     expect(yaml.describeError('nope')).toBe('Invalid YAML syntax');
   });
 });
 
-test.describe('large integers', () => {
+describe('large integers', () => {
   test('keeps an integer too large for a double', () => {
     const [document] = yaml.parseDocuments(
       `id: ${UNSAFE}\nneg: -${UNSAFE}\nhex: 0xFFFFFFFFFFFFFFFF`
@@ -141,7 +141,7 @@ test.describe('large integers', () => {
   });
 });
 
-test.describe('render', () => {
+describe('render', () => {
   const documents = [{ name: 'Ada', roles: ['Admin', 'Editor'], nested: { deep: { value: 1 } } }];
 
   test('formats with the requested indent', () => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -14,7 +14,7 @@ import {
 const generate = (text: string, changes: Partial<NumeronymOptions> = {}) =>
   generateNumeronyms(text, { ...DEFAULT_OPTIONS, ...changes });
 
-test.describe('numeronym', () => {
+describe('numeronym', () => {
   test('the well-known ones', () => {
     expect(numeronym('internationalization')).toBe('i18n'); // 20 letters
     expect(numeronym('localization')).toBe('l10n'); // 12
@@ -57,7 +57,7 @@ test.describe('numeronym', () => {
   });
 });
 
-test.describe('per-word mode', () => {
+describe('per-word mode', () => {
   test('shortens each word in place and leaves the rest alone', () => {
     expect(generate('The internationalization of Kubernetes, again!')).toBe(
       'The i18n of K8s, a3n!'
@@ -95,7 +95,7 @@ test.describe('per-word mode', () => {
   });
 });
 
-test.describe('phrase mode', () => {
+describe('phrase mode', () => {
   test('treats the letters and digits of a line as one word', () => {
     expect(generate('Hello, World!', { mode: 'phrase' })).toBe('H8d'); // HelloWorld has 10 letters
     expect(generate('Hello, World!', { mode: 'phrase', lowercase: true })).toBe('h8d');

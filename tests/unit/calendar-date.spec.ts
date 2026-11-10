@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DAY_IN_MS,
   daysInMonth,
@@ -10,7 +10,7 @@ import {
   utcTime,
 } from '@/lib/tools/calendar-date';
 
-test.describe('utcTime', () => {
+describe('utcTime', () => {
   test('matches Date.UTC for ordinary years', () => {
     expect(utcTime(2024, 1, 29)).toBe(Date.UTC(2024, 1, 29));
     expect(utcTime(1970, 0, 1)).toBe(0);
@@ -31,7 +31,7 @@ test.describe('utcTime', () => {
   });
 });
 
-test.describe('daysInMonth', () => {
+describe('daysInMonth', () => {
   test('knows the leap year rules', () => {
     expect(daysInMonth(2023, 1)).toBe(28);
     expect(daysInMonth(2024, 1)).toBe(29);
@@ -49,7 +49,7 @@ test.describe('daysInMonth', () => {
   });
 });
 
-test.describe('parseDateInput', () => {
+describe('parseDateInput', () => {
   test('reads a real date as UTC midnight', () => {
     expect(parseDateInput('1990-06-15')?.toISOString()).toBe('1990-06-15T00:00:00.000Z');
     expect(parseDateInput('2024-02-29')?.toISOString()).toBe('2024-02-29T00:00:00.000Z');
@@ -87,7 +87,7 @@ test.describe('parseDateInput', () => {
   });
 });
 
-test.describe('formatDateInput and toDateInputValue', () => {
+describe('formatDateInput and toDateInputValue', () => {
   test('pads every field', () => {
     expect(formatDateInput(2024, 1, 5)).toBe('2024-01-05');
     expect(formatDateInput(50, 12, 31)).toBe('0050-12-31');
@@ -105,7 +105,7 @@ test.describe('formatDateInput and toDateInputValue', () => {
   });
 });
 
-test.describe('formatLongDate', () => {
+describe('formatLongDate', () => {
   test('writes the date out in words', () => {
     expect(formatLongDate('1990-06-15')).toBe('June 15, 1990');
     expect(formatLongDate('2024-02-29')).toBe('February 29, 2024');

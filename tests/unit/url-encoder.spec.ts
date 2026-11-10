@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   convertUrlComponent,
   decodeUrlComponent,
   encodeUrlComponent,
 } from '@/lib/tools/url-encoder';
 
-test.describe('encodeUrlComponent', () => {
+describe('encodeUrlComponent', () => {
   test('percent-encodes reserved characters and spaces', () => {
     expect(encodeUrlComponent('https://example.com/search?q=hello world')).toBe(
       'https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dhello%20world'
@@ -28,7 +28,7 @@ test.describe('encodeUrlComponent', () => {
   });
 });
 
-test.describe('decodeUrlComponent', () => {
+describe('decodeUrlComponent', () => {
   test('reverses encodeUrlComponent', () => {
     for (const text of ['hello world', 'a&b=c+d#e', 'é 日本 😀', '100%', 'line1\nline2', '']) {
       expect(decodeUrlComponent(encodeUrlComponent(text))).toBe(text);
@@ -59,7 +59,7 @@ test.describe('decodeUrlComponent', () => {
   });
 });
 
-test.describe('convertUrlComponent', () => {
+describe('convertUrlComponent', () => {
   test('returns nothing for empty input', () => {
     expect(convertUrlComponent('', 'encode')).toEqual({ output: '', error: '' });
     expect(convertUrlComponent('', 'decode')).toEqual({ output: '', error: '' });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   COMPOUNDING_OPTIONS,
   buildChartGeometry,
@@ -36,7 +36,7 @@ const base: CompoundInput = {
   compoundsPerYear: 12,
 };
 
-test.describe('roundCents', () => {
+describe('roundCents', () => {
   test('rounds half up and ignores floating-point noise', () => {
     expect(roundCents(1647.0094976902803)).toBe(164701);
     expect(roundCents(0.125)).toBe(13);
@@ -45,7 +45,7 @@ test.describe('roundCents', () => {
   });
 });
 
-test.describe('monthlyGrowthRate', () => {
+describe('monthlyGrowthRate', () => {
   test('monthly compounding is rate / 12', () => {
     expect(monthlyGrowthRate(12, 12)).toBeCloseTo(0.01, 12);
   });
@@ -55,7 +55,7 @@ test.describe('monthlyGrowthRate', () => {
   });
 });
 
-test.describe('calculateCompoundInterest, no contributions', () => {
+describe('calculateCompoundInterest, no contributions', () => {
   test('1000 at 5% for 10 years compounded monthly is 1647.01', () => {
     const result = ready(base);
     // 1000 * (1 + 0.05 / 12) ^ 120 = 1647.0094977
@@ -112,7 +112,7 @@ test.describe('calculateCompoundInterest, no contributions', () => {
   });
 });
 
-test.describe('calculateCompoundInterest, with contributions', () => {
+describe('calculateCompoundInterest, with contributions', () => {
   test('100 a month at 5% for 10 years, paid at the end of the month, is 15528.23', () => {
     // 100 * ((1 + 0.05 / 12) ^ 120 - 1) / (0.05 / 12) = 15528.2279
     const result = ready({ ...base, principal: 0, monthlyContribution: 100 });
@@ -172,7 +172,7 @@ test.describe('calculateCompoundInterest, with contributions', () => {
   });
 });
 
-test.describe('table and chart', () => {
+describe('table and chart', () => {
   const result = ready({ ...base, monthlyContribution: 100 });
 
   test('every row adds up exactly and rows chain together', () => {
@@ -220,7 +220,7 @@ test.describe('table and chart', () => {
   });
 });
 
-test.describe('chart geometry', () => {
+describe('chart geometry', () => {
   const box = { width: 600, height: 300, left: 50, right: 10, top: 10, bottom: 30 };
 
   test('places the first point bottom-left of the plot and scales to a round axis', () => {
@@ -255,7 +255,7 @@ test.describe('chart geometry', () => {
   });
 });
 
-test.describe('validation', () => {
+describe('validation', () => {
   test('rejects negative and out-of-range numbers per field', () => {
     expect(errorsOf({ ...base, principal: -1 }).principal).toBe(
       'Starting amount cannot be negative.'
@@ -296,7 +296,7 @@ test.describe('validation', () => {
   });
 });
 
-test.describe('evaluateCompoundInterest', () => {
+describe('evaluateCompoundInterest', () => {
   const fields: CompoundFields = {
     principal: '1,000',
     rate: '5',
@@ -338,7 +338,7 @@ test.describe('evaluateCompoundInterest', () => {
   });
 });
 
-test.describe('output', () => {
+describe('output', () => {
   const result = ready({ ...base, monthlyContribution: 100 });
   const money = createCentsFormatter('USD');
 

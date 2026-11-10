@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MAX_CANVAS_PIXELS,
   RENDER_SCALE,
@@ -15,7 +15,7 @@ const ARCH_E: [number, number] = [2592, 3456];
 const canvasPixels = ([width, height]: [number, number], scale: number) =>
   Math.floor(width * scale) * Math.floor(height * scale);
 
-test.describe('pageRenderScale', () => {
+describe('pageRenderScale', () => {
   test('draws ordinary pages at the full scale', () => {
     expect(RENDER_SCALE).toBe(2);
     expect(pageRenderScale(...A4)).toBe(2);
@@ -61,7 +61,7 @@ test.describe('pageRenderScale', () => {
 
 // A page that could not be drawn used to be skipped, so every later image
 // took the number of the page before it, and nothing was said.
-test.describe('describeFailedPages', () => {
+describe('describeFailedPages', () => {
   test('says nothing when every page worked', () => {
     expect(describeFailedPages([], 12)).toBe('');
   });

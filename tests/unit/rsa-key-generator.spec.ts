@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { generateRsaKeyPair, rsaKeyFileName, type RsaKeyPair } from '@/lib/tools/rsa-key-generator';
 
 const OAEP = { name: 'RSA-OAEP', hash: 'SHA-256' } as const;
@@ -40,7 +40,7 @@ async function importDer(pair: {
 
 const modulusBits = (key: CryptoKey) => (key.algorithm as RsaHashedKeyAlgorithm).modulusLength;
 
-test.describe('generateRsaKeyPair', () => {
+describe('generateRsaKeyPair', () => {
   test('PEM: SPKI and PKCS#8 blocks that import and work as a pair', async () => {
     const pair = await generateRsaKeyPair(2048, 'PEM');
     expect(pair.format).toBe('PEM');
@@ -110,7 +110,7 @@ test.describe('generateRsaKeyPair', () => {
   });
 });
 
-test.describe('rsaKeyFileName', () => {
+describe('rsaKeyFileName', () => {
   test('names the files after the key and its format', () => {
     expect(rsaKeyFileName('public', 'PEM')).toBe('public_key.pem');
     expect(rsaKeyFileName('private', 'PEM')).toBe('private_key.pem');

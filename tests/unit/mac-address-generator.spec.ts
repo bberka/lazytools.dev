@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   applyMacFlags,
   DEFAULT_MAC_OPTIONS,
@@ -28,7 +28,7 @@ const options = (overrides: Partial<MacOptions>): MacOptions => ({
   ...overrides,
 });
 
-test.describe('formatMac', () => {
+describe('formatMac', () => {
   const bytes = [0x00, 0x1a, 0x2b, 0x3c, 0x4d, 0x5e];
 
   test('writes every format', () => {
@@ -49,7 +49,7 @@ test.describe('formatMac', () => {
   });
 });
 
-test.describe('applyMacFlags', () => {
+describe('applyMacFlags', () => {
   test('clears the multicast bit for unicast and sets it for multicast', () => {
     expect(applyMacFlags(0xff, 'unicast', 'any')).toBe(0xfe);
     expect(applyMacFlags(0x00, 'multicast', 'any')).toBe(0x01);
@@ -72,7 +72,7 @@ test.describe('applyMacFlags', () => {
   });
 });
 
-test.describe('generateMacs', () => {
+describe('generateMacs', () => {
   test('applies the flags to the random first byte', () => {
     const fill = fillWith(0xff, 1, 2, 3, 4, 5);
     expect(generateMacs(options({ count: 1, cast: 'unicast', scope: 'local' }), fill)).toEqual([
@@ -119,7 +119,7 @@ test.describe('generateMacs', () => {
   });
 });
 
-test.describe('parseMacCount', () => {
+describe('parseMacCount', () => {
   test('accepts 1 to 1000 only', () => {
     expect(parseMacCount('1')).toBe(1);
     expect(parseMacCount(' 1000 ')).toBe(1000);
@@ -131,7 +131,7 @@ test.describe('parseMacCount', () => {
   });
 });
 
-test.describe('parseMac', () => {
+describe('parseMac', () => {
   test('reads a global unicast address in colon form', () => {
     expect(info('00:1A:2B:3C:4D:5E')).toEqual({
       format: 'colon',

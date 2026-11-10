@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createHash } from 'node:crypto';
 import {
   EMPTY_HASHES,
@@ -37,7 +37,7 @@ function pseudoRandomBytes(length: number, seed: number): Uint8Array {
   return bytes;
 }
 
-test.describe('computeHashes', () => {
+describe('computeHashes', () => {
   test('hashes text as UTF-8 with the published digests', async () => {
     expect(await computeHashes('abc')).toEqual({
       MD5: '900150983cd24fb0d6963f7d28e17f72',
@@ -108,7 +108,7 @@ test.describe('computeHashes', () => {
   });
 });
 
-test.describe('findMatchingAlgorithm', () => {
+describe('findMatchingAlgorithm', () => {
   test('names the algorithm whose digest was pasted', async () => {
     const hashes = await computeHashes('abc');
     for (const algorithm of HASH_ALGORITHMS) {

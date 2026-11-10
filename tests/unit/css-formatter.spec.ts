@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   beautifyCss,
   byteLength,
@@ -10,7 +10,7 @@ import {
 const min = (css: string, keepImportantComments = false) =>
   minifyCss(css, { keepImportantComments }).output;
 
-test.describe('minifyCss basics', () => {
+describe('minifyCss basics', () => {
   test('strips comments, whitespace and the last semicolon', () => {
     expect(min('/* header */\na {\n  color : red ;\n  margin : 0 auto ;\n}\n\n/* end */')).toBe(
       'a{color:red;margin:0 auto}'
@@ -43,7 +43,7 @@ test.describe('minifyCss basics', () => {
   });
 });
 
-test.describe('minifyCss keeps strings, urls and comments inside them intact', () => {
+describe('minifyCss keeps strings, urls and comments inside them intact', () => {
   test('a string with comment markers, braces, semicolons and double spaces', () => {
     expect(min('a::after{content:"a  /* not a comment */ ; } b"}')).toBe(
       'a::after{content:"a  /* not a comment */ ; } b"}'
@@ -84,7 +84,7 @@ test.describe('minifyCss keeps strings, urls and comments inside them intact', (
   });
 });
 
-test.describe('minifyCss keeps the spacing CSS needs', () => {
+describe('minifyCss keeps the spacing CSS needs', () => {
   test('calc keeps the spaces around + and -', () => {
     expect(min('a{width:calc( 100% - ( 2 * var( --gap , 4px ) ) )}')).toBe(
       'a{width:calc(100% - (2 * var(--gap,4px)))}'
@@ -140,7 +140,7 @@ test.describe('minifyCss keeps the spacing CSS needs', () => {
   });
 });
 
-test.describe('minifyCss shortens numbers and colours only where that is safe', () => {
+describe('minifyCss shortens numbers and colours only where that is safe', () => {
   test('shortenNumber', () => {
     expect(shortenNumber('0.5')).toBe('.5');
     expect(shortenNumber('0.50em')).toBe('.5em');
@@ -205,7 +205,7 @@ test.describe('minifyCss shortens numbers and colours only where that is safe', 
   });
 });
 
-test.describe('minifyCss with at-rules and nesting', () => {
+describe('minifyCss with at-rules and nesting', () => {
   test('@media, @supports, @container prelude spacing', () => {
     expect(min('@media screen and ( min-width : 600px ) and (max-width: 900px) { a{b:c} }')).toBe(
       '@media screen and (min-width:600px) and (max-width:900px){a{b:c}}'
@@ -270,7 +270,7 @@ test.describe('minifyCss with at-rules and nesting', () => {
   });
 });
 
-test.describe('minifyCss comments option', () => {
+describe('minifyCss comments option', () => {
   test('/*! comments are kept on request', () => {
     const css = '/*! MIT License */\n/* drop me */\na { b : c }';
     expect(min(css)).toBe('a{b:c}');
@@ -278,7 +278,7 @@ test.describe('minifyCss comments option', () => {
   });
 });
 
-test.describe('warnings', () => {
+describe('warnings', () => {
   test('a stray closing brace', () => {
     const result = minifyCss('a{b:c}\n}\nd{e:f}');
     expect(result.output).toBe('a{b:c}d{e:f}');
@@ -308,7 +308,7 @@ test.describe('warnings', () => {
   });
 });
 
-test.describe('beautifyCss', () => {
+describe('beautifyCss', () => {
   test('one declaration per line, two-space indent, blank line between blocks', () => {
     expect(beautifyCss('a{color:red;margin:0 auto}b,c>d{x:y}').output).toBe(
       'a {\n  color: red;\n  margin: 0 auto;\n}\n\nb,\nc > d {\n  x: y;\n}\n'
@@ -423,7 +423,7 @@ test.describe('beautifyCss', () => {
   });
 });
 
-test.describe('sizes', () => {
+describe('sizes', () => {
   test('byteLength counts UTF-8 bytes', () => {
     expect(byteLength('abc')).toBe(3);
     expect(byteLength('é')).toBe(2);
@@ -452,7 +452,7 @@ test.describe('sizes', () => {
   });
 });
 
-test.describe('limits', () => {
+describe('limits', () => {
   test('blocks nested thousands deep are returned unchanged with a warning', () => {
     const deep = `${'a{'.repeat(20000)}b:c${'}'.repeat(20000)}`;
     for (const result of [minifyCss(deep), beautifyCss(deep)]) {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   calculateClamp,
   clampChart,
@@ -26,7 +26,7 @@ const DEFAULTS: ClampInput = {
 const calculate = (overrides: Partial<ClampInput> = {}) =>
   calculateClamp({ ...DEFAULTS, ...overrides });
 
-test.describe('parseDecimal', () => {
+describe('parseDecimal', () => {
   test('reads plain decimals', () => {
     expect(parseDecimal('16')).toBe(16);
     expect(parseDecimal(' 1.5 ')).toBe(1.5);
@@ -65,7 +65,7 @@ test.describe('parseDecimal', () => {
   });
 });
 
-test.describe('roundTo', () => {
+describe('roundTo', () => {
   test('rounds half up without binary-fraction misses', () => {
     expect(roundTo(1.005, 2)).toBe(1.01);
     expect(roundTo(0.45454545)).toBe(0.4545);
@@ -77,7 +77,7 @@ test.describe('roundTo', () => {
   });
 });
 
-test.describe('calculateClamp', () => {
+describe('calculateClamp', () => {
   test('builds the default fluid font size in rem', () => {
     // Slope: (32 - 16) / (1200 - 320) = 0.0181818 px per px, so 1.8182vw.
     // Intercept: 16 - 0.0181818 * 320 = 10.1818px = 0.6364rem.
@@ -256,7 +256,7 @@ test.describe('calculateClamp', () => {
   });
 });
 
-test.describe('sizeAtViewport', () => {
+describe('sizeAtViewport', () => {
   const calculation = calculate();
 
   test('holds the limits outside the fluid range', () => {
@@ -296,7 +296,7 @@ test.describe('sizeAtViewport', () => {
   });
 });
 
-test.describe('clampChart', () => {
+describe('clampChart', () => {
   test('pads the fluid range by a quarter on each side', () => {
     expect(clampChart(calculate())).toEqual({
       xMin: 100,

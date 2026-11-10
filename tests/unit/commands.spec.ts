@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   APP_COMMANDS,
   APP_COMMANDS_IN_ORDER,
@@ -51,7 +51,7 @@ function ids(commands: readonly { id: string }[]): string[] {
   return commands.map((command) => command.id);
 }
 
-test.describe('shortcut matching', () => {
+describe('shortcut matching', () => {
   const modShiftDelete: Shortcut = { key: 'Delete', mod: true, shift: true };
 
   test('takes Ctrl as the command modifier off macOS', () => {
@@ -147,7 +147,7 @@ test.describe('shortcut matching', () => {
   });
 });
 
-test.describe('palette shortcuts', () => {
+describe('palette shortcuts', () => {
   test('toggle the palette with Ctrl+K or Cmd+K on every platform', () => {
     for (const platform of PLATFORMS) {
       expect(
@@ -214,7 +214,7 @@ test.describe('palette shortcuts', () => {
   });
 });
 
-test.describe('shortcut labels', () => {
+describe('shortcut labels', () => {
   test('name the command modifier per platform', () => {
     expect(shortcutKeys(PALETTE_SHORTCUTS.toggle, 'other')).toEqual(['Ctrl', 'K']);
     expect(shortcutKeys(PALETTE_SHORTCUTS.toggle, 'mac')).toEqual(['⌘', 'K']);
@@ -251,7 +251,7 @@ test.describe('shortcut labels', () => {
   });
 });
 
-test.describe('platform detection', () => {
+describe('platform detection', () => {
   test('reads Apple devices as mac and everything else as other', () => {
     const apple = [
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.4 Safari/605.1.15',
@@ -285,7 +285,7 @@ test.describe('platform detection', () => {
   });
 });
 
-test.describe('typing target', () => {
+describe('typing target', () => {
   test('is an input, a textarea or an editable element', () => {
     expect(isTypingTarget(element('INPUT'))).toBe(true);
     expect(isTypingTarget(element('TEXTAREA'))).toBe(true);
@@ -300,7 +300,7 @@ test.describe('typing target', () => {
   });
 });
 
-test.describe('app commands', () => {
+describe('app commands', () => {
   test('are the five commands, in the order the palette lists them', () => {
     expect(ids(APP_COMMANDS_IN_ORDER)).toEqual([
       'toggleTheme',
@@ -449,13 +449,13 @@ test.describe('app commands', () => {
   });
 
   test('only the clear commands can have nothing to do', () => {
-    const withCheck = APP_COMMANDS_IN_ORDER.filter((command) => command.nothingToDo);
+    const withCheck = APP_COMMANDS_IN_ORDER.filter((command) => command.nothingToDo !== undefined);
 
     expect(ids(withCheck)).toEqual(['clearRecentTools', 'clearFavorites']);
   });
 });
 
-test.describe('command search', () => {
+describe('command search', () => {
   const state = stateWith();
 
   test('returns every command for a blank query', () => {
@@ -495,7 +495,7 @@ test.describe('command search', () => {
   });
 });
 
-test.describe('command shortcuts', () => {
+describe('command shortcuts', () => {
   const anywhere = { platform: 'other', paletteOpen: false, typing: false } as const;
 
   test('are Alt+C, Alt+W and the command modifier with Shift and Delete', () => {

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { lineEnding, numberReader, plural, splitLines } from '@/lib/text';
 
-test.describe('splitLines', () => {
+describe('splitLines', () => {
   test('splits on LF, CRLF and CR and ignores one trailing line break', () => {
     expect(splitLines('a\nb')).toEqual(['a', 'b']);
     expect(splitLines('a\r\nb\r\n')).toEqual(['a', 'b']);
@@ -15,7 +15,7 @@ test.describe('splitLines', () => {
   });
 });
 
-test.describe('lineEnding', () => {
+describe('lineEnding', () => {
   test('is CRLF when any line break is CRLF, LF otherwise', () => {
     expect(lineEnding('a\r\nb')).toBe('\r\n');
     expect(lineEnding('a\nb\r\nc')).toBe('\r\n');
@@ -24,7 +24,7 @@ test.describe('lineEnding', () => {
   });
 });
 
-test.describe('plural', () => {
+describe('plural', () => {
   test('adds an s unless the count is exactly one', () => {
     expect(plural(1, 'item')).toBe('1 item');
     expect(plural(0, 'item')).toBe('0 items');
@@ -38,7 +38,7 @@ test.describe('plural', () => {
   });
 });
 
-test.describe('numberReader', () => {
+describe('numberReader', () => {
   const read = numberReader('Enter a number.');
 
   test('reads plain, signed and grouped numbers', () => {

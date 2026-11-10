@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildPathSvg,
   inspectPath,
@@ -13,7 +13,7 @@ const SQUARE = 'M 10 10 H 90 V 90 H 10 L 10 10';
 const values = (pathData: string) =>
   parsePath(pathData).segments.map(({ command, args }) => [command, ...args.map(Number)]);
 
-test.describe('parsePath', () => {
+describe('parsePath', () => {
   test('splits path data into commands and their numbers', () => {
     expect(parsePath(SQUARE)).toEqual({
       error: '',
@@ -104,7 +104,7 @@ test.describe('parsePath', () => {
   });
 });
 
-test.describe('optimizePath', () => {
+describe('optimizePath', () => {
   test('drops optional whitespace', () => {
     expect(optimizePath(SQUARE)).toBe('M10 10H90V90H10L10 10');
   });
@@ -171,7 +171,7 @@ test.describe('optimizePath', () => {
   });
 });
 
-test.describe('inspectPath', () => {
+describe('inspectPath', () => {
   test('summarises a valid path', () => {
     expect(inspectPath(SQUARE)).toEqual({
       empty: false,
@@ -215,7 +215,7 @@ test.describe('inspectPath', () => {
   });
 });
 
-test.describe('isValidViewBox', () => {
+describe('isValidViewBox', () => {
   test('accepts four numbers separated by spaces or commas', () => {
     expect(isValidViewBox('0 0 100 100')).toBe(true);
     expect(isValidViewBox(' -10,-10,20.5,1e2 ')).toBe(true);
@@ -237,7 +237,7 @@ test.describe('isValidViewBox', () => {
   });
 });
 
-test.describe('buildPathSvg', () => {
+describe('buildPathSvg', () => {
   const options = {
     pathData: SQUARE,
     viewBox: '0 0 100 100',

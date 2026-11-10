@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { calculateBmi, getBmiCategory, type BmiInput } from '@/lib/tools/bmi-calculator';
 
 const BLANK: BmiInput = {
@@ -16,7 +16,7 @@ const metric = (weightKg: string, heightCm: string) =>
 const us = (weightLb: string, heightFeet: string, heightInches: string) =>
   calculateBmi({ ...BLANK, unitSystem: 'us', weightLb, heightFeet, heightInches });
 
-test.describe('getBmiCategory', () => {
+describe('getBmiCategory', () => {
   test('includes the lower bound of each CDC range', () => {
     expect(getBmiCategory(18.4).id).toBe('underweight');
     expect(getBmiCategory(18.5).id).toBe('healthy');
@@ -39,7 +39,7 @@ test.describe('getBmiCategory', () => {
   });
 });
 
-test.describe('calculateBmi', () => {
+describe('calculateBmi', () => {
   test('calculates from metric units', () => {
     expect(metric('72', '175')).toEqual({
       bmi: '23.5',

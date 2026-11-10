@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MAX_COUNT,
   MAX_TIMESTAMP,
@@ -59,7 +59,7 @@ function sequenceBytes(...hexes: string[]): RandomBytes {
 const ZERO_RANDOM = '00000000000000000000';
 const MAX_RANDOM_HEX = 'ffffffffffffffffffff';
 
-test.describe('encodeTime', () => {
+describe('encodeTime', () => {
   test('matches the ULID spec example', () => {
     expect(valueOf(encodeTime(SPEC_TIME))).toBe(SPEC_TIME_PART);
   });
@@ -83,7 +83,7 @@ test.describe('encodeTime', () => {
   });
 });
 
-test.describe('generateUlids', () => {
+describe('generateUlids', () => {
   test('builds a ULID from a timestamp and injected randomness', () => {
     const ulids = valueOf(
       generateUlids(
@@ -300,7 +300,7 @@ test.describe('generateUlids', () => {
   });
 });
 
-test.describe('decodeUlid', () => {
+describe('decodeUlid', () => {
   test('decodes the ULID from the spec', () => {
     expect(valueOf(decodeUlid(SPEC_ULID))).toEqual({
       ulid: SPEC_ULID,
@@ -401,7 +401,7 @@ test.describe('decodeUlid', () => {
   });
 });
 
-test.describe('ULID and UUID layout', () => {
+describe('ULID and UUID layout', () => {
   test('converts the spec ULID to its UUID form and back', () => {
     expect(valueOf(ulidToUuid(SPEC_ULID))).toBe(SPEC_ULID_UUID);
     expect(valueOf(uuidToUlid(SPEC_ULID_UUID))).toBe(SPEC_ULID);
@@ -460,7 +460,7 @@ test.describe('ULID and UUID layout', () => {
   });
 });
 
-test.describe('parseTimestampInput', () => {
+describe('parseTimestampInput', () => {
   test('reads Unix milliseconds', () => {
     expect(valueOf(parseTimestampInput('1469918176385'))).toBe(SPEC_TIME);
     expect(valueOf(parseTimestampInput('  0  '))).toBe(0);
@@ -483,7 +483,7 @@ test.describe('parseTimestampInput', () => {
   });
 });
 
-test.describe('parseCount', () => {
+describe('parseCount', () => {
   test('accepts whole numbers from 1 to 1000', () => {
     expect(valueOf(parseCount('1'))).toBe(1);
     expect(valueOf(parseCount(' 250 '))).toBe(250);
@@ -497,7 +497,7 @@ test.describe('parseCount', () => {
   });
 });
 
-test.describe('formatRelativeTime', () => {
+describe('formatRelativeTime', () => {
   const now = 1_700_000_000_000;
 
   test('says "just now" within five seconds either way', () => {

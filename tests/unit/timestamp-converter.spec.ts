@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   changeUnit,
   createConverterState,
@@ -29,7 +29,7 @@ const localFields = (ms: number) => {
 const blank = createConverterState();
 const blankMs = createConverterState('milliseconds');
 
-test.describe('parseTimestamp', () => {
+describe('parseTimestamp', () => {
   test('reads seconds and milliseconds', () => {
     expect(parseTimestamp('1640995200', 'seconds')).toEqual({ kind: 'instant', ms: 1640995200000 });
     expect(parseTimestamp('1640995200000', 'milliseconds')).toEqual({
@@ -90,7 +90,7 @@ test.describe('parseTimestamp', () => {
   });
 });
 
-test.describe('formatTimestamp', () => {
+describe('formatTimestamp', () => {
   test('writes the moment in the unit, rounding seconds down', () => {
     expect(formatTimestamp(1640995215123, 'milliseconds')).toBe('1640995215123');
     expect(formatTimestamp(1640995215123, 'seconds')).toBe('1640995215');
@@ -99,7 +99,7 @@ test.describe('formatTimestamp', () => {
   });
 });
 
-test.describe('local date and time', () => {
+describe('local date and time', () => {
   test('toLocalDateTime gives the wall-clock fields of a moment', () => {
     const ms = Date.UTC(2024, 5, 15, 12, 34, 56, 789);
     expect(toLocalDateTime(ms)).toEqual(localFields(ms));
@@ -162,7 +162,7 @@ test.describe('local date and time', () => {
   });
 });
 
-test.describe('editTimestamp', () => {
+describe('editTimestamp', () => {
   // The results used to be rebuilt from the date, hour and minute alone, so
   // this showed 00:00:00 instead of 00:00:15.
   test('keeps the seconds of a typed timestamp', () => {
@@ -234,7 +234,7 @@ test.describe('editTimestamp', () => {
   });
 });
 
-test.describe('editDateTime', () => {
+describe('editDateTime', () => {
   test('sets the timestamp from a picked date and time', () => {
     const dated = editDateTime(blank, { date: '2024-03-05' });
     expect(dated.instant).toBe(new Date(2024, 2, 5).getTime());
@@ -304,7 +304,7 @@ test.describe('editDateTime', () => {
   });
 });
 
-test.describe('showInstant', () => {
+describe('showInstant', () => {
   test('puts a moment on both sides at the precision of the unit', () => {
     const seconds = showInstant(blank, 1640995215789);
     expect(seconds.timestamp).toBe('1640995215');
@@ -325,7 +325,7 @@ test.describe('showInstant', () => {
   });
 });
 
-test.describe('changeUnit', () => {
+describe('changeUnit', () => {
   // The timestamp used to be rebuilt from the date and time, which lost the
   // seconds: 1640995215 became 1640995200000.
   test('keeps the moment and rewrites the timestamp', () => {
@@ -381,7 +381,7 @@ test.describe('changeUnit', () => {
   });
 });
 
-test.describe('formatRelativeTime', () => {
+describe('formatRelativeTime', () => {
   const now = 1_700_000_000_000;
   const second = 1000;
   const minute = 60 * second;
@@ -415,7 +415,7 @@ test.describe('formatRelativeTime', () => {
   });
 });
 
-test.describe('describeInstant', () => {
+describe('describeInstant', () => {
   test('gives the ISO, UTC and local forms', () => {
     expect(describeInstant(0)).toEqual({
       iso: '1970-01-01T00:00:00.000Z',

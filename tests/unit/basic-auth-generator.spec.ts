@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildSnippets,
   decodeBasicAuth,
@@ -36,7 +36,7 @@ function decodeError(input: string) {
   return result.error;
 }
 
-test.describe('encodeBasicAuth', () => {
+describe('encodeBasicAuth', () => {
   test('builds the header from the RFC 7617 example', () => {
     expect(encoded('Aladdin', 'open sesame')).toEqual({
       ok: true,
@@ -75,7 +75,7 @@ test.describe('encodeBasicAuth', () => {
   });
 });
 
-test.describe('decodeBasicAuth', () => {
+describe('decodeBasicAuth', () => {
   test('reads a whole header, a header value and a bare token', () => {
     const expected = { username: 'user', password: 'pass' };
     expect(decoded(basicAuthorizationHeader(USER_PASS))).toEqual(expected);
@@ -135,7 +135,7 @@ test.describe('decodeBasicAuth', () => {
   });
 });
 
-test.describe('snippets', () => {
+describe('snippets', () => {
   test('quotes single quotes for the shell', () => {
     expect(shellQuote("it's")).toBe(`'it'\\''s'`);
     expect(shellQuote('plain')).toBe("'plain'");

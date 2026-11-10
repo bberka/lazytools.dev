@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -23,7 +23,7 @@ function run(text: string, changes: Partial<LineOptions>) {
   return processLines(text, { ...plain, ...changes });
 }
 
-test.describe('leadingNumber', () => {
+describe('leadingNumber', () => {
   test('reads the number a line starts with', () => {
     expect(leadingNumber('10 apples')).toBe(10);
     expect(leadingNumber('  -3.5kg')).toBe(-3.5);
@@ -39,7 +39,7 @@ test.describe('leadingNumber', () => {
   });
 });
 
-test.describe('sorting', () => {
+describe('sorting', () => {
   test('A to Z puts lower case before upper case for the same letter and ignores case otherwise', () => {
     expect(run('banana\nApple\ncherry', { sort: 'az' }).text).toBe('Apple\nbanana\ncherry');
     expect(run('b\nA\na\nB', { sort: 'az' }).text).toBe('a\nA\nb\nB');
@@ -90,7 +90,7 @@ test.describe('sorting', () => {
   });
 });
 
-test.describe('processLines', () => {
+describe('processLines', () => {
   test('removes duplicates and counts them; the first occurrence stays', () => {
     const result = run('a\nA\na\nb', { removeDuplicates: true });
     expect(result.text).toBe('a\nA\nb');

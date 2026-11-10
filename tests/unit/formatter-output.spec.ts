@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeLineCount,
   describeTreeNode,
@@ -9,7 +9,7 @@ import { ExactNumber } from '@/lib/tools/json-formatter';
 const JSON_WORDS: TreeVocabulary = { list: 'Array', map: 'Object', member: 'key', empty: 'null' };
 const XML_WORDS: TreeVocabulary = { list: 'List', map: 'Element', member: 'node', empty: 'empty' };
 
-test.describe('describeLineCount', () => {
+describe('describeLineCount', () => {
   test('counts lines and uses the singular for one', () => {
     expect(describeLineCount('a\nb\nc')).toBe('3 lines');
     expect(describeLineCount('{"a":1}')).toBe('1 line');
@@ -30,7 +30,7 @@ test.describe('describeLineCount', () => {
   });
 });
 
-test.describe('describeTreeNode leaves', () => {
+describe('describeTreeNode leaves', () => {
   test('describes scalars', () => {
     expect(describeTreeNode(true, JSON_WORDS)).toEqual({
       kind: 'leaf',
@@ -98,7 +98,7 @@ test.describe('describeTreeNode leaves', () => {
   });
 });
 
-test.describe('describeTreeNode branches', () => {
+describe('describeTreeNode branches', () => {
   test('lists array items by index', () => {
     expect(describeTreeNode(['a', null], JSON_WORDS)).toEqual({
       kind: 'branch',

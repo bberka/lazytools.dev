@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CURL_TARGET_LANGUAGES,
   PLACEHOLDER_URL,
@@ -16,7 +16,7 @@ const EXAMPLE = `curl -X POST https://api.example.com/v1/users \\
   -H "Authorization: Bearer token123" \\
   -d '{"name": "Ada", "role": "admin"}'`;
 
-test.describe('parseCurl', () => {
+describe('parseCurl', () => {
   test('reads method, URL, headers and body', () => {
     expect(parseCurl(EXAMPLE)).toEqual({
       url: 'https://api.example.com/v1/users',
@@ -293,7 +293,7 @@ test.describe('parseCurl', () => {
   });
 });
 
-test.describe('generateRequestCode', () => {
+describe('generateRequestCode', () => {
   test('writes the fetch snippet', () => {
     expect(convert(EXAMPLE, 'js-fetch')).toBe(
       [
@@ -524,7 +524,7 @@ test.describe('generateRequestCode', () => {
   });
 });
 
-test.describe('snippetNotes', () => {
+describe('snippetNotes', () => {
   const notesFor = (command: string, language: CurlTargetLanguage) =>
     snippetNotes(parseCurl(command), language);
 

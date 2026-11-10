@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import type { FetchLike } from '@/lib/tools/network-fetch';
 import {
   COMMON_PORTS,
@@ -33,7 +33,7 @@ const hang: FetchLike = (_input, init) =>
     );
   });
 
-test.describe('parseScanHost', () => {
+describe('parseScanHost', () => {
   test('accepts hostnames and trims them', () => {
     expect(hostOf('localhost')).toBe('localhost');
     expect(hostOf('  example.com ')).toBe('example.com');
@@ -101,7 +101,7 @@ test.describe('parseScanHost', () => {
   });
 });
 
-test.describe('parsePortList', () => {
+describe('parsePortList', () => {
   test('reads single ports and ranges, sorted and without duplicates', () => {
     expect(portsOf('80')).toEqual([80]);
     expect(portsOf('443,80')).toEqual([80, 443]);
@@ -170,7 +170,7 @@ test.describe('parsePortList', () => {
   });
 });
 
-test.describe('planScan', () => {
+describe('planScan', () => {
   test('scans the common ports in common mode, whatever the port field holds', () => {
     const plan = planScan('example.com', 'common', 'not ports');
     expect(plan).toEqual({ ok: true, host: 'example.com', ports: [...COMMON_PORTS] });
@@ -209,7 +209,7 @@ test.describe('planScan', () => {
   });
 });
 
-test.describe('probeUrl', () => {
+describe('probeUrl', () => {
   test('uses HTTPS for 443 and 8443 and HTTP for every other port', () => {
     expect(probeUrl('example.com', 80)).toBe('http://example.com:80/favicon.ico');
     expect(probeUrl('example.com', 8080)).toBe('http://example.com:8080/favicon.ico');
@@ -219,7 +219,7 @@ test.describe('probeUrl', () => {
   });
 });
 
-test.describe('probePort', () => {
+describe('probePort', () => {
   test('requests the probe URL without credentials, cache or CORS', async () => {
     const requests: Array<[string, RequestInit | undefined]> = [];
     const fetchImpl: FetchLike = async (input, init) => {

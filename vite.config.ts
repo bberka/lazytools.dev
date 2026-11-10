@@ -1,8 +1,18 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 
 // Vite+ drives lint (Oxlint), format (Oxfmt) and unit tests (Vitest). The app itself
 // is still built and served by Next.js, so `build` and `dev` stay `next` scripts.
 export default defineConfig({
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  test: {
+    include: ['tests/unit/**/*.spec.ts'],
+    environment: 'node',
+    // Playwright gave every test 30s; the PDF, image and crypto specs rely on it.
+    testTimeout: 30_000,
+  },
   staged: {
     '*': 'vp check --fix',
   },

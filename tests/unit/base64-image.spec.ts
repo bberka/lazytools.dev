@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   IMAGE_TYPES,
   analyzeImage,
@@ -21,7 +21,7 @@ const GIF_B64 = 'R0lGODlh'; // "GIF89a"
 const ascii = (text: string) => Array.from(text, (char) => char.charCodeAt(0));
 const u8 = (...values: number[]) => Uint8Array.from(values);
 const pad = (head: number[], length: number) =>
-  Uint8Array.from([...head, ...new Array(Math.max(0, length - head.length)).fill(0)]);
+  Uint8Array.from([...head, ...Array.from({ length: Math.max(0, length - head.length) }, () => 0)]);
 
 function okParse(text: string) {
   const result = parseImageInput(text);
@@ -35,7 +35,7 @@ function errorOf(text: string) {
   return result.error;
 }
 
-test.describe('detectImageType', () => {
+describe('detectImageType', () => {
   test('PNG, JPEG and GIF signatures', () => {
     expect(detectImageType(u8(...PNG_HEAD))?.kind).toBe('png');
     expect(detectImageType(u8(0xff, 0xd8, 0xff, 0xe0))?.kind).toBe('jpeg');
@@ -115,7 +115,7 @@ test.describe('detectImageType', () => {
   });
 });
 
-test.describe('decodeBase64', () => {
+describe('decodeBase64', () => {
   test('decodes standard Base64 with padding', () => {
     const result = decodeBase64(PNG_B64);
     expect(result).toEqual({ ok: true, bytes: u8(...PNG_HEAD), notes: [] });
@@ -218,7 +218,7 @@ test.describe('decodeBase64', () => {
   });
 });
 
-test.describe('encodeBase64', () => {
+describe('encodeBase64', () => {
   test('round trips and pads', () => {
     expect(encodeBase64(u8(0x41))).toBe('QQ==');
     expect(encodeBase64(u8(0x41, 0x42))).toBe('QUI=');
@@ -239,7 +239,7 @@ test.describe('encodeBase64', () => {
   });
 });
 
-test.describe('parseImageInput with data URLs', () => {
+describe('parseImageInput with data URLs', () => {
   test('a complete data URL', () => {
     const result = okParse(`data:image/png;base64,${PNG_B64}`);
     expect(result.bytes).toEqual(u8(...PNG_HEAD));
@@ -321,7 +321,7 @@ test.describe('parseImageInput with data URLs', () => {
   });
 });
 
-test.describe('parseImageInput with raw Base64', () => {
+describe('parseImageInput with raw Base64', () => {
   test('bare Base64 has no declared type', () => {
     const result = okParse(PNG_B64);
     expect(result.declaredMime).toBeNull();
@@ -349,7 +349,7 @@ test.describe('parseImageInput with raw Base64', () => {
   });
 });
 
-test.describe('analyzeImage', () => {
+describe('analyzeImage', () => {
   test('a correct declaration', () => {
     const analysis = analyzeImage(u8(...PNG_HEAD), 'image/png');
     expect(analysis.type?.mime).toBe('image/png');
@@ -390,7 +390,7 @@ test.describe('analyzeImage', () => {
   });
 });
 
-test.describe('helpers', () => {
+describe('helpers', () => {
   test('hexPreview', () => {
     expect(hexPreview(new TextEncoder().encode('Hello, world'))).toBe('48 65 6c 6c 6f 2c 20 77');
     expect(hexPreview(u8(0, 1, 0xab), 8)).toBe('00 01 ab');

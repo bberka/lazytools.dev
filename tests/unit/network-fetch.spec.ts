@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   fetchJson,
   RequestTimeoutError,
@@ -17,7 +17,7 @@ const hang: FetchLike = (_input, init) =>
     );
   });
 
-test.describe('fetchJson', () => {
+describe('fetchJson', () => {
   test('returns the parsed body and status of an OK response', async () => {
     const urls: string[] = [];
     const fetchImpl: FetchLike = async (input) => {
@@ -110,7 +110,7 @@ test.describe('fetchJson', () => {
   });
 });
 
-test.describe('withDeadline', () => {
+describe('withDeadline', () => {
   test('resolves with the result of the task', async () => {
     expect(await withDeadline(async () => 42, { timeoutMs: 1000 })).toBe(42);
   });

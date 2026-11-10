@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFArray, PDFDocument, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import mammoth from 'mammoth';
@@ -15,7 +15,7 @@ const layout = (text: string, maxWidth = 20, linesPerPage = 100) =>
 
 const lines = (text: string, maxWidth = 20) => layout(text, maxWidth).flat();
 
-test.describe('layoutTextPages', () => {
+describe('layoutTextPages', () => {
   test('breaks lines at spaces and keeps every line inside the width', () => {
     const wrapped = lines('The quick brown fox jumps over the lazy dog', 12);
 
@@ -112,7 +112,7 @@ test.describe('layoutTextPages', () => {
   });
 });
 
-test.describe('textToPdf', () => {
+describe('textToPdf', () => {
   // The font the tool fetches from /fonts at run time.
   const roboto = readFileSync(join(process.cwd(), 'public', 'fonts', 'Roboto-Regular.ttf'));
 

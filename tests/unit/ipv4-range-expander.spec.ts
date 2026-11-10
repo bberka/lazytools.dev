@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   collapseToCidrs,
   expandRanges,
@@ -26,7 +26,7 @@ function blocks(input: string): string[] {
   return result.blocks;
 }
 
-test.describe('expandRanges', () => {
+describe('expandRanges', () => {
   test('lists a /30 including its network and broadcast addresses', () => {
     expect(expanded('192.168.1.0/30')).toEqual({
       ok: true,
@@ -143,7 +143,7 @@ test.describe('expandRanges', () => {
   });
 });
 
-test.describe('rangeToCidrs', () => {
+describe('rangeToCidrs', () => {
   test('writes a whole space as /0', () => {
     expect(rangeToCidrs({ start: 0, end: 0xffffffff })).toEqual(['0.0.0.0/0']);
   });
@@ -163,7 +163,7 @@ test.describe('rangeToCidrs', () => {
   });
 });
 
-test.describe('collapseToCidrs', () => {
+describe('collapseToCidrs', () => {
   test('keeps a single CIDR block as it is', () => {
     expect(blocks('192.168.1.0/24')).toEqual(['192.168.1.0/24']);
     expect(blocks('10.0.0.9/32')).toEqual(['10.0.0.9/32']);
@@ -226,7 +226,7 @@ test.describe('collapseToCidrs', () => {
   });
 });
 
-test.describe('parseRanges and mergeRanges', () => {
+describe('parseRanges and mergeRanges', () => {
   test('reads each kind of entry into numbers', () => {
     expect(parseRanges('1.0.0.0/8\n2.2.2.2\n3.0.0.1 - 3.0.0.5')).toEqual({
       ok: true,

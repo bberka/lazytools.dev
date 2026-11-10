@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CLIENT_KIND_LABELS,
   DEVICE_TYPE_LABELS,
@@ -555,7 +555,7 @@ const CASES: Expected[] = [
   },
 ];
 
-test.describe('real-world user agents', () => {
+describe('real-world user agents', () => {
   test('there are well over fifteen of them', () => {
     expect(CASES.length).toBeGreaterThanOrEqual(15);
     expect(new Set(CASES.map((c) => c.ua)).size).toBe(CASES.length);
@@ -582,7 +582,7 @@ test.describe('real-world user agents', () => {
   });
 });
 
-test.describe('detection order', () => {
+describe('detection order', () => {
   const sniffedAsChromeOrSafari = [
     CASES.find((c) => c.title.startsWith('Edge (Chromium)')),
     CASES.find((c) => c.title.startsWith('Edge (legacy')),
@@ -654,7 +654,7 @@ test.describe('detection order', () => {
   });
 });
 
-test.describe('operating system, device and CPU details', () => {
+describe('operating system, device and CPU details', () => {
   test('Windows NT numbers map to the names people use', () => {
     const version = (nt: string) =>
       parse(`Mozilla/5.0 (Windows NT ${nt}) AppleWebKit/537.36`).os.version;
@@ -737,7 +737,7 @@ test.describe('operating system, device and CPU details', () => {
   });
 });
 
-test.describe('notes', () => {
+describe('notes', () => {
   test('Windows 10 or 11 carries the Windows 11 caveat', () => {
     const notes = parse(CASES[0].ua).notes;
     expect(notes.some((n) => n.includes('Windows 11'))).toBe(true);
@@ -768,7 +768,7 @@ test.describe('notes', () => {
   });
 });
 
-test.describe('input handling', () => {
+describe('input handling', () => {
   test('empty and whitespace-only input is an error result, not a throw', () => {
     for (const input of ['', '   ', '\n\t ']) {
       const outcome = parseUserAgent(input);
@@ -832,7 +832,7 @@ test.describe('input handling', () => {
   });
 });
 
-test.describe('JSON output', () => {
+describe('JSON output', () => {
   test('round-trips through JSON.parse with unknown fields as null', () => {
     const result = parse('Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0');
     const json = resultToJson(result);
@@ -857,7 +857,7 @@ test.describe('JSON output', () => {
   });
 });
 
-test.describe('labels', () => {
+describe('labels', () => {
   test('every device type and client kind has a label', () => {
     for (const type of [
       'desktop',
@@ -876,7 +876,7 @@ test.describe('labels', () => {
   });
 });
 
-test.describe('client hints', () => {
+describe('client hints', () => {
   test('reads brands, mobile and platform from a navigator.userAgentData shaped object', () => {
     const hints = readClientHints({
       brands: [
@@ -943,7 +943,7 @@ test.describe('client hints', () => {
   });
 });
 
-test.describe('samples offered in the Select', () => {
+describe('samples offered in the Select', () => {
   test('ids are unique and every sample parses to something recognised', () => {
     expect(new Set(USER_AGENT_SAMPLES.map((s) => s.id)).size).toBe(USER_AGENT_SAMPLES.length);
     for (const sample of USER_AGENT_SAMPLES) {

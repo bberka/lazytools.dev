@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   COMMON_TIME_ZONES,
   convertTimeZone,
@@ -30,7 +30,7 @@ const V8_STYLE_ZONES = [
   'Europe/Paris',
 ];
 
-test.describe('convertTimeZone', () => {
+describe('convertTimeZone', () => {
   test('converts standard time and daylight time to UTC', () => {
     const winter = convert('2024-01-15T12:00', 'America/New_York', 'UTC');
     expect(winter.utcDate.toISOString()).toBe('2024-01-15T17:00:00.000Z');
@@ -162,7 +162,7 @@ test.describe('convertTimeZone', () => {
 });
 
 // "Now" fills the form with the clock of the From zone, not the visitor's.
-test.describe('toZonedInputValue', () => {
+describe('toZonedInputValue', () => {
   const moment = new Date('2025-03-16T02:45:30Z');
 
   test('reads the wall clock of a moment in each zone, to the minute', () => {
@@ -187,7 +187,7 @@ test.describe('toZonedInputValue', () => {
   });
 });
 
-test.describe('listTimeZones', () => {
+describe('listTimeZones', () => {
   // The pickers used to offer exactly the runtime's list, so in Chrome
   // "utc", "kolkata" and "argentina" found nothing.
   test('adds the common zones the runtime leaves out', () => {
@@ -228,7 +228,7 @@ test.describe('listTimeZones', () => {
   });
 });
 
-test.describe('time zone names', () => {
+describe('time zone names', () => {
   // The label used to be "America/New / York".
   test('timeZoneLabel shows underscores as spaces', () => {
     expect(timeZoneLabel('America/New_York')).toBe('America/New York');
@@ -256,7 +256,7 @@ test.describe('time zone names', () => {
   });
 });
 
-test.describe('searchTimeZones', () => {
+describe('searchTimeZones', () => {
   const options = toTimeZoneOptions(listTimeZones(V8_STYLE_ZONES));
   const values = (query: string, limit?: number) =>
     searchTimeZones(options, query, limit).map((option) => option.value);

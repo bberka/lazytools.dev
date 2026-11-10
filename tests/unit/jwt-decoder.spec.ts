@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decodeJwt, isJwtExpired, jwtTimes } from '@/lib/tools/jwt-decoder';
 
 // The example token from jwt.io.
@@ -14,7 +14,7 @@ function token(header: unknown, payload: unknown, signature = 'c2ln'): string {
   return `${segment(header)}.${segment(payload)}.${signature}`;
 }
 
-test.describe('decodeJwt', () => {
+describe('decodeJwt', () => {
   test('decodes the header, the payload and keeps the signature', () => {
     expect(decodeJwt(SAMPLE)).toEqual({
       header: { alg: 'HS256', typ: 'JWT' },
@@ -106,7 +106,7 @@ test.describe('decodeJwt', () => {
   });
 });
 
-test.describe('jwtTimes', () => {
+describe('jwtTimes', () => {
   test('reads iat, exp and nbf', () => {
     expect(jwtTimes({ iat: 1516239022, exp: 1516242622, nbf: 1516239000 })).toEqual({
       issuedAt: 1516239022,
@@ -134,7 +134,7 @@ test.describe('jwtTimes', () => {
   });
 });
 
-test.describe('isJwtExpired', () => {
+describe('isJwtExpired', () => {
   const now = Date.UTC(2024, 0, 1, 12, 0, 0);
 
   test('compares exp, in seconds, with the given time, in milliseconds', () => {

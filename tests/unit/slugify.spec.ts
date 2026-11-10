@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -13,7 +13,7 @@ import {
 const slug = (text: string, changes: Partial<SlugOptions> = {}) =>
   slugify(text, { ...DEFAULT_OPTIONS, ...changes });
 
-test.describe('slugify basics', () => {
+describe('slugify basics', () => {
   test('lower-cases, drops punctuation and joins words with a hyphen', () => {
     expect(slug('Hello, World!')).toBe('hello-world');
     expect(slug('  --Hello___World--  ')).toBe('hello-world');
@@ -46,7 +46,7 @@ test.describe('slugify basics', () => {
   });
 });
 
-test.describe('transliteration', () => {
+describe('transliteration', () => {
   test('Turkish letters become plain Latin letters', () => {
     expect(slug('Işık Şişli Çağ Üzüm Öğle İstanbul')).toBe('isik-sisli-cag-uzum-ogle-istanbul');
   });
@@ -82,7 +82,7 @@ test.describe('transliteration', () => {
   });
 });
 
-test.describe('stopwords', () => {
+describe('stopwords', () => {
   test('are removed when asked, whatever their case', () => {
     expect(slug('The Quick Brown Fox of the Year', { removeStopwords: true })).toBe(
       'quick-brown-fox-year'
@@ -102,7 +102,7 @@ test.describe('stopwords', () => {
   });
 });
 
-test.describe('maximum length', () => {
+describe('maximum length', () => {
   test('cuts between words and counts the separators', () => {
     expect(slug('Hello wonderful world', { maxLength: 10 })).toBe('hello');
     expect(slug('Hello wonderful world', { maxLength: 15 })).toBe('hello-wonderful');
@@ -134,7 +134,7 @@ test.describe('maximum length', () => {
   });
 });
 
-test.describe('one slug per line', () => {
+describe('one slug per line', () => {
   test('keeps blank lines and the CRLF line ending', () => {
     const options = { ...DEFAULT_OPTIONS, perLine: true };
     expect(slugifyLines('Hello World\r\n\r\nFoo  Bar\r\n', options)).toBe(

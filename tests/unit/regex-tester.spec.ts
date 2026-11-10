@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { explainRegex, testRegex, toFlagString, type RegexFlags } from '@/lib/tools/regex-tester';
 
 const flags = (overrides: Partial<RegexFlags> = {}): RegexFlags => ({
@@ -10,7 +10,7 @@ const flags = (overrides: Partial<RegexFlags> = {}): RegexFlags => ({
   ...overrides,
 });
 
-test.describe('toFlagString', () => {
+describe('toFlagString', () => {
   test('writes the flags in a fixed order', () => {
     expect(toFlagString(flags())).toBe('g');
     expect(toFlagString(flags({ global: false }))).toBe('');
@@ -20,7 +20,7 @@ test.describe('toFlagString', () => {
   });
 });
 
-test.describe('testRegex', () => {
+describe('testRegex', () => {
   test('finds every match with its index and capture groups', () => {
     const result = testRegex('(\\w)(\\d)?', flags(), 'a1 b');
 
@@ -108,7 +108,7 @@ const describeToken = (
   options?: Parameters<typeof explainRegex>[1]
 ) => explainRegex(pattern, options).find((item) => item.token === token);
 
-test.describe('explainRegex', () => {
+describe('explainRegex', () => {
   test('explains nothing for an empty pattern', () => {
     expect(explainRegex('')).toEqual([]);
   });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   autoFontSize,
   buildPlaceholderOutputs,
@@ -43,7 +43,7 @@ function invalid(overrides: Partial<PlaceholderFields>) {
   return outcome.errors;
 }
 
-test.describe('escapeXml', () => {
+describe('escapeXml', () => {
   test('escapes the five XML special characters', () => {
     expect(escapeXml(`<a href="x">Tom & 'Jerry'</a>`)).toBe(
       '&lt;a href=&quot;x&quot;&gt;Tom &amp; &apos;Jerry&apos;&lt;/a&gt;'
@@ -63,7 +63,7 @@ test.describe('escapeXml', () => {
   });
 });
 
-test.describe('labels and font size', () => {
+describe('labels and font size', () => {
   test('a blank label is the size', () => {
     expect(resolveLabel({ text: '', width: 600, height: 400 })).toBe('600 x 400');
     expect(resolveLabel({ text: '   \n ', width: 5, height: 7 })).toBe('5 x 7');
@@ -91,7 +91,7 @@ test.describe('labels and font size', () => {
   });
 });
 
-test.describe('buildPlaceholderSvg', () => {
+describe('buildPlaceholderSvg', () => {
   test('default 600 x 400 placeholder', () => {
     expect(buildPlaceholderSvg(config)).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" role="img" aria-label="600 x 400">' +
@@ -152,7 +152,7 @@ test.describe('buildPlaceholderSvg', () => {
   });
 });
 
-test.describe('data URI and snippets', () => {
+describe('data URI and snippets', () => {
   const svg = buildPlaceholderSvg({ ...config, text: `It's (50%) "ok" & <fine>! *` });
   const uri = svgToDataUri(svg);
 
@@ -198,7 +198,7 @@ test.describe('data URI and snippets', () => {
   });
 });
 
-test.describe('evaluatePlaceholder', () => {
+describe('evaluatePlaceholder', () => {
   test('builds from the form as typed', () => {
     const outcome = evaluatePlaceholder({ ...fields, width: ' 300 ', height: '200', radius: '' });
     expect(outcome.status).toBe('ready');

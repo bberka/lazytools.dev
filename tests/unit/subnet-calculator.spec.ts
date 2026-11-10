@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { calculateSubnet, type SubnetInfo } from '@/lib/tools/subnet-calculator';
 
 function subnet(ip: string, cidr: string | number): SubnetInfo {
@@ -13,7 +13,7 @@ function errorOf(ip: string, cidr: string | number): string {
   return result.error;
 }
 
-test.describe('calculateSubnet', () => {
+describe('calculateSubnet', () => {
   test('works out every field of an ordinary /24', () => {
     expect(subnet('192.168.1.10', '24')).toEqual({
       ipAddress: '192.168.1.10',

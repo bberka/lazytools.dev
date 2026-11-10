@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ipv4ToNumber,
   isValidIPv6,
@@ -7,7 +7,7 @@ import {
   parseIPv4,
 } from '@/lib/tools/ip-address';
 
-test.describe('parseIPv4', () => {
+describe('parseIPv4', () => {
   test('reads the four octets of a dotted-decimal address', () => {
     expect(parseIPv4('192.168.1.10')).toEqual([192, 168, 1, 10]);
     expect(parseIPv4('0.0.0.0')).toEqual([0, 0, 0, 0]);
@@ -57,7 +57,7 @@ test.describe('parseIPv4', () => {
   });
 });
 
-test.describe('ipv4ToNumber and numberToIPv4', () => {
+describe('ipv4ToNumber and numberToIPv4', () => {
   test('convert both ways', () => {
     expect(ipv4ToNumber([192, 168, 1, 10])).toBe(3232235786);
     expect(numberToIPv4(3232235786)).toBe('192.168.1.10');
@@ -72,7 +72,7 @@ test.describe('ipv4ToNumber and numberToIPv4', () => {
   });
 });
 
-test.describe('isValidIPv6', () => {
+describe('isValidIPv6', () => {
   test('accepts full and compressed addresses', () => {
     for (const text of [
       '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
@@ -138,7 +138,7 @@ test.describe('isValidIPv6', () => {
   });
 });
 
-test.describe('normalizeIp', () => {
+describe('normalizeIp', () => {
   test('returns IPv4 without leading zeros and IPv6 as typed', () => {
     expect(normalizeIp('008.008.004.004')).toBe('8.8.4.4');
     expect(normalizeIp('8.8.8.8')).toBe('8.8.8.8');

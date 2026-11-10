@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   BLINDNESS_TYPES,
   applyColorMatrix,
@@ -29,7 +29,7 @@ function expectWithinOne(actual: number[], expected: number[]) {
   );
 }
 
-test.describe('BLINDNESS_TYPES', () => {
+describe('BLINDNESS_TYPES', () => {
   test('lists the nine kinds in the order the tool shows them', () => {
     expect(TYPES).toEqual([
       'normal',
@@ -62,7 +62,7 @@ test.describe('BLINDNESS_TYPES', () => {
   });
 });
 
-test.describe('colorMatrixValues', () => {
+describe('colorMatrixValues', () => {
   test('writes the feColorMatrix rows with alpha untouched', () => {
     const matrix = BLINDNESS_TYPES.protanopia.matrix;
     expect(matrix).not.toBeNull();
@@ -74,7 +74,7 @@ test.describe('colorMatrixValues', () => {
   });
 });
 
-test.describe('applyColorMatrix', () => {
+describe('applyColorMatrix', () => {
   test('the identity matrix returns every 8-bit value unchanged', () => {
     const before = Uint8ClampedArray.from({ length: 256 * 4 }, (_, index) =>
       index % 4 === 3 ? 255 : index >> 2
@@ -103,7 +103,7 @@ test.describe('applyColorMatrix', () => {
   });
 });
 
-test.describe('simulateColorBlindness', () => {
+describe('simulateColorBlindness', () => {
   test('normal vision changes nothing', () => {
     expect(simulate('normal', 12, 200, 99, 40)).toEqual([12, 200, 99, 40]);
   });

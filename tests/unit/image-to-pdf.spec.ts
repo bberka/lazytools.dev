@@ -1,5 +1,5 @@
 import { deflateSync } from 'node:zlib';
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   PDFArray,
   PDFDict,
@@ -53,7 +53,12 @@ function exifSegment(
     type === 4 ? uint32(orientation, littleEndian) : [...uint16(orientation, littleEndian), 0, 0];
 
   return segment(0xe1, [
-    ...[0x45, 0x78, 0x69, 0x66, 0, 0], // "Exif\0\0"
+    0x45,
+    0x78,
+    0x69,
+    0x66,
+    0,
+    0, // "Exif\0\0"
     ...(littleEndian ? [0x49, 0x49] : [0x4d, 0x4d]),
     ...uint16(0x002a, littleEndian),
     ...uint32(8, littleEndian), // the directory follows the TIFF header
@@ -61,7 +66,10 @@ function exifSegment(
     ...uint16(0x010f, littleEndian), // Make, which is not the tag looked for
     ...uint16(2, littleEndian),
     ...uint32(1, littleEndian),
-    ...[0x41, 0, 0, 0],
+    0x41,
+    0,
+    0,
+    0,
     ...uint16(0x0112, littleEndian), // Orientation
     ...uint16(type, littleEndian),
     ...uint32(1, littleEndian),
@@ -192,7 +200,7 @@ async function readPageImages(pdfBytes: Uint8Array) {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-test.describe('detectImageFormat', () => {
+describe('detectImageFormat', () => {
   test('recognises JPEG and PNG by their first bytes', () => {
     expect(detectImageFormat(jpeg(4, 3))).toBe('jpeg');
     expect(detectImageFormat(png(2, 2))).toBe('png');
@@ -209,7 +217,7 @@ test.describe('detectImageFormat', () => {
   });
 });
 
-test.describe('readJpegOrientation', () => {
+describe('readJpegOrientation', () => {
   test('reads every orientation, in both byte orders', () => {
     for (let orientation = 1; orientation <= 8; orientation++) {
       expect(readJpegOrientation(jpeg(4, 3, exifSegment(orientation)))).toBe(orientation);
@@ -267,7 +275,7 @@ test.describe('readJpegOrientation', () => {
   });
 });
 
-test.describe('placeImage', () => {
+describe('placeImage', () => {
   const WIDTH = 40;
   const HEIGHT = 30;
 
@@ -368,7 +376,7 @@ test.describe('placeImage', () => {
   });
 });
 
-test.describe('imagesToPdf', () => {
+describe('imagesToPdf', () => {
   test('makes one page per image, in order, each the size of its image', async () => {
     const pdf = await imagesToPdf([
       file(png(3, 2), 'first.png', 'image/png'),

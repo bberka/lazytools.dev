@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { buildUrl, parseUrl, type UrlParts } from '@/lib/tools/url-parser-builder';
 
 const EMPTY: UrlParts = { protocol: '', host: '', path: '', hash: '', params: [] };
@@ -7,7 +7,7 @@ function pairs(parts: UrlParts): Array<[string, string]> {
   return parts.params.map((param) => [param.key, param.value]);
 }
 
-test.describe('parseUrl', () => {
+describe('parseUrl', () => {
   test('splits an absolute URL', () => {
     const parts = parseUrl('https://example.com/api/search?q=query&limit=10#results');
     expect(parts.protocol).toBe('https:');
@@ -178,7 +178,7 @@ test.describe('parseUrl', () => {
   });
 });
 
-test.describe('buildUrl', () => {
+describe('buildUrl', () => {
   test('puts the parts back together', () => {
     expect(
       buildUrl({
@@ -279,7 +279,7 @@ test.describe('buildUrl', () => {
   });
 });
 
-test.describe('parseUrl then buildUrl', () => {
+describe('parseUrl then buildUrl', () => {
   test('reproduces well-formed URLs', () => {
     for (const url of [
       'https://example.com/api/search?q=query&limit=10#results',

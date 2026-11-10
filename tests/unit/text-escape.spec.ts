@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertEscape, escapeText, unescapeText, type EscapeMode } from '@/lib/tools/text-escape';
 
 const MODES: EscapeMode[] = ['javascript', 'json', 'html', 'xml', 'csv', 'sql', 'regex'];
 
-test.describe('JavaScript', () => {
+describe('JavaScript', () => {
   // Defect: the backspace rule was written /\b/, a word boundary, so "\b" was
   // inserted around every word.
   test('escapes plain words without adding anything', () => {
@@ -50,7 +50,7 @@ test.describe('JavaScript', () => {
   });
 });
 
-test.describe('JSON', () => {
+describe('JSON', () => {
   test('escapes like JSON.stringify without the surrounding quotes', () => {
     expect(escapeText('say "hi"\n\tC:\\x', 'json')).toBe('say \\"hi\\"\\n\\tC:\\\\x');
     expect(escapeText('\u0001', 'json')).toBe('\\u0001');
@@ -82,7 +82,7 @@ test.describe('JSON', () => {
   });
 });
 
-test.describe('HTML and XML', () => {
+describe('HTML and XML', () => {
   test('escape the markup characters', () => {
     expect(escapeText('<a href="x">T&C\'s</a>', 'html')).toBe(
       '&lt;a href=&quot;x&quot;&gt;T&amp;C&#39;s&lt;/a&gt;'
@@ -105,7 +105,7 @@ test.describe('HTML and XML', () => {
   });
 });
 
-test.describe('CSV, SQL and regular expressions', () => {
+describe('CSV, SQL and regular expressions', () => {
   test('CSV quotes a field only when it needs it', () => {
     expect(escapeText('plain', 'csv')).toBe('plain');
     expect(escapeText('a,b', 'csv')).toBe('"a,b"');
@@ -140,7 +140,7 @@ test.describe('CSV, SQL and regular expressions', () => {
   });
 });
 
-test.describe('every mode', () => {
+describe('every mode', () => {
   const SAMPLES = [
     'plain words',
     'He said "hi", she said \'bye\'',
@@ -173,7 +173,7 @@ test.describe('every mode', () => {
   });
 });
 
-test.describe('convertEscape', () => {
+describe('convertEscape', () => {
   // Defect: input made only of whitespace was treated as empty.
   test('escapes input that is only whitespace', () => {
     expect(convertEscape('\t', 'javascript', 'escape')).toEqual({ output: '\\t', error: '' });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   convertIPv4,
   expandIPv6,
@@ -18,7 +18,7 @@ function errorOf(input: string): string {
   return result.error;
 }
 
-test.describe('convertIPv4 forms', () => {
+describe('convertIPv4 forms', () => {
   test('writes 192.168.1.1 in every form', () => {
     expect(forms('192.168.1.1')).toEqual({
       'dotted-decimal': '192.168.1.1',
@@ -68,7 +68,7 @@ test.describe('convertIPv4 forms', () => {
   });
 });
 
-test.describe('readIPv4 detection', () => {
+describe('readIPv4 detection', () => {
   test('reads dotted decimal, ignoring surrounding space', () => {
     expect(readIPv4('  10.0.0.1 ')).toEqual({
       ok: true,
@@ -139,7 +139,7 @@ test.describe('readIPv4 detection', () => {
   });
 });
 
-test.describe('convertIPv4 errors', () => {
+describe('convertIPv4 errors', () => {
   test('asks for input when it is empty', () => {
     expect(errorOf('')).toBe('Enter an address to convert.');
     expect(errorOf('   ')).toBe('Enter an address to convert.');
@@ -173,7 +173,7 @@ test.describe('convertIPv4 errors', () => {
   });
 });
 
-test.describe('expandIPv6', () => {
+describe('expandIPv6', () => {
   test('fills in the zero groups', () => {
     expect(expandIPv6('::')).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
     expect(expandIPv6('::1')).toEqual([0, 0, 0, 0, 0, 0, 0, 1]);

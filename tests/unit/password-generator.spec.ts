@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   clampInteger,
   countCharacterTypes,
@@ -54,7 +54,7 @@ function replay(values: number[]): () => number {
   };
 }
 
-test.describe('createRandomInt', () => {
+describe('createRandomInt', () => {
   test('maps a 32-bit value into the range', () => {
     const randomInt = createRandomInt(replay([0, 9, 10, 25]));
     expect([randomInt(10), randomInt(10), randomInt(10), randomInt(10)]).toEqual([0, 9, 0, 5]);
@@ -86,11 +86,11 @@ test.describe('createRandomInt', () => {
   test('the secure generator stays inside the range and reaches all of it', () => {
     const seen = new Set<number>();
     for (let i = 0; i < 2000; i++) seen.add(secureRandomInt(6));
-    expect([...seen].sort()).toEqual([0, 1, 2, 3, 4, 5]);
+    expect([...seen].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5]);
   });
 });
 
-test.describe('generatePassword: random passwords', () => {
+describe('generatePassword: random passwords', () => {
   test('has the requested length and only characters of the enabled sets', () => {
     for (const length of [4, 16, 64, 256]) {
       const password = valueOf(generatePassword({ ...ALL_SETS, length }, seededRandomInt(length)));
@@ -239,7 +239,7 @@ test.describe('generatePassword: random passwords', () => {
   });
 });
 
-test.describe('generatePassword: PIN codes', () => {
+describe('generatePassword: PIN codes', () => {
   test('groups the digits with hyphens and keeps the digit count', () => {
     const random = seededRandomInt(11);
     expect(valueOf(generatePassword({ mode: 'pin', length: 6, groupSize: 3 }, random))).toMatch(
@@ -270,7 +270,7 @@ test.describe('generatePassword: PIN codes', () => {
   });
 });
 
-test.describe('generatePassword: passphrases', () => {
+describe('generatePassword: passphrases', () => {
   const base = {
     mode: 'passphrase',
     wordCount: 4,
@@ -312,7 +312,7 @@ test.describe('generatePassword: passphrases', () => {
   });
 });
 
-test.describe('helpers', () => {
+describe('helpers', () => {
   test('countCharacterTypes counts each kind and ignores whitespace', () => {
     expect(countCharacterTypes('Ab1! cD2?')).toEqual({
       uppercase: 2,

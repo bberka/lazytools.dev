@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decodeHtmlEntities, encodeHtmlEntities } from '@/lib/tools/html-encoder';
 
 // These tests run without a DOM, so they cover the built-in table (HTML 4
 // names plus &apos;) and the reference syntax. In a browser, names outside the
 // table are additionally looked up through the DOM.
 
-test.describe('encodeHtmlEntities', () => {
+describe('encodeHtmlEntities', () => {
   test('escapes the five characters that are unsafe in HTML', () => {
     expect(encodeHtmlEntities('<div class="a">Tom & Jerry\'s</div>')).toBe(
       '&lt;div class=&quot;a&quot;&gt;Tom &amp; Jerry&#39;s&lt;/div&gt;'
@@ -23,7 +23,7 @@ test.describe('encodeHtmlEntities', () => {
   });
 });
 
-test.describe('decodeHtmlEntities', () => {
+describe('decodeHtmlEntities', () => {
   test('reverses encodeHtmlEntities', () => {
     for (const text of ['<a href="x?a=1&b=2">it\'s</a>', '&amp;', '&&&', '5 < 6 > 4', '']) {
       expect(decodeHtmlEntities(encodeHtmlEntities(text))).toBe(text);

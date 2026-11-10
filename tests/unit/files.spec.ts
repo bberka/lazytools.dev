@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   downloadBlob,
   downloadBytes,
@@ -20,7 +20,7 @@ const TB = 1024 * GB;
 
 const file = (name: string, type = '', size = 0) => ({ name, type, size });
 
-test.describe('formatBytes', () => {
+describe('formatBytes', () => {
   test('labels whole bytes below 1 KB', () => {
     expect(formatBytes(0)).toBe('0 Bytes');
     expect(formatBytes(1)).toBe('1 Byte');
@@ -106,7 +106,7 @@ test.describe('formatBytes', () => {
   });
 });
 
-test.describe('file names', () => {
+describe('file names', () => {
   test('splitFileName splits at the last dot', () => {
     expect(splitFileName('photo.jpg')).toEqual({ base: 'photo', extension: 'jpg' });
     expect(splitFileName('photo.final.JPG')).toEqual({ base: 'photo.final', extension: 'JPG' });
@@ -174,7 +174,7 @@ test.describe('file names', () => {
   });
 });
 
-test.describe('matchesAccept', () => {
+describe('matchesAccept', () => {
   test('accepts everything when there is no list', () => {
     expect(matchesAccept(file('anything.bin'))).toBe(true);
     expect(matchesAccept(file('anything.bin'), '')).toBe(true);
@@ -211,7 +211,7 @@ test.describe('matchesAccept', () => {
   });
 });
 
-test.describe('validateFile', () => {
+describe('validateFile', () => {
   test('returns null for a file that passes', () => {
     expect(validateFile(file('a.png', 'image/png', 10))).toBeNull();
     expect(
@@ -266,7 +266,7 @@ test.describe('validateFile', () => {
   });
 });
 
-test.describe('validateFiles', () => {
+describe('validateFiles', () => {
   const rules = { accept: 'image/*', maxSize: MB };
   const photo = file('photo.jpg', 'image/jpeg', 1000);
   const icon = file('icon.png', 'image/png', 2000);
@@ -311,7 +311,7 @@ test.describe('validateFiles', () => {
 
 // The download functions only reach for `document`, `URL` and `setTimeout`,
 // so hand-written stand-ins are enough to check what they do with them.
-test.describe('downloads', () => {
+describe('downloads', () => {
   interface FakeBrowser {
     /** Every link click, with whether the link was in the document at the time. */
     clicks: Array<{ href: string; download: string; attached: boolean }>;

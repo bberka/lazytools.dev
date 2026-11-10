@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeXmlParserError,
   formatXml,
@@ -31,7 +31,7 @@ function malformed(errorText: string | null, namespace = XHTML): () => XmlDocume
   return () => document(0, { [namespace]: [{ textContent: errorText }] });
 }
 
-test.describe('formatXml', () => {
+describe('formatXml', () => {
   test('indents nested elements', () => {
     expect(formatXml('<root><group><a>1</a><b>2</b></group><empty/></root>')).toBe(
       [
@@ -191,7 +191,7 @@ test.describe('formatXml', () => {
   });
 });
 
-test.describe('minifyXml', () => {
+describe('minifyXml', () => {
   test('removes whitespace between tags', () => {
     expect(minifyXml('<root>\n  <a>1</a>\n  <b>\n    <c/>\n  </b>\n</root>\n')).toBe(
       '<root><a>1</a><b><c/></b></root>'
@@ -226,7 +226,7 @@ test.describe('minifyXml', () => {
   });
 });
 
-test.describe('validateXml', () => {
+describe('validateXml', () => {
   test('returns null for blank text without calling the parser', () => {
     let calls = 0;
     const parse = () => {
@@ -298,7 +298,7 @@ test.describe('validateXml', () => {
   });
 });
 
-test.describe('describeXmlParserError', () => {
+describe('describeXmlParserError', () => {
   test('strips the fixed sentences Chrome and Safari add', () => {
     expect(
       describeXmlParserError(

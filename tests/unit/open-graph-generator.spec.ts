@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   checkFields,
   displayHost,
@@ -15,7 +15,7 @@ const fields = (overrides: Partial<OpenGraphFields>): OpenGraphFields => ({
   ...overrides,
 });
 
-test.describe('escapeAttribute', () => {
+describe('escapeAttribute', () => {
   test('escapes the characters that break a double-quoted attribute', () => {
     expect(escapeAttribute(`Tom & "Jerry" <b>it's</b>`)).toBe(
       'Tom &amp; &quot;Jerry&quot; &lt;b&gt;it&#39;s&lt;/b&gt;'
@@ -31,7 +31,7 @@ test.describe('escapeAttribute', () => {
   });
 });
 
-test.describe('generateMetaTags', () => {
+describe('generateMetaTags', () => {
   test('writes the tags for a full set of fields in order', () => {
     const tags = generateMetaTags(
       fields({
@@ -92,7 +92,7 @@ test.describe('generateMetaTags', () => {
   });
 });
 
-test.describe('normalizeHandle', () => {
+describe('normalizeHandle', () => {
   test('adds one @ and trims', () => {
     expect(normalizeHandle('berk')).toBe('@berk');
     expect(normalizeHandle(' @@berk ')).toBe('@berk');
@@ -101,7 +101,7 @@ test.describe('normalizeHandle', () => {
   });
 });
 
-test.describe('lengthHint', () => {
+describe('lengthHint', () => {
   test('counts up to the limit as ok and beyond it as over', () => {
     expect(lengthHint('', 60)).toEqual({ count: 0, limit: 60, state: 'empty' });
     expect(lengthHint('a'.repeat(60), 60)).toEqual({ count: 60, limit: 60, state: 'ok' });
@@ -116,7 +116,7 @@ test.describe('lengthHint', () => {
   });
 });
 
-test.describe('checkFields', () => {
+describe('checkFields', () => {
   test('is quiet for good fields', () => {
     expect(
       checkFields(
@@ -146,7 +146,7 @@ test.describe('checkFields', () => {
   });
 });
 
-test.describe('displayHost', () => {
+describe('displayHost', () => {
   test('returns the host without www', () => {
     expect(displayHost('https://www.lazytools.dev/tools/x')).toBe('lazytools.dev');
     expect(displayHost(' http://sub.example.com:8080/a ')).toBe('sub.example.com');

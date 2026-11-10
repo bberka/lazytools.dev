@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { describeKey, keyInfoText, pushHistory, type KeyEventLike } from '@/lib/tools/keycode-info';
 
 const event = (overrides: Partial<KeyEventLike>): KeyEventLike => ({
@@ -15,7 +15,7 @@ const event = (overrides: Partial<KeyEventLike>): KeyEventLike => ({
   ...overrides,
 });
 
-test.describe('describeKey', () => {
+describe('describeKey', () => {
   test('describes a letter key', () => {
     expect(describeKey(event({}))).toEqual({
       key: 'a',
@@ -103,7 +103,7 @@ test.describe('describeKey', () => {
   });
 });
 
-test.describe('pushHistory', () => {
+describe('pushHistory', () => {
   test('puts the newest first', () => {
     expect(pushHistory([2, 1], 3)).toEqual([3, 2, 1]);
   });
@@ -123,7 +123,7 @@ test.describe('pushHistory', () => {
   });
 });
 
-test.describe('keyInfoText', () => {
+describe('keyInfoText', () => {
   test('writes one value per line', () => {
     expect(
       keyInfoText(

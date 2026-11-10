@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createHmac } from 'node:crypto';
 import {
   HMAC_ALGORITHMS,
@@ -158,7 +158,7 @@ const RFC_2202_SHA1: Vector[] = [
   },
 ];
 
-test.describe('published test vectors (hmacDigest)', () => {
+describe('published test vectors (hmacDigest)', () => {
   for (const vector of [...RFC_4231, ...RFC_2202_SHA1]) {
     test(vector.name, async () => {
       for (const [algorithm, expected] of Object.entries(vector.expected) as [
@@ -171,7 +171,7 @@ test.describe('published test vectors (hmacDigest)', () => {
   }
 });
 
-test.describe('computeHmac', () => {
+describe('computeHmac', () => {
   test('RFC 4231 case 2 from UTF-8 key and message text', async () => {
     const result = await computeHmac({
       message: 'what do ya want for nothing?',
@@ -308,7 +308,7 @@ test.describe('computeHmac', () => {
   });
 });
 
-test.describe('decodeKey', () => {
+describe('decodeKey', () => {
   test('UTF-8 keeps every character, including multi-byte ones', () => {
     const decoded = decodeKey('é😀', 'utf8');
     expect(decoded.ok).toBe(true);
@@ -375,7 +375,7 @@ test.describe('decodeKey', () => {
   });
 });
 
-test.describe('encodeDigest', () => {
+describe('encodeDigest', () => {
   const bytes = new Uint8Array([0xfb, 0xff, 0xbf, 0x00, 0x0a]);
 
   test('hex is lowercase by default and uppercase on request', () => {
@@ -413,7 +413,7 @@ test.describe('encodeDigest', () => {
   });
 });
 
-test.describe('timingSafeEqual', () => {
+describe('timingSafeEqual', () => {
   test('is true only for identical bytes', () => {
     expect(timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3]))).toBe(true);
     expect(timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 4]))).toBe(false);
@@ -431,7 +431,7 @@ test.describe('timingSafeEqual', () => {
   });
 });
 
-test.describe('verifySignature', () => {
+describe('verifySignature', () => {
   // RFC 4231 test case 2, HMAC-SHA-256.
   const digest = fromHex('5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843');
 

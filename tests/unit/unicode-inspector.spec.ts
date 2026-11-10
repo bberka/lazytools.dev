@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CHAR_CLASSES,
   CHAR_TABLE,
@@ -40,7 +40,7 @@ function tagEncode(ascii: string): string {
   return Array.from(ascii, (char) => String.fromCodePoint(0xe0000 + char.charCodeAt(0))).join('');
 }
 
-test.describe('UTF-8 and UTF-16 encoding', () => {
+describe('UTF-8 and UTF-16 encoding', () => {
   const utf8Vectors: Array<[number, number[]]> = [
     [0x0000, [0x00]],
     [0x0041, [0x41]],
@@ -112,7 +112,7 @@ test.describe('UTF-8 and UTF-16 encoding', () => {
   });
 });
 
-test.describe('escapes and entities', () => {
+describe('escapes and entities', () => {
   test('JavaScript escapes use \\uXXXX in the BMP and \\u{X} above it', () => {
     expect(jsEscape(0x61)).toBe('\\u0061');
     expect(jsEscape(0x200b)).toBe('\\u200B');
@@ -134,7 +134,7 @@ test.describe('escapes and entities', () => {
   });
 });
 
-test.describe('surrogate pairs and emoji sequences', () => {
+describe('surrogate pairs and emoji sequences', () => {
   test('an astral character is one code point and two UTF-16 units', () => {
     const { stats, rows } = inspectText('\u{1F600}');
     expect(stats).toMatchObject({
@@ -315,7 +315,7 @@ test.describe('surrogate pairs and emoji sequences', () => {
   });
 });
 
-test.describe('detecting the characters in the table', () => {
+describe('detecting the characters in the table', () => {
   const named: Array<[number, string, CharClass]> = [
     [0x200b, 'Zero-width space', 'zero-width'],
     [0x200c, 'Zero-width non-joiner', 'zero-width'],
@@ -502,7 +502,7 @@ test.describe('detecting the characters in the table', () => {
   });
 });
 
-test.describe('table and highlighted view limits', () => {
+describe('table and highlighted view limits', () => {
   test('the table is capped and says how many rows there are', () => {
     const text = 'a'.repeat(1200);
     const inspection = inspectText(text);
@@ -577,7 +577,7 @@ test.describe('table and highlighted view limits', () => {
   });
 });
 
-test.describe('removing invisible characters', () => {
+describe('removing invisible characters', () => {
   test('removes zero-width characters, word joiner, BOM and soft hyphen', () => {
     expect(removeInvisibleCharacters('foo\u200Bbar\u200C\u200D\u2060\uFEFF\u00AD')).toEqual({
       text: 'foobar',
@@ -672,7 +672,7 @@ test.describe('removing invisible characters', () => {
   });
 });
 
-test.describe('replacing non-standard spaces', () => {
+describe('replacing non-standard spaces', () => {
   test('replaces each space variant with U+0020, one for one', () => {
     const text = 'a\u00A0b\u2003c\u202Fd\u3000e\u2009f\u2800g\u1680h\u205Fi\u200Aj';
     expect(replaceNonStandardSpaces(text)).toEqual({ text: 'a b c d e f g h i j', count: 9 });
@@ -685,7 +685,7 @@ test.describe('replacing non-standard spaces', () => {
   });
 });
 
-test.describe('normalisation', () => {
+describe('normalisation', () => {
   test('UAX #15 example: U+1E9B U+0323 in all four forms', () => {
     const text = '\u1E9B\u0323';
     expect(normalizeText(text, 'NFC')).toBe('\u1E9B\u0323');
@@ -718,7 +718,7 @@ test.describe('normalisation', () => {
   });
 });
 
-test.describe('cleanText', () => {
+describe('cleanText', () => {
   test('does nothing unless asked', () => {
     const text = 'a\u200B\u00A0b';
     expect(cleanText(text)).toEqual({
@@ -768,7 +768,7 @@ test.describe('cleanText', () => {
   });
 });
 
-test.describe('example text', () => {
+describe('example text', () => {
   test('contains the traps it advertises', () => {
     const { stats, hiddenTagText } = inspectText(EXAMPLE_TEXT);
     expect(stats.byClass['zero-width']).toBe(3); // ZWSP, word joiner, BOM

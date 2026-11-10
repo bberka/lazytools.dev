@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { MAX_SCALE, MIN_SCALE, clampScale, prepareSvg, rasterSize } from '@/lib/tools/svg-to-png';
 
 const XMLNS = 'xmlns="http://www.w3.org/2000/svg"';
@@ -10,7 +10,7 @@ function prepared(source: string) {
   return result;
 }
 
-test.describe('clampScale', () => {
+describe('clampScale', () => {
   test('reads a whole number in range', () => {
     expect(clampScale('2')).toBe(2);
     expect(clampScale('10')).toBe(10);
@@ -38,7 +38,7 @@ test.describe('clampScale', () => {
   });
 });
 
-test.describe('rasterSize', () => {
+describe('rasterSize', () => {
   test('multiplies the size by the scale', () => {
     expect(rasterSize({ width: 24, height: 24 }, 2)).toEqual({ width: 48, height: 48 });
     expect(rasterSize({ width: 300, height: 150 }, 10)).toEqual({ width: 3000, height: 1500 });
@@ -49,7 +49,7 @@ test.describe('rasterSize', () => {
   });
 });
 
-test.describe('prepareSvg', () => {
+describe('prepareSvg', () => {
   test('leaves complete SVG exactly as it was written', () => {
     const svg = `<svg ${XMLNS} width="24" height="24" viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></svg>`;
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   appendTranscript,
   describeRecognitionError,
@@ -18,7 +18,7 @@ function resultEvent(
   };
 }
 
-test.describe('appendTranscript', () => {
+describe('appendTranscript', () => {
   test('starts a transcript with the first phrase', () => {
     expect(appendTranscript('', 'Hello there')).toBe('Hello there');
   });
@@ -62,7 +62,7 @@ test.describe('appendTranscript', () => {
   });
 });
 
-test.describe('readRecognitionResults', () => {
+describe('readRecognitionResults', () => {
   test('separates settled text from text still being recognized', () => {
     const event = resultEvent(0, [
       { transcript: 'Hello there', isFinal: true },
@@ -125,7 +125,7 @@ test.describe('readRecognitionResults', () => {
   });
 });
 
-test.describe('describeRecognitionError', () => {
+describe('describeRecognitionError', () => {
   test('reports nothing when recognition was only cut off', () => {
     expect(describeRecognitionError('aborted')).toBeNull();
   });
@@ -147,7 +147,7 @@ test.describe('describeRecognitionError', () => {
   });
 });
 
-test.describe('transcriptFileName', () => {
+describe('transcriptFileName', () => {
   // The name used to carry the UTC date, which is the day before or after the
   // user's own date for part of every day outside UTC.
   test("is dated by the user's calendar day at any time of day", () => {

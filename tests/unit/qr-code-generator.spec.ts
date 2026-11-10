@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { prepareQrRequest, qrFileBaseName, type QrForm } from '@/lib/tools/qr-code-generator';
 
 const form = (overrides: Partial<QrForm> = {}): QrForm => ({
@@ -23,7 +23,7 @@ function errorOf(overrides: Partial<QrForm>): string {
   return result.error;
 }
 
-test.describe('prepareQrRequest', () => {
+describe('prepareQrRequest', () => {
   test('builds the request for the default form', () => {
     expect(requestOf()).toEqual({
       text: 'https://lazytools.dev',
@@ -108,7 +108,7 @@ test.describe('prepareQrRequest', () => {
   });
 });
 
-test.describe('qrFileBaseName', () => {
+describe('qrFileBaseName', () => {
   test('makes a hyphenated lower-case name', () => {
     expect(qrFileBaseName('https://lazytools.dev')).toBe('https-lazytools-dev');
     expect(qrFileBaseName('  Hello, World!  ')).toBe('hello-world');

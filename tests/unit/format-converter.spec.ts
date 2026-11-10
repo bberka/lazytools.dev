@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertData, parseCsv, type DataFormat } from '@/lib/tools/format-converter';
 
 // 2^53 + 1: the first integer a double cannot hold.
@@ -15,7 +15,7 @@ async function output(text: string, from: DataFormat, to: DataFormat, options = 
   return result.output;
 }
 
-test.describe('parseCsv', () => {
+describe('parseCsv', () => {
   test('splits rows and cells', () => {
     expect(parseCsv('a,b,c\n1,2,3')).toEqual([
       ['a', 'b', 'c'],
@@ -94,7 +94,7 @@ test.describe('parseCsv', () => {
   });
 });
 
-test.describe('convertData basics', () => {
+describe('convertData basics', () => {
   test('gives empty output for empty and whitespace-only text', async () => {
     for (const from of FORMATS) {
       for (const to of FORMATS) {
@@ -148,7 +148,7 @@ test.describe('convertData basics', () => {
   });
 });
 
-test.describe('JSON, YAML and TOML', () => {
+describe('JSON, YAML and TOML', () => {
   test('converts JSON to YAML and back', async () => {
     const json = '{"name":"Ada","roles":["Admin","Editor"],"active":true,"score":4.5,"none":null}';
     const yaml = await output(json, 'json', 'yaml');
@@ -213,7 +213,7 @@ test.describe('JSON, YAML and TOML', () => {
   });
 });
 
-test.describe('large integers', () => {
+describe('large integers', () => {
   // TOML parses a 64-bit integer to a bigint, which JSON.stringify and
   // js-yaml both refuse: the conversion failed with "Do not know how to
   // serialize a BigInt", shown as an error in the TOML.
@@ -242,7 +242,7 @@ test.describe('large integers', () => {
   });
 });
 
-test.describe('CSV', () => {
+describe('CSV', () => {
   test('converts CSV with a header row to a list of objects', async () => {
     expect(JSON.parse(await output('name,age\nJohn,30\nAda,36', 'csv', 'json'))).toEqual([
       { name: 'John', age: '30' },
@@ -344,7 +344,7 @@ test.describe('CSV', () => {
   });
 });
 
-test.describe('XML', () => {
+describe('XML', () => {
   test('reads XML into the xml-js compact form', async () => {
     expect(
       JSON.parse(
@@ -492,7 +492,7 @@ test.describe('XML', () => {
   });
 });
 
-test.describe('errors', () => {
+describe('errors', () => {
   test('marks bad input as a parse error with a one-line message', async () => {
     const json = await convertData('{"a":}', 'json', 'yaml');
     expect(json.output).toBe('');

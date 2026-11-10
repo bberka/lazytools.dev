@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   EXAMPLE_CSV,
   MAX_COLUMNS,
@@ -29,7 +29,7 @@ const table = (cells: string[][], alignments: Alignment[]): TableData => ({ cell
 const padded = { pad: true, escapePipes: true };
 const compact = { pad: false, escapePipes: true };
 
-test.describe('markdownTable', () => {
+describe('markdownTable', () => {
   const fruit = table(
     [
       ['Name', 'Qty'],
@@ -124,7 +124,7 @@ test.describe('markdownTable', () => {
   });
 });
 
-test.describe('escapeCell', () => {
+describe('escapeCell', () => {
   test('escapes pipes that are not escaped yet', () => {
     expect(escapeCell('a|b', true)).toBe('a\\|b');
     expect(escapeCell('a\\|b', true)).toBe('a\\|b');
@@ -153,7 +153,7 @@ test.describe('escapeCell', () => {
   });
 });
 
-test.describe('displayWidth', () => {
+describe('displayWidth', () => {
   test('counts columns', () => {
     expect(displayWidth('')).toBe(0);
     expect(displayWidth('abc')).toBe(3);
@@ -165,7 +165,7 @@ test.describe('displayWidth', () => {
   });
 });
 
-test.describe('editing the grid', () => {
+describe('editing the grid', () => {
   test('createTable makes a blank rectangle and never less than 1 by 1', () => {
     const t = createTable(2, 3);
     expect(t.cells).toEqual([
@@ -285,7 +285,7 @@ test.describe('editing the grid', () => {
   });
 });
 
-test.describe('parseDelimited', () => {
+describe('parseDelimited', () => {
   test('reads CSV, TSV and semicolon files', () => {
     expect(parseDelimited('a,b\n1,2')).toEqual([
       ['a', 'b'],
@@ -366,7 +366,7 @@ test.describe('parseDelimited', () => {
   });
 });
 
-test.describe('tableFromRows', () => {
+describe('tableFromRows', () => {
   test('uses the first row as the header', () => {
     const result = tableFromRows(
       [

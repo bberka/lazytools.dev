@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CURRENCIES,
   convertCurrency,
@@ -52,7 +52,7 @@ const silentService: FetchRate = (_url, { signal }) =>
 
 const RATE = { date: '2026-10-09', base: 'USD', quote: 'EUR', rate: 0.89149 };
 
-test.describe('convertCurrency', () => {
+describe('convertCurrency', () => {
   test('converts at the latest rate when no date is given', async () => {
     const { fetch, urls } = service(200, RATE);
     const outcome = await convertCurrency(request(), { fetch, today: TODAY });
@@ -348,7 +348,7 @@ test.describe('convertCurrency', () => {
   });
 });
 
-test.describe('currency formatting', () => {
+describe('currency formatting', () => {
   test('formats an amount with two to four decimals', () => {
     expect(formatAmount(100)).toBe('100.00');
     expect(formatAmount(89.149)).toBe('89.149');
@@ -395,7 +395,7 @@ test.describe('currency formatting', () => {
   });
 });
 
-test.describe('currency list', () => {
+describe('currency list', () => {
   test('has unique three-letter codes', () => {
     const codes = CURRENCIES.map((currency) => currency.code);
 

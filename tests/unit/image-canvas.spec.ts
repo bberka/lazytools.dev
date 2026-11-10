@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   canvasImageType,
   canvasToBlob,
@@ -15,7 +15,7 @@ function fakeCanvas(write: (type?: string, quality?: number) => Blob | null): Bl
   };
 }
 
-test.describe('canvasImageType', () => {
+describe('canvasImageType', () => {
   test('keeps the three types a canvas can write', () => {
     expect(canvasImageType('image/png')).toBe('image/png');
     expect(canvasImageType('image/jpeg')).toBe('image/jpeg');
@@ -42,7 +42,7 @@ test.describe('canvasImageType', () => {
   });
 });
 
-test.describe('imageTypeExtension', () => {
+describe('imageTypeExtension', () => {
   test('names the file after its type', () => {
     expect(imageTypeExtension('image/jpeg')).toBe('jpg');
     expect(imageTypeExtension('image/png')).toBe('png');
@@ -55,7 +55,7 @@ test.describe('imageTypeExtension', () => {
   });
 });
 
-test.describe('canvasToBlob', () => {
+describe('canvasToBlob', () => {
   test('resolves with the blob and passes type and quality on', async () => {
     const seen: Array<[string | undefined, number | undefined]> = [];
     const canvas = fakeCanvas((type, quality) => {

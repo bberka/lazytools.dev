@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { formatNumber, readNumber } from '@/lib/tools/calculator-numbers';
 
 const number = (value: number) => ({ kind: 'number', value });
 const EMPTY = { kind: 'empty' };
 const INVALID = { kind: 'invalid' };
 
-test.describe('readNumber', () => {
+describe('readNumber', () => {
   test('reads plain, signed, fractional and exponent numbers', () => {
     expect(readNumber('42')).toEqual(number(42));
     expect(readNumber('  42  ')).toEqual(number(42));
@@ -115,7 +115,7 @@ test.describe('readNumber', () => {
   });
 });
 
-test.describe('formatNumber', () => {
+describe('formatNumber', () => {
   const twoDecimals = { minFractionDigits: 2, maxFractionDigits: 2 };
   const keepsSmall = { ...twoDecimals, minSignificantDigits: 2 };
 

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   SAMPLE_LEFT,
   SAMPLE_RIGHT,
@@ -143,7 +143,7 @@ function normalise(value: JsonValue): JsonValue {
 // Parsing
 // ---------------------------------------------------------------------------
 
-test.describe('parseJson', () => {
+describe('parseJson', () => {
   test('parses every JSON value type', () => {
     const cases: Array<[string, JsonValue]> = [
       ['null', null],
@@ -356,7 +356,7 @@ test.describe('parseJson', () => {
 // JSON Pointer
 // ---------------------------------------------------------------------------
 
-test.describe('JSON Pointer escaping', () => {
+describe('JSON Pointer escaping', () => {
   test('escapes ~ as ~0 and / as ~1', () => {
     expect(escapePointerToken('plain')).toBe('plain');
     expect(escapePointerToken('a/b')).toBe('a~1b');
@@ -446,7 +446,7 @@ test.describe('JSON Pointer escaping', () => {
 // Structural comparison
 // ---------------------------------------------------------------------------
 
-test.describe('diffJson: objects', () => {
+describe('diffJson: objects', () => {
   test('identical documents have no differences', () => {
     const result = diff('{"a":1,"b":[1,2,{"c":null}]}', '{"a":1,"b":[1,2,{"c":null}]}');
     expect(result.summary.differences).toBe(0);
@@ -514,7 +514,7 @@ test.describe('diffJson: objects', () => {
   });
 });
 
-test.describe('diffJson: arrays by index', () => {
+describe('diffJson: arrays by index', () => {
   test('compares element by element', () => {
     const result = diff('[1,2,3]', '[1,9,3]');
     expect(summarise(result)).toEqual(['changed /1']);
@@ -558,7 +558,7 @@ test.describe('diffJson: arrays by index', () => {
   });
 });
 
-test.describe('diffJson: arrays with order ignored', () => {
+describe('diffJson: arrays with order ignored', () => {
   const ignore: DiffOptions = { ignoreArrayOrder: true };
 
   test('the same elements in another order are equal', () => {
@@ -636,7 +636,7 @@ test.describe('diffJson: arrays with order ignored', () => {
   });
 });
 
-test.describe('diffJson: types, null and numbers', () => {
+describe('diffJson: types, null and numbers', () => {
   test('a changed type is a type change, not a change', () => {
     const cases: Array<[string, string]> = [
       ['{"a":1}', '{"a":"1"}'],
@@ -718,7 +718,7 @@ test.describe('diffJson: types, null and numbers', () => {
   });
 });
 
-test.describe('diffJson: summary and unchanged values', () => {
+describe('diffJson: summary and unchanged values', () => {
   const left = '{"a":1,"b":2,"c":{"d":[1,2]},"e":{},"f":[]}';
   const right = '{"a":1,"b":3,"c":{"d":[1,2]},"e":{},"f":[]}';
 
@@ -763,7 +763,7 @@ test.describe('diffJson: summary and unchanged values', () => {
 // JSON Patch
 // ---------------------------------------------------------------------------
 
-test.describe('JSON Patch (RFC 6902)', () => {
+describe('JSON Patch (RFC 6902)', () => {
   test('the reference applier follows the RFC 6902 Appendix A examples', () => {
     expect(applyPatch({ foo: 'bar' }, [{ op: 'add', path: '/baz', value: 'qux' }])).toEqual({
       foo: 'bar',
@@ -934,7 +934,7 @@ function reorder(random: () => number, value: JsonValue): JsonValue {
   return value;
 }
 
-test.describe('generated documents', () => {
+describe('generated documents', () => {
   const SEEDS = Array.from({ length: 400 }, (_, i) => i + 1);
 
   test('the patch always turns the left document into the right one', () => {
@@ -1015,7 +1015,7 @@ test.describe('generated documents', () => {
 // Text in, report out
 // ---------------------------------------------------------------------------
 
-test.describe('compareJsonText', () => {
+describe('compareJsonText', () => {
   test('reports each side on its own', () => {
     const empty = compareJsonText('', '  ');
     expect(empty.left.status).toBe('empty');
@@ -1071,7 +1071,7 @@ test.describe('compareJsonText', () => {
   });
 });
 
-test.describe('formatReport', () => {
+describe('formatReport', () => {
   test('lists each difference with a marker that is not a colour', () => {
     const result = diff('{"a":1,"b":"x","c":true,"d":[1]}', '{"a":2,"c":"yes","d":[1],"e":null}');
     expect(formatReport(result)).toBe(
@@ -1115,7 +1115,7 @@ test.describe('formatReport', () => {
   });
 });
 
-test.describe('formatValue', () => {
+describe('formatValue', () => {
   test('writes compact JSON and shortens long values', () => {
     expect(formatValue({ a: [1, 'x'] })).toBe('{"a":[1,"x"]}');
     expect(formatValue('x'.repeat(10), 5)).toBe('"xxx...');
@@ -1123,7 +1123,7 @@ test.describe('formatValue', () => {
   });
 });
 
-test.describe('sample data', () => {
+describe('sample data', () => {
   test('parses and shows every kind of difference', () => {
     const comparison = compareJsonText(SAMPLE_LEFT, SAMPLE_RIGHT);
     expect(comparison.left.status).toBe('valid');

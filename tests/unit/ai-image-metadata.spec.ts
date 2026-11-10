@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { scanImageMetadata, stripImageMetadata } from '@/lib/tools/ai-image-metadata';
 
 // ── Fixture builders ─────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ const sameBytes = (a: Uint8Array, b: Uint8Array) => expect(Array.from(a)).toEqua
 
 // ── JPEG ─────────────────────────────────────────────────────────────────────
 
-test.describe('JPEG', () => {
+describe('JPEG', () => {
   test('an image without metadata is reported clean and returned unchanged', () => {
     const result = stripImageMetadata(JPEG_BASE);
     expect(result.format).toBe('jpeg');
@@ -247,7 +247,7 @@ test.describe('JPEG', () => {
 
 // ── PNG ──────────────────────────────────────────────────────────────────────
 
-test.describe('PNG', () => {
+describe('PNG', () => {
   test('removes text, iTXt, eXIf and caBX chunks and keeps iCCP and pixel data', () => {
     const itxt = chunk('iTXt', [
       ...enc('XML:com.adobe.xmp'),
@@ -308,7 +308,7 @@ test.describe('PNG', () => {
 
 // ── WebP ─────────────────────────────────────────────────────────────────────
 
-test.describe('WebP', () => {
+describe('WebP', () => {
   test('removes EXIF, XMP and C2PA chunks, fixes the RIFF size and clears the VP8X flags', () => {
     const iccp = riffChunk('ICCP', [1, 2, 3, 4, 5]);
     const input = webp(
@@ -350,7 +350,7 @@ test.describe('WebP', () => {
 
 // ── Damaged and foreign input ────────────────────────────────────────────────
 
-test.describe('damaged input', () => {
+describe('damaged input', () => {
   const full = [
     ['JPEG', jpeg(exifApp1(), comment('x'))],
     ['PNG', png(text('parameters', 'Steps: 20, Sampler: Euler'))],

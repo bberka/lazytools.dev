@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ExactNumber,
   parseJson,
@@ -63,7 +63,7 @@ function randomValue(random: () => number, depth: number): unknown {
   }
 }
 
-test.describe('parseJson', () => {
+describe('parseJson', () => {
   test('parses ordinary JSON like JSON.parse', () => {
     const text = '{"name":"Ada","roles":["Admin","Editor"],"age":36,"ok":true,"none":null}';
 
@@ -212,13 +212,13 @@ test.describe('parseJson', () => {
     expect(() => parseJson("{'a':1}")).toThrow(SyntaxError);
   });
 
-  test('survives nesting deeper than the call stack by falling back', () => {
+  test('survives nesting deeper than the call stack by falling back', (context) => {
     const depth = 200000;
     const text = `${'['.repeat(depth)}${UNSAFE}${']'.repeat(depth)}`;
     try {
       JSON.parse(text);
     } catch {
-      test.skip(true, 'this runtime cannot parse the text natively either');
+      context.skip('this runtime cannot parse the text natively either');
     }
 
     // Walk down by hand: a recursive comparison would overflow as well.
@@ -235,7 +235,7 @@ test.describe('parseJson', () => {
   });
 });
 
-test.describe('stringifyJson', () => {
+describe('stringifyJson', () => {
   test('matches JSON.stringify when there is no bigint', () => {
     const random = createRandom(7);
 
@@ -307,7 +307,7 @@ test.describe('stringifyJson', () => {
   });
 });
 
-test.describe('validateJson', () => {
+describe('validateJson', () => {
   test('returns null for empty and whitespace-only text', () => {
     expect(validateJson('')).toBeNull();
     expect(validateJson('  \n\t ')).toBeNull();
@@ -344,9 +344,9 @@ test.describe('validateJson', () => {
       valid: true,
       summary: 'Object with 1 key',
     });
-    expect((validateJson('[0.1234567890123456789]')?.value as unknown[])[0]).toBeInstanceOf(
-      ExactNumber
-    );
+    const validation = validateJson('[0.1234567890123456789]');
+    if (!validation) throw new Error('expected a validation result');
+    expect((validation.value as unknown[])[0]).toBeInstanceOf(ExactNumber);
   });
 
   test('reports the parser message for invalid JSON', () => {
@@ -364,7 +364,7 @@ test.describe('validateJson', () => {
   });
 });
 
-test.describe('queryJson', () => {
+describe('queryJson', () => {
   const data = {
     name: 'Ada',
     roles: ['Admin', 'Editor'],
@@ -479,7 +479,7 @@ test.describe('queryJson', () => {
   });
 });
 
-test.describe('renderJson', () => {
+describe('renderJson', () => {
   const value = { name: 'Ada', roles: ['Admin', 'Editor'] };
 
   test('formats with spaces, tabs or on one line', () => {

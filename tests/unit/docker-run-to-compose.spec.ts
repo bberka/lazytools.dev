@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { dump, load } from 'js-yaml';
 import {
   COMPOSE_YAML_OPTIONS,
@@ -26,7 +26,7 @@ function tokensOf(input: string, escapeDollars = false): string[] {
   return result.tokens;
 }
 
-test.describe('tokenizer', () => {
+describe('tokenizer', () => {
   test('splits on runs of spaces and tabs', () => {
     expect(tokensOf('docker  run\t-d   nginx')).toEqual(['docker', 'run', '-d', 'nginx']);
   });
@@ -168,7 +168,7 @@ test.describe('tokenizer', () => {
   });
 });
 
-test.describe('image, command and service name', () => {
+describe('image, command and service name', () => {
   test('a bare image', () => {
     const result = convert('docker run nginx');
     expect(result.serviceName).toBe('nginx');
@@ -231,7 +231,7 @@ test.describe('image, command and service name', () => {
   });
 });
 
-test.describe('flags', () => {
+describe('flags', () => {
   test('-p / --publish in every spelling', () => {
     const service = serviceOf(
       'docker run -p 8080:80 -p9090:90 -p=7070:70 --publish 127.0.0.1:53:53/udp --publish=3000 nginx'
@@ -620,7 +620,7 @@ test.describe('flags', () => {
   });
 });
 
-test.describe('notes and warnings', () => {
+describe('notes and warnings', () => {
   test('-d and --rm are explained in notes and do not appear in the service', () => {
     const result = convert('docker run -d --rm --name job busybox');
     expect(result.notes).toHaveLength(2);
@@ -724,7 +724,7 @@ test.describe('notes and warnings', () => {
   });
 });
 
-test.describe('a realistic command', () => {
+describe('a realistic command', () => {
   const NEXTCLOUD = `docker run -d \\
   --name nextcloud \\
   --restart unless-stopped \\
@@ -822,7 +822,7 @@ test.describe('a realistic command', () => {
   });
 });
 
-test.describe('YAML output', () => {
+describe('YAML output', () => {
   test('matches the layout of a hand-written compose file', () => {
     const result = convert(
       'docker run -d --name web --restart no -p 8080:80 -e TZ=UTC -v data:/data --network backend --memory 512m nginx:1.27'
@@ -877,7 +877,7 @@ test.describe('YAML output', () => {
   });
 });
 
-test.describe('input that is not a docker run command', () => {
+describe('input that is not a docker run command', () => {
   const rejected = (input: string) => {
     const result = convertDockerRun(input);
     if (result.ok) throw new Error(`expected a rejection for: ${input}`);

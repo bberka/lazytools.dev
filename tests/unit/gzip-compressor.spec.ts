@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { runGzip, sizeChangeLabel } from '@/lib/tools/gzip-compressor';
 
 const utf8Size = (text: string) => new TextEncoder().encode(text).length;
@@ -20,7 +20,7 @@ function noise(length: number): string {
   return text;
 }
 
-test.describe('runGzip', () => {
+describe('runGzip', () => {
   test('compresses to Base64 of a GZip stream', async () => {
     const { output } = await runGzip('compress', 'hello hello hello hello');
     expect(output).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
@@ -112,7 +112,7 @@ test.describe('runGzip', () => {
   });
 });
 
-test.describe('sizeChangeLabel', () => {
+describe('sizeChangeLabel', () => {
   test('says how much smaller the output is', () => {
     expect(sizeChangeLabel(1000, 375)).toBe('62.5% smaller');
     expect(sizeChangeLabel(200, 200)).toBe('0.0% smaller');

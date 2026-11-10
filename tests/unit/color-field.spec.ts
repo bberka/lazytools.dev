@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { fieldPositionOf, hsvAtFieldPoint } from '@/lib/tools/color-field';
 import { pickerPosition } from '@/lib/tools/color-picker';
 import { hsvToRgb, rgbToHex, rgbToHsv } from '@/lib/tools/design-color';
 
-test.describe('hsvAtFieldPoint', () => {
+describe('hsvAtFieldPoint', () => {
   test('reads the corners of the square as the colours painted there', () => {
     // Defect: the pointer was read as HSL, so the pure-red corner picked white.
     const red = 0;
@@ -27,7 +27,7 @@ test.describe('hsvAtFieldPoint', () => {
   });
 });
 
-test.describe('fieldPositionOf', () => {
+describe('fieldPositionOf', () => {
   test('puts pure colours on the top edge and black on the bottom', () => {
     expect(fieldPositionOf(rgbToHsv({ r: 255, g: 0, b: 0 }))).toEqual({ left: 100, top: 0 });
     expect(fieldPositionOf(rgbToHsv({ r: 255, g: 255, b: 255 }))).toEqual({ left: 0, top: 0 });
@@ -40,7 +40,7 @@ test.describe('fieldPositionOf', () => {
   });
 });
 
-test.describe('the picked colour and the marker agree', () => {
+describe('the picked colour and the marker agree', () => {
   const COLOURS = [
     { name: 'red', rgb: { r: 255, g: 0, b: 0 } },
     { name: 'green', rgb: { r: 0, g: 255, b: 0 } },

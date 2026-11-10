@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   FUNCTION_NAMES,
   MAX_SOURCE_LENGTH,
@@ -24,7 +24,7 @@ function failure(source: string, angle: AngleMode = 'rad', variables: Variables 
   return result.error;
 }
 
-test.describe('operators and precedence', () => {
+describe('operators and precedence', () => {
   test('multiplication binds tighter than addition', () => {
     expect(value('2 + 3 * 4')).toBe(14);
     expect(value('(2 + 3) * 4')).toBe(20);
@@ -74,7 +74,7 @@ test.describe('operators and precedence', () => {
   });
 });
 
-test.describe('constants and functions', () => {
+describe('constants and functions', () => {
   test('pi and e', () => {
     expect(value('pi')).toBe(Math.PI);
     expect(value('e')).toBe(Math.E);
@@ -140,7 +140,7 @@ test.describe('constants and functions', () => {
   });
 });
 
-test.describe('angle mode', () => {
+describe('angle mode', () => {
   test('degrees', () => {
     expect(value('sin(30)', 'deg')).toBe(0.5);
     expect(value('sin(90)', 'deg')).toBe(1);
@@ -174,7 +174,7 @@ test.describe('angle mode', () => {
   });
 });
 
-test.describe('variables', () => {
+describe('variables', () => {
   test('assignment returns the name and value without needing an existing variable', () => {
     const result = evaluateExpression('x = 3 * 4');
     expect(result).toEqual({ ok: true, value: 12, assignment: { name: 'x', value: 12 } });
@@ -209,7 +209,7 @@ test.describe('variables', () => {
   });
 });
 
-test.describe('errors carry a position', () => {
+describe('errors carry a position', () => {
   test('unknown names and functions', () => {
     expect(failure('1 + foo')).toEqual({
       message: 'Unknown name "foo" at position 5',
@@ -294,7 +294,7 @@ test.describe('errors carry a position', () => {
   });
 });
 
-test.describe('domain and range errors', () => {
+describe('domain and range errors', () => {
   test('division and remainder by zero', () => {
     expect(failure('1 / 0')).toEqual({
       message: 'Division by zero at position 3',
@@ -332,7 +332,7 @@ test.describe('domain and range errors', () => {
   });
 });
 
-test.describe('safety limits', () => {
+describe('safety limits', () => {
   test('does not execute JavaScript', () => {
     expect(failure('alert(1)').message).toContain('Unknown function');
     expect(failure('process.exit()').message).toContain('Unexpected');
@@ -357,7 +357,7 @@ test.describe('safety limits', () => {
   });
 });
 
-test.describe('formatResult', () => {
+describe('formatResult', () => {
   test('hides floating-point noise using 12 significant digits', () => {
     expect(shown('0.1 + 0.2')).toBe('0.3');
     expect(shown('1 / 3')).toBe('0.333333333333');

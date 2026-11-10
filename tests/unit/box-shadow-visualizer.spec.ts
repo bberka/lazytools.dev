@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { buildBoxShadow, type ShadowLayer } from '@/lib/tools/box-shadow-visualizer';
 
 const layer = (overrides: Partial<ShadowLayer> = {}): ShadowLayer => ({
@@ -15,7 +15,7 @@ const layer = (overrides: Partial<ShadowLayer> = {}): ShadowLayer => ({
   ...overrides,
 });
 
-test.describe('buildBoxShadow', () => {
+describe('buildBoxShadow', () => {
   test('writes one layer', () => {
     expect(buildBoxShadow([layer()])).toEqual({
       value: '0px 8px 16px -4px rgba(0, 0, 0, 0.15)',

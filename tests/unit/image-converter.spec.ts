@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ICO_MAX_SIDE,
   canvasFilter,
@@ -26,7 +26,7 @@ const untouched: Adjustments = {
   saturation: 100,
 };
 
-test.describe('planOutput', () => {
+describe('planOutput', () => {
   test('keeps the source size when nothing is asked for', () => {
     expect(planOutput(photo, request())).toEqual({
       drawWidth: 800,
@@ -155,7 +155,7 @@ test.describe('planOutput', () => {
   });
 });
 
-test.describe('cropToImagePixels', () => {
+describe('cropToImagePixels', () => {
   const displayed = { width: 400, height: 300 };
 
   test('maps the selection onto the image at its own scale', () => {
@@ -219,7 +219,7 @@ test.describe('cropToImagePixels', () => {
   });
 });
 
-test.describe('canvasFilter', () => {
+describe('canvasFilter', () => {
   test('is none when nothing is adjusted', () => {
     expect(canvasFilter(untouched)).toBe('none');
   });
@@ -244,7 +244,7 @@ test.describe('canvasFilter', () => {
   });
 });
 
-test.describe('encodeIco', () => {
+describe('encodeIco', () => {
   const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
 
   test('writes a one-image icon directory in front of the PNG', () => {

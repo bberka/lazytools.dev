@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   SNOWFLAKE_PRESETS,
   clampFieldValue,
@@ -30,7 +30,7 @@ function errorOf(result: { ok: true } | { ok: false; error: string } | null): st
   return result.error;
 }
 
-test.describe('layoutProblem', () => {
+describe('layoutProblem', () => {
   test('accepts every preset, including the 64-bit Instagram layout', () => {
     for (const id of presetIds) {
       expect(layoutProblem(SNOWFLAKE_PRESETS[id].layout), id).toBeNull();
@@ -69,7 +69,7 @@ test.describe('layoutProblem', () => {
   });
 });
 
-test.describe('field helpers', () => {
+describe('field helpers', () => {
   test('maxFieldValue is the largest value a field holds', () => {
     expect(maxFieldValue(0)).toBe(0);
     expect(maxFieldValue(5)).toBe(31);
@@ -97,7 +97,7 @@ test.describe('field helpers', () => {
   });
 });
 
-test.describe('generateSnowflakeIds', () => {
+describe('generateSnowflakeIds', () => {
   test('packs the fields in order', () => {
     const [first] = valueOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 1 }));
     expect(first.id).toBe(String(1n << 22n));
@@ -251,7 +251,7 @@ test.describe('generateSnowflakeIds', () => {
   });
 });
 
-test.describe('decodeSnowflake', () => {
+describe('decodeSnowflake', () => {
   test('returns null for blank input', () => {
     expect(decodeSnowflake('', twitter)).toBeNull();
     expect(decodeSnowflake('   \n', twitter)).toBeNull();
@@ -358,7 +358,7 @@ test.describe('decodeSnowflake', () => {
   });
 });
 
-test.describe('relativeTimeLabel', () => {
+describe('relativeTimeLabel', () => {
   const now = Date.UTC(2026, 0, 1);
   const second = 1000;
   const day = 86_400 * second;
@@ -376,7 +376,7 @@ test.describe('relativeTimeLabel', () => {
   });
 });
 
-test.describe('snowflakeIdsToCsv', () => {
+describe('snowflakeIdsToCsv', () => {
   test('quotes the date, whose comma would otherwise add a column', () => {
     const ids = valueOf(
       generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 2, datacenterId: 3 })

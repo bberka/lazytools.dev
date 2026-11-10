@@ -1,10 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 
 const join = (segments: Array<{ text: string }>) =>
   segments.map((segment) => segment.text).join('');
 
-test.describe('splitAtMatches', () => {
+describe('splitAtMatches', () => {
   test('alternates unmatched and matched text', () => {
     expect(
       splitAtMatches('one cat, two cats', [

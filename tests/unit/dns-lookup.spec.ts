@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeDnsRecords,
   formatTtl,
@@ -36,7 +36,7 @@ const nameOf = (input: string) => {
   return parsed.ok ? parsed.name : `error: ${parsed.error}`;
 };
 
-test.describe('parseDomainName', () => {
+describe('parseDomainName', () => {
   test('accepts ordinary domain names and trims them', () => {
     expect(nameOf('example.com')).toBe('example.com');
     expect(nameOf('  www.Example.co.uk \n')).toBe('www.Example.co.uk');
@@ -116,7 +116,7 @@ test.describe('parseDomainName', () => {
   });
 });
 
-test.describe('sameDnsName', () => {
+describe('sameDnsName', () => {
   test('ignores case and a trailing dot', () => {
     expect(sameDnsName('google.com.', 'google.com')).toBe(true);
     expect(sameDnsName('WWW.Example.COM', 'www.example.com.')).toBe(true);
@@ -129,7 +129,7 @@ test.describe('sameDnsName', () => {
   });
 });
 
-test.describe('formatTtl', () => {
+describe('formatTtl', () => {
   test('shows the largest whole unit', () => {
     expect(formatTtl(0)).toBe('0s');
     expect(formatTtl(59)).toBe('59s');
@@ -143,7 +143,7 @@ test.describe('formatTtl', () => {
   });
 });
 
-test.describe('describeDnsRecords', () => {
+describe('describeDnsRecords', () => {
   const record = (type: string): DnsRecord => ({ name: 'example.com.', type, ttl: 60, data: 'x' });
   const result = (type: DnsLookupResult['type'], types: string[]): DnsLookupResult => ({
     name: 'example.com',
@@ -173,7 +173,7 @@ test.describe('describeDnsRecords', () => {
   });
 });
 
-test.describe('lookupDns', () => {
+describe('lookupDns', () => {
   const GOOGLE_A = {
     Status: 0,
     TC: false,

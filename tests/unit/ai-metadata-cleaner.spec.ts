@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_TEXT_OPTIONS,
   cleanAiText,
@@ -18,7 +18,7 @@ const only = (category: TextCategory) => ({
   [category]: true,
 });
 
-test.describe('cleanAiText characters', () => {
+describe('cleanAiText characters', () => {
   test('plain text passes through with all counts at zero', () => {
     const result = cleanAiText('Hello, world!\n\tTabs and\r\nlines stay. Café 世界 😀');
     expect(result.text).toBe('Hello, world!\n\tTabs and\r\nlines stay. Café 世界 😀');
@@ -92,7 +92,7 @@ test.describe('cleanAiText characters', () => {
   });
 });
 
-test.describe('tracking parameters', () => {
+describe('tracking parameters', () => {
   test('strips utm_source=chatgpt.com and keeps the other parameters and the fragment', () => {
     expect(stripTrackingParams('https://example.com/a?x=1&utm_source=chatgpt.com&y=2#top')).toEqual(
       {

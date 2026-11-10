@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { calculatePercentage } from '@/lib/tools/percentage-calculator';
 
-test.describe('calculatePercentage', () => {
+describe('calculatePercentage', () => {
   test('calculates X% of Y', () => {
     expect(calculatePercentage('percent-of', '20', '150')).toEqual({
       value: '30.00',

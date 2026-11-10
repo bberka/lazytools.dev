@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   JSON_CODE_LANGUAGES,
   generateCodeFromJson,
@@ -32,7 +32,7 @@ const USERS = [
 
 const ALL_LANGUAGES = JSON_CODE_LANGUAGES.map((language) => language.value);
 
-test.describe('inspectJson', () => {
+describe('inspectJson', () => {
   test('summarises what the text holds', () => {
     expect(inspectJson('{"a": 1, "b": 2}')).toEqual({
       valid: true,
@@ -57,7 +57,7 @@ test.describe('inspectJson', () => {
   });
 });
 
-test.describe('TypeScript', () => {
+describe('TypeScript', () => {
   test('writes an interface per object, root first', () => {
     expect(typescript(PROFILE)).toBe(
       lines(
@@ -239,7 +239,7 @@ test.describe('TypeScript', () => {
   });
 });
 
-test.describe('Zod', () => {
+describe('Zod', () => {
   // The schemas were listed root first, so the root read a const before its declaration.
   test('declares a nested schema before the schema that uses it', () => {
     const code = generate(PROFILE, 'zod');
@@ -300,7 +300,7 @@ test.describe('Zod', () => {
   });
 });
 
-test.describe('Python', () => {
+describe('Python', () => {
   test('writes dataclasses, root first', () => {
     expect(generate(PROFILE, 'python-dataclass')).toBe(
       lines(
@@ -403,7 +403,7 @@ test.describe('Python', () => {
   });
 });
 
-test.describe('Go', () => {
+describe('Go', () => {
   test('writes structs with json tags', () => {
     expect(generate(PROFILE, 'go')).toBe(
       lines(
@@ -455,7 +455,7 @@ test.describe('Go', () => {
   });
 });
 
-test.describe('Java', () => {
+describe('Java', () => {
   // The nested class was named twice: field "Company", getter "Company1".
   test('uses one class per nested object', () => {
     const code = generate(PROFILE, 'java');
@@ -522,7 +522,7 @@ test.describe('Java', () => {
   });
 });
 
-test.describe('C#', () => {
+describe('C#', () => {
   test('writes classes with properties', () => {
     expect(generate({ id: 1, name: 'a', tags: ['x'] }, 'csharp')).toBe(
       lines(
@@ -587,7 +587,7 @@ test.describe('C#', () => {
   });
 });
 
-test.describe('Rust', () => {
+describe('Rust', () => {
   // "pub type: String" does not compile.
   test('escapes keywords and renames what serde cannot derive', () => {
     expect(
@@ -627,7 +627,7 @@ test.describe('Rust', () => {
   });
 });
 
-test.describe('Swift', () => {
+describe('Swift', () => {
   test('writes Codable structs', () => {
     expect(generate(PROFILE, 'swift')).toBe(
       lines(
@@ -703,7 +703,7 @@ test.describe('Swift', () => {
   });
 });
 
-test.describe('Kotlin', () => {
+describe('Kotlin', () => {
   test('writes data classes', () => {
     expect(generate(PROFILE, 'kotlin')).toBe(
       lines(
@@ -757,7 +757,7 @@ test.describe('Kotlin', () => {
   });
 });
 
-test.describe('Dart', () => {
+describe('Dart', () => {
   // fromJson used to assign the decoded Map and List<dynamic> straight to typed fields.
   test('converts nested objects, lists and doubles in fromJson', () => {
     expect(
@@ -904,7 +904,7 @@ test.describe('Dart', () => {
   });
 });
 
-test.describe('every language', () => {
+describe('every language', () => {
   // A root that is not an object used to give an empty box in most languages,
   // and a null root gave nothing in all of them.
   test('names a root that is not an object', () => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   GRADIENT_PRESETS,
   MAX_STOPS,
@@ -61,7 +61,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-test.describe('gradient types', () => {
+describe('gradient types', () => {
   test('linear', () => {
     expect(buildGradientValue(model())).toBe('linear-gradient(90deg, #ff0000 0%, #0000ff 100%)');
   });
@@ -143,7 +143,7 @@ test.describe('gradient types', () => {
   });
 });
 
-test.describe('stop ordering', () => {
+describe('stop ordering', () => {
   test('stops are emitted in position order whatever order they were listed in', () => {
     const value = buildGradientValue(
       model({ stops: stopsFrom(['#0000ff', 100], ['#00ff00', 50], ['#ff0000', 0]) })
@@ -178,7 +178,7 @@ test.describe('stop ordering', () => {
   });
 });
 
-test.describe('clamping', () => {
+describe('clamping', () => {
   test('stop positions are clamped to 0 to 100', () => {
     const value = buildGradientValue(
       model({ stops: stopsFrom(['#ff0000', -25], ['#0000ff', 140]) })
@@ -231,7 +231,7 @@ test.describe('clamping', () => {
   });
 });
 
-test.describe('colours', () => {
+describe('colours', () => {
   test('hex colours are lower-cased and short forms are expanded', () => {
     expect(normaliseColor('#FF0000')).toBe('#ff0000');
     expect(normaliseColor('#F0a')).toBe('#ff00aa');
@@ -259,7 +259,7 @@ test.describe('colours', () => {
   });
 });
 
-test.describe('Tailwind class', () => {
+describe('Tailwind class', () => {
   test('spaces become underscores and the spaces after commas disappear', () => {
     expect(buildTailwindClass(model())).toBe('bg-[linear-gradient(90deg,#ff0000_0%,#0000ff_100%)]');
   });
@@ -311,7 +311,7 @@ test.describe('Tailwind class', () => {
   });
 });
 
-test.describe('editing the stop list', () => {
+describe('editing the stop list', () => {
   test('addStop puts a new stop in the widest gap with a blended colour', () => {
     const stops = stopsFrom(['#000000', 0], ['#ffffff', 20], ['#ff0000', 100]);
     const next = addStop(stops);
@@ -390,7 +390,7 @@ test.describe('editing the stop list', () => {
   });
 });
 
-test.describe('repeatsVisibly', () => {
+describe('repeatsVisibly', () => {
   test('a repeating gradient that spans 0 to 100 shows no repeat', () => {
     expect(repeatsVisibly(model({ repeating: true }))).toBe(false);
   });
@@ -416,7 +416,7 @@ test.describe('repeatsVisibly', () => {
   });
 });
 
-test.describe('presets and randomise', () => {
+describe('presets and randomise', () => {
   test('there are a few presets covering every type, repeating included', () => {
     expect(GRADIENT_PRESETS.length).toBeGreaterThanOrEqual(5);
     const types = new Set(GRADIENT_PRESETS.map((p) => p.model.type));

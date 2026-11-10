@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decryptText, encryptText, generatePassword } from '@/lib/tools/aes-encryption';
 
 const PASSWORD = 'correct horse battery staple';
@@ -14,7 +14,7 @@ const fromBase64 = (text: string) => Uint8Array.from(atob(text), (char) => char.
 const toBase64 = (bytes: Uint8Array) =>
   btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''));
 
-test.describe('encryptText and decryptText', () => {
+describe('encryptText and decryptText', () => {
   test('round-trips plain, Unicode, emoji, multi-line and whitespace-only text', async () => {
     for (const message of [
       'hello',
@@ -78,7 +78,7 @@ test.describe('encryptText and decryptText', () => {
   });
 });
 
-test.describe('generatePassword', () => {
+describe('generatePassword', () => {
   test('returns 32 hexadecimal characters, different every time', () => {
     const first = generatePassword();
     const second = generatePassword();

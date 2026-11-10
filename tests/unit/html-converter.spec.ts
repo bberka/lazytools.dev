@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { htmlToMarkdown, htmlToPlainText, type MarkupNode } from '@/lib/tools/html-converter';
 
 // ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ const sample = h(
 
 // ---------------------------------------------------------------------------
 
-test.describe('HTML to Markdown', () => {
+describe('HTML to Markdown', () => {
   test('converts the sample document', () => {
     expect(htmlToMarkdown(sample)).toBe(
       [
@@ -410,7 +410,7 @@ test.describe('HTML to Markdown', () => {
   });
 });
 
-test.describe('HTML to plain text', () => {
+describe('HTML to plain text', () => {
   test('converts the sample document', () => {
     // The old output ran table cells together ("AreaStatus") and kept the
     // indentation of the HTML source.

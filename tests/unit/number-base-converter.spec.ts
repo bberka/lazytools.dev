@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertNumberBase, type NumberBase } from '@/lib/tools/number-base-converter';
 
 const ok = (binary: string, octal: string, decimal: string, hex: string) => ({
@@ -12,7 +12,7 @@ const errorOf = (input: string, base: NumberBase): string => {
   return result.status === 'error' ? result.error : `not an error: ${result.status}`;
 };
 
-test.describe('convertNumberBase', () => {
+describe('convertNumberBase', () => {
   test('converts from every base to all four', () => {
     const expected = ok('11111111', '377', '255', 'FF');
 

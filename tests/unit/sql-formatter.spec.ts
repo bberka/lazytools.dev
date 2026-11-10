@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { formatSql, minifySql, type SqlFormatSettings } from '@/lib/tools/sql-formatter';
 
 const DEFAULTS: SqlFormatSettings = {
@@ -8,7 +8,7 @@ const DEFAULTS: SqlFormatSettings = {
   logicalOperatorNewline: 'before',
 };
 
-test.describe('formatSql', () => {
+describe('formatSql', () => {
   test('formats a query with upper-case keywords and two-space indent', async () => {
     expect(await formatSql('select a, b from t where x = 1 and y = 2', DEFAULTS)).toEqual({
       output: 'SELECT\n  a,\n  b\nFROM\n  t\nWHERE\n  x = 1\n  AND y = 2',
@@ -72,7 +72,7 @@ test.describe('formatSql', () => {
   });
 });
 
-test.describe('minifySql', () => {
+describe('minifySql', () => {
   test('collapses whitespace onto one line', () => {
     expect(minifySql('SELECT a,\n       b\nFROM   t\nWHERE  x = 1\n')).toBe(
       'SELECT a, b FROM t WHERE x = 1'

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertHex, hexToText, textToHex } from '@/lib/tools/hex-converter';
 
-test.describe('textToHex', () => {
+describe('textToHex', () => {
   test('writes one lower-case pair per UTF-8 byte', () => {
     expect(textToHex('Hello')).toBe('48656c6c6f');
     expect(textToHex('Hello', { delimiter: ' ' })).toBe('48 65 6c 6c 6f');
@@ -24,7 +24,7 @@ test.describe('textToHex', () => {
   });
 });
 
-test.describe('hexToText', () => {
+describe('hexToText', () => {
   test('reads pairs with or without separators, in either case', () => {
     expect(hexToText('48656c6c6f')).toBe('Hello');
     expect(hexToText('48 65 6C 6c 6F')).toBe('Hello');
@@ -73,7 +73,7 @@ test.describe('hexToText', () => {
   });
 });
 
-test.describe('convertHex', () => {
+describe('convertHex', () => {
   test('returns nothing for empty input, and for blank input when decoding', () => {
     expect(convertHex('', 'encode')).toEqual({ output: '', error: '' });
     expect(convertHex('', 'decode')).toEqual({ output: '', error: '' });

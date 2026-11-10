@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { buildStandaloneHtml } from '@/lib/markdown';
 import { PAGE_FORMATS_MM, escapeHtml, previewPageSize } from '@/lib/tools/document-export';
 
-test.describe('paper sizes', () => {
+describe('paper sizes', () => {
   test('lists portrait sizes, short side first', () => {
     expect(PAGE_FORMATS_MM.A4).toEqual([210, 297]);
     expect(PAGE_FORMATS_MM.Letter).toEqual([215.9, 279.4]);
@@ -13,7 +13,7 @@ test.describe('paper sizes', () => {
   });
 });
 
-test.describe('preview page size', () => {
+describe('preview page size', () => {
   test('is as wide as the paper and one page tall', () => {
     // The numbers both converters showed before the sizes were shared.
     expect(previewPageSize('A4', 'portrait')).toEqual({ width: 794, minHeight: 1123 });
@@ -30,7 +30,7 @@ test.describe('preview page size', () => {
   });
 });
 
-test.describe('escaping text for HTML', () => {
+describe('escaping text for HTML', () => {
   test('escapes the characters HTML gives a meaning to', () => {
     expect(escapeHtml(`<b class="x">Tom & Jerry's</b>`)).toBe(
       '&lt;b class=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/b&gt;'

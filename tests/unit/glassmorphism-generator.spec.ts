@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_GLASS_PRESET,
   GLASS_PRESETS,
@@ -12,7 +12,7 @@ const FROSTED = GLASS_PRESETS[DEFAULT_GLASS_PRESET].settings;
 const build = (overrides: Partial<GlassSettings> = {}) =>
   buildGlassOutput({ ...FROSTED, ...overrides });
 
-test.describe('presets', () => {
+describe('presets', () => {
   test('offers the six presets with Frosted Light as the default', () => {
     expect(Object.values(GLASS_PRESETS).map((preset) => preset.name)).toEqual([
       'Frosted Light',
@@ -68,7 +68,7 @@ test.describe('presets', () => {
   });
 });
 
-test.describe('buildGlassOutput', () => {
+describe('buildGlassOutput', () => {
   test('builds the inline style', () => {
     expect(build().style).toEqual({
       background: 'rgba(255, 255, 255, 0.15)',

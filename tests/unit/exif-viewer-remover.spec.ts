@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   parseExifSections,
   uniqueFileNames,
@@ -100,12 +100,12 @@ function writeDirectory(entries: Entry[], start: number, littleEndian: boolean):
     if (entry.pointer !== undefined) {
       directory.push(...u32(entry.pointer));
     } else if (entry.data.length <= 4) {
-      directory.push(...entry.data, ...new Array<number>(4 - entry.data.length).fill(0));
+      directory.push(...entry.data, ...Array.from({ length: 4 - entry.data.length }, () => 0));
     } else {
       directory.push(...u32(storedAt));
       stored.push(
         ...entry.data,
-        ...new Array<number>(padded(entry.data.length) - entry.data.length).fill(0)
+        ...Array.from({ length: padded(entry.data.length) - entry.data.length }, () => 0)
       );
       storedAt += padded(entry.data.length);
     }
@@ -168,7 +168,7 @@ function fieldsOf(sections: ExifSection[], title: string): Record<string, string
 
 // ── Reading ───────────────────────────────────────────────────────────────────
 
-test.describe('parseExifSections', () => {
+describe('parseExifSections', () => {
   for (const littleEndian of [true, false]) {
     const order = littleEndian ? 'little-endian' : 'big-endian';
 
@@ -370,11 +370,18 @@ test.describe('parseExifSections', () => {
     // Padding blocks left by editors run to thousands of bytes.
     const w = writer(true);
     const sections = parseExifSections(
-      jpegWithExif({ image: [w.undefinedBytes(0xea1c, new Array<number>(2060).fill(0))] })
+      jpegWithExif({
+        image: [
+          w.undefinedBytes(
+            0xea1c,
+            Array.from({ length: 2060 }, () => 0)
+          ),
+        ],
+      })
     );
 
     expect(fieldsOf(sections, 'Image')).toEqual({
-      'Tag 0xea1c': `${new Array<number>(16).fill(0).join(', ')}, ... (2060 values)`,
+      'Tag 0xea1c': `${Array.from({ length: 16 }, () => 0).join(', ')}, ... (2060 values)`,
     });
   });
 
@@ -470,7 +477,7 @@ test.describe('parseExifSections', () => {
 
 // ── Batch file names ──────────────────────────────────────────────────────────
 
-test.describe('uniqueFileNames', () => {
+describe('uniqueFileNames', () => {
   test('leaves distinct names alone', () => {
     expect(uniqueFileNames(['a-clean.jpg', 'b-clean.jpg', 'a-clean.png'])).toEqual([
       'a-clean.jpg',

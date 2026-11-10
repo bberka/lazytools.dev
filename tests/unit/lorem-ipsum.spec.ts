@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   LOREM_MAX_COUNT,
   LOREM_MIN_COUNT,
@@ -27,7 +27,7 @@ const generate = (options: Partial<LoremOptions>, seed = 1) =>
 const wordsOf = (text: string) => text.split(/\s+/).filter(Boolean);
 const sentencesOf = (text: string) => text.split(/(?<=\.)\s+/).filter(Boolean);
 
-test.describe('words', () => {
+describe('words', () => {
   test('generates exactly the number of words asked for', () => {
     for (const count of [1, 5, 6, 50, 250]) {
       expect(wordsOf(generate({ type: 'words', count })), `${count} words`).toHaveLength(count);
@@ -56,7 +56,7 @@ test.describe('words', () => {
   });
 });
 
-test.describe('sentences', () => {
+describe('sentences', () => {
   test('generates the number of sentences asked for, each 5 to 14 words', () => {
     for (let seed = 1; seed <= 20; seed++) {
       const sentences = sentencesOf(generate({ type: 'sentences', count: 6 }, seed));
@@ -80,7 +80,7 @@ test.describe('sentences', () => {
   });
 });
 
-test.describe('paragraphs', () => {
+describe('paragraphs', () => {
   test('generates the number of paragraphs asked for, each 3 to 7 sentences', () => {
     for (let seed = 1; seed <= 20; seed++) {
       const paragraphs = generate({ count: 5 }, seed).split('\n\n');
@@ -123,7 +123,7 @@ test.describe('paragraphs', () => {
   });
 });
 
-test.describe('count limits', () => {
+describe('count limits', () => {
   test('reads the count a user typed', () => {
     expect(parseLoremCount('3')).toBe(3);
     expect(parseLoremCount('2.7')).toBe(2);
@@ -149,7 +149,7 @@ test.describe('count limits', () => {
   });
 });
 
-test.describe('randomness', () => {
+describe('randomness', () => {
   test('gives the same text for the same random source', () => {
     expect(generate({ count: 4 }, 42)).toBe(generate({ count: 4 }, 42));
     expect(generate({ count: 4 }, 42)).not.toBe(generate({ count: 4 }, 43));

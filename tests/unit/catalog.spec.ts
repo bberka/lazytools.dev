@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createToolCatalog, toolCatalog } from '@/lib/catalog';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { Tool, ToolComponentLoader, ToolRegistry } from '@/lib/types';
@@ -118,7 +118,7 @@ const HIDDEN_IDS = ['data-formatter', 'pdf-merge'];
 const catalog = createToolCatalog(registry);
 const ids = (tools: readonly Tool[]) => tools.map((tool) => tool.id);
 
-test.describe('tool catalog: hidden policy', () => {
+describe('tool catalog: hidden policy', () => {
   test('keeps hidden tools out of discovery', () => {
     expect(ids(catalog.discoverable())).toEqual(VISIBLE_IDS);
     expect(ids(catalog.search(''))).toEqual(VISIBLE_IDS);
@@ -149,7 +149,7 @@ test.describe('tool catalog: hidden policy', () => {
   });
 });
 
-test.describe('tool catalog: lookup', () => {
+describe('tool catalog: lookup', () => {
   test('returns the tool together with its component loader', async () => {
     const entry = catalog.get('json-formatter');
 
@@ -204,7 +204,7 @@ test.describe('tool catalog: lookup', () => {
 
 // Expected orders were recorded from the search helper this catalog replaced,
 // run against the same tools, so they pin the ranking it had.
-test.describe('tool catalog: search ranking', () => {
+describe('tool catalog: search ranking', () => {
   const rankings: Array<[query: string, expected: string[]]> = [
     // Equal scores keep catalog order
     ['json', ['json-formatter', 'json-to-code']],
@@ -256,7 +256,7 @@ test.describe('tool catalog: search ranking', () => {
   });
 });
 
-test.describe('tool catalog: filter', () => {
+describe('tool catalog: filter', () => {
   test('narrows by tag in catalog order', () => {
     expect(ids(catalog.filter({ tag: 'pdf-tools' }))).toEqual(['markdown-editor', 'pdf-tools']);
     expect(ids(catalog.filter({ tag: 'converters' }))).toEqual([
@@ -318,7 +318,7 @@ test.describe('tool catalog: filter', () => {
   });
 });
 
-test.describe('tool catalog: grouping', () => {
+describe('tool catalog: grouping', () => {
   test('groups tools under each of their tags and leaves empty groups out', () => {
     const groups = Object.fromEntries(
       catalog.groupByTag().map((group) => [group.tag, ids(group.tools)])
@@ -359,7 +359,7 @@ test.describe('tool catalog: grouping', () => {
   });
 });
 
-test.describe('tool catalog: construction', () => {
+describe('tool catalog: construction', () => {
   const withDescription = (description: string): ToolRegistry => ({
     'sample-tool': {
       name: 'Sample Tool',
@@ -395,7 +395,7 @@ test.describe('tool catalog: construction', () => {
   });
 });
 
-test.describe('tool catalog: the app registry', () => {
+describe('tool catalog: the app registry', () => {
   test('covers every registry entry, hidden ones included', () => {
     expect(ids(toolCatalog.all())).toEqual(Object.keys(TOOL_REGISTRY));
   });

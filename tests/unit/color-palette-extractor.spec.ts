@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { DEFAULT_PALETTE_SIZE, extractPalette } from '@/lib/tools/color-palette-extractor';
 
 type Rgba = [number, number, number, number];
@@ -12,7 +12,7 @@ function pixels(...runs: Array<[Rgba, number]>): Uint8ClampedArray {
 
 const opaque = (red: number, green: number, blue: number): Rgba => [red, green, blue, 255];
 
-test.describe('extractPalette', () => {
+describe('extractPalette', () => {
   test('reports pure white as white', () => {
     // 255 rounds to 260 at a step of 10. That overflowed into the next
     // channel, and a white background came out as the near-black #050504.

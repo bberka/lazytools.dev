@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CURRENCIES,
   buildLoanSummary,
@@ -59,7 +59,7 @@ const LOANS: LoanInput[] = [
   { amount: 50_000, annualRatePercent: 8, term: 1, termUnit: 'months' },
 ];
 
-test.describe('monthly payment against published figures', () => {
+describe('monthly payment against published figures', () => {
   // The standard fixed-rate payment table, in cents.
   const published: Array<[LoanInput, number]> = [
     [MORTGAGE, 119_910],
@@ -129,7 +129,7 @@ test.describe('monthly payment against published figures', () => {
   });
 });
 
-test.describe('zero interest', () => {
+describe('zero interest', () => {
   test('12,000 over 12 months is 1,000 a month with no interest', () => {
     const result = ready({ amount: 12_000, annualRatePercent: 0, term: 12, termUnit: 'months' });
     expect(result.monthlyPayment).toBe(100_000);
@@ -151,7 +151,7 @@ test.describe('zero interest', () => {
   });
 });
 
-test.describe('extra payments', () => {
+describe('extra payments', () => {
   test('shorten the term and save interest', () => {
     const base = ready(MORTGAGE);
     const withExtra = ready({ ...MORTGAGE, extraPayment: 200 });
@@ -216,7 +216,7 @@ test.describe('extra payments', () => {
   });
 });
 
-test.describe('schedule invariants', () => {
+describe('schedule invariants', () => {
   for (const input of LOANS) {
     const label = `${input.amount} at ${input.annualRatePercent}% over ${input.term} ${input.termUnit}${
       input.extraPayment ? ` + ${input.extraPayment}` : ''
@@ -287,7 +287,7 @@ test.describe('schedule invariants', () => {
   });
 });
 
-test.describe('whole-unit currencies', () => {
+describe('whole-unit currencies', () => {
   const yen: LoanInput = {
     amount: 1_500_000,
     annualRatePercent: 1.75,
@@ -314,7 +314,7 @@ test.describe('whole-unit currencies', () => {
   });
 });
 
-test.describe('validation', () => {
+describe('validation', () => {
   test('rejects a missing, zero or negative amount', () => {
     expect(errorsOf({ ...MORTGAGE, amount: 0 }).amount).toMatch(/greater than zero/);
     expect(errorsOf({ ...MORTGAGE, amount: -5 }).amount).toMatch(/greater than zero/);
@@ -370,7 +370,7 @@ test.describe('validation', () => {
   });
 });
 
-test.describe('typed input', () => {
+describe('typed input', () => {
   const evaluate = (changes: Partial<LoanFields>, currency?: string) =>
     evaluateLoan({ ...FIELDS, ...changes }, currency);
 
@@ -445,7 +445,7 @@ test.describe('typed input', () => {
   });
 });
 
-test.describe('schedule by year', () => {
+describe('schedule by year', () => {
   test('folds 360 months into 30 years whose totals match the schedule', () => {
     const { schedule, totalInterest, totalPaid, amount } = ready(MORTGAGE);
     const years = groupScheduleByYear(schedule);
@@ -482,7 +482,7 @@ test.describe('schedule by year', () => {
   });
 });
 
-test.describe('CSV export', () => {
+describe('CSV export', () => {
   test('has a header, one line per payment and ends on a zero balance', () => {
     const csv = scheduleToCsv(ready(MORTGAGE));
     const lines = csv.trimEnd().split('\r\n');
@@ -529,7 +529,7 @@ test.describe('CSV export', () => {
   });
 });
 
-test.describe('summary text', () => {
+describe('summary text', () => {
   const usd = createMoneyFormatter('USD');
 
   test('lists the figures', () => {
@@ -556,7 +556,7 @@ test.describe('summary text', () => {
   });
 });
 
-test.describe('formatting', () => {
+describe('formatting', () => {
   test('formatMonths writes years and months', () => {
     expect(formatMonths(0)).toBe('0 months');
     expect(formatMonths(1)).toBe('1 month');

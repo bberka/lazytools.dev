@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildOtpauthUri,
   computeTotpWindow,
@@ -54,7 +54,7 @@ const RFC_4226_VECTORS: Array<{ counter: number; truncated: number; hotp: string
 
 const SHA1_OPTIONS: TotpOptions = { algorithm: 'SHA-1', digits: 6, period: 30 };
 
-test.describe('decodeBase32', () => {
+describe('decodeBase32', () => {
   test('decodes the RFC 4648 test vectors, padded and unpadded', () => {
     const vectors: Array<[string, string]> = [
       ['f', 'MY======'],
@@ -170,7 +170,7 @@ test.describe('decodeBase32', () => {
   });
 });
 
-test.describe('encodeBase32', () => {
+describe('encodeBase32', () => {
   test('matches the RFC 4648 test vectors', () => {
     expect(encodeBase32(ascii(''))).toBe('');
     expect(encodeBase32(ascii('f'))).toBe('MY');
@@ -202,7 +202,7 @@ test.describe('encodeBase32', () => {
   });
 });
 
-test.describe('hotp (RFC 4226 Appendix D)', () => {
+describe('hotp (RFC 4226 Appendix D)', () => {
   const key = ascii(RFC_6238_SEEDS['SHA-1']);
 
   test('reproduces the 6-digit HOTP values for counters 0-9', async () => {
@@ -240,7 +240,7 @@ test.describe('hotp (RFC 4226 Appendix D)', () => {
   });
 });
 
-test.describe('totp (RFC 6238 Appendix B)', () => {
+describe('totp (RFC 6238 Appendix B)', () => {
   for (const algorithm of Object.keys(RFC_6238_SEEDS) as TotpAlgorithm[]) {
     test(`reproduces every ${algorithm} vector with 8 digits`, async () => {
       const key = ascii(RFC_6238_SEEDS[algorithm]);
@@ -285,7 +285,7 @@ test.describe('totp (RFC 6238 Appendix B)', () => {
   });
 });
 
-test.describe('totpCounter and secondsRemaining', () => {
+describe('totpCounter and secondsRemaining', () => {
   test('counts whole periods since the Unix epoch', () => {
     expect(totpCounter(0, 30)).toBe(0);
     expect(totpCounter(29_999, 30)).toBe(0);
@@ -311,7 +311,7 @@ test.describe('totpCounter and secondsRemaining', () => {
   });
 });
 
-test.describe('computeTotpWindow', () => {
+describe('computeTotpWindow', () => {
   const seed = encodeBase32(ascii(RFC_6238_SEEDS['SHA-1']));
   const options8: TotpOptions = { algorithm: 'SHA-1', digits: 8, period: 30 };
 
@@ -449,7 +449,7 @@ test.describe('computeTotpWindow', () => {
   });
 });
 
-test.describe('buildOtpauthUri', () => {
+describe('buildOtpauthUri', () => {
   test('builds the Key URI Format link with every parameter', () => {
     const result = buildOtpauthUri({
       ...SHA1_OPTIONS,
@@ -579,7 +579,7 @@ test.describe('buildOtpauthUri', () => {
   });
 });
 
-test.describe('generateSecret', () => {
+describe('generateSecret', () => {
   test('makes a 160-bit secret as 32 Base32 characters', () => {
     const secret = generateSecret();
 
@@ -612,7 +612,7 @@ test.describe('generateSecret', () => {
   });
 });
 
-test.describe('formatCode', () => {
+describe('formatCode', () => {
   test('groups six digits as 3 + 3 and eight digits as 4 + 4', () => {
     expect(formatCode('123456')).toBe('123 456');
     expect(formatCode('007081')).toBe('007 081');

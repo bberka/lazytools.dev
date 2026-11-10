@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   decodeCertificate,
   fingerprintCertificate,
@@ -146,7 +146,7 @@ function buildCertificate(parts: CertificateParts = {}): Uint8Array {
     parts.issuer ?? name,
     seq(parts.notBefore ?? utcTime('240101000000Z'), parts.notAfter ?? utcTime('340101000000Z')),
     parts.subject ?? name,
-    seq(seq(oid('1.3.101.112')), bitString(...new Array<number>(32).fill(7))),
+    seq(seq(oid('1.3.101.112')), bitString(...Array.from({ length: 32 }, () => 7))),
     ...(parts.extensions ? [explicit(3, seq(...parts.extensions))] : [])
   );
   return seq(tbs, signatureAlgorithm, bitString(0xde, 0xad));
@@ -154,7 +154,7 @@ function buildCertificate(parts: CertificateParts = {}): Uint8Array {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-test.describe('decodeCertificate: an RSA certificate', () => {
+describe('decodeCertificate: an RSA certificate', () => {
   const { cert, der, certificateCount } = decodeCertificate(LEAF_PEM, IN_2026);
 
   test('reads the fields OpenSSL reports', () => {
@@ -250,7 +250,7 @@ test.describe('decodeCertificate: an RSA certificate', () => {
   });
 });
 
-test.describe('decodeCertificate: an EC certificate', () => {
+describe('decodeCertificate: an EC certificate', () => {
   const { cert, der } = decodeCertificate(CA_PEM, IN_2026);
 
   test('reads the fields OpenSSL reports', async () => {
@@ -274,7 +274,7 @@ test.describe('decodeCertificate: an EC certificate', () => {
   });
 });
 
-test.describe('decodeCertificate: validity', () => {
+describe('decodeCertificate: validity', () => {
   test('is valid inside the period', () => {
     const { cert } = decodeCertificate(LEAF_PEM, IN_2026);
     expect([cert.isExpired, cert.isNotYetValid]).toEqual([false, false]);
@@ -326,7 +326,7 @@ test.describe('decodeCertificate: validity', () => {
   });
 });
 
-test.describe('decodeCertificate: names and identifiers', () => {
+describe('decodeCertificate: names and identifiers', () => {
   // Defect: TeletexString values were decoded as UTF-8, which turned every
   // accented letter into a replacement character.
   test('decodes Teletex, BMP and Universal strings', () => {
@@ -369,7 +369,7 @@ test.describe('decodeCertificate: names and identifiers', () => {
   });
 });
 
-test.describe('decodeCertificate: input formats', () => {
+describe('decodeCertificate: input formats', () => {
   // Defect: every PEM block was glued together before decoding, so a chain
   // either failed to decode or got fingerprints computed over all of it.
   test('decodes the first certificate of a chain and counts the rest', async () => {
@@ -444,7 +444,7 @@ test.describe('decodeCertificate: input formats', () => {
   });
 });
 
-test.describe('decodeCertificate: input that is not a certificate', () => {
+describe('decodeCertificate: input that is not a certificate', () => {
   test('asks for PEM when the text has no PEM block', () => {
     for (const text of ['', '   ', 'hello', pemBody(LEAF_PEM), '-----BEGIN']) {
       expect(() => decodeCertificate(text), JSON.stringify(text.slice(0, 20))).toThrow(

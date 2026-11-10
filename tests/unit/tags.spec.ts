@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { toolCatalog } from '@/lib/catalog';
 import { TAGS, TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
@@ -29,7 +29,7 @@ function expectClasses(styles: Record<string, string>, fields: string[], label: 
   }
 }
 
-test.describe('tag taxonomy', () => {
+describe('tag taxonomy', () => {
   test('is keyed by the ToolTag union', () => {
     expect(keyedByTheTagUnion).toBe(true);
   });

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   convertPunycode,
   decodeDomain,
@@ -28,7 +28,7 @@ const VECTORS: Array<[unicode: string, punycode: string]> = [
   ['-> $1.00 <-', '-> $1.00 <--'],
 ];
 
-test.describe('encodePunycode / decodePunycode', () => {
+describe('encodePunycode / decodePunycode', () => {
   test('match the reference vectors in both directions', () => {
     for (const [unicode, punycode] of VECTORS) {
       expect(encodePunycode(unicode), unicode).toBe(punycode);
@@ -65,7 +65,7 @@ test.describe('encodePunycode / decodePunycode', () => {
   });
 });
 
-test.describe('encodeDomain / decodeDomain', () => {
+describe('encodeDomain / decodeDomain', () => {
   test('convert only the labels that need it', () => {
     expect(encodeDomain('münchen.de')).toBe('xn--mnchen-3ya.de');
     expect(encodeDomain('www.домены.рф')).toBe('www.xn--d1acufc5f.xn--p1ai');
@@ -94,7 +94,7 @@ test.describe('encodeDomain / decodeDomain', () => {
   });
 });
 
-test.describe('convertPunycode', () => {
+describe('convertPunycode', () => {
   test('returns nothing for blank input', () => {
     expect(convertPunycode('', 'encode')).toBe('');
     expect(convertPunycode('  \n ', 'decode')).toBe('');

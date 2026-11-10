@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { hashPassword, verifyPassword, type Argon2Settings } from '@/lib/tools/password-hasher';
 
 // Small costs keep the suite fast; the published vectors below use real ones.
@@ -17,7 +17,7 @@ const ARGON2I_REFERENCE =
 // The example hash from the Bcrypt article on Wikipedia.
 const BCRYPT_REFERENCE = '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW';
 
-test.describe('hashPassword', () => {
+describe('hashPassword', () => {
   test('makes a Bcrypt hash with the requested cost that verifies', async () => {
     const hash = await hashPassword('correct horse', { algorithm: 'bcrypt', rounds: 4 });
     expect(hash).toMatch(/^\$2[aby]\$04\$[./A-Za-z0-9]{53}$/);
@@ -70,7 +70,7 @@ test.describe('hashPassword', () => {
   });
 });
 
-test.describe('verifyPassword', () => {
+describe('verifyPassword', () => {
   test('agrees with the Argon2 reference implementation', async () => {
     expect(await verifyPassword('password', ARGON2I_REFERENCE)).toEqual({
       matches: true,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import JSZip from 'jszip';
 import { pdfTextToDocx, pdfTextToParagraphs } from '@/lib/tools/pdf-to-word';
 
@@ -29,7 +29,7 @@ async function readDocx(docx: Blob) {
   return { xml, paragraphs };
 }
 
-test.describe('pdfTextToParagraphs', () => {
+describe('pdfTextToParagraphs', () => {
   test('makes one paragraph per page, with an empty one between pages', () => {
     expect(pdfTextToParagraphs(['Page one text', 'Page two text', 'Page three'])).toEqual([
       'Page one text',
@@ -87,7 +87,7 @@ test.describe('pdfTextToParagraphs', () => {
   });
 });
 
-test.describe('pdfTextToDocx', () => {
+describe('pdfTextToDocx', () => {
   test('writes a Word document with the paragraphs of the PDF', async () => {
     const docx = await pdfTextToDocx(['First  page', 'Second page: a < b & c > d']);
 

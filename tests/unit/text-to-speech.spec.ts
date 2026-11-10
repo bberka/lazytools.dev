@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeSpeechError,
   locateSpokenWord,
@@ -7,7 +7,7 @@ import {
 
 const withoutWhitespace = (value: string) => value.replace(/\s+/g, '');
 
-test.describe('splitIntoSentences', () => {
+describe('splitIntoSentences', () => {
   test('splits at sentence-ending punctuation followed by whitespace', () => {
     expect(splitIntoSentences('Hello world. How are you? Fine!')).toEqual([
       'Hello world.',
@@ -137,7 +137,7 @@ test.describe('splitIntoSentences', () => {
   });
 });
 
-test.describe('locateSpokenWord', () => {
+describe('locateSpokenWord', () => {
   const sentence = 'Hello brave new world.';
 
   test('cuts the sentence around the reported word', () => {
@@ -207,7 +207,7 @@ test.describe('locateSpokenWord', () => {
   });
 });
 
-test.describe('describeSpeechError', () => {
+describe('describeSpeechError', () => {
   test('reports nothing when speech was cut off on purpose', () => {
     expect(describeSpeechError('interrupted')).toBeNull();
     expect(describeSpeechError('canceled')).toBeNull();

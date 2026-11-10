@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFDocument } from 'pdf-lib';
 import {
   PDF_MIME_TYPE,
@@ -9,7 +9,7 @@ import {
   type PdfTextRun,
 } from '@/lib/pdf';
 
-test.describe('isPdfFile', () => {
+describe('isPdfFile', () => {
   test('accepts files the browser reports as PDF', () => {
     expect(isPdfFile(new File(['%PDF-1.7'], 'report.pdf', { type: 'application/pdf' }))).toBe(true);
     expect(isPdfFile({ type: PDF_MIME_TYPE })).toBe(true);
@@ -35,7 +35,7 @@ test.describe('isPdfFile', () => {
   });
 });
 
-test.describe('pdfBlob', () => {
+describe('pdfBlob', () => {
   test('keeps the bytes and marks them as a PDF', async () => {
     const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]);
     const blob = pdfBlob(bytes);
@@ -52,7 +52,7 @@ test.describe('pdfBlob', () => {
   });
 });
 
-test.describe('parsePageRange', () => {
+describe('parsePageRange', () => {
   test('reads single pages and ranges as zero-based indices', () => {
     expect(parsePageRange('1-3, 5', 10)).toEqual([0, 1, 2, 4]);
     expect(parsePageRange('7', 10)).toEqual([6]);
@@ -94,7 +94,7 @@ test.describe('parsePageRange', () => {
   });
 });
 
-test.describe('layoutPdfText', () => {
+describe('layoutPdfText', () => {
   const run = (str: string, y: number, hasEOL = false): PdfTextRun => ({
     str,
     hasEOL,
@@ -133,7 +133,7 @@ test.describe('layoutPdfText', () => {
   });
 });
 
-test.describe('with pdf-lib documents', () => {
+describe('with pdf-lib documents', () => {
   const pageSizes: Array<[number, number]> = [
     [200, 300],
     [400, 500],

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createHmac } from 'node:crypto';
 import {
   EXPIRY_PRESETS,
@@ -62,7 +62,7 @@ const NODE_HASH: Record<JwtAlgorithm, string> = {
   HS512: 'sha512',
 };
 
-test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
+describe('RFC 7515 Appendix A.1 (HS256)', () => {
   test('base64url of the header and payload octets matches the RFC', () => {
     expect(base64UrlEncodeText(RFC7515_HEADER)).toBe(RFC7515_HEADER_B64);
     expect(base64UrlEncodeText(RFC7515_PAYLOAD)).toBe(RFC7515_PAYLOAD_B64);
@@ -135,7 +135,7 @@ test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
   });
 });
 
-test.describe('algorithms', () => {
+describe('algorithms', () => {
   test('only the three HMAC algorithms are recognised, case-sensitively', () => {
     expect([...JWT_ALGORITHMS]).toEqual(['HS256', 'HS384', 'HS512']);
     for (const alg of JWT_ALGORITHMS) expect(isJwtAlgorithm(alg)).toBe(true);
@@ -145,7 +145,7 @@ test.describe('algorithms', () => {
   });
 });
 
-test.describe('HMAC primitive', () => {
+describe('HMAC primitive', () => {
   // RFC 4231 test case 2.
   const key = new TextEncoder().encode('Jefe');
   const data = new TextEncoder().encode('what do ya want for nothing?');
@@ -174,7 +174,7 @@ test.describe('HMAC primitive', () => {
   });
 });
 
-test.describe('Base64URL', () => {
+describe('Base64URL', () => {
   test('encodes the RFC 4648 section 10 vectors without padding', () => {
     const encode = (text: string) => base64UrlEncode(new TextEncoder().encode(text));
     expect(encode('')).toBe('');
@@ -271,7 +271,7 @@ test.describe('Base64URL', () => {
   });
 });
 
-test.describe('JSON helpers', () => {
+describe('JSON helpers', () => {
   test('parseJsonObject accepts objects only', () => {
     expect(parseJsonObject('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
     expect(parseJsonObject('  {}  ')).toEqual({ ok: true, value: {} });
@@ -357,7 +357,7 @@ test.describe('JSON helpers', () => {
   });
 });
 
-test.describe('secrets', () => {
+describe('secrets', () => {
   test('decodes UTF-8 text and counts bytes, not characters', () => {
     const result = decodeSecret('s3cr€t', 'utf8');
     expect(result.ok && Array.from(result.value)).toEqual(Array.from(Buffer.from('s3cr€t')));
@@ -407,7 +407,7 @@ test.describe('secrets', () => {
   });
 });
 
-test.describe('claims and time', () => {
+describe('claims and time', () => {
   test('unixSeconds floors the injected clock to whole seconds', () => {
     expect(unixSeconds(() => 1_700_000_000_999)).toBe(1_700_000_000);
     expect(unixSeconds(() => 0)).toBe(0);
@@ -462,7 +462,7 @@ test.describe('claims and time', () => {
   });
 });
 
-test.describe('validateHeader and validatePayload', () => {
+describe('validateHeader and validatePayload', () => {
   test('a header must be a JSON object whose alg matches the selection', () => {
     expect(validateHeader('{"alg":"HS256","typ":"JWT"}', 'HS256')).toBeNull();
     expect(validateHeader('{"alg":"HS512"}', 'HS512')).toBeNull();
@@ -490,7 +490,7 @@ test.describe('validateHeader and validatePayload', () => {
   });
 });
 
-test.describe('signJwt', () => {
+describe('signJwt', () => {
   const base = {
     header: '{"alg":"HS256","typ":"JWT"}',
     payload: '{"sub":"1"}',
@@ -645,7 +645,7 @@ test.describe('signJwt', () => {
   });
 });
 
-test.describe('verifyJwt', () => {
+describe('verifyJwt', () => {
   const SECRET = 'a-test-secret-that-is-long-enough!';
   const NOW = 1_800_000_000;
 

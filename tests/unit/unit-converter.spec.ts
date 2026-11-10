@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   UNIT_CATEGORIES,
   convertUnits,
@@ -9,7 +9,7 @@ import {
 const convert = (categoryId: UnitCategoryId, value: string, fromUnitId: string, toUnitId: string) =>
   convertUnits({ categoryId, value, fromUnitId, toUnitId });
 
-test.describe('unit catalogue', () => {
+describe('unit catalogue', () => {
   test('lists the eight categories in display order', () => {
     expect(UNIT_CATEGORIES.map((category) => category.id)).toEqual([
       'length',
@@ -38,7 +38,7 @@ test.describe('unit catalogue', () => {
   });
 });
 
-test.describe('convertUnits', () => {
+describe('convertUnits', () => {
   test('converts length', () => {
     expect(convert('length', '1', 'meter', 'foot')).toEqual({
       value: '3.2808399 ft',

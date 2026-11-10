@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MIME_CATEGORIES,
   MIME_ENTRIES,
@@ -12,7 +12,7 @@ import {
   searchMimeTypes,
 } from '@/lib/tools/mime-types';
 
-test.describe('known pairs', () => {
+describe('known pairs', () => {
   const pairs: Array<[string, string]> = [
     ['json', 'application/json'],
     ['webp', 'image/webp'],
@@ -56,7 +56,7 @@ test.describe('known pairs', () => {
   }
 });
 
-test.describe('data integrity', () => {
+describe('data integrity', () => {
   test('has about 150 entries', () => {
     expect(MIME_ENTRIES.length).toBeGreaterThanOrEqual(150);
     expect(MIME_ENTRIES.length).toBeLessThanOrEqual(200);
@@ -111,7 +111,7 @@ test.describe('data integrity', () => {
   });
 });
 
-test.describe('extensionOf', () => {
+describe('extensionOf', () => {
   test('accepts a bare extension, a dotted one, a glob and a file name', () => {
     expect(extensionOf('png')).toBe('png');
     expect(extensionOf('.PNG')).toBe('png');
@@ -128,7 +128,7 @@ test.describe('extensionOf', () => {
   });
 });
 
-test.describe('lookups', () => {
+describe('lookups', () => {
   test('by file name', () => {
     expect(lookupByExtension('index.HTML')?.type).toBe('text/html');
     expect(lookupByExtension('.WebP')?.type).toBe('image/webp');
@@ -163,7 +163,7 @@ test.describe('lookups', () => {
   });
 });
 
-test.describe('searchMimeTypes', () => {
+describe('searchMimeTypes', () => {
   const exts = (text: string, category?: Parameters<typeof searchMimeTypes>[1]) =>
     searchMimeTypes(text, category).map((entry) => entry.ext);
 
@@ -223,7 +223,7 @@ test.describe('searchMimeTypes', () => {
   });
 });
 
-test.describe('countByCategory', () => {
+describe('countByCategory', () => {
   test('counts add up to the number of entries', () => {
     const counts = countByCategory(MIME_ENTRIES);
     expect(Object.values(counts).reduce((sum, value) => sum + value, 0)).toBe(MIME_ENTRIES.length);

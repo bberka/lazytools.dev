@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -17,7 +17,7 @@ const normalize = (address: string, changes: Partial<EmailOptions> = {}) =>
 const run = (text: string, changes: Partial<EmailOptions> = {}) =>
   normalizeEmails(text, { ...DEFAULT_OPTIONS, ...changes });
 
-test.describe('parseEntries', () => {
+describe('parseEntries', () => {
   test('splits on newlines, commas and semicolons, in any mix, and skips blanks', () => {
     expect(parseEntries('a@x.com;B@X.com, c@x.com\r\n\r\n d@x.com \n')).toEqual([
       'a@x.com',
@@ -40,7 +40,7 @@ test.describe('parseEntries', () => {
   });
 });
 
-test.describe('emailProblem', () => {
+describe('emailProblem', () => {
   test('accepts ordinary addresses, plus tags, quotes characters and international letters', () => {
     for (const address of [
       'user@example.com',
@@ -87,7 +87,7 @@ test.describe('emailProblem', () => {
   });
 });
 
-test.describe('normalizeAddress', () => {
+describe('normalizeAddress', () => {
   test('lower-cases the domain always and the local part by default', () => {
     expect(normalize('User@EXAMPLE.COM')).toBe('user@example.com');
     expect(normalize('User@EXAMPLE.COM', { lowercaseLocal: false })).toBe('User@example.com');
@@ -127,7 +127,7 @@ test.describe('normalizeAddress', () => {
   });
 });
 
-test.describe('normalizeEmails', () => {
+describe('normalizeEmails', () => {
   test('finds duplicates after normalization and keeps the first one', () => {
     const result = run('A.B@gmail.com\nab+x@gmail.com\nab@googlemail.com\nc@x.com');
     expect(result.entries.map((entry) => entry.normalized)).toEqual([

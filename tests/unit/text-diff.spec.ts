@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   diffText,
   hasChanges,
@@ -20,7 +20,7 @@ const sketch = (rows: DiffRow[]) =>
     return `${mark(row.left)} | ${mark(row.right)}`;
   });
 
-test.describe('diffText', () => {
+describe('diffText', () => {
   test('finds nothing to compare in two empty texts', () => {
     expect(diffText('', '', 'lines')).toEqual([]);
     expect(diffText('', '', 'words')).toEqual([]);
@@ -60,7 +60,7 @@ test.describe('diffText', () => {
 
 // Defect: the last line of a text rarely ends in a line break, so adding a line
 // after it showed that line as removed and added again.
-test.describe('diffText by line at the end of a text', () => {
+describe('diffText by line at the end of a text', () => {
   test('keeps the last line unchanged when a line is added after it', () => {
     expect(diffText('alpha\nbeta', 'alpha\nbeta\ngamma', 'lines')).toEqual([
       { text: 'alpha\nbeta\n', change: 'unchanged' },
@@ -84,7 +84,7 @@ test.describe('diffText by line at the end of a text', () => {
 
 // Defect: a removed or added line without a line break ran into the segment
 // after it in the inline view: "worldthere".
-test.describe('diffText line breaks between segments', () => {
+describe('diffText line breaks between segments', () => {
   test('ends every segment but the last with a line break', () => {
     expect(diffText('hello\nworld', 'hello\nthere', 'lines')).toEqual([
       { text: 'hello\n', change: 'unchanged' },
@@ -119,7 +119,7 @@ test.describe('diffText line breaks between segments', () => {
   });
 });
 
-test.describe('hasChanges', () => {
+describe('hasChanges', () => {
   test('is false for identical texts and true otherwise', () => {
     expect(hasChanges(diffText('same\ntext', 'same\ntext', 'lines'))).toBe(false);
     expect(hasChanges(diffText('same\ntext', 'same\ntexts', 'lines'))).toBe(true);
@@ -131,7 +131,7 @@ test.describe('hasChanges', () => {
   });
 });
 
-test.describe('segmentsOf', () => {
+describe('segmentsOf', () => {
   const segments = diffText('The quick brown fox', 'The slow brown fox', 'words');
   const text = (side: 'original' | 'modified') =>
     segmentsOf(segments, side)
@@ -169,7 +169,7 @@ test.describe('segmentsOf', () => {
   });
 });
 
-test.describe('toSideBySideRows', () => {
+describe('toSideBySideRows', () => {
   test('has no rows for no differences to show', () => {
     expect(toSideBySideRows([])).toEqual([]);
   });
