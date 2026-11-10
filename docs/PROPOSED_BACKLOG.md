@@ -116,7 +116,7 @@ All tools must:
 - **Key Features**: Timestamp-based sorting, random generation.
 - **Implementation**: Dynamically imported `ulid` library.
 
-#### Basic Auth Generator
+#### Basic Auth Generator (Status: Implemented)
 
 - **Description**: Generate HTTP `Basic` authentication headers.
 - **Key Features**: Encodes `username:password` in base64.
@@ -132,7 +132,7 @@ All tools must:
 
 ### 4. Formatters & Validators
 
-#### CSS Minifier & Formatter
+#### CSS Minifier & Formatter (Status: Implemented)
 
 - **Description**: Beautify or compress stylesheet blocks.
 - **Key Features**: Custom rules, indentation spaces, comparison metrics (pre vs. post size).
@@ -172,7 +172,7 @@ All tools must:
 
 ### 5. Text Tools
 
-#### Text Sorter & Deduplicator
+#### Text Sorter & Deduplicator (Status: Implemented)
 
 - **Description**: Sort lists alphabetically, by length, and remove duplicate entries.
 - **Key Features**: Strips leading/trailing spaces, case insensitivity selectors, reverse sorting.
@@ -184,19 +184,19 @@ All tools must:
 - **Key Features**: Detailed Unicode mapping, reveals characters like `\u200B` or control markers.
 - **Implementation**: Loop checking character codes.
 
-#### Markdown Table Generator
+#### Markdown Table Generator (Status: Implemented)
 
 - **Description**: A visual grid builder to design and export Markdown tables.
 - **Key Features**: Visual columns/rows adding, alignment selectors.
 - **Implementation**: Standard state-bound React grid.
 
-#### Slugify String
+#### Slugify String (Status: Implemented)
 
 - **Description**: Convert standard text into URL-friendly slugs.
 - **Key Features**: Removes special characters, replaces spaces with hyphens, lowers case.
 - **Implementation**: Native regex replacement or `slugify` library.
 
-#### Text to NATO Alphabet
+#### Text to NATO Alphabet (Status: Implemented)
 
 - **Description**: Translate words into the NATO phonetic alphabet.
 - **Key Features**: Bidirectional translation if possible, copy out.
@@ -208,13 +208,13 @@ All tools must:
 - **Key Features**: Various font styles (Fraktur, script, bold), Figlet ASCII art.
 - **Implementation**: Unicode character mapping, `figlet.js`.
 
-#### Email Normalizer
+#### Email Normalizer (Status: Implemented)
 
 - **Description**: Normalize email addresses (e.g., stripping `+tags` or dots for Gmail).
 - **Key Features**: Domain-specific rules (Gmail, Outlook).
 - **Implementation**: Regex parsing.
 
-#### Numeronym Generator
+#### Numeronym Generator (Status: Implemented)
 
 - **Description**: Generate i18n-style abbreviations (e.g., "internationalization" -> "i18n").
 - **Key Features**: Selectable word length threshold.
@@ -248,7 +248,7 @@ All tools must:
 - **Key Features**: Adjustable header/payload parameters, private keys signature.
 - **Implementation**: Client-side cryptography via Web Crypto API.
 
-#### Base64 Image Decoder
+#### Base64 Image Decoder (Status: Implemented)
 
 - **Description**: View and download images from their raw base64 data URLs.
 - **Key Features**: Live preview, files info (width, height, size), simple downloads.
@@ -272,7 +272,7 @@ All tools must:
 - **Key Features**: Parses environment variables, ports, and volumes.
 - **Implementation**: Client-side parsing algorithm.
 
-#### MIME Types Reference
+#### MIME Types Reference (Status: Implemented)
 
 - **Description**: Searchable directory of file extensions and their MIME types.
 - **Key Features**: Offline lookup.
@@ -284,7 +284,7 @@ All tools must:
 - **Key Features**: Visual badges for browser/OS, current user-agent detection.
 - **Implementation**: `ua-parser-js` library.
 
-#### Keycode Info
+#### Keycode Info (Status: Implemented)
 
 - **Description**: Press any key to see its Javascript event `keyCode`, `code`, and `key` values.
 - **Key Features**: Interactive keyboard listener.
@@ -296,7 +296,7 @@ All tools must:
 - **Key Features**: Categorized commands, click-to-copy.
 - **Implementation**: Static markdown/JSON data.
 
-#### Open Graph Meta Generator
+#### Open Graph Meta Generator (Status: Implemented)
 
 - **Description**: Generate and preview SEO/Open Graph HTML meta tags for websites.
 - **Key Features**: Facebook/Twitter card previews.
@@ -358,13 +358,13 @@ All tools must:
 - **Key Features**: Offline fallback dictionary lookup.
 - **Implementation**: Static dataset parser.
 
-#### IPv4 Address Converter
+#### IPv4 Address Converter (Status: Implemented)
 
 - **Description**: Convert IPs between Decimal, Hex, Octal, and Binary formats.
 - **Key Features**: Bidirectional conversion.
 - **Implementation**: Bitwise IP conversion.
 
-#### IPv4 Range Expander
+#### IPv4 Range Expander (Status: Implemented)
 
 - **Description**: Expand CIDR notations or IP ranges into a full list of IP addresses.
 - **Key Features**: CIDR to IP list, start/end IP to list.
@@ -376,7 +376,7 @@ All tools must:
 - **Key Features**: Random `/48` prefix generation following RFC 4193.
 - **Implementation**: Native Math.random() / Web Crypto.
 
-#### MAC Address Generator
+#### MAC Address Generator (Status: Implemented)
 
 - **Description**: Generate random valid MAC addresses.
 - **Key Features**: Unicast/Multicast, specific OUI prefixes.
@@ -410,7 +410,7 @@ All tools must:
 - **Key Features**: Add/remove container elements, live styling preview.
 - **Implementation**: Reactive Tailwind grid elements.
 
-#### SVG Placeholder Generator
+#### SVG Placeholder Generator (Status: Implemented)
 
 - **Description**: Generate lightweight SVG placeholder images with custom dimensions and text.
 - **Key Features**: Colors, dimensions, text customization, data-URI export.
@@ -478,13 +478,13 @@ All tools must:
 - **Key Features**: Interactive monthly tables.
 - **Implementation**: Math interest formula.
 
-#### Compound Interest Calculator
+#### Compound Interest Calculator (Status: Implemented)
 
 - **Description**: Project investment growth with monthly contributions and interest graphs.
 - **Key Features**: CSS graphs/charts.
 - **Implementation**: Compounding formula models.
 
-#### Math Evaluator
+#### Math Evaluator (Status: Implemented)
 
 - **Description**: Parse and evaluate complex mathematical expressions.
 - **Key Features**: Variables, functions (sin, cos), constants.

@@ -71,6 +71,10 @@ Behaviour that several callers need lives in one module with a small interface, 
 
 Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests. Unit tests (`tests/unit/`) run on Vitest through `vp test`; Playwright is e2e only.
 
+## Tooling
+
+Next.js builds and serves the app. Vite+ (`vp`, from the `vite-plus` dev dependency) runs Oxlint, Oxfmt and the Vitest unit tests, all configured in `vite.config.ts`. Playwright runs the e2e suite against the static export. Packages are managed with pnpm.
+
 ## Static export notes
 
 With `output: 'export'`:
