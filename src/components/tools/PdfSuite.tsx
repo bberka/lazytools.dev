@@ -7,20 +7,47 @@ import { Loader2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const loadingEl = (
-  <div role="status" aria-label="Loading tool" className="flex items-center justify-center py-6 sm:py-12">
+  <output aria-label="Loading tool" className="flex items-center justify-center py-6 sm:py-12">
     <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
-  </div>
+  </output>
 );
 
-const PdfToImage = dynamic(() => import('./PdfToImage').then((m) => ({ default: m.PdfToImage })), { ssr: false, loading: () => loadingEl });
-const PdfToWord = dynamic(() => import('./PdfToWord').then((m) => ({ default: m.PdfToWord })), { ssr: false, loading: () => loadingEl });
-const WordToPdf = dynamic(() => import('./WordToPdf').then((m) => ({ default: m.WordToPdf })), { ssr: false, loading: () => loadingEl });
-const ImageToPdf = dynamic(() => import('./ImageToPdf').then((m) => ({ default: m.ImageToPdf })), { ssr: false, loading: () => loadingEl });
-const PdfEditor = dynamic(() => import('./PdfEditor').then((m) => ({ default: m.PdfEditor })), { ssr: false, loading: () => loadingEl });
-const PdfMerge = dynamic(() => import('./PdfMerge').then((m) => ({ default: m.PdfMerge })), { ssr: false, loading: () => loadingEl });
-const PdfSplit = dynamic(() => import('./PdfSplit').then((m) => ({ default: m.PdfSplit })), { ssr: false, loading: () => loadingEl });
-const PdfCompress = dynamic(() => import('./PdfCompress').then((m) => ({ default: m.PdfCompress })), { ssr: false, loading: () => loadingEl });
-const PdfWatermark = dynamic(() => import('./PdfWatermark').then((m) => ({ default: m.PdfWatermark })), { ssr: false, loading: () => loadingEl });
+const PdfToImage = dynamic(() => import('./PdfToImage').then((m) => ({ default: m.PdfToImage })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const PdfToWord = dynamic(() => import('./PdfToWord').then((m) => ({ default: m.PdfToWord })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const WordToPdf = dynamic(() => import('./WordToPdf').then((m) => ({ default: m.WordToPdf })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const ImageToPdf = dynamic(() => import('./ImageToPdf').then((m) => ({ default: m.ImageToPdf })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const PdfEditor = dynamic(() => import('./PdfEditor').then((m) => ({ default: m.PdfEditor })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const PdfMerge = dynamic(() => import('./PdfMerge').then((m) => ({ default: m.PdfMerge })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const PdfSplit = dynamic(() => import('./PdfSplit').then((m) => ({ default: m.PdfSplit })), {
+  ssr: false,
+  loading: () => loadingEl,
+});
+const PdfCompress = dynamic(
+  () => import('./PdfCompress').then((m) => ({ default: m.PdfCompress })),
+  { ssr: false, loading: () => loadingEl }
+);
+const PdfWatermark = dynamic(
+  () => import('./PdfWatermark').then((m) => ({ default: m.PdfWatermark })),
+  { ssr: false, loading: () => loadingEl }
+);
 
 interface PdfSuitePage {
   /** Full class literal: the grid needs one column per tab. */

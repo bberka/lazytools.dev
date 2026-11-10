@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertList, type ListOptions } from '@/lib/tools/list-converter';
 
 const DEFAULTS: ListOptions = {
@@ -12,12 +12,18 @@ const DEFAULTS: ListOptions = {
   caseConversion: 'none',
 };
 
+// A JavaScript engine reading the generated literals back is the behaviour under test.
+function evalLiteralList(source: string): unknown {
+  // oxlint-disable-next-line no-implied-eval -- evaluating generated JavaScript is the point
+  return new Function(`return [${source}]`)();
+}
+
 const convert = (input: string, options: Partial<ListOptions> = {}) =>
   convertList(input, { ...DEFAULTS, ...options });
 
 const items = (input: string, options: Partial<ListOptions> = {}) => convert(input, options).items;
 
-test.describe('splitting and cleaning', () => {
+describe('splitting and cleaning', () => {
   test('splits lines, trims them and drops the empty ones by default', () => {
     expect(items('  apple \r\nbanana\n\n   \ncherry\n')).toEqual(['apple', 'banana', 'cherry']);
   });
@@ -38,9 +44,9 @@ test.describe('splitting and cleaning', () => {
   });
 
   test('can keep whitespace and empty items', () => {
-    expect(items(' a ,,b', { inputDelimiter: 'comma', trimItems: false, removeEmpty: false })).toEqual(
-      [' a ', '', 'b']
-    );
+    expect(
+      items(' a ,,b', { inputDelimiter: 'comma', trimItems: false, removeEmpty: false })
+    ).toEqual([' a ', '', 'b']);
     expect(items(' a , ,b', { inputDelimiter: 'comma', trimItems: false })).toEqual([
       ' a ',
       ' ',
@@ -59,10 +65,12 @@ test.describe('splitting and cleaning', () => {
   // Defect: duplicates were removed before the case conversion, so "Apple"
   // and "apple" both survived and came out as two identical items.
   test('removes items that only become duplicates after the case conversion', () => {
-    expect(items('Apple\napple\nAPPLE\npear', { deduplicate: true, caseConversion: 'lower' })).toEqual(
-      ['apple', 'pear']
-    );
-    expect(items('Apple\napple', { deduplicate: true, caseConversion: 'upper' })).toEqual(['APPLE']);
+    expect(
+      items('Apple\napple\nAPPLE\npear', { deduplicate: true, caseConversion: 'lower' })
+    ).toEqual(['apple', 'pear']);
+    expect(items('Apple\napple', { deduplicate: true, caseConversion: 'upper' })).toEqual([
+      'APPLE',
+    ]);
   });
 
   test('converts case', () => {
@@ -72,7 +80,11 @@ test.describe('splitting and cleaning', () => {
 
   test('sorts in either direction, ignoring case', () => {
     expect(items('pear\nApple\nbanana', { sortOrder: 'asc' })).toEqual(['Apple', 'banana', 'pear']);
-    expect(items('pear\nApple\nbanana', { sortOrder: 'desc' })).toEqual(['pear', 'banana', 'Apple']);
+    expect(items('pear\nApple\nbanana', { sortOrder: 'desc' })).toEqual([
+      'pear',
+      'banana',
+      'Apple',
+    ]);
   });
 
   test('has no items for empty or blank input', () => {
@@ -81,7 +93,7 @@ test.describe('splitting and cleaning', () => {
   });
 });
 
-test.describe('outputs', () => {
+describe('outputs', () => {
   test('formats a plain list every way', () => {
     expect(convert('apple\nbanana\ncherry').outputs).toEqual({
       csv: 'apple, banana, cherry',
@@ -126,8 +138,8 @@ test.describe('outputs', () => {
     expect(outputs.singleQuoted).toBe(`'C:\\\\new\\\\', 'end\\\\'`);
     expect(outputs.doubleQuoted).toBe(`"C:\\\\new\\\\", "end\\\\"`);
     // A JavaScript engine reads the literals back as the original items.
-    expect(new Function(`return [${outputs.singleQuoted}]`)()).toEqual(['C:\\new\\', 'end\\']);
-    expect(new Function(`return [${outputs.doubleQuoted}]`)()).toEqual(['C:\\new\\', 'end\\']);
+    expect(evalLiteralList(outputs.singleQuoted)).toEqual(['C:\\new\\', 'end\\']);
+    expect(evalLiteralList(outputs.doubleQuoted)).toEqual(['C:\\new\\', 'end\\']);
   });
 
   // Defect: an item that spans lines put a raw line break inside the quotes.
@@ -136,7 +148,7 @@ test.describe('outputs', () => {
 
     expect(outputs.singleQuoted).toBe(`'one\\ntwo', 'three'`);
     expect(outputs.doubleQuoted).toBe(`"one\\ntwo", "three"`);
-    expect(new Function(`return [${outputs.singleQuoted}]`)()).toEqual(['one\ntwo', 'three']);
+    expect(evalLiteralList(outputs.singleQuoted)).toEqual(['one\ntwo', 'three']);
   });
 
   // Defect: items were joined as they were, so "Doe, Jane" read back as two fields.
@@ -159,8 +171,8 @@ test.describe('outputs', () => {
     const awkward = ["it's \\'quoted\\'", 'tab\there', '"double" \\ \'single\'', 'ünïcödé 😀'];
     const { outputs } = convert(awkward.join('\n'));
 
-    expect(new Function(`return [${outputs.singleQuoted}]`)()).toEqual(awkward);
-    expect(new Function(`return [${outputs.doubleQuoted}]`)()).toEqual(awkward);
+    expect(evalLiteralList(outputs.singleQuoted)).toEqual(awkward);
+    expect(evalLiteralList(outputs.doubleQuoted)).toEqual(awkward);
     expect(JSON.parse(outputs.json)).toEqual(awkward);
   });
 });

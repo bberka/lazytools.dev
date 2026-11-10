@@ -8,6 +8,7 @@
  */
 
 import { generateSnowflakeIds, type SnowflakeLayout } from './snowflake-generator';
+import { bytesToHex } from './bytes';
 
 export type IdType = 'v4' | 'v7' | 'snowflake';
 
@@ -39,13 +40,15 @@ function secureRandomBytes(length: number): Uint8Array {
   return globalThis.crypto.getRandomValues(new Uint8Array(length));
 }
 
-function toHex(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
 /** 32 hex digits in the 8-4-4-4-12 layout. */
 function hyphenate(hex: string): string {
-  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20, 32)].join('-');
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20, 32),
+  ].join('-');
 }
 
 /** Stamps the RFC 9562 variant (binary 10) on the byte that starts the fourth group. */
@@ -58,7 +61,7 @@ export function uuidV4(source: IdSource = {}): string {
   const bytes = Uint8Array.from((source.randomBytes ?? secureRandomBytes)(16));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = withVariant(bytes[8]);
-  return hyphenate(toHex(bytes));
+  return hyphenate(bytesToHex(bytes));
 }
 
 /**
@@ -82,7 +85,10 @@ function uuidV7Batch(count: number, source: IdSource): string[] {
     tail[0] = withVariant(tail[0]);
 
     return hyphenate(
-      time.toString(16).padStart(12, '0') + '7' + randA.toString(16).padStart(3, '0') + toHex(tail)
+      time.toString(16).padStart(12, '0') +
+        '7' +
+        randA.toString(16).padStart(3, '0') +
+        bytesToHex(tail)
     );
   });
 }

@@ -75,7 +75,9 @@ export function PdfToWord() {
       if (blob) {
         setWordBlob(blob);
       } else {
-        setError('No text found in the PDF. Scanned pages are pictures and have no text to extract.');
+        setError(
+          'No text found in the PDF. Scanned pages are pictures and have no text to extract.'
+        );
       }
     } catch (conversionError) {
       if (!isCurrent()) return;
@@ -105,7 +107,10 @@ export function PdfToWord() {
           <CardDescription>
             Extract text from a PDF and convert it to a Word (.docx) document.
             <br />
-            <span className="text-xs text-muted-foreground">Note: This is a client-side tool. It extracts raw text but may not preserve complex formatting, tables, or images.</span>
+            <span className="text-xs text-muted-foreground">
+              Note: This is a client-side tool. It extracts raw text but may not preserve complex
+              formatting, tables, or images.
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,7 +144,10 @@ export function PdfToWord() {
           )}
 
           {error && (
-            <div role="alert" className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}

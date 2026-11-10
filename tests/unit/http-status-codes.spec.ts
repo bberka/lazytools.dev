@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   HTTP_STATUS_CODES,
   STATUS_CLASSES,
@@ -13,12 +13,10 @@ import {
 // (registered as "(Unused)") and 418 (reserved by RFC 9110). Written out
 // separately from the data so a dropped or mistyped entry shows up here.
 const EXPECTED_CODES = [
-  100, 101, 102, 103,
-  200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
-  300, 301, 302, 303, 304, 305, 306, 307, 308,
-  400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418,
-  421, 422, 423, 424, 425, 426, 428, 429, 431, 451,
-  500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511,
+  100, 101, 102, 103, 200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304,
+  305, 306, 307, 308, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414,
+  415, 416, 417, 418, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 501, 502, 503, 504,
+  505, 506, 507, 508, 510, 511,
 ];
 
 const range = (from: number, to: number) =>
@@ -26,7 +24,7 @@ const range = (from: number, to: number) =>
 
 const codesOf = (entries: readonly { code: number }[]) => entries.map((entry) => entry.code);
 
-test.describe('the status code table', () => {
+describe('the status code table', () => {
   test('lists exactly the registered codes', () => {
     expect(codesOf(HTTP_STATUS_CODES)).toEqual(EXPECTED_CODES);
   });
@@ -87,7 +85,7 @@ test.describe('the status code table', () => {
   });
 });
 
-test.describe('statusClassOf', () => {
+describe('statusClassOf', () => {
   test('maps the edges of each class', () => {
     expect(statusClassOf(100)).toBe('1xx');
     expect(statusClassOf(199)).toBe('1xx');
@@ -112,7 +110,7 @@ test.describe('statusClassOf', () => {
   });
 });
 
-test.describe('classes of the table entries', () => {
+describe('classes of the table entries', () => {
   test('are derived from the code', () => {
     for (const entry of HTTP_STATUS_CODES) {
       expect(entry.statusClass, String(entry.code)).toBe(statusClassOf(entry.code));
@@ -150,7 +148,7 @@ test.describe('classes of the table entries', () => {
   });
 });
 
-test.describe('getStatusCode and formatStatusLine', () => {
+describe('getStatusCode and formatStatusLine', () => {
   test('look an entry up by number', () => {
     expect(getStatusCode(404)?.phrase).toBe('Not Found');
     expect(getStatusCode(999)).toBeUndefined();
@@ -164,7 +162,7 @@ test.describe('getStatusCode and formatStatusLine', () => {
   });
 });
 
-test.describe('searchStatusCodes by number', () => {
+describe('searchStatusCodes by number', () => {
   test('returns every code for an empty or blank query', () => {
     expect(codesOf(searchStatusCodes(''))).toEqual(EXPECTED_CODES);
     expect(codesOf(searchStatusCodes('   '))).toEqual(EXPECTED_CODES);
@@ -213,7 +211,7 @@ test.describe('searchStatusCodes by number', () => {
   });
 });
 
-test.describe('searchStatusCodes by words', () => {
+describe('searchStatusCodes by words', () => {
   test('matches words in the phrase', () => {
     expect(codesOf(searchStatusCodes('teapot'))).toEqual([418]);
     expect(codesOf(searchStatusCodes('gateway'))).toEqual([502, 504]);
@@ -232,7 +230,7 @@ test.describe('searchStatusCodes by words', () => {
 
   test('matches part of a word', () => {
     expect(codesOf(searchStatusCodes('redirect'))).toEqual(
-      expect.arrayContaining([301, 302, 303, 307, 308]),
+      expect.arrayContaining([301, 302, 303, 307, 308])
     );
     expect(codesOf(searchStatusCodes('authent'))).toEqual(expect.arrayContaining([401, 407, 511]));
   });
@@ -270,7 +268,7 @@ test.describe('searchStatusCodes by words', () => {
   });
 });
 
-test.describe('searchStatusCodes with numbers and words together', () => {
+describe('searchStatusCodes with numbers and words together', () => {
   test('keeps codes with the prefix whose text has the word', () => {
     const results = codesOf(searchStatusCodes('40 not'));
     expect(results).toEqual(expect.arrayContaining([404, 405, 406]));
@@ -286,7 +284,7 @@ test.describe('searchStatusCodes with numbers and words together', () => {
   });
 });
 
-test.describe('searchStatusCodes by class', () => {
+describe('searchStatusCodes by class', () => {
   test('narrows the results to one class', () => {
     expect(codesOf(searchStatusCodes('', '3xx'))).toEqual(range(300, 308));
     expect(codesOf(searchStatusCodes('', '1xx'))).toEqual([100, 101, 102, 103]);
@@ -302,7 +300,9 @@ test.describe('searchStatusCodes by class', () => {
   });
 
   test('accepts a class such as 4xx as a search term', () => {
-    expect(codesOf(searchStatusCodes('4xx'))).toEqual(EXPECTED_CODES.filter((c) => c >= 400 && c < 500));
+    expect(codesOf(searchStatusCodes('4xx'))).toEqual(
+      EXPECTED_CODES.filter((c) => c >= 400 && c < 500)
+    );
     expect(searchStatusCodes('4XX')).toEqual(searchStatusCodes('4xx'));
     expect(codesOf(searchStatusCodes('5xx timeout'))).toEqual([504]);
     expect(searchStatusCodes('4xx', '5xx')).toEqual([]);

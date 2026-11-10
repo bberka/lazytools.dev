@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,13 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   Bot,
-  Check,
   CircleAlert,
   Cog,
-  Copy,
   Globe,
   Info,
   Layers,
@@ -101,7 +99,11 @@ function ClientHintsPanel({ hints }: { hints: ClientHints | null }) {
                   key={`${entry.brand}-${entry.version}`}
                   variant={entry.placeholder ? 'outline' : 'secondary'}
                   className={entry.placeholder ? 'text-muted-foreground' : undefined}
-                  title={entry.placeholder ? 'A made-up brand that browsers add so sites cannot rely on the list' : undefined}
+                  title={
+                    entry.placeholder
+                      ? 'A made-up brand that browsers add so sites cannot rely on the list'
+                      : undefined
+                  }
                 >
                   {entry.brand} {entry.version}
                 </Badge>
@@ -109,14 +111,17 @@ function ClientHintsPanel({ hints }: { hints: ClientHints | null }) {
             )}
           </div>
           <dl>
-            <Row label="Mobile" value={hints.mobile === null ? null : hints.mobile ? 'Yes' : 'No'} />
+            <Row
+              label="Mobile"
+              value={hints.mobile === null ? null : hints.mobile ? 'Yes' : 'No'}
+            />
             <Row label="Platform" value={hints.platform} />
           </dl>
         </>
       ) : (
         <p className="text-muted-foreground">
-          This browser does not expose navigator.userAgentData (Firefox and Safari do not), so only the User-Agent
-          string above is available.
+          This browser does not expose navigator.userAgentData (Firefox and Safari do not), so only
+          the User-Agent string above is available.
         </p>
       )}
     </div>
@@ -129,8 +134,6 @@ export function UserAgentParser() {
   // Null until "Use my browser's" is clicked; `hintsChecked` tells "not asked yet" from "not supported".
   const [hints, setHints] = useState<ClientHints | null>(null);
   const [hintsChecked, setHintsChecked] = useState(false);
-
-  const copyJson = useCopyToClipboard();
 
   const outcome = useMemo(() => parseUserAgent(input), [input]);
   const json = useMemo(() => (outcome.ok ? resultToJson(outcome.result) : ''), [outcome]);
@@ -168,7 +171,7 @@ export function UserAgentParser() {
   const failure = outcome.ok ? null : outcome;
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: input */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -183,7 +186,10 @@ export function UserAgentParser() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="ua-sample" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <label
+                htmlFor="ua-sample"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
                 Sample user agents
               </label>
               <Select value={sampleId} onValueChange={handleSample}>
@@ -201,7 +207,10 @@ export function UserAgentParser() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="ua-input" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <label
+                htmlFor="ua-input"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
                 User-Agent
               </label>
               <Textarea
@@ -222,7 +231,12 @@ export function UserAgentParser() {
                 <Monitor className="mr-2 h-4 w-4" />
                 Use my browser&apos;s
               </Button>
-              <Button onClick={handleClear} variant="outline" size="sm" disabled={!input && !hintsChecked}>
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                disabled={!input && !hintsChecked}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear
               </Button>
@@ -243,15 +257,13 @@ export function UserAgentParser() {
                   <MonitorSmartphone className="h-5 w-5 text-primary" />
                   Parsed result
                 </CardTitle>
-                <Button
-                  onClick={() => copyJson.copyToClipboard(json)}
-                  variant={copyJson.isCopied ? 'default' : 'outline'}
+                <CopyButton
+                  text={json}
+                  label="Copy JSON"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   size="sm"
                   className="h-8"
-                >
-                  {copyJson.isCopied ? <Check className="mr-1 h-3.5 w-3.5" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
-                  {copyJson.isCopied ? 'Copied' : 'Copy JSON'}
-                </Button>
+                />
               </div>
               <CardDescription className="break-words">{summarise(result)}</CardDescription>
             </CardHeader>
@@ -262,21 +274,24 @@ export function UserAgentParser() {
               </div>
 
               {!isRecognised(result) && (
-                <div
-                  role="status"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/40 p-3 text-sm text-destructive"
-                >
+                <output className="flex items-start gap-2 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    Nothing in this string matched a known browser, engine, operating system or device. Check that
-                    you pasted the whole header value.
+                    Nothing in this string matched a known browser, engine, operating system or
+                    device. Check that you pasted the whole header value.
                   </span>
-                </div>
+                </output>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Panel
-                  title={result.kind === 'bot' ? 'Bot' : result.kind === 'http-client' ? 'Client' : 'Browser'}
+                  title={
+                    result.kind === 'bot'
+                      ? 'Bot'
+                      : result.kind === 'http-client'
+                        ? 'Client'
+                        : 'Browser'
+                  }
                   icon={
                     result.kind === 'bot' ? (
                       <Bot className="h-4 w-4" />
@@ -301,7 +316,11 @@ export function UserAgentParser() {
                 <Panel title="Device" icon={<Smartphone className="h-4 w-4" />}>
                   <Row
                     label="Type"
-                    value={result.device.type === 'unknown' ? null : DEVICE_TYPE_LABELS[result.device.type]}
+                    value={
+                      result.device.type === 'unknown'
+                        ? null
+                        : DEVICE_TYPE_LABELS[result.device.type]
+                    }
                   />
                   <Row label="Vendor" value={result.device.vendor} />
                   <Row label="Model" value={result.device.model} />
@@ -343,7 +362,10 @@ export function UserAgentParser() {
           <Card className="flex h-full items-center justify-center py-4 text-muted-foreground sm:py-8">
             <CardContent className="text-center">
               {failure?.code === 'empty' ? (
-                <p>Paste a User-Agent string, pick a sample, or use your own browser&apos;s to see it parsed.</p>
+                <p>
+                  Paste a User-Agent string, pick a sample, or use your own browser&apos;s to see it
+                  parsed.
+                </p>
               ) : (
                 <p role="alert" className="flex items-center justify-center gap-2 text-destructive">
                   <CircleAlert className="h-4 w-4 shrink-0" />

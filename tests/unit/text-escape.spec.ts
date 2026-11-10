@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { convertEscape, escapeText, unescapeText, type EscapeMode } from '@/lib/tools/text-escape';
 
 const MODES: EscapeMode[] = ['javascript', 'json', 'html', 'xml', 'csv', 'sql', 'regex'];
 
-test.describe('JavaScript', () => {
+describe('JavaScript', () => {
   // Defect: the backspace rule was written /\b/, a word boundary, so "\b" was
   // inserted around every word.
   test('escapes plain words without adding anything', () => {
@@ -12,7 +12,9 @@ test.describe('JavaScript', () => {
   });
 
   test('escapes quotes, backslashes and control characters', () => {
-    expect(escapeText('He said "hi" and \'bye\'', 'javascript')).toBe('He said \\"hi\\" and \\\'bye\\\'');
+    expect(escapeText('He said "hi" and \'bye\'', 'javascript')).toBe(
+      'He said \\"hi\\" and \\\'bye\\\''
+    );
     expect(escapeText('C:\\temp', 'javascript')).toBe('C:\\\\temp');
     expect(escapeText('a\nb\rc\td\be\ff', 'javascript')).toBe('a\\nb\\rc\\td\\be\\ff');
   });
@@ -27,7 +29,9 @@ test.describe('JavaScript', () => {
   test('reads an escaped backslash before a letter as a backslash', () => {
     expect(unescapeText('C:\\\\new\\\\table', 'javascript')).toBe('C:\\new\\table');
     expect(unescapeText('\\\\n', 'javascript')).toBe('\\n');
-    expect(unescapeText(escapeText('C:\\new\\table', 'javascript'), 'javascript')).toBe('C:\\new\\table');
+    expect(unescapeText(escapeText('C:\\new\\table', 'javascript'), 'javascript')).toBe(
+      'C:\\new\\table'
+    );
   });
 
   test('unescapes unicode, hex and other standard sequences', () => {
@@ -46,7 +50,7 @@ test.describe('JavaScript', () => {
   });
 });
 
-test.describe('JSON', () => {
+describe('JSON', () => {
   test('escapes like JSON.stringify without the surrounding quotes', () => {
     expect(escapeText('say "hi"\n\tC:\\x', 'json')).toBe('say \\"hi\\"\\n\\tC:\\\\x');
     expect(escapeText('\u0001', 'json')).toBe('\\u0001');
@@ -66,13 +70,19 @@ test.describe('JSON', () => {
   });
 
   test('reports a backslash that does not start a JSON escape', () => {
-    expect(() => unescapeText('ab\\x41', 'json')).toThrow('Invalid JSON escape sequence "\\x" at position 3.');
-    expect(() => unescapeText('\\u12', 'json')).toThrow('Invalid JSON escape sequence "\\u" at position 1.');
-    expect(() => unescapeText('end\\', 'json')).toThrow('Invalid JSON escape sequence "\\" at position 4.');
+    expect(() => unescapeText('ab\\x41', 'json')).toThrow(
+      'Invalid JSON escape sequence "\\x" at position 3.'
+    );
+    expect(() => unescapeText('\\u12', 'json')).toThrow(
+      'Invalid JSON escape sequence "\\u" at position 1.'
+    );
+    expect(() => unescapeText('end\\', 'json')).toThrow(
+      'Invalid JSON escape sequence "\\" at position 4.'
+    );
   });
 });
 
-test.describe('HTML and XML', () => {
+describe('HTML and XML', () => {
   test('escape the markup characters', () => {
     expect(escapeText('<a href="x">T&C\'s</a>', 'html')).toBe(
       '&lt;a href=&quot;x&quot;&gt;T&amp;C&#39;s&lt;/a&gt;'
@@ -89,11 +99,13 @@ test.describe('HTML and XML', () => {
   });
 
   test('XML keeps what is not one of its five entities', () => {
-    expect(unescapeText('&nbsp; &copy; &amp;lt; &#0; &lt', 'xml')).toBe('&nbsp; &copy; &lt; &#0; &lt');
+    expect(unescapeText('&nbsp; &copy; &amp;lt; &#0; &lt', 'xml')).toBe(
+      '&nbsp; &copy; &lt; &#0; &lt'
+    );
   });
 });
 
-test.describe('CSV, SQL and regular expressions', () => {
+describe('CSV, SQL and regular expressions', () => {
   test('CSV quotes a field only when it needs it', () => {
     expect(escapeText('plain', 'csv')).toBe('plain');
     expect(escapeText('a,b', 'csv')).toBe('"a,b"');
@@ -119,12 +131,16 @@ test.describe('CSV, SQL and regular expressions', () => {
     expect(escapeText('a.b*c+d?e^f$g{h}i(j)k|l[m]n\\o', 'regex')).toBe(
       'a\\.b\\*c\\+d\\?e\\^f\\$g\\{h\\}i\\(j\\)k\\|l\\[m\\]n\\\\o'
     );
-    expect(new RegExp(`^${escapeText('1+1=2? (yes) [ok] $5.00', 'regex')}$`).test('1+1=2? (yes) [ok] $5.00')).toBe(true);
+    expect(
+      new RegExp(`^${escapeText('1+1=2? (yes) [ok] $5.00', 'regex')}$`).test(
+        '1+1=2? (yes) [ok] $5.00'
+      )
+    ).toBe(true);
     expect(unescapeText('a\\.b\\\\c\\d', 'regex')).toBe('a.b\\c\\d');
   });
 });
 
-test.describe('every mode', () => {
+describe('every mode', () => {
   const SAMPLES = [
     'plain words',
     'He said "hi", she said \'bye\'',
@@ -141,7 +157,10 @@ test.describe('every mode', () => {
   test('unescapes exactly what it escaped', () => {
     for (const mode of MODES) {
       for (const sample of SAMPLES) {
-        expect(unescapeText(escapeText(sample, mode), mode), `${mode}: ${JSON.stringify(sample)}`).toBe(sample);
+        expect(
+          unescapeText(escapeText(sample, mode), mode),
+          `${mode}: ${JSON.stringify(sample)}`
+        ).toBe(sample);
       }
     }
   });
@@ -154,7 +173,7 @@ test.describe('every mode', () => {
   });
 });
 
-test.describe('convertEscape', () => {
+describe('convertEscape', () => {
   // Defect: input made only of whitespace was treated as empty.
   test('escapes input that is only whitespace', () => {
     expect(convertEscape('\t', 'javascript', 'escape')).toEqual({ output: '\\t', error: '' });

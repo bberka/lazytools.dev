@@ -113,10 +113,10 @@ export function ColorPaletteExtractor() {
             }
           />
           {processing && (
-            <p role="status" className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <output className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Extracting colors...
-            </p>
+            </output>
           )}
           {error && (
             <div
@@ -171,7 +171,9 @@ export function ColorPaletteExtractor() {
                             : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
                         )}
                       >
-                        <span className="text-white text-[10px] font-bold">{copied ? 'Copied' : 'Copy'}</span>
+                        <span className="text-white text-[10px] font-bold">
+                          {copied ? 'Copied' : 'Copy'}
+                        </span>
                       </span>
                     </button>
                   );

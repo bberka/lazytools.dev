@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createHmac } from 'node:crypto';
 import {
   EXPIRY_PRESETS,
@@ -62,7 +62,7 @@ const NODE_HASH: Record<JwtAlgorithm, string> = {
   HS512: 'sha512',
 };
 
-test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
+describe('RFC 7515 Appendix A.1 (HS256)', () => {
   test('base64url of the header and payload octets matches the RFC', () => {
     expect(base64UrlEncodeText(RFC7515_HEADER)).toBe(RFC7515_HEADER_B64);
     expect(base64UrlEncodeText(RFC7515_PAYLOAD)).toBe(RFC7515_PAYLOAD_B64);
@@ -92,7 +92,11 @@ test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
   });
 
   test('verifyJwt accepts the RFC token before exp and rejects it from exp on', async () => {
-    const options = { token: RFC7515_TOKEN, secret: RFC7515_KEY, secretEncoding: 'base64' as const };
+    const options = {
+      token: RFC7515_TOKEN,
+      secret: RFC7515_KEY,
+      secretEncoding: 'base64' as const,
+    };
 
     const before = await verifyJwt({ ...options, clock: at(RFC7515_EXP - 1) });
     expect(before.status).toBe('valid');
@@ -131,7 +135,7 @@ test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
   });
 });
 
-test.describe('algorithms', () => {
+describe('algorithms', () => {
   test('only the three HMAC algorithms are recognised, case-sensitively', () => {
     expect([...JWT_ALGORITHMS]).toEqual(['HS256', 'HS384', 'HS512']);
     for (const alg of JWT_ALGORITHMS) expect(isJwtAlgorithm(alg)).toBe(true);
@@ -141,7 +145,7 @@ test.describe('algorithms', () => {
   });
 });
 
-test.describe('HMAC primitive', () => {
+describe('HMAC primitive', () => {
   // RFC 4231 test case 2.
   const key = new TextEncoder().encode('Jefe');
   const data = new TextEncoder().encode('what do ya want for nothing?');
@@ -170,7 +174,7 @@ test.describe('HMAC primitive', () => {
   });
 });
 
-test.describe('Base64URL', () => {
+describe('Base64URL', () => {
   test('encodes the RFC 4648 section 10 vectors without padding', () => {
     const encode = (text: string) => base64UrlEncode(new TextEncoder().encode(text));
     expect(encode('')).toBe('');
@@ -267,7 +271,7 @@ test.describe('Base64URL', () => {
   });
 });
 
-test.describe('JSON helpers', () => {
+describe('JSON helpers', () => {
   test('parseJsonObject accepts objects only', () => {
     expect(parseJsonObject('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
     expect(parseJsonObject('  {}  ')).toEqual({ ok: true, value: {} });
@@ -331,7 +335,10 @@ test.describe('JSON helpers', () => {
     });
 
     const replaced = setJsonMember('{ "id" : 12345678901234567890 , "iat" : 1 }', 'iat', 2);
-    expect(replaced).toEqual({ ok: true, value: '{\n  "id": 12345678901234567890,\n  "iat": 2\n}' });
+    expect(replaced).toEqual({
+      ok: true,
+      value: '{\n  "id": 12345678901234567890,\n  "iat": 2\n}',
+    });
   });
 
   test('setJsonMember matches a key that was written with an escape', () => {
@@ -350,7 +357,7 @@ test.describe('JSON helpers', () => {
   });
 });
 
-test.describe('secrets', () => {
+describe('secrets', () => {
   test('decodes UTF-8 text and counts bytes, not characters', () => {
     const result = decodeSecret('s3cr€t', 'utf8');
     expect(result.ok && Array.from(result.value)).toEqual(Array.from(Buffer.from('s3cr€t')));
@@ -400,7 +407,7 @@ test.describe('secrets', () => {
   });
 });
 
-test.describe('claims and time', () => {
+describe('claims and time', () => {
   test('unixSeconds floors the injected clock to whole seconds', () => {
     expect(unixSeconds(() => 1_700_000_000_999)).toBe(1_700_000_000);
     expect(unixSeconds(() => 0)).toBe(0);
@@ -455,7 +462,7 @@ test.describe('claims and time', () => {
   });
 });
 
-test.describe('validateHeader and validatePayload', () => {
+describe('validateHeader and validatePayload', () => {
   test('a header must be a JSON object whose alg matches the selection', () => {
     expect(validateHeader('{"alg":"HS256","typ":"JWT"}', 'HS256')).toBeNull();
     expect(validateHeader('{"alg":"HS512"}', 'HS512')).toBeNull();
@@ -483,7 +490,7 @@ test.describe('validateHeader and validatePayload', () => {
   });
 });
 
-test.describe('signJwt', () => {
+describe('signJwt', () => {
   const base = {
     header: '{"alg":"HS256","typ":"JWT"}',
     payload: '{"sub":"1"}',
@@ -556,7 +563,10 @@ test.describe('signJwt', () => {
     const keyBytes = Uint8Array.from({ length: 64 }, (_, i) => (i * 11 + 3) & 0xff);
     for (const algorithm of JWT_ALGORITHMS) {
       for (const encoding of ['utf8', 'base64'] as const) {
-        const secret = encoding === 'base64' ? Buffer.from(keyBytes).toString('base64') : 'plain-text-secret-value-1234567890';
+        const secret =
+          encoding === 'base64'
+            ? Buffer.from(keyBytes).toString('base64')
+            : 'plain-text-secret-value-1234567890';
         const result = await signJwt({
           header: `{"alg":"${algorithm}","typ":"JWT"}`,
           payload: '{"sub":"abc"}',
@@ -635,7 +645,7 @@ test.describe('signJwt', () => {
   });
 });
 
-test.describe('verifyJwt', () => {
+describe('verifyJwt', () => {
   const SECRET = 'a-test-secret-that-is-long-enough!';
   const NOW = 1_800_000_000;
 
@@ -677,7 +687,9 @@ test.describe('verifyJwt', () => {
   test('says how long a valid token has left', async () => {
     const result = await verify(await tokenFor(`{"exp":${NOW + 90}}`));
     expect(result.status).toBe('valid');
-    expect(result.message).toBe('The signature is valid (HS256). It expires in 1 minute 30 seconds.');
+    expect(result.message).toBe(
+      'The signature is valid (HS256). It expires in 1 minute 30 seconds.'
+    );
   });
 
   test('reports a wrong secret as an invalid signature', async () => {
@@ -727,7 +739,9 @@ test.describe('verifyJwt', () => {
       const result = await verify(token);
       expect(result.status).toBe('malformed');
     }
-    expect((await verify('a.b')).message).toBe('A JWT has 3 parts separated by dots, but this has 2.');
+    expect((await verify('a.b')).message).toBe(
+      'A JWT has 3 parts separated by dots, but this has 2.'
+    );
     expect((await verify('')).message).toBe('Paste a token to verify.');
   });
 
@@ -799,12 +813,22 @@ test.describe('verifyJwt', () => {
     const empty = await verifyJwt({ token, secret: '', secretEncoding: 'utf8', clock: at(NOW) });
     expect(empty.status).toBe('invalid-secret');
     expect(empty.message).toBe('Enter a secret.');
-    const bad = await verifyJwt({ token, secret: 'nope!', secretEncoding: 'base64', clock: at(NOW) });
+    const bad = await verifyJwt({
+      token,
+      secret: 'nope!',
+      secretEncoding: 'base64',
+      clock: at(NOW),
+    });
     expect(bad.status).toBe('invalid-secret');
   });
 
   test('malformed wins over a missing secret, so structure errors show up early', async () => {
-    const result = await verifyJwt({ token: 'a.b', secret: '', secretEncoding: 'utf8', clock: at(NOW) });
+    const result = await verifyJwt({
+      token: 'a.b',
+      secret: '',
+      secretEncoding: 'utf8',
+      clock: at(NOW),
+    });
     expect(result.status).toBe('malformed');
   });
 

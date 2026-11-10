@@ -2,7 +2,9 @@
 // password against an existing hash string. No React and no DOM, so it runs in
 // the browser and in Node. The hashing libraries are loaded on first use.
 
-export const ARGON2_VARIANTS = ['argon2id', 'argon2i', 'argon2d'] as const;
+import { bytesToHex } from './bytes';
+
+const ARGON2_VARIANTS = ['argon2id', 'argon2i', 'argon2d'] as const;
 export type Argon2Variant = (typeof ARGON2_VARIANTS)[number];
 
 export type PasswordHashAlgorithm = 'bcrypt' | Argon2Variant;
@@ -41,12 +43,6 @@ const ARGON2_VERSION = 19;
 // salt and 31 of hash in Bcrypt's own Base64 alphabet: 60 characters in all.
 const BCRYPT_HASH = /^\$2[aby]\$(\d{2})\$[./A-Za-z0-9]{53}$/;
 
-function toHex(bytes: Uint8Array): string {
-  let hex = '';
-  for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
-  return hex;
-}
-
 /** Decodes Base64 with or without padding, in the standard or the URL-safe alphabet. */
 function base64ToBytes(text: string): Uint8Array {
   const standard = text.replace(/=+$/, '').replace(/-/g, '+').replace(/_/g, '/');
@@ -72,7 +68,9 @@ function parseArgon2Hash(encoded: string): ParsedArgon2 {
   const parts = encoded.split('$');
   // Expected parts: ['', variant, version, params, salt, hash]
   if (parts.length !== 6 || parts[0] !== '') {
-    throw new Error('Invalid Argon2 hash format. Expected: $argon2id$v=19$m=...,t=...,p=...$salt$hash');
+    throw new Error(
+      'Invalid Argon2 hash format. Expected: $argon2id$v=19$m=...,t=...,p=...$salt$hash'
+    );
   }
 
   const variant = ARGON2_VARIANTS.find((name) => name === parts[1]);
@@ -87,7 +85,9 @@ function parseArgon2Hash(encoded: string): ParsedArgon2 {
   // A hash made by another version can never be reproduced here, so saying
   // "does not match" would be wrong.
   if (Number(version[1]) !== ARGON2_VERSION) {
-    throw new Error(`Unsupported Argon2 version: v=${version[1]}. Only v=${ARGON2_VERSION} hashes can be verified.`);
+    throw new Error(
+      `Unsupported Argon2 version: v=${version[1]}. Only v=${ARGON2_VERSION} hashes can be verified.`
+    );
   }
 
   const params: Record<string, number> = {};
@@ -136,7 +136,10 @@ async function argon2(
  * time, so hashing the same password twice gives two different strings. The
  * password is used exactly as given; whitespace is part of it.
  */
-export async function hashPassword(password: string, settings: PasswordHashSettings): Promise<string> {
+export async function hashPassword(
+  password: string,
+  settings: PasswordHashSettings
+): Promise<string> {
   if (settings.algorithm === 'bcrypt') {
     const { default: bcrypt } = await import('bcryptjs');
     const salt = await bcrypt.genSalt(settings.rounds);
@@ -161,7 +164,10 @@ export async function hashPassword(password: string, settings: PasswordHashSetti
  * cut-off or malformed hash, an unsupported Argon2 version. A well-formed hash
  * of a different password is not an error; it gives `matches: false`.
  */
-export async function verifyPassword(password: string, hash: string): Promise<PasswordVerification> {
+export async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<PasswordVerification> {
   const encoded = hash.trim();
 
   if (encoded.startsWith('$argon2')) {
@@ -177,7 +183,10 @@ export async function verifyPassword(password: string, hash: string): Promise<Pa
       hashLength: parsed.hash.length,
       outputType: 'hex',
     });
-    return { matches: recomputed === toHex(parsed.hash), algorithm: `Argon2 (${parsed.variant})` };
+    return {
+      matches: recomputed === bytesToHex(parsed.hash),
+      algorithm: `Argon2 (${parsed.variant})`,
+    };
   }
 
   if (/^\$2[aby]\$/.test(encoded)) {

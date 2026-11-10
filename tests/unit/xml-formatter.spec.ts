@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeXmlParserError,
   formatXml,
@@ -31,15 +31,25 @@ function malformed(errorText: string | null, namespace = XHTML): () => XmlDocume
   return () => document(0, { [namespace]: [{ textContent: errorText }] });
 }
 
-test.describe('formatXml', () => {
+describe('formatXml', () => {
   test('indents nested elements', () => {
     expect(formatXml('<root><group><a>1</a><b>2</b></group><empty/></root>')).toBe(
-      ['<root>', '  <group>', '    <a>1</a>', '    <b>2</b>', '  </group>', '  <empty/>', '</root>'].join('\n')
+      [
+        '<root>',
+        '  <group>',
+        '    <a>1</a>',
+        '    <b>2</b>',
+        '  </group>',
+        '  <empty/>',
+        '</root>',
+      ].join('\n')
     );
   });
 
   test('uses the given indent unit', () => {
-    expect(formatXml('<a><b><c/></b></a>', '    ')).toBe('<a>\n    <b>\n        <c/>\n    </b>\n</a>');
+    expect(formatXml('<a><b><c/></b></a>', '    ')).toBe(
+      '<a>\n    <b>\n        <c/>\n    </b>\n</a>'
+    );
     expect(formatXml('<a><b><c/></b></a>', '\t')).toBe('<a>\n\t<b>\n\t\t<c/>\n\t</b>\n</a>');
   });
 
@@ -53,15 +63,36 @@ test.describe('formatXml', () => {
   });
 
   test('re-indents text that already sits on lines of its own', () => {
-    const xml = '<a>\n        <note>\n            first line\n              second, deeper\n\n            third\n        </note>\n</a>';
+    const xml =
+      '<a>\n        <note>\n            first line\n              second, deeper\n\n            third\n        </note>\n</a>';
 
     expect(formatXml(xml)).toBe(
-      ['<a>', '  <note>', '    first line', '      second, deeper', '', '    third', '  </note>', '</a>'].join('\n')
+      [
+        '<a>',
+        '  <note>',
+        '    first line',
+        '      second, deeper',
+        '',
+        '    third',
+        '  </note>',
+        '</a>',
+      ].join('\n')
     );
     expect(formatXml(xml, '\t')).toBe(
-      ['<a>', '\t<note>', '\t\tfirst line', '\t\t  second, deeper', '', '\t\tthird', '\t</note>', '</a>'].join('\n')
+      [
+        '<a>',
+        '\t<note>',
+        '\t\tfirst line',
+        '\t\t  second, deeper',
+        '',
+        '\t\tthird',
+        '\t</note>',
+        '</a>',
+      ].join('\n')
     );
-    expect(formatXml('<a>\r\n   <b>\r\n      x\r\n   </b>\r\n</a>')).toBe('<a>\n  <b>\n    x\n  </b>\n</a>');
+    expect(formatXml('<a>\r\n   <b>\r\n      x\r\n   </b>\r\n</a>')).toBe(
+      '<a>\n  <b>\n    x\n  </b>\n</a>'
+    );
   });
 
   test('does not re-indent text that starts or ends on a tag line', () => {
@@ -71,7 +102,11 @@ test.describe('formatXml', () => {
   });
 
   test('writes the XML declaration and a doctype on their own lines', () => {
-    expect(formatXml('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE note SYSTEM "note.dtd"><note><to>x</to></note>')).toBe(
+    expect(
+      formatXml(
+        '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE note SYSTEM "note.dtd"><note><to>x</to></note>'
+      )
+    ).toBe(
       '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE note SYSTEM "note.dtd">\n<note>\n  <to>x</to>\n</note>'
     );
   });
@@ -79,7 +114,9 @@ test.describe('formatXml', () => {
   test('keeps a doctype with an internal subset in one piece', () => {
     const doctype = '<!DOCTYPE note [<!ELEMENT note (to)><!ENTITY gt2 ">>">]>';
 
-    expect(formatXml(`${doctype}<note><to>x</to></note>`)).toBe(`${doctype}\n<note>\n  <to>x</to>\n</note>`);
+    expect(formatXml(`${doctype}<note><to>x</to></note>`)).toBe(
+      `${doctype}\n<note>\n  <to>x</to>\n</note>`
+    );
   });
 
   // The tag splitter stopped at the first ">", so these broke a tag in two.
@@ -100,7 +137,9 @@ test.describe('formatXml', () => {
   test('copies CDATA exactly', () => {
     const cdata = '<![CDATA[ if (a < b && c > d) {\n    run("</x>");\n} ]]>';
 
-    expect(formatXml(`<a><script>${cdata}</script><b/></a>`)).toBe(`<a>\n  <script>${cdata}</script>\n  <b/>\n</a>`);
+    expect(formatXml(`<a><script>${cdata}</script><b/></a>`)).toBe(
+      `<a>\n  <script>${cdata}</script>\n  <b/>\n</a>`
+    );
   });
 
   test('copies mixed content as written', () => {
@@ -116,7 +155,9 @@ test.describe('formatXml', () => {
   });
 
   test('closes an element that holds only whitespace on the same line', () => {
-    expect(formatXml('<a><b>   </b><c>\n</c><d></d></a>')).toBe('<a>\n  <b></b>\n  <c></c>\n  <d></d>\n</a>');
+    expect(formatXml('<a><b>   </b><c>\n</c><d></d></a>')).toBe(
+      '<a>\n  <b></b>\n  <c></c>\n  <d></d>\n</a>'
+    );
   });
 
   test('is stable when its own output is formatted again', () => {
@@ -127,7 +168,11 @@ test.describe('formatXml', () => {
   });
 
   test('keeps processing instructions, namespaces and Unicode names', () => {
-    expect(formatXml('<?xml-stylesheet href="a.xsl"?><s:Envelope xmlns:s="urn:s"><s:Body><名前>日本語 😀</名前></s:Body></s:Envelope>')).toBe(
+    expect(
+      formatXml(
+        '<?xml-stylesheet href="a.xsl"?><s:Envelope xmlns:s="urn:s"><s:Body><名前>日本語 😀</名前></s:Body></s:Envelope>'
+      )
+    ).toBe(
       '<?xml-stylesheet href="a.xsl"?>\n<s:Envelope xmlns:s="urn:s">\n  <s:Body>\n    <名前>日本語 😀</名前>\n  </s:Body>\n</s:Envelope>'
     );
   });
@@ -146,15 +191,20 @@ test.describe('formatXml', () => {
   });
 });
 
-test.describe('minifyXml', () => {
+describe('minifyXml', () => {
   test('removes whitespace between tags', () => {
-    expect(minifyXml('<root>\n  <a>1</a>\n  <b>\n    <c/>\n  </b>\n</root>\n')).toBe('<root><a>1</a><b><c/></b></root>');
+    expect(minifyXml('<root>\n  <a>1</a>\n  <b>\n    <c/>\n  </b>\n</root>\n')).toBe(
+      '<root><a>1</a><b><c/></b></root>'
+    );
   });
 
   test('leaves text, comments and CDATA as they are', () => {
-    const xml = '<a>\n  <t>  keep   this  </t>\n  <!-- a >   < b -->\n  <d><![CDATA[ x >   < y ]]></d>\n</a>';
+    const xml =
+      '<a>\n  <t>  keep   this  </t>\n  <!-- a >   < b -->\n  <d><![CDATA[ x >   < y ]]></d>\n</a>';
 
-    expect(minifyXml(xml)).toBe('<a><t>  keep   this  </t><!-- a >   < b --><d><![CDATA[ x >   < y ]]></d></a>');
+    expect(minifyXml(xml)).toBe(
+      '<a><t>  keep   this  </t><!-- a >   < b --><d><![CDATA[ x >   < y ]]></d></a>'
+    );
   });
 
   test('keeps the spaces between inline elements of mixed content', () => {
@@ -176,7 +226,7 @@ test.describe('minifyXml', () => {
   });
 });
 
-test.describe('validateXml', () => {
+describe('validateXml', () => {
   test('returns null for blank text without calling the parser', () => {
     let calls = 0;
     const parse = () => {
@@ -248,7 +298,7 @@ test.describe('validateXml', () => {
   });
 });
 
-test.describe('describeXmlParserError', () => {
+describe('describeXmlParserError', () => {
   test('strips the fixed sentences Chrome and Safari add', () => {
     expect(
       describeXmlParserError(

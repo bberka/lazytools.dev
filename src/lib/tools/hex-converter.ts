@@ -44,7 +44,10 @@ const NOT_HEX = /[^\s\p{P}\p{S}0-9a-fA-F]/u;
  * @throws Error when the input holds no hex digits, an odd number of them, or
  * a letter or digit that is not hexadecimal.
  */
-export function hexToText(hex: string, format: Pick<HexFormat, 'delimiter' | 'prefix'> = {}): string {
+export function hexToText(
+  hex: string,
+  format: Pick<HexFormat, 'delimiter' | 'prefix'> = {}
+): string {
   const { delimiter = '', prefix = '' } = format;
 
   let clean = hex;
@@ -90,7 +93,10 @@ export function convertHex(
 ): { output: string; error: string } {
   if (mode === 'encode' ? text === '' : !text.trim()) return { output: '', error: '' };
   try {
-    return { output: mode === 'encode' ? textToHex(text, format) : hexToText(text, format), error: '' };
+    return {
+      output: mode === 'encode' ? textToHex(text, format) : hexToText(text, format),
+      error: '',
+    };
   } catch (err) {
     return {
       output: '',

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * Flows of the speech tools and the resume analyzer, run against the built app.
@@ -386,9 +387,7 @@ async function recognize(page: Page, index: number, resultIndex: number, phrases
 /** Presses Start Recording and lets the stand-in recognizer report that it is running. */
 async function startRecording(page: Page, index = 0) {
   await page.getByRole('button', { name: 'Start Recording' }).click();
-  await expect
-    .poll(async () => (await recognitionSessions(page))[index]?.started ?? 0)
-    .toBe(1);
+  await expect.poll(async () => (await recognitionSessions(page))[index]?.started ?? 0).toBe(1);
   await recognitionEvent(page, index, 'start');
   await expect(page.getByRole('button', { name: 'Stop Recording' })).toBeVisible();
 }
@@ -422,9 +421,10 @@ function pdfFile(name: string, buffer: Buffer): UploadFile {
 
 /** Picks a file the way a user does: through the Choose File button and the file dialog. */
 async function chooseResume(page: Page, file: UploadFile) {
-  const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Choose File, PDF resume' }).click();
-  await (await chooser).setFiles(file);
+  const chooser = await openFileChooser(page, () =>
+    page.getByRole('button', { name: 'Choose File, PDF resume' }).click()
+  );
+  await chooser.setFiles(file);
 }
 
 async function analyze(page: Page) {
@@ -764,7 +764,9 @@ test.describe('Speech tools and resume analyzer', () => {
 
       // The reading moves on by itself.
       await speechEvent(page, 0, 'end');
-      await expect.poll(() => spokenTexts(page)).toEqual(['General Kenobi!', 'You are a bold one.']);
+      await expect
+        .poll(() => spokenTexts(page))
+        .toEqual(['General Kenobi!', 'You are a bold one.']);
       await speechEvent(page, 1, 'start');
       await expect(sentences.nth(2)).toHaveAttribute('aria-current', 'true');
 
@@ -814,9 +816,7 @@ test.describe('Speech tools and resume analyzer', () => {
 
       await speechEvent(page, 0, 'error', { error: 'synthesis-failed' });
       await expect(alertSaying(page, 'The speech engine could not speak this text.')).toBeVisible();
-      await expect
-        .poll(() => spokenTexts(page))
-        .toEqual(['First sentence.', 'Second sentence.']);
+      await expect.poll(() => spokenTexts(page)).toEqual(['First sentence.', 'Second sentence.']);
 
       // A code the tool has no wording for is still shown, with the code.
       await speechEvent(page, 1, 'error', { error: 'engine-on-fire' });
@@ -1579,9 +1579,7 @@ test.describe('Speech tools and resume analyzer', () => {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         buffer: Buffer.from('not a pdf'),
       });
-      await expect(
-        alertSaying(page, '"resume.docx" is not a supported file type.')
-      ).toBeVisible();
+      await expect(alertSaying(page, '"resume.docx" is not a supported file type.')).toBeVisible();
       await expect(page.getByText('No file chosen')).toBeVisible();
       await expect(analyzeButton).toBeDisabled();
 

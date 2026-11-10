@@ -1,8 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, Download, Info, Landmark, PiggyBank, Trash2 } from 'lucide-react';
+import { AlertCircle, Download, Info, Landmark, PiggyBank, Trash2 } from 'lucide-react';
+import { Stat } from './Stat';
+import { FieldError } from './FieldError';
 import { toast } from 'sonner';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
 import {
@@ -38,26 +40,6 @@ const termUnitOptions = [
 
 const INVALID_INPUT = 'border-destructive focus-visible:ring-destructive';
 
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <div id={id} role="alert" className="flex items-start gap-1.5 text-xs text-destructive">
-      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <div className="min-w-0 rounded-md border bg-card p-3">
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="mt-1 break-words font-mono text-base font-semibold sm:text-lg">{value}</dd>
-      {detail && <dd className="mt-0.5 text-xs text-muted-foreground">{detail}</dd>}
-    </div>
-  );
-}
-
 export function LoanCalculator() {
   const [amount, setAmount] = useState('200000');
   const [rate, setRate] = useState('6');
@@ -66,7 +48,6 @@ export function LoanCalculator() {
   const [extra, setExtra] = useState('');
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
   const [groupByYear, setGroupByYear] = useState(false);
-  const copySummary = useCopyToClipboard();
 
   const evaluation = useMemo(
     () => evaluateLoan({ amount, rate, term, termUnit, extra }, currency),
@@ -91,7 +72,11 @@ export function LoanCalculator() {
   const handleDownload = () => {
     if (!result) return;
     try {
-      downloadText(scheduleToCsv(result), 'loan-amortization-schedule.csv', 'text/csv;charset=utf-8');
+      downloadText(
+        scheduleToCsv(result),
+        'loan-amortization-schedule.csv',
+        'text/csv;charset=utf-8'
+      );
       toast.success('Schedule downloaded');
     } catch {
       toast.error('Could not download the schedule');
@@ -100,7 +85,7 @@ export function LoanCalculator() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -112,7 +97,7 @@ export function LoanCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="loan-currency" className="text-sm font-medium">
                   Currency
@@ -185,7 +170,10 @@ export function LoanCalculator() {
                     aria-invalid={Boolean(errors.term)}
                     aria-describedby={errors.term ? 'loan-term-error' : undefined}
                   />
-                  <Select value={termUnit} onValueChange={(value) => setTermUnit(value as TermUnit)}>
+                  <Select
+                    value={termUnit}
+                    onValueChange={(value) => setTermUnit(value as TermUnit)}
+                  >
                     <SelectTrigger aria-label="Term unit" className="h-9 w-28 shrink-0">
                       <SelectValue placeholder="Unit" />
                     </SelectTrigger>
@@ -274,7 +262,7 @@ export function LoanCalculator() {
                   )}
                 </div>
 
-                <dl className="grid gap-3 sm:grid-cols-3">
+                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <Stat label="Total interest" value={formatMoney(result.totalInterest)} />
                   <Stat label="Total paid" value={formatMoney(result.totalPaid)} />
                   <Stat
@@ -290,7 +278,7 @@ export function LoanCalculator() {
                       <PiggyBank className="h-4 w-4 text-primary" />
                       What the extra payment saves
                     </div>
-                    <dl className="grid gap-3 sm:grid-cols-2">
+                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <Stat
                         label="Time saved"
                         value={formatMonths(result.savings.monthsSaved)}
@@ -312,22 +300,11 @@ export function LoanCalculator() {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => copySummary.copyToClipboard(buildLoanSummary(result, formatMoney))}
-                    variant={copySummary.isCopied ? 'default' : 'outline'}
-                  >
-                    {copySummary.isCopied ? (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-2 h-4 w-4" />
-                        {copySummary.isError ? 'Copy failed, try again' : 'Copy summary'}
-                      </>
-                    )}
-                  </Button>
+                  <CopyButton
+                    text={buildLoanSummary(result, formatMoney)}
+                    label="Copy summary"
+                    errorLabel="Copy failed, try again"
+                  />
                   <Button onClick={handleDownload} variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     Download CSV
@@ -364,9 +341,9 @@ export function LoanCalculator() {
             </div>
           </CardHeader>
           <CardContent>
-            <div
-              role="region"
+            <section
               aria-label="Amortization schedule table"
+              // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
               tabIndex={0}
               className="max-h-96 overflow-auto rounded-md border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -448,7 +425,7 @@ export function LoanCalculator() {
                   </tr>
                 </tfoot>
               </table>
-            </div>
+            </section>
           </CardContent>
         </Card>
       )}

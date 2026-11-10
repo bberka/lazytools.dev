@@ -9,15 +9,9 @@ interface RecentToolsContextType {
   clearRecentTools: () => void;
 }
 
-const RecentToolsContext = createContext<RecentToolsContextType | undefined>(
-  undefined
-);
+const RecentToolsContext = createContext<RecentToolsContextType | undefined>(undefined);
 
-export function RecentToolsProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function RecentToolsProvider({ children }: { children: React.ReactNode }) {
   const recentTools = usePreference('recentTools');
 
   const addRecentTool = useCallback((toolId: string) => {
@@ -33,9 +27,7 @@ export function RecentToolsProvider({
     [recentTools, addRecentTool, clearRecentTools]
   );
 
-  return (
-    <RecentToolsContext.Provider value={value}>{children}</RecentToolsContext.Provider>
-  );
+  return <RecentToolsContext.Provider value={value}>{children}</RecentToolsContext.Provider>;
 }
 
 export function useRecentTools() {

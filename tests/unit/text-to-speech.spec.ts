@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeSpeechError,
   locateSpokenWord,
@@ -7,7 +7,7 @@ import {
 
 const withoutWhitespace = (value: string) => value.replace(/\s+/g, '');
 
-test.describe('splitIntoSentences', () => {
+describe('splitIntoSentences', () => {
   test('splits at sentence-ending punctuation followed by whitespace', () => {
     expect(splitIntoSentences('Hello world. How are you? Fine!')).toEqual([
       'Hello world.',
@@ -95,7 +95,11 @@ test.describe('splitIntoSentences', () => {
       'It was 2019.',
       'Five people came.',
     ]);
-    expect(splitIntoSentences('Is that Dr? Yes! He is.')).toEqual(['Is that Dr?', 'Yes!', 'He is.']);
+    expect(splitIntoSentences('Is that Dr? Yes! He is.')).toEqual([
+      'Is that Dr?',
+      'Yes!',
+      'He is.',
+    ]);
   });
 
   test('splits text written without capital letters like any other', () => {
@@ -119,7 +123,8 @@ test.describe('splitIntoSentences', () => {
   });
 
   test('stays fast on very large text', () => {
-    const sentence = 'The quick brown fox jumps over the lazy dog near example.com at 3.14 p.m. today.';
+    const sentence =
+      'The quick brown fox jumps over the lazy dog near example.com at 3.14 p.m. today.';
     const oneLine = Array.from({ length: 20000 }, () => sentence).join(' ');
     const started = Date.now();
 
@@ -132,7 +137,7 @@ test.describe('splitIntoSentences', () => {
   });
 });
 
-test.describe('locateSpokenWord', () => {
+describe('locateSpokenWord', () => {
   const sentence = 'Hello brave new world.';
 
   test('cuts the sentence around the reported word', () => {
@@ -202,7 +207,7 @@ test.describe('locateSpokenWord', () => {
   });
 });
 
-test.describe('describeSpeechError', () => {
+describe('describeSpeechError', () => {
   test('reports nothing when speech was cut off on purpose', () => {
     expect(describeSpeechError('interrupted')).toBeNull();
     expect(describeSpeechError('canceled')).toBeNull();

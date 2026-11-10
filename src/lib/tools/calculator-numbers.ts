@@ -26,8 +26,7 @@ const POINT_DECIMAL =
 
 // The same with the separators swapped (1.250,5), tried second: a comma that
 // cannot be grouping thousands is a decimal comma, so "1,5" is one and a half.
-const COMMA_DECIMAL =
-  /^[+-]?(?:(?:\d+|[1-9]\d{0,2}(?:\.\d{3})+),\d*|,\d+)(?:e[+-]?\d+)?$/i;
+const COMMA_DECIMAL = /^[+-]?(?:(?:\d+|[1-9]\d{0,2}(?:\.\d{3})+),\d*|,\d+)(?:e[+-]?\d+)?$/i;
 
 // A sign or decimal separator on its own is a number still being typed.
 const UNFINISHED = /^[+-]?[.,]?$/;

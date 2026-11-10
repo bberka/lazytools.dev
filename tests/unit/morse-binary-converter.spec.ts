@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   UNKNOWN_MORSE,
   binaryToText,
@@ -10,7 +10,7 @@ import {
   unsupportedMorseCharacters,
 } from '@/lib/tools/morse-binary-converter';
 
-test.describe('textToMorse', () => {
+describe('textToMorse', () => {
   test('encodes letters, digits and punctuation, ignoring case', () => {
     expect(textToMorse('SOS')).toBe('... --- ...');
     expect(textToMorse('Hello World')).toBe('.... . .-.. .-.. --- / .-- --- .-. .-.. -..');
@@ -38,7 +38,7 @@ test.describe('textToMorse', () => {
   });
 });
 
-test.describe('unsupportedMorseCharacters', () => {
+describe('unsupportedMorseCharacters', () => {
   test('lists each left-out character once, in order', () => {
     expect(unsupportedMorseCharacters('héllo wörld é 100% 😀')).toEqual(['é', 'ö', '%', '😀']);
   });
@@ -51,7 +51,7 @@ test.describe('unsupportedMorseCharacters', () => {
   });
 });
 
-test.describe('morseToText', () => {
+describe('morseToText', () => {
   test('decodes letters and word breaks', () => {
     expect(morseToText('... --- ...')).toBe('SOS');
     expect(morseToText('.... . .-.. .-.. --- / .-- --- .-. .-.. -..')).toBe('HELLO WORLD');
@@ -87,13 +87,20 @@ test.describe('morseToText', () => {
   });
 
   test('decodes what textToMorse wrote', () => {
-    for (const text of ['HELLO WORLD', 'SOS', 'A  B', '1, 2 & 3!', 'USER@EXAMPLE.COM', '"QUOTED" (X) $5 = A+B_C; D: E/F-G\'S?']) {
+    for (const text of [
+      'HELLO WORLD',
+      'SOS',
+      'A  B',
+      '1, 2 & 3!',
+      'USER@EXAMPLE.COM',
+      '"QUOTED" (X) $5 = A+B_C; D: E/F-G\'S?',
+    ]) {
       expect(morseToText(textToMorse(text)), text).toBe(text);
     }
   });
 });
 
-test.describe('morseTimeline', () => {
+describe('morseTimeline', () => {
   // At 12 words per minute one unit is exactly a tenth of a second.
   const units = (morse: string) =>
     morseTimeline(morse, 12).tones.map((tone) => [
@@ -153,7 +160,7 @@ test.describe('morseTimeline', () => {
   });
 });
 
-test.describe('textToBinary / binaryToText', () => {
+describe('textToBinary / binaryToText', () => {
   test('writes eight bits per UTF-8 byte', () => {
     expect(textToBinary('Hi', ' ')).toBe('01001000 01101001');
     expect(textToBinary('Hi', '')).toBe('0100100001101001');
@@ -175,7 +182,9 @@ test.describe('textToBinary / binaryToText', () => {
   });
 
   test('rejects a bit count that is not a multiple of eight', () => {
-    expect(() => binaryToText('0100100', ' ')).toThrow('Binary data length must be a multiple of 8 bits.');
+    expect(() => binaryToText('0100100', ' ')).toThrow(
+      'Binary data length must be a multiple of 8 bits.'
+    );
   });
 
   // Defect: letters and other digits were dropped silently; text with no bits
@@ -190,7 +199,7 @@ test.describe('textToBinary / binaryToText', () => {
   });
 });
 
-test.describe('convertCode', () => {
+describe('convertCode', () => {
   test('returns nothing for empty input, and for blank input when decoding', () => {
     for (const kind of ['morse', 'binary'] as const) {
       expect(convertCode('', kind, 'encode')).toEqual({ output: '', error: '' });
@@ -206,8 +215,14 @@ test.describe('convertCode', () => {
   });
 
   test('uses the separator for binary in both directions', () => {
-    expect(convertCode('Hi', 'binary', 'encode', ',')).toEqual({ output: '01001000,01101001', error: '' });
-    expect(convertCode('01001000,01101001', 'binary', 'decode', ',')).toEqual({ output: 'Hi', error: '' });
+    expect(convertCode('Hi', 'binary', 'encode', ',')).toEqual({
+      output: '01001000,01101001',
+      error: '',
+    });
+    expect(convertCode('01001000,01101001', 'binary', 'decode', ',')).toEqual({
+      output: 'Hi',
+      error: '',
+    });
   });
 
   test('turns a failure into an error without output', () => {
@@ -226,7 +241,10 @@ test.describe('convertCode', () => {
     const text = 'Grüße, 世界 😀';
     for (const separator of [' ', '', ',']) {
       const binary = convertCode(text, 'binary', 'encode', separator).output;
-      expect(convertCode(binary, 'binary', 'decode', separator)).toEqual({ output: text, error: '' });
+      expect(convertCode(binary, 'binary', 'decode', separator)).toEqual({
+        output: text,
+        error: '',
+      });
     }
   });
 });

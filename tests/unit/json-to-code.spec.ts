@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   JSON_CODE_LANGUAGES,
   generateCodeFromJson,
@@ -32,7 +32,7 @@ const USERS = [
 
 const ALL_LANGUAGES = JSON_CODE_LANGUAGES.map((language) => language.value);
 
-test.describe('inspectJson', () => {
+describe('inspectJson', () => {
   test('summarises what the text holds', () => {
     expect(inspectJson('{"a": 1, "b": 2}')).toEqual({
       valid: true,
@@ -57,7 +57,7 @@ test.describe('inspectJson', () => {
   });
 });
 
-test.describe('TypeScript', () => {
+describe('TypeScript', () => {
   test('writes an interface per object, root first', () => {
     expect(typescript(PROFILE)).toBe(
       lines(
@@ -138,12 +138,16 @@ test.describe('TypeScript', () => {
     expect(code).toContain('export type RootObject = RootObjectItem[];');
     expect(code).toContain('  owner: Owner;');
     expect(code).toContain('  tags: (string | number)[];');
-    expect(code).toContain(lines('export interface Owner {', '  name: string;', '  age?: number;', '}'));
+    expect(code).toContain(
+      lines('export interface Owner {', '  name: string;', '  age?: number;', '}')
+    );
     expect(code.match(/interface /g)).toHaveLength(2);
   });
 
   test('types mixed, empty and null values', () => {
-    expect(typescript({ mixed: [1, 'a', null], empty: [], nothing: null, grid: [[1], [2, 3]] })).toBe(
+    expect(
+      typescript({ mixed: [1, 'a', null], empty: [], nothing: null, grid: [[1], [2, 3]] })
+    ).toBe(
       lines(
         'export interface RootObject {',
         '  mixed: (number | string | null)[];',
@@ -235,7 +239,7 @@ test.describe('TypeScript', () => {
   });
 });
 
-test.describe('Zod', () => {
+describe('Zod', () => {
   // The schemas were listed root first, so the root read a const before its declaration.
   test('declares a nested schema before the schema that uses it', () => {
     const code = generate(PROFILE, 'zod');
@@ -257,7 +261,9 @@ test.describe('Zod', () => {
         '});'
       )
     );
-    expect(code.indexOf('const companySchema')).toBeLessThan(code.indexOf('company: companySchema'));
+    expect(code.indexOf('const companySchema')).toBeLessThan(
+      code.indexOf('company: companySchema')
+    );
   });
 
   test('marks optional and nullable properties and merges array items', () => {
@@ -294,7 +300,7 @@ test.describe('Zod', () => {
   });
 });
 
-test.describe('Python', () => {
+describe('Python', () => {
   test('writes dataclasses, root first', () => {
     expect(generate(PROFILE, 'python-dataclass')).toBe(
       lines(
@@ -364,7 +370,10 @@ test.describe('Python', () => {
   });
 
   test('uses the call form of TypedDict for keys a class body cannot hold', () => {
-    const code = generate({ 'first-name': 'a', class: 'b', __v: 0, inner: { ok: true } }, 'python-typeddict');
+    const code = generate(
+      { 'first-name': 'a', class: 'b', __v: 0, inner: { ok: true } },
+      'python-typeddict'
+    );
     expect(code).toBe(
       lines(
         'from __future__ import annotations',
@@ -388,11 +397,13 @@ test.describe('Python', () => {
     expect(code).toContain('from typing import Any, NotRequired, TypedDict');
     expect(code).toContain('    nickname: str | None');
     expect(code).toContain('    email: NotRequired[str]');
-    expect(generate({}, 'python-typeddict')).toContain(lines('class RootObject(TypedDict):', '    pass'));
+    expect(generate({}, 'python-typeddict')).toContain(
+      lines('class RootObject(TypedDict):', '    pass')
+    );
   });
 });
 
-test.describe('Go', () => {
+describe('Go', () => {
   test('writes structs with json tags', () => {
     expect(generate(PROFILE, 'go')).toBe(
       lines(
@@ -428,7 +439,9 @@ test.describe('Go', () => {
       )
     );
     expect(generate({ values: [1, 2.5] }, 'go')).toContain('\tValues []float64 `json:"values"`');
-    expect(generate({ values: [null, { a: 1 }] }, 'go')).toContain('\tValues []*Value `json:"values"`');
+    expect(generate({ values: [null, { a: 1 }] }, 'go')).toContain(
+      '\tValues []*Value `json:"values"`'
+    );
   });
 
   // "_id" and "2fa" used to give fields encoding/json cannot see or Go cannot compile.
@@ -442,13 +455,15 @@ test.describe('Go', () => {
   });
 });
 
-test.describe('Java', () => {
+describe('Java', () => {
   // The nested class was named twice: field "Company", getter "Company1".
   test('uses one class per nested object', () => {
     const code = generate(PROFILE, 'java');
     expect(code).toContain('    private Company company;');
     expect(code).toContain('    public Company getCompany() { return company; }');
-    expect(code).toContain('    public void setCompany(Company company) { this.company = company; }');
+    expect(code).toContain(
+      '    public void setCompany(Company company) { this.company = company; }'
+    );
     expect(code.match(/public class /g)).toHaveLength(2);
     expect(code).not.toContain('Company1');
   });
@@ -456,7 +471,9 @@ test.describe('Java', () => {
   // List<long> does not compile.
   test('boxes primitives inside a List and imports List', () => {
     const code = generate({ ids: [1, 2], ratios: [0.5], flags: [true], count: 3 }, 'java');
-    expect(code.startsWith(lines('import java.util.List;', '', 'public class RootObject {'))).toBe(true);
+    expect(code.startsWith(lines('import java.util.List;', '', 'public class RootObject {'))).toBe(
+      true
+    );
     expect(code).toContain('    private List<Long> ids;');
     expect(code).toContain('    private List<Double> ratios;');
     expect(code).toContain('    private List<Boolean> flags;');
@@ -505,7 +522,7 @@ test.describe('Java', () => {
   });
 });
 
-test.describe('C#', () => {
+describe('C#', () => {
   test('writes classes with properties', () => {
     expect(generate({ id: 1, name: 'a', tags: ['x'] }, 'csharp')).toBe(
       lines(
@@ -522,7 +539,13 @@ test.describe('C#', () => {
   });
 
   test('makes value types nullable where the value can be null or missing', () => {
-    const code = generate([{ n: 1, on: true, s: 'a' }, { n: null, s: null }], 'csharp');
+    const code = generate(
+      [
+        { n: 1, on: true, s: 'a' },
+        { n: null, s: null },
+      ],
+      'csharp'
+    );
     expect(code).toContain('    public long? N { get; set; }');
     expect(code).toContain('    public bool? On { get; set; }');
     expect(code).toContain('    public string S { get; set; }');
@@ -564,11 +587,14 @@ test.describe('C#', () => {
   });
 });
 
-test.describe('Rust', () => {
+describe('Rust', () => {
   // "pub type: String" does not compile.
   test('escapes keywords and renames what serde cannot derive', () => {
     expect(
-      generate({ type: 'a', self: 1, firstName: 'b', '2fa': true, plain: 1.5, nothing: null }, 'rust')
+      generate(
+        { type: 'a', self: 1, firstName: 'b', '2fa': true, plain: 1.5, nothing: null },
+        'rust'
+      )
     ).toBe(
       lines(
         'use serde::{Deserialize, Serialize};',
@@ -601,7 +627,7 @@ test.describe('Rust', () => {
   });
 });
 
-test.describe('Swift', () => {
+describe('Swift', () => {
   test('writes Codable structs', () => {
     expect(generate(PROFILE, 'swift')).toBe(
       lines(
@@ -677,7 +703,7 @@ test.describe('Swift', () => {
   });
 });
 
-test.describe('Kotlin', () => {
+describe('Kotlin', () => {
   test('writes data classes', () => {
     expect(generate(PROFILE, 'kotlin')).toBe(
       lines(
@@ -717,7 +743,7 @@ test.describe('Kotlin', () => {
   });
 
   test('maps a renamed property back to its key', () => {
-    expect(generate({ 'first-name': 'Ada', id: 1, 'price$': 2 }, 'kotlin')).toBe(
+    expect(generate({ 'first-name': 'Ada', id: 1, price$: 2 }, 'kotlin')).toBe(
       lines(
         'import com.google.gson.annotations.SerializedName',
         '',
@@ -731,10 +757,12 @@ test.describe('Kotlin', () => {
   });
 });
 
-test.describe('Dart', () => {
+describe('Dart', () => {
   // fromJson used to assign the decoded Map and List<dynamic> straight to typed fields.
   test('converts nested objects, lists and doubles in fromJson', () => {
-    expect(generate({ id: 1, price: 9.5, tags: ['a'], owner: { name: 'x' }, items: [{ n: 1 }] }, 'dart')).toBe(
+    expect(
+      generate({ id: 1, price: 9.5, tags: ['a'], owner: { name: 'x' }, items: [{ n: 1 }] }, 'dart')
+    ).toBe(
       lines(
         'class RootObject {',
         '  final int id;',
@@ -876,7 +904,7 @@ test.describe('Dart', () => {
   });
 });
 
-test.describe('every language', () => {
+describe('every language', () => {
   // A root that is not an object used to give an empty box in most languages,
   // and a null root gave nothing in all of them.
   test('names a root that is not an object', () => {

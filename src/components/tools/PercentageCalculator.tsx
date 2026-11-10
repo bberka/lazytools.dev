@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { calculatePercentage, type PercentageMode } from '@/lib/tools/percentage-calculator';
 
 type Mode = PercentageMode;
@@ -34,7 +34,6 @@ export function PercentageCalculator() {
   const [mode, setMode] = useState<Mode>('percent-of');
   const [x, setX] = useState(exampleValues['percent-of'].x);
   const [y, setY] = useState(exampleValues['percent-of'].y);
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => calculatePercentage(mode, x, y), [mode, x, y]);
 
@@ -80,9 +79,7 @@ export function PercentageCalculator() {
       <Card>
         <CardHeader>
           <CardTitle>Percentage Calculator</CardTitle>
-          <CardDescription>
-            Calculate percentages, increases and decreases.
-          </CardDescription>
+          <CardDescription>Calculate percentages, increases and decreases.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -150,23 +147,7 @@ export function PercentageCalculator() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>

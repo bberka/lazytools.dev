@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { PdfToolError } from '@/lib/tools/pdf-page-ops';
 import {
@@ -24,7 +24,7 @@ import {
 const page = { width: 600, height: 800 };
 const mark = { width: 100, height: 40 };
 
-test.describe('selectWatermarkPages', () => {
+describe('selectWatermarkPages', () => {
   test('picks every page, the first or the last', () => {
     expect(selectWatermarkPages('all', 3)).toEqual([0, 1, 2]);
     expect(selectWatermarkPages('first', 3)).toEqual([0]);
@@ -44,7 +44,7 @@ test.describe('selectWatermarkPages', () => {
   });
 });
 
-test.describe('layoutWatermark', () => {
+describe('layoutWatermark', () => {
   test('keeps corner marks 20 points from the edges', () => {
     const at = (position: WatermarkOptions['position']) =>
       layoutWatermark(page, mark, { position, kind: 'image' });
@@ -149,7 +149,7 @@ test.describe('layoutWatermark', () => {
   });
 });
 
-test.describe('measureWatermarkText', () => {
+describe('measureWatermarkText', () => {
   test('agrees with the font pdf-lib embeds', async () => {
     const doc = await PDFDocument.create();
     const fonts = [
@@ -183,7 +183,7 @@ test.describe('measureWatermarkText', () => {
   });
 });
 
-test.describe('parseHexColor', () => {
+describe('parseHexColor', () => {
   test('reads six and three digit colours', () => {
     expect(parseHexColor('#ff0000')).toEqual({ r: 1, g: 0, b: 0 });
     expect(parseHexColor('#0000FF')).toEqual({ r: 0, g: 0, b: 1 });
@@ -199,7 +199,7 @@ test.describe('parseHexColor', () => {
   });
 });
 
-test.describe('watermarkPdf with text', () => {
+describe('watermarkPdf with text', () => {
   const text: TextWatermark = {
     kind: 'text',
     text: 'CONFIDENTIAL',
@@ -307,7 +307,7 @@ test.describe('watermarkPdf with text', () => {
   });
 });
 
-test.describe('watermarkPdf on turned and cropped pages', () => {
+describe('watermarkPdf on turned and cropped pages', () => {
   const text: TextWatermark = {
     kind: 'text',
     text: 'DRAFT',
@@ -382,7 +382,7 @@ test.describe('watermarkPdf on turned and cropped pages', () => {
   });
 });
 
-test.describe('watermarkPdf with text the built-in fonts cannot draw', () => {
+describe('watermarkPdf with text the built-in fonts cannot draw', () => {
   const text: TextWatermark = {
     kind: 'text',
     text: 'GİZLİ',
@@ -473,7 +473,7 @@ test.describe('watermarkPdf with text the built-in fonts cannot draw', () => {
   });
 });
 
-test.describe('watermarkPdf with an image', () => {
+describe('watermarkPdf with an image', () => {
   const options: WatermarkOptions = { position: 'bottom-right', opacity: 40, pages: 'all' };
 
   test('sizes the image from its pixels and the scale', async () => {

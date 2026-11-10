@@ -82,9 +82,9 @@ export function MockDataGenerator() {
   // Generate data initially on mount. Random rows must not be part of the
   // prerendered page, so this cannot be the initial state.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // oxlint-disable-next-line react-hooks/set-state-in-effect
     generateData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const jsonString = useMemo(() => mockDataToJson(dataset), [dataset]);
@@ -134,7 +134,7 @@ export function MockDataGenerator() {
   const previewRows = dataset.rows.slice(0, 10);
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left Panel: Configuration */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -154,10 +154,7 @@ export function MockDataGenerator() {
               >
                 Rows count
               </label>
-              <Select
-                value={String(rowsCount)}
-                onValueChange={(val) => setRowsCount(Number(val))}
-              >
+              <Select value={String(rowsCount)} onValueChange={(val) => setRowsCount(Number(val))}>
                 <SelectTrigger id="mock-rows-count">
                   <SelectValue />
                 </SelectTrigger>
@@ -177,11 +174,14 @@ export function MockDataGenerator() {
                 Fields list
               </span>
 
-              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                 {fields.map((field, index) => {
                   const fieldLabel = field.name.trim() || `field ${index + 1}`;
                   return (
-                    <div key={field.id} className="flex gap-2 items-center bg-muted/30 p-2 rounded-md">
+                    <div
+                      key={field.id}
+                      className="flex gap-2 items-center bg-muted/30 p-2 rounded-md"
+                    >
                       <div className="flex flex-col gap-1 shrink-0">
                         <Button
                           variant="ghost"
@@ -218,7 +218,10 @@ export function MockDataGenerator() {
                           value={field.type}
                           onValueChange={(val) => updateFieldType(field.id, val)}
                         >
-                          <SelectTrigger aria-label={`Type of ${fieldLabel}`} className="h-8 text-xs">
+                          <SelectTrigger
+                            aria-label={`Type of ${fieldLabel}`}
+                            className="h-8 text-xs"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -258,9 +261,9 @@ export function MockDataGenerator() {
             </Button>
 
             {isOutdated && (
-              <p role="status" className="text-xs text-muted-foreground">
+              <output className="block text-xs text-muted-foreground">
                 The schema changed. Generate again to update the output.
-              </p>
+              </output>
             )}
           </CardContent>
         </Card>
@@ -307,9 +310,9 @@ export function MockDataGenerator() {
                   <Button
                     onClick={() => {
                       if (activeTab === 'json') {
-                        copyJson.copyToClipboard(jsonString);
+                        void copyJson.copyToClipboard(jsonString);
                       } else {
-                        copyCsv.copyToClipboard(csvString);
+                        void copyCsv.copyToClipboard(csvString);
                       }
                     }}
                     variant={
@@ -336,8 +339,8 @@ export function MockDataGenerator() {
                         ? 'Copied'
                         : 'Copy'
                       : copyCsv.isCopied
-                      ? 'Copied'
-                      : 'Copy'}
+                        ? 'Copied'
+                        : 'Copy'}
                   </Button>
 
                   <Button

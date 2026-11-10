@@ -8,7 +8,9 @@ import Link from 'next/link';
 
 export default function CrashSimulator() {
   const [crashType, setCrashType] = useState<'none' | 'render' | 'mount'>(
-    typeof window !== 'undefined' && window.location.search.includes('immediate=true') ? 'mount' : 'none'
+    typeof window !== 'undefined' && window.location.search.includes('immediate=true')
+      ? 'mount'
+      : 'none'
   );
 
   useEffect(() => {
@@ -36,9 +38,12 @@ export default function CrashSimulator() {
             <Flame className="h-6 w-6 animate-pulse" />
           </div>
           <div>
-            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">Error Page Simulator</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
+              Error Page Simulator
+            </CardTitle>
             <CardDescription className="text-sm mt-1">
-              Use this tool to test and preview the application&apos;s custom error page (`error.tsx`) under different crash scenarios.
+              Use this tool to test and preview the application&apos;s custom error page
+              (`error.tsx`) under different crash scenarios.
             </CardDescription>
           </div>
         </CardHeader>
@@ -47,8 +52,9 @@ export default function CrashSimulator() {
           <div className="p-4 rounded-xl bg-muted/40 border border-border/50 text-xs space-y-2 leading-relaxed text-muted-foreground">
             <p className="font-semibold text-foreground">How React Error Boundaries Work:</p>
             <p>
-              React caught errors must occur during the **render phase** or **lifecycle methods** of components.
-              Errors inside event handlers do not trigger boundaries unless they force a re-render that crashes.
+              React caught errors must occur during the **render phase** or **lifecycle methods** of
+              components. Errors inside event handlers do not trigger boundaries unless they force a
+              re-render that crashes.
             </p>
           </div>
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, Database, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Database, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { describeLineCount } from '@/lib/tools/formatter-output';
 import {
   formatSql,
@@ -76,7 +76,6 @@ export function SqlFormatter() {
   const [formatted, setFormatted] = useState<SqlFormatResult>(NO_RESULT);
   // False until the formatter has answered once, i.e. while its chunk loads.
   const [hasVerdict, setHasVerdict] = useState(false);
-  const copy = useCopyToClipboard();
 
   const settings = useMemo<SqlFormatSettings>(
     () => ({ dialect, indentation, keywordCase, logicalOperatorNewline }),
@@ -137,9 +136,11 @@ export function SqlFormatter() {
             className="font-mono text-sm"
           />
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
-              <label htmlFor="sql-dialect" className="text-sm font-medium">SQL dialect</label>
+              <label htmlFor="sql-dialect" className="text-sm font-medium">
+                SQL dialect
+              </label>
               <Select
                 value={dialect}
                 onValueChange={(value) => {
@@ -163,7 +164,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-indentation" className="text-sm font-medium">Indentation</label>
+              <label htmlFor="sql-indentation" className="text-sm font-medium">
+                Indentation
+              </label>
               <Select
                 value={indentation}
                 onValueChange={(value) => {
@@ -186,7 +189,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-keyword-case" className="text-sm font-medium">Keyword case</label>
+              <label htmlFor="sql-keyword-case" className="text-sm font-medium">
+                Keyword case
+              </label>
               <Select
                 value={keywordCase}
                 onValueChange={(value) => {
@@ -210,7 +215,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-operator-wrapping" className="text-sm font-medium">AND / OR wrapping</label>
+              <label htmlFor="sql-operator-wrapping" className="text-sm font-medium">
+                AND / OR wrapping
+              </label>
               <Select
                 value={logicalOperatorNewline}
                 onValueChange={(value) => {
@@ -235,11 +242,21 @@ export function SqlFormatter() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button onClick={() => setIsMinified(true)} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={() => setIsMinified(true)}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               Minify
             </Button>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -258,7 +275,8 @@ export function SqlFormatter() {
                 <>
                   <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Valid SQL:</strong> Formatted successfully under {DIALECT_OPTIONS.find(d => d.value === dialect)?.label ?? dialect} dialect.
+                    <strong>Valid SQL:</strong> Formatted successfully under{' '}
+                    {DIALECT_OPTIONS.find((d) => d.value === dialect)?.label ?? dialect} dialect.
                   </div>
                 </>
               ) : (
@@ -295,25 +313,15 @@ export function SqlFormatter() {
             className="font-mono text-sm"
           />
 
-          <Button
-            onClick={() => copy.copyToClipboard(output)}
+          <CopyButton
+            text={output}
+            label="Copy to Clipboard"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!output}
             size="sm"
-            variant={copy.isCopied ? 'default' : 'outline'}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {copy.isCopied ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="mr-2 h-4 w-4" />
-                {copy.isError ? 'Copy failed' : 'Copy to Clipboard'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

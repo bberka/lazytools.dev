@@ -17,16 +17,7 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import {
-  FileText,
-  Download,
-  Trash2,
-  Sparkles,
-  Split,
-  Plus,
-  Minus,
-  Loader2,
-} from 'lucide-react';
+import { FileText, Download, Trash2, Sparkles, Split, Plus, Minus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadBlob, sanitizeFileName } from '@/lib/files';
 import { sanitizePreviewHtml } from '@/lib/markdown/sanitize';
@@ -100,7 +91,9 @@ export function MarkdownToDocx() {
   const [headerText, setHeaderText] = useState('');
   const [footerText, setFooterText] = useState('Confidential');
   const [includePageNumbers, setIncludePageNumbers] = useState(true);
-  const [pageNumberPosition, setPageNumberPosition] = useState<'left' | 'center' | 'right'>('center');
+  const [pageNumberPosition, setPageNumberPosition] = useState<'left' | 'center' | 'right'>(
+    'center'
+  );
 
   // What the user types is cleaned before it is shown; the DOCX is built from the Markdown itself.
   const previewHtml = useMemo(() => sanitizePreviewHtml(html, SAMPLE_HTML), [html]);
@@ -197,23 +190,37 @@ export function MarkdownToDocx() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 items-stretch gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Left pane: Editor & Settings */}
         <Card className="flex flex-col border shadow-sm">
-          <Tabs value={activeLeftTab} onValueChange={(val: string) => setActiveLeftTab(val as 'layout' | 'typography' | 'breaks')} className="w-full flex flex-col flex-1">
+          <Tabs
+            value={activeLeftTab}
+            onValueChange={(val: string) =>
+              setActiveLeftTab(val as 'layout' | 'typography' | 'breaks')
+            }
+            className="w-full flex flex-col flex-1"
+          >
             <CardHeader className="p-4 border-b flex flex-col gap-3 items-start">
               <div>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary" />
                   Document Composer
                 </CardTitle>
-                <CardDescription className="text-xs">Write Markdown and configure layout settings.</CardDescription>
+                <CardDescription className="text-xs">
+                  Write Markdown and configure layout settings.
+                </CardDescription>
               </div>
               {/* Tabs for Left column settings */}
               <TabsList className="w-full grid grid-cols-3 bg-secondary/80 p-0.5 rounded-lg text-xs h-auto">
-                <TabsTrigger value="layout" className="w-full rounded-md font-medium text-xs">Page Setup</TabsTrigger>
-                <TabsTrigger value="typography" className="w-full rounded-md font-medium text-xs">Typography</TabsTrigger>
-                <TabsTrigger value="breaks" className="w-full rounded-md font-medium text-xs">Paging Rules</TabsTrigger>
+                <TabsTrigger value="layout" className="w-full rounded-md font-medium text-xs">
+                  Page Setup
+                </TabsTrigger>
+                <TabsTrigger value="typography" className="w-full rounded-md font-medium text-xs">
+                  Typography
+                </TabsTrigger>
+                <TabsTrigger value="breaks" className="w-full rounded-md font-medium text-xs">
+                  Paging Rules
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             <CardContent className="p-4 flex-1 flex flex-col min-h-[480px]">
@@ -221,8 +228,13 @@ export function MarkdownToDocx() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-muted/40 p-4 rounded-xl border">
                   <div className="space-y-3">
                     <div>
-                      <label id="docx-page-size" className="text-xs font-semibold block mb-1">Page Size</label>
-                      <Select value={pageSize} onValueChange={(val: 'A4' | 'Letter') => setPageSize(val)}>
+                      <span id="docx-page-size" className="text-xs font-semibold block mb-1">
+                        Page Size
+                      </span>
+                      <Select
+                        value={pageSize}
+                        onValueChange={(val: 'A4' | 'Letter') => setPageSize(val)}
+                      >
                         <SelectTrigger className="h-9" aria-labelledby="docx-page-size">
                           <SelectValue placeholder="Page Size" />
                         </SelectTrigger>
@@ -233,8 +245,13 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-orientation" className="text-xs font-semibold block mb-1">Orientation</label>
-                      <Select value={orientation} onValueChange={(val: 'portrait' | 'landscape') => setOrientation(val)}>
+                      <span id="docx-orientation" className="text-xs font-semibold block mb-1">
+                        Orientation
+                      </span>
+                      <Select
+                        value={orientation}
+                        onValueChange={(val: 'portrait' | 'landscape') => setOrientation(val)}
+                      >
                         <SelectTrigger className="h-9" aria-labelledby="docx-orientation">
                           <SelectValue placeholder="Orientation" />
                         </SelectTrigger>
@@ -245,8 +262,13 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-margins" className="text-xs font-semibold block mb-1">Page Margins</label>
-                      <Select value={marginType} onValueChange={(val: 'normal' | 'narrow' | 'wide') => setMarginType(val)}>
+                      <span id="docx-margins" className="text-xs font-semibold block mb-1">
+                        Page Margins
+                      </span>
+                      <Select
+                        value={marginType}
+                        onValueChange={(val: 'normal' | 'narrow' | 'wide') => setMarginType(val)}
+                      >
                         <SelectTrigger className="h-9" aria-labelledby="docx-margins">
                           <SelectValue placeholder="Margins" />
                         </SelectTrigger>
@@ -261,7 +283,12 @@ export function MarkdownToDocx() {
 
                   <div className="space-y-3">
                     <div>
-                      <label htmlFor="docx-header-text" className="text-xs font-semibold block mb-1">Header Text (Right aligned)</label>
+                      <label
+                        htmlFor="docx-header-text"
+                        className="text-xs font-semibold block mb-1"
+                      >
+                        Header Text (Right aligned)
+                      </label>
                       <Input
                         id="docx-header-text"
                         placeholder="e.g. Project Proposal"
@@ -271,7 +298,12 @@ export function MarkdownToDocx() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="docx-footer-text" className="text-xs font-semibold block mb-1">Footer Text (Left aligned)</label>
+                      <label
+                        htmlFor="docx-footer-text"
+                        className="text-xs font-semibold block mb-1"
+                      >
+                        Footer Text (Left aligned)
+                      </label>
                       <Input
                         id="docx-footer-text"
                         placeholder="e.g. Confidential"
@@ -282,7 +314,12 @@ export function MarkdownToDocx() {
                     </div>
                     <div className="flex flex-col gap-2 pt-2">
                       <div className="flex items-center justify-between">
-                        <label htmlFor="show-pagenum" className="text-xs font-medium cursor-pointer">Include Page Numbers</label>
+                        <label
+                          htmlFor="show-pagenum"
+                          className="text-xs font-medium cursor-pointer"
+                        >
+                          Include Page Numbers
+                        </label>
                         <Checkbox
                           id="show-pagenum"
                           checked={includePageNumbers}
@@ -291,12 +328,22 @@ export function MarkdownToDocx() {
                       </div>
                       {includePageNumbers && (
                         <div className="flex items-center justify-between gap-2">
-                          <span id="docx-page-number-alignment" className="text-[10px] text-muted-foreground">Page Number Alignment</span>
+                          <span
+                            id="docx-page-number-alignment"
+                            className="text-[10px] text-muted-foreground"
+                          >
+                            Page Number Alignment
+                          </span>
                           <Select
                             value={pageNumberPosition}
-                            onValueChange={(val: 'left' | 'center' | 'right') => setPageNumberPosition(val)}
+                            onValueChange={(val: 'left' | 'center' | 'right') =>
+                              setPageNumberPosition(val)
+                            }
                           >
-                            <SelectTrigger className="h-7 w-28 text-[11px]" aria-labelledby="docx-page-number-alignment">
+                            <SelectTrigger
+                              className="h-7 w-28 text-[11px]"
+                              aria-labelledby="docx-page-number-alignment"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -316,7 +363,9 @@ export function MarkdownToDocx() {
                 <div className="space-y-4 mb-4 bg-muted/40 p-4 rounded-xl border">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label id="docx-theme-preset" className="text-xs font-semibold block mb-1">Theme Preset</label>
+                      <span id="docx-theme-preset" className="text-xs font-semibold block mb-1">
+                        Theme Preset
+                      </span>
                       <Select value={themeKey} onValueChange={handleThemeChange}>
                         <SelectTrigger className="h-9" aria-labelledby="docx-theme-preset">
                           <SelectValue />
@@ -332,7 +381,9 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-font-family" className="text-xs font-semibold block mb-1">Font Family</label>
+                      <span id="docx-font-family" className="text-xs font-semibold block mb-1">
+                        Font Family
+                      </span>
                       <Select
                         value={options.fontFamily}
                         onValueChange={(val) => updateOption('fontFamily', val)}
@@ -344,14 +395,18 @@ export function MarkdownToDocx() {
                           <SelectItem value="Segoe UI">Segoe UI (Clean Sans)</SelectItem>
                           <SelectItem value="Calibri">Calibri (Standard Office)</SelectItem>
                           <SelectItem value="Arial">Arial (Universal Sans)</SelectItem>
-                          <SelectItem value="Times New Roman">Times New Roman (Academic)</SelectItem>
+                          <SelectItem value="Times New Roman">
+                            Times New Roman (Academic)
+                          </SelectItem>
                           <SelectItem value="Georgia">Georgia (Elegant Serif)</SelectItem>
                           <SelectItem value="Consolas">Consolas (Code Style)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-line-spacing" className="text-xs font-semibold block mb-1">Line Spacing</label>
+                      <span id="docx-line-spacing" className="text-xs font-semibold block mb-1">
+                        Line Spacing
+                      </span>
                       <Select
                         value={String(options.bodyLineSpacing)}
                         onValueChange={(val) => updateOption('bodyLineSpacing', parseFloat(val))}
@@ -373,57 +428,69 @@ export function MarkdownToDocx() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3">
                     <div className="space-y-3">
-                      <div role="group" aria-labelledby="docx-body-font-size">
+                      <fieldset className="min-w-0" aria-labelledby="docx-body-font-size">
                         <div className="flex justify-between items-center mb-1">
-                          <span id="docx-body-font-size" className="text-xs font-semibold">Body Font Size ({options.bodyFontSize}pt)</span>
+                          <span id="docx-body-font-size" className="text-xs font-semibold">
+                            Body Font Size ({options.bodyFontSize}pt)
+                          </span>
                         </div>
-                        <Slider aria-labelledby="docx-body-font-size"
+                        <Slider
+                          aria-labelledby="docx-body-font-size"
                           value={options.bodyFontSize}
                           min={9}
                           max={16}
                           step={0.5}
                           onChange={(val: number) => updateOption('bodyFontSize', val)}
                         />
-                      </div>
-                      <div role="group" aria-labelledby="docx-paragraph-spacing">
+                      </fieldset>
+                      <fieldset className="min-w-0" aria-labelledby="docx-paragraph-spacing">
                         <div className="flex justify-between items-center mb-1">
-                          <span id="docx-paragraph-spacing" className="text-xs font-semibold">Paragraph Spacing After ({options.paragraphSpacingAfter}pt)</span>
+                          <span id="docx-paragraph-spacing" className="text-xs font-semibold">
+                            Paragraph Spacing After ({options.paragraphSpacingAfter}pt)
+                          </span>
                         </div>
-                        <Slider aria-labelledby="docx-paragraph-spacing"
+                        <Slider
+                          aria-labelledby="docx-paragraph-spacing"
                           value={options.paragraphSpacingAfter}
                           min={0}
                           max={24}
                           step={1}
                           onChange={(val: number) => updateOption('paragraphSpacingAfter', val)}
                         />
-                      </div>
+                      </fieldset>
                     </div>
 
                     <div className="space-y-3">
-                      <div role="group" aria-labelledby="docx-h1-size">
+                      <fieldset className="min-w-0" aria-labelledby="docx-h1-size">
                         <div className="flex justify-between items-center mb-1">
-                          <span id="docx-h1-size" className="text-xs font-semibold">Heading 1 Size ({options.h1FontSize}pt)</span>
+                          <span id="docx-h1-size" className="text-xs font-semibold">
+                            Heading 1 Size ({options.h1FontSize}pt)
+                          </span>
                         </div>
-                        <Slider aria-labelledby="docx-h1-size"
+                        <Slider
+                          aria-labelledby="docx-h1-size"
                           value={options.h1FontSize}
                           min={14}
                           max={32}
                           step={1}
                           onChange={(val: number) => updateOption('h1FontSize', val)}
                         />
-                      </div>
-                      <div role="group" aria-labelledby="docx-heading-spacing">
+                      </fieldset>
+                      <fieldset className="min-w-0" aria-labelledby="docx-heading-spacing">
                         <div className="flex justify-between items-center mb-1">
-                          <span id="docx-heading-spacing" className="text-xs font-semibold">Heading Spacing Before ({options.headingSpacingBefore}pt)</span>
+                          <span id="docx-heading-spacing" className="text-xs font-semibold">
+                            Heading Spacing Before ({options.headingSpacingBefore}pt)
+                          </span>
                         </div>
-                        <Slider aria-labelledby="docx-heading-spacing"
+                        <Slider
+                          aria-labelledby="docx-heading-spacing"
                           value={options.headingSpacingBefore}
                           min={4}
                           max={36}
                           step={1}
                           onChange={(val: number) => updateOption('headingSpacingBefore', val)}
                         />
-                      </div>
+                      </fieldset>
                     </div>
                   </div>
                 </div>
@@ -434,7 +501,9 @@ export function MarkdownToDocx() {
                   <div className="space-y-3">
                     <div className="font-semibold text-foreground mb-1">Auto Page Breaks</div>
                     <div className="flex items-center justify-between">
-                      <label htmlFor="break-h1" className="cursor-pointer">Page break before Level 1 Heading (<code>#</code>)</label>
+                      <label htmlFor="break-h1" className="cursor-pointer">
+                        Page break before Level 1 Heading (<code>#</code>)
+                      </label>
                       <Checkbox
                         id="break-h1"
                         checked={autoPageBreakBeforeH1}
@@ -442,7 +511,9 @@ export function MarkdownToDocx() {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <label htmlFor="break-h2" className="cursor-pointer">Page break before Level 2 Heading (<code>##</code>)</label>
+                      <label htmlFor="break-h2" className="cursor-pointer">
+                        Page break before Level 2 Heading (<code>##</code>)
+                      </label>
                       <Checkbox
                         id="break-h2"
                         checked={autoPageBreakBeforeH2}
@@ -454,7 +525,9 @@ export function MarkdownToDocx() {
                   <div className="space-y-3">
                     <div className="font-semibold text-foreground mb-1">Keep Together Rules</div>
                     <div className="flex items-center justify-between">
-                      <label htmlFor="keep-next" className="cursor-pointer">Keep Headings with following text</label>
+                      <label htmlFor="keep-next" className="cursor-pointer">
+                        Keep Headings with following text
+                      </label>
                       <Checkbox
                         id="keep-next"
                         checked={keepHeadingsWithNext}
@@ -462,7 +535,9 @@ export function MarkdownToDocx() {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <label htmlFor="table-split" className="cursor-pointer">Prevent Table Rows splitting across pages</label>
+                      <label htmlFor="table-split" className="cursor-pointer">
+                        Prevent Table Rows splitting across pages
+                      </label>
                       <Checkbox
                         id="table-split"
                         checked={preventTableRowSplit}
@@ -486,7 +561,11 @@ export function MarkdownToDocx() {
                     <Trash2 className="h-4 w-4 mr-2" />
                     Clear
                   </Button>
-                  <Button onClick={handleDownloadDocx} disabled={exporting || blocks.length === 0} className="bg-primary hover:bg-primary/90">
+                  <Button
+                    onClick={handleDownloadDocx}
+                    disabled={exporting || blocks.length === 0}
+                    className="bg-primary hover:bg-primary/90"
+                  >
                     {exporting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -506,19 +585,29 @@ export function MarkdownToDocx() {
         </Card>
 
         <Card className="flex flex-col border shadow-sm">
-          <Tabs value={activeRightTab} onValueChange={(val: string) => setActiveRightTab(val as 'preview' | 'outline')} className="w-full flex flex-col flex-1">
+          <Tabs
+            value={activeRightTab}
+            onValueChange={(val: string) => setActiveRightTab(val as 'preview' | 'outline')}
+            className="w-full flex flex-col flex-1"
+          >
             <CardHeader className="p-4 border-b flex flex-col gap-3 items-start">
               <div>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
                   Layout & Spacing Manager
                 </CardTitle>
-                <CardDescription className="text-xs">Adjust spacing and page breaks block-by-block.</CardDescription>
+                <CardDescription className="text-xs">
+                  Adjust spacing and page breaks block-by-block.
+                </CardDescription>
               </div>
               {/* Tabs for right side */}
               <TabsList className="w-full grid grid-cols-2 bg-secondary/80 p-0.5 rounded-lg text-xs h-auto">
-                <TabsTrigger value="outline" className="w-full rounded-md font-medium text-xs">Spacing & Outline</TabsTrigger>
-                <TabsTrigger value="preview" className="w-full rounded-md font-medium text-xs">HTML Preview</TabsTrigger>
+                <TabsTrigger value="outline" className="w-full rounded-md font-medium text-xs">
+                  Spacing & Outline
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="w-full rounded-md font-medium text-xs">
+                  HTML Preview
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
 
@@ -529,7 +618,8 @@ export function MarkdownToDocx() {
                     <div
                       className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-xl border bg-background font-serif"
                       style={{
-                        fontFamily: options.fontFamily === 'Segoe UI' ? 'system-ui' : options.fontFamily,
+                        fontFamily:
+                          options.fontFamily === 'Segoe UI' ? 'system-ui' : options.fontFamily,
                         lineHeight: options.bodyLineSpacing,
                       }}
                       dangerouslySetInnerHTML={{ __html: previewHtml }}
@@ -541,7 +631,8 @@ export function MarkdownToDocx() {
                   {activeRightTab === 'outline' && (
                     <div className="space-y-4">
                       <p className="text-xs text-muted-foreground italic mb-2">
-                        Tip: Toggle page breaks or fine-tune empty spacing (margins) before/after individual sections to keep related paragraphs together.
+                        Tip: Toggle page breaks or fine-tune empty spacing (margins) before/after
+                        individual sections to keep related paragraphs together.
                       </p>
 
                       {blocks.length === 0 ? (
@@ -552,7 +643,9 @@ export function MarkdownToDocx() {
                         <div className="space-y-3">
                           {blocks.map((block, idx) => {
                             const isHeading = block.type === 'heading';
-                            const levelName = isHeading ? `H${block.level}` : block.type.toUpperCase();
+                            const levelName = isHeading
+                              ? `H${block.level}`
+                              : block.type.toUpperCase();
                             // Null for code, tables and rules, which the document lays out
                             // without paragraph spacing.
                             const spacing = blockSpacing(block, options);
@@ -560,15 +653,22 @@ export function MarkdownToDocx() {
                             // Check if a page break would naturally be forced here
                             const isPageBreakActive =
                               block.pageBreakBefore ||
-                              (block.type === 'heading' && block.level === 1 && autoPageBreakBeforeH1) ||
-                              (block.type === 'heading' && block.level === 2 && autoPageBreakBeforeH2);
+                              (block.type === 'heading' &&
+                                block.level === 1 &&
+                                autoPageBreakBeforeH1) ||
+                              (block.type === 'heading' &&
+                                block.level === 2 &&
+                                autoPageBreakBeforeH2);
 
                             return (
                               <div key={block.id} className="relative">
                                 {/* Visual Page Break Line */}
                                 {isPageBreakActive && idx > 0 && (
                                   <div className="my-3 flex items-center justify-center relative">
-                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div
+                                      className="absolute inset-0 flex items-center"
+                                      aria-hidden="true"
+                                    >
                                       <div className="w-full border-t border-dashed border-primary/50"></div>
                                     </div>
                                     <span className="relative px-3 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground tracking-wider flex items-center gap-1 shadow-xs">
@@ -594,23 +694,29 @@ export function MarkdownToDocx() {
                                           isHeading
                                             ? 'bg-primary text-primary-foreground'
                                             : block.type === 'code'
-                                            ? 'bg-foreground/10 text-foreground'
-                                            : block.type === 'table'
-                                            ? 'border border-border bg-background text-foreground'
-                                            : 'bg-secondary text-secondary-foreground'
+                                              ? 'bg-foreground/10 text-foreground'
+                                              : block.type === 'table'
+                                                ? 'border border-border bg-background text-foreground'
+                                                : 'bg-secondary text-secondary-foreground'
                                         }`}
                                       >
                                         {levelName}
                                       </span>
                                       <span className="font-medium text-muted-foreground truncate max-w-[200px]">
-                                        {block.text ? block.text : <span className="italic opacity-60">empty block</span>}
+                                        {block.text ? (
+                                          block.text
+                                        ) : (
+                                          <span className="italic opacity-60">empty block</span>
+                                        )}
                                       </span>
                                     </div>
 
                                     {/* Action: Toggle page break. A rule is a page break already. */}
                                     {block.type !== 'hr' && (
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] text-muted-foreground">Force Break</span>
+                                        <span className="text-[10px] text-muted-foreground">
+                                          Force Break
+                                        </span>
                                         <Switch
                                           checked={block.pageBreakBefore}
                                           onCheckedChange={() => togglePageBreak(block.id)}
@@ -625,7 +731,9 @@ export function MarkdownToDocx() {
                                     <div className="flex flex-wrap items-center justify-between border-t py-2 mt-2 gap-x-4 gap-y-1 text-[10px] text-muted-foreground bg-muted/20 -mx-3 -mb-3 px-3 rounded-b-lg">
                                       <div className="flex items-center gap-1">
                                         <span>Space Before:</span>
-                                        <span className="font-semibold text-foreground">{spacing.before}pt</span>
+                                        <span className="font-semibold text-foreground">
+                                          {spacing.before}pt
+                                        </span>
                                         <Button
                                           variant="ghost"
                                           size="icon"
@@ -648,7 +756,9 @@ export function MarkdownToDocx() {
 
                                       <div className="flex items-center gap-1">
                                         <span>Space After:</span>
-                                        <span className="font-semibold text-foreground">{spacing.after}pt</span>
+                                        <span className="font-semibold text-foreground">
+                                          {spacing.after}pt
+                                        </span>
                                         <Button
                                           variant="ghost"
                                           size="icon"

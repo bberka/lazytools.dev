@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowRightLeft, Check, Copy, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   UNIT_CATEGORIES,
   convertUnits,
@@ -33,7 +33,6 @@ export function UnitConverter() {
   const [inputValue, setInputValue] = useState('1');
   const [fromUnitId, setFromUnitId] = useState('meter');
   const [toUnitId, setToUnitId] = useState('foot');
-  const copyResult = useCopyToClipboard();
 
   const category = useMemo(() => getUnitCategory(categoryId), [categoryId]);
 
@@ -75,7 +74,8 @@ export function UnitConverter() {
         <CardHeader>
           <CardTitle>Unit Converter</CardTitle>
           <CardDescription>
-            Convert between common units for length, weight, temperature, area, volume, speed, time, and data.
+            Convert between common units for length, weight, temperature, area, volume, speed, time,
+            and data.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -83,7 +83,10 @@ export function UnitConverter() {
             <label htmlFor="unit-category" className="mb-2 block text-sm font-medium">
               Category
             </label>
-            <Select value={categoryId} onValueChange={(value) => handleCategoryChange(value as CategoryId)}>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => handleCategoryChange(value as CategoryId)}
+            >
               <SelectTrigger id="unit-category">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -114,7 +117,7 @@ export function UnitConverter() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <div>
               <label htmlFor="unit-from" className="mb-2 block text-sm font-medium">
                 From
@@ -180,23 +183,7 @@ export function UnitConverter() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>

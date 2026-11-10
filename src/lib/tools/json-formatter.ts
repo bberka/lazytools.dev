@@ -11,6 +11,8 @@
  * `ExactNumber`. Everything here is pure, so it runs in Node and in the browser.
  */
 
+import { plural } from '@/lib/text';
+
 /**
  * A number a double cannot hold, kept exactly as it was written. The text is
  * a private field so that it is not a key: the value looks like an empty
@@ -61,16 +63,14 @@ export interface JsonRenderResult {
   value: unknown;
 }
 
-// ---------------------------------------------------------------------------
 // Parsing
-// ---------------------------------------------------------------------------
 
 /**
  * An integer literal of 16 or more digits, the only kind that can lie past
  * 2^53 - 1. It may also match digits inside a string; that only costs a slower
  * read, never a wrong one.
  */
-const LONG_INTEGER = /(?:^|[\[:,\s])(-?\d{16,})(?=[\],}\s]|$)/g;
+const LONG_INTEGER = /(?:^|[[:,\s])(-?\d{16,})(?=[\],}\s]|$)/g;
 const INTEGER_LITERAL = /^-?\d+$/;
 
 /** True when the text holds an integer that `JSON.parse` would round. */
@@ -291,9 +291,7 @@ export function parseJson(text: string, options: JsonParseOptions = {}): unknown
   }
 }
 
-// ---------------------------------------------------------------------------
 // Serialising
-// ---------------------------------------------------------------------------
 
 /**
  * `JSON.stringify` that writes a `bigint` or an `ExactNumber` as a plain
@@ -337,13 +335,7 @@ export function stringifyJson(value: unknown, indent?: number | string): string 
   return marked.replace(new RegExp(`"${marker}(-?[\\d.eE+-]+)${marker}"`, 'g'), '$1');
 }
 
-// ---------------------------------------------------------------------------
 // Validation
-// ---------------------------------------------------------------------------
-
-function plural(count: number, noun: string): string {
-  return `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
-}
 
 function summarize(value: unknown): string {
   if (Array.isArray(value)) {
@@ -382,9 +374,7 @@ export function validateJson(text: string): JsonValidation | null {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Path queries
-// ---------------------------------------------------------------------------
 
 interface PathStep {
   key: string;
@@ -393,11 +383,10 @@ interface PathStep {
 }
 
 // ["key"], ['key'], [0] or [key], or else a bare name between dots.
-const PATH_STEP =
-  /\[\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^\[\]"']*?))\s*\]|([^.\[\]]+)/g;
+const PATH_STEP = /\[\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^[\]"']*?))\s*\]|([^.[\]]+)/g;
 const ARRAY_INDEX = /^-?\d+$/;
 
-const ROOT_MARKER = /^\$(?=[.\[]|$)/;
+const ROOT_MARKER = /^\$(?=[.[]|$)/;
 
 function parsePath(path: string): PathStep[] {
   // "$" is the root only when a step follows it; "$ref" and "$schema" are keys.
@@ -463,9 +452,7 @@ export function queryJson(value: unknown, path: string): unknown {
   return current;
 }
 
-// ---------------------------------------------------------------------------
 // Output
-// ---------------------------------------------------------------------------
 
 /**
  * Writes a parsed document, or the part of it a path selects, as formatted or

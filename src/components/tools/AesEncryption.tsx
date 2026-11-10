@@ -7,7 +7,18 @@ import { Textarea } from '../ui/textarea';
 import { TooltipSimple } from '../ui/tooltip';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Input } from '../ui/input';
-import { Copy, Check, Lock, Unlock, ArrowLeftRight, Trash2, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Lock,
+  Unlock,
+  ArrowLeftRight,
+  Trash2,
+  KeyRound,
+  Loader2,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
 import { decryptText, encryptText, generatePassword } from '@/lib/tools/aes-encryption';
 
@@ -38,7 +49,10 @@ export function AesEncryption() {
     setError('');
   };
 
-  const runCipher = async (cipher: (text: string, password: string) => Promise<string>, emptyInput: string) => {
+  const runCipher = async (
+    cipher: (text: string, password: string) => Promise<string>,
+    emptyInput: string
+  ) => {
     const run = ++latestRun.current;
     setError('');
     if (!input.trim()) {
@@ -90,10 +104,6 @@ export function AesEncryption() {
     setError('');
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(output);
-  };
-
   const handleClear = () => {
     latestRun.current += 1;
     setInput('');
@@ -138,7 +148,12 @@ export function AesEncryption() {
         </Tabs>
         {output && (
           <TooltipSimple content="Swap input/output">
-            <Button variant="ghost" size="icon" onClick={handleSwapMode} aria-label="Swap input/output">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSwapMode}
+              aria-label="Swap input/output"
+            >
               <ArrowLeftRight className="h-4 w-4" />
             </Button>
           </TooltipSimple>
@@ -213,11 +228,7 @@ export function AesEncryption() {
               setInput((e.target as HTMLTextAreaElement).value);
               discardResult();
             }}
-            placeholder={
-              mode === 'encrypt'
-                ? 'Enter text here...'
-                : 'Paste encrypted text here...'
-            }
+            placeholder={mode === 'encrypt' ? 'Enter text here...' : 'Paste encrypted text here...'}
             aria-label={mode === 'encrypt' ? 'Text to encrypt' : 'Encrypted text to decrypt'}
             rows={6}
             className="font-mono text-sm"
@@ -252,7 +263,10 @@ export function AesEncryption() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -273,7 +287,7 @@ export function AesEncryption() {
               <Button
                 variant={isCopied ? 'default' : 'ghost'}
                 size="icon"
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(output)}
                 aria-label={isCopied ? 'Copied!' : 'Copy to clipboard'}
               >
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -281,7 +295,7 @@ export function AesEncryption() {
             </TooltipSimple>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[100px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[100px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output}
             </pre>
           </CardContent>
@@ -294,14 +308,19 @@ export function AesEncryption() {
           <div className="flex items-start gap-3">
             <div className="text-blue-600 dark:text-blue-500">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div className="text-sm space-y-1">
               <p className="font-medium">Security Information</p>
               <p className="text-muted-foreground">
-                All encryption happens in your browser. Your password and data never leave your device.
-                Store your password securely - it cannot be recovered if lost.
+                All encryption happens in your browser. Your password and data never leave your
+                device. Store your password securely - it cannot be recovered if lost.
               </p>
             </div>
           </div>

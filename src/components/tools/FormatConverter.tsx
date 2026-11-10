@@ -52,7 +52,6 @@ export function FormatConverter() {
   const [inputFormat, setInputFormat] = useState<Format>('json');
   const [outputFormat, setOutputFormat] = useState<Format>('yaml');
 
-  // Format-specific settings
   const [delimiter, setDelimiter] = useState<Delimiter>(',');
   const [useHeaders, setUseHeaders] = useState(true);
   const [jsonIndentation, setJsonIndentation] = useState('2');
@@ -151,8 +150,13 @@ export function FormatConverter() {
       {/* Format selector toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label htmlFor="convert-from" className="text-sm font-medium text-muted-foreground">From:</label>
-          <Select value={inputFormat} onValueChange={(value) => handleInputFormatChange(value as Format)}>
+          <label htmlFor="convert-from" className="text-sm font-medium text-muted-foreground">
+            From:
+          </label>
+          <Select
+            value={inputFormat}
+            onValueChange={(value) => handleInputFormatChange(value as Format)}
+          >
             <SelectTrigger id="convert-from" className="w-full sm:w-[140px]">
               <SelectValue placeholder="From format" />
             </SelectTrigger>
@@ -180,8 +184,13 @@ export function FormatConverter() {
         </Button>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label htmlFor="convert-to" className="text-sm font-medium text-muted-foreground">To:</label>
-          <Select value={outputFormat} onValueChange={(value) => handleOutputFormatChange(value as Format)}>
+          <label htmlFor="convert-to" className="text-sm font-medium text-muted-foreground">
+            To:
+          </label>
+          <Select
+            value={outputFormat}
+            onValueChange={(value) => handleOutputFormatChange(value as Format)}
+          >
             <SelectTrigger id="convert-to" className="w-full sm:w-[140px]">
               <SelectValue placeholder="To format" />
             </SelectTrigger>
@@ -200,16 +209,28 @@ export function FormatConverter() {
 
       {/* Conditional Configuration Panel */}
       {showOptions && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-muted/40 rounded-lg border transition-all duration-300">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4 bg-muted/40 rounded-lg border transition-all duration-300">
           {(inputFormat === 'csv' || outputFormat === 'csv') && (
             <div className="space-y-1.5">
-              <label htmlFor="convert-csv-delimiter" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CSV Delimiter</label>
+              <label
+                htmlFor="convert-csv-delimiter"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                CSV Delimiter
+              </label>
               <Select
                 value={delimiter}
                 onValueChange={(val) => {
                   const nextDelimiter = val as Delimiter;
                   setDelimiter(nextDelimiter);
-                  void convert(input, inputFormat, outputFormat, nextDelimiter, useHeaders, jsonIndentation);
+                  void convert(
+                    input,
+                    inputFormat,
+                    outputFormat,
+                    nextDelimiter,
+                    useHeaders,
+                    jsonIndentation
+                  );
                 }}
               >
                 <SelectTrigger id="convert-csv-delimiter" className="w-full bg-background">
@@ -230,7 +251,12 @@ export function FormatConverter() {
 
           {outputFormat === 'json' && (
             <div className="space-y-1.5">
-              <label htmlFor="convert-json-indentation" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">JSON Indentation</label>
+              <label
+                htmlFor="convert-json-indentation"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                JSON Indentation
+              </label>
               <Select
                 value={jsonIndentation}
                 onValueChange={(val) => {
@@ -260,7 +286,14 @@ export function FormatConverter() {
                 onCheckedChange={(checked) => {
                   const nextUseHeaders = Boolean(checked);
                   setUseHeaders(nextUseHeaders);
-                  void convert(input, inputFormat, outputFormat, delimiter, nextUseHeaders, jsonIndentation);
+                  void convert(
+                    input,
+                    inputFormat,
+                    outputFormat,
+                    delimiter,
+                    nextUseHeaders,
+                    jsonIndentation
+                  );
                 }}
                 label="Use header row / object keys"
               />
@@ -270,7 +303,7 @@ export function FormatConverter() {
       )}
 
       {/* Main Panels */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -290,7 +323,12 @@ export function FormatConverter() {
             />
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9 w-full sm:w-auto hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors duration-200">
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9 w-full sm:w-auto hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors duration-200"
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
@@ -323,7 +361,7 @@ export function FormatConverter() {
               onClick={() => copyToClipboard(output)}
               disabled={!output}
               size="sm"
-              variant={isCopied ? "default" : "outline"}
+              variant={isCopied ? 'default' : 'outline'}
               className="min-h-11 w-full sm:min-h-9 sm:w-auto transition-all duration-200 font-medium"
             >
               {isCopied ? (

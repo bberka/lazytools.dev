@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFDocument, PDFName } from 'pdf-lib';
 import {
   COMPRESSION_PRESETS,
@@ -10,7 +10,7 @@ import {
 import { PdfToolError } from '@/lib/tools/pdf-page-ops';
 import { createEncryptedPdf, pageSizes } from './pdf-edit-fixtures';
 
-test.describe('renderDpi', () => {
+describe('renderDpi', () => {
   test('counts 72 pixels per inch for every unit of scale', () => {
     expect(renderDpi(1)).toBe(72);
     expect(renderDpi(1.5)).toBe(108);
@@ -34,7 +34,7 @@ test.describe('renderDpi', () => {
   });
 });
 
-test.describe('fitRenderScale', () => {
+describe('fitRenderScale', () => {
   test('keeps the preferred scale for ordinary pages', () => {
     expect(fitRenderScale(612, 792, 2)).toBe(2);
     expect(fitRenderScale(595, 842, 1.5)).toBe(1.5);
@@ -54,7 +54,7 @@ test.describe('fitRenderScale', () => {
   });
 });
 
-test.describe('optimizePdfStructure', () => {
+describe('optimizePdfStructure', () => {
   async function describedPdf(): Promise<Uint8Array> {
     const doc = await PDFDocument.create();
     doc.addPage([300, 400]);
@@ -116,7 +116,7 @@ test.describe('optimizePdfStructure', () => {
   });
 });
 
-test.describe('summarizeCompression', () => {
+describe('summarizeCompression', () => {
   test('reports the share that was saved with one decimal', () => {
     expect(summarizeCompression(1000, 400)).toEqual({
       originalSize: 1000,

@@ -11,7 +11,6 @@ interface TauriGlobal {
 
 export function TauriWindowHandler() {
   useEffect(() => {
-    // Check if we are running inside Tauri
     const tauri = (window as Window & { __TAURI__?: TauriGlobal }).__TAURI__;
     if (tauri) {
       try {

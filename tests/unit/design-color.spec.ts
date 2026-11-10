@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   hexToRgba,
   hslToRgb,
@@ -10,7 +10,7 @@ import {
   rgbToHsv,
 } from '@/lib/tools/design-color';
 
-test.describe('parseHexColor', () => {
+describe('parseHexColor', () => {
   test('reads six-digit hex with or without the hash, in either case', () => {
     expect(parseHexColor('#3B82F6')).toEqual({ r: 59, g: 130, b: 246 });
     expect(parseHexColor('3b82f6')).toEqual({ r: 59, g: 130, b: 246 });
@@ -23,13 +23,26 @@ test.describe('parseHexColor', () => {
   });
 
   test('rejects anything that is not a whole hex colour', () => {
-    for (const value of ['', '   ', '#', '#f', '#ff', '#ff00', '#ff000', '#ff00000', '#ggg', 'red', 'none', '#12345g']) {
+    for (const value of [
+      '',
+      '   ',
+      '#',
+      '#f',
+      '#ff',
+      '#ff00',
+      '#ff000',
+      '#ff00000',
+      '#ggg',
+      'red',
+      'none',
+      '#12345g',
+    ]) {
       expect(parseHexColor(value), value).toBeNull();
     }
   });
 });
 
-test.describe('rgbToHex and normalizeHexColor', () => {
+describe('rgbToHex and normalizeHexColor', () => {
   test('writes upper-case #RRGGBB', () => {
     expect(rgbToHex({ r: 59, g: 130, b: 246 })).toBe('#3B82F6');
     expect(rgbToHex({ r: 0, g: 0, b: 0 })).toBe('#000000');
@@ -47,7 +60,7 @@ test.describe('rgbToHex and normalizeHexColor', () => {
   });
 });
 
-test.describe('hexToRgba', () => {
+describe('hexToRgba', () => {
   test('uses the CSS spacing by default and a custom separator on request', () => {
     expect(hexToRgba('#ffffff', 0.15)).toBe('rgba(255, 255, 255, 0.15)');
     expect(hexToRgba('#EC4899', 0.4, ',')).toBe('rgba(236,72,153,0.4)');
@@ -60,7 +73,7 @@ test.describe('hexToRgba', () => {
   });
 });
 
-test.describe('HSL', () => {
+describe('HSL', () => {
   test('converts the primaries and greys', () => {
     expect(rgbToHsl({ r: 255, g: 0, b: 0 })).toEqual({ h: 0, s: 100, l: 50 });
     expect(rgbToHsl({ r: 0, g: 255, b: 0 })).toEqual({ h: 120, s: 100, l: 50 });
@@ -85,7 +98,7 @@ test.describe('HSL', () => {
   });
 });
 
-test.describe('HSV', () => {
+describe('HSV', () => {
   test('converts the primaries, black, white and a grey', () => {
     expect(rgbToHsv({ r: 255, g: 0, b: 0 })).toEqual({ h: 0, s: 100, v: 100 });
     expect(rgbToHsv({ r: 0, g: 0, b: 255 })).toEqual({ h: 240, s: 100, v: 100 });

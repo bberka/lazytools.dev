@@ -128,9 +128,7 @@ export interface MemoryPreferenceStorage extends PreferenceStorage {
 }
 
 /** In-memory adapter for tests, optionally seeded with already stored items. */
-export function createMemoryStorage(
-  initial: Record<string, string> = {}
-): MemoryPreferenceStorage {
+export function createMemoryStorage(initial: Record<string, string> = {}): MemoryPreferenceStorage {
   const items = new Map(Object.entries(initial));
   const listeners = new Set<(key: string | null) => void>();
   const tell = (key: string | null) => [...listeners].forEach((listener) => listener(key));
@@ -362,9 +360,7 @@ export function createPreferencesStore(storage: PreferenceStorage): PreferencesS
     const favorites = get('favorites');
     set(
       'favorites',
-      favorites.includes(toolId)
-        ? favorites.filter((id) => id !== toolId)
-        : [...favorites, toolId]
+      favorites.includes(toolId) ? favorites.filter((id) => id !== toolId) : [...favorites, toolId]
     );
   }
 

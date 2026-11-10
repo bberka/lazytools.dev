@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { toolCatalog } from '@/lib/catalog';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 interface TagFilterProps {
   selectedTag: ToolTag | null;
@@ -77,11 +77,7 @@ export function TagFilter({
                     styles.bgActiveHover,
                     'shadow-sm font-semibold'
                   )
-                : cn(
-                    styles.bgHover,
-                    styles.textHover,
-                    styles.borderHover
-                  )
+                : cn(styles.bgHover, styles.textHover, styles.borderHover)
             )}
           >
             <Icon

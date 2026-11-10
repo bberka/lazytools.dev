@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decryptText, encryptText, generatePassword } from '@/lib/tools/aes-encryption';
 
 const PASSWORD = 'correct horse battery staple';
@@ -11,11 +11,18 @@ const LEGACY_ENCRYPTED =
   'ObrNrP/IJDfriIZaLrgzIGLgRiZrruHRHmd1LGUQ/0mLr69zC0M9PehYaM5BBv4ZVYy9iBrZ6amEezVom/reFeAS8CzlbpCz';
 
 const fromBase64 = (text: string) => Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
-const toBase64 = (bytes: Uint8Array) => btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''));
+const toBase64 = (bytes: Uint8Array) =>
+  btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''));
 
-test.describe('encryptText and decryptText', () => {
+describe('encryptText and decryptText', () => {
   test('round-trips plain, Unicode, emoji, multi-line and whitespace-only text', async () => {
-    for (const message of ['hello', 'Grüße, 世界 👋🏽', 'line one\nline two\r\n\ttabbed', '   ', 'x'.repeat(100_000)]) {
+    for (const message of [
+      'hello',
+      'Grüße, 世界 👋🏽',
+      'line one\nline two\r\n\ttabbed',
+      '   ',
+      'x'.repeat(100_000),
+    ]) {
       const encrypted = await encryptText(message, PASSWORD);
       expect(await decryptText(encrypted, PASSWORD)).toBe(message);
     }
@@ -64,12 +71,14 @@ test.describe('encryptText and decryptText', () => {
 
   test('rejects text that is not Base64, is empty or is cut off', async () => {
     for (const broken of ['not base64 at all!', '', '   ', 'AAAA', LEGACY_ENCRYPTED.slice(0, 40)]) {
-      await expect(decryptText(broken, PASSWORD), JSON.stringify(broken)).rejects.toThrow(DECRYPT_ERROR);
+      await expect(decryptText(broken, PASSWORD), JSON.stringify(broken)).rejects.toThrow(
+        DECRYPT_ERROR
+      );
     }
   });
 });
 
-test.describe('generatePassword', () => {
+describe('generatePassword', () => {
   test('returns 32 hexadecimal characters, different every time', () => {
     const first = generatePassword();
     const second = generatePassword();

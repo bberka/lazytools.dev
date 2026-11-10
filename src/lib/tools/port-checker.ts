@@ -44,15 +44,17 @@ export const COMMON_PORTS: readonly PortTarget[] = [
   { port: 27017, service: 'MongoDB', protocol: 'TCP' },
 ];
 
-export const MAX_CUSTOM_PORTS = 50;
-export const PROBE_TIMEOUT_MS = 3000;
+const MAX_CUSTOM_PORTS = 50;
+const PROBE_TIMEOUT_MS = 3000;
 
 export type ScanMode = 'common' | 'custom';
 export type ProbeResult = 'open' | 'filtered';
 
 export type ScanHostResult = { ok: true; host: string } | { ok: false; error: string };
 export type PortListResult = { ok: true; ports: number[] } | { ok: false; error: string };
-export type ScanPlan = { ok: true; host: string; ports: PortTarget[] } | { ok: false; error: string };
+export type ScanPlan =
+  | { ok: true; host: string; ports: PortTarget[] }
+  | { ok: false; error: string };
 
 export interface ProbeOptions {
   /** Cancels the probe, which then resolves at once. After aborting, ignore the result. */
@@ -94,7 +96,9 @@ export function parseScanHost(input: string): ScanHostResult {
     labels.every((label) => HOST_LABEL.test(label)) &&
     !NUMERIC_LABEL.test(labels[labels.length - 1]);
 
-  return isHostname ? { ok: true, host: typed } : { ok: false, error: 'Invalid hostname or IP address format' };
+  return isHostname
+    ? { ok: true, host: typed }
+    : { ok: false, error: 'Invalid hostname or IP address format' };
 }
 
 /**
@@ -103,7 +107,10 @@ export function parseScanHost(input: string): ScanHostResult {
  * the whole list, so a typo is reported rather than quietly left out of the scan.
  */
 export function parsePortList(input: string, maxPorts = MAX_CUSTOM_PORTS): PortListResult {
-  const tooMany: PortListResult = { ok: false, error: `Please limit the scan to ${maxPorts} ports maximum` };
+  const tooMany: PortListResult = {
+    ok: false,
+    error: `Please limit the scan to ${maxPorts} ports maximum`,
+  };
 
   // "8000 - 8010" is one range, so spaces around a dash go before the list is split.
   const entries = input
@@ -153,7 +160,12 @@ export function planScan(hostInput: string, mode: ScanMode, portsInput: string):
     ok: true,
     host: host.host,
     ports: list.ports.map(
-      (port) => COMMON_PORTS.find((common) => common.port === port) ?? { port, service: 'Unknown', protocol: 'TCP' }
+      (port) =>
+        COMMON_PORTS.find((common) => common.port === port) ?? {
+          port,
+          service: 'Unknown',
+          protocol: 'TCP',
+        }
     ),
   };
 }
@@ -169,7 +181,11 @@ export function probeUrl(host: string, port: number): string {
  * HTTP response, whatever its status or content, and "filtered" when there is
  * no answer before the deadline or the request fails. It does not reject.
  */
-export async function probePort(host: string, port: number, options: ProbeOptions = {}): Promise<ProbeResult> {
+export async function probePort(
+  host: string,
+  port: number,
+  options: ProbeOptions = {}
+): Promise<ProbeResult> {
   const { signal, timeoutMs = PROBE_TIMEOUT_MS, fetchImpl = defaultFetch } = options;
 
   try {

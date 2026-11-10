@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -13,8 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, FileJson, Trash2, CheckCircle2, AlertTriangle, Search, Info, ChevronRight, ChevronDown } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import {
+  FileJson,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  Search,
+  Info,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -38,7 +47,9 @@ function TreeNode({ name, value, depth }: { name?: string; value: unknown; depth
   const node = describeTreeNode(value, TREE_WORDS);
   const label =
     name === undefined ? null : (
-      <span className="text-purple-600 dark:text-purple-400 font-semibold">{name === '' ? '""' : name}:</span>
+      <span className="text-purple-600 dark:text-purple-400 font-semibold">
+        {name === '' ? '""' : name}:
+      </span>
     );
 
   if (node.kind === 'leaf') {
@@ -82,7 +93,6 @@ export function JsonFormatter() {
   const [indentation, setIndentation] = useState('2');
   const [isMinified, setIsMinified] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
-  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
   // Reactive validation state computed from the input text
   const validation = useMemo(() => validateJson(input), [input]);
@@ -140,7 +150,9 @@ export function JsonFormatter() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Indentation configuration */}
               <div className="flex items-center gap-2">
-                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
+                <label htmlFor="indentation" className="text-sm font-medium">
+                  Indentation:
+                </label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -156,12 +168,23 @@ export function JsonFormatter() {
                 </Select>
               </div>
 
-              <Button onClick={handleMinify} variant="outline" size="sm" className="min-h-11 sm:min-h-9" disabled={!validation?.valid}>
+              <Button
+                onClick={handleMinify}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9"
+                disabled={!validation?.valid}
+              >
                 Minify JSON
               </Button>
             </div>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -205,7 +228,8 @@ export function JsonFormatter() {
               Filter / Query Output
             </CardTitle>
             <CardDescription className="text-xs">
-              Inspect nested fields using dot/bracket paths (e.g., <code>$.roles[0]</code> or <code>roles</code>). Leave empty for full JSON.
+              Inspect nested fields using dot/bracket paths (e.g., <code>$.roles[0]</code> or{' '}
+              <code>roles</code>). Leave empty for full JSON.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -230,7 +254,10 @@ export function JsonFormatter() {
             </CardDescription>
           </div>
           {validation?.valid && !outputResult.error && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
+            <fieldset
+              className="min-w-0 flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
+              aria-label="Output view"
+            >
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -249,7 +276,7 @@ export function JsonFormatter() {
               >
                 Tree View
               </Button>
-            </div>
+            </fieldset>
           )}
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
@@ -259,7 +286,7 @@ export function JsonFormatter() {
               <div className="min-w-0 break-words">{outputResult.error}</div>
             </div>
           ) : viewMode === 'tree' && outputResult.value !== null ? (
-            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
+            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text">
               <TreeNode value={outputResult.value} depth={0} />
             </div>
           ) : (
@@ -273,25 +300,15 @@ export function JsonFormatter() {
             />
           )}
 
-          <Button
-            onClick={() => copyToClipboard(outputResult.text)}
+          <CopyButton
+            text={outputResult.text}
+            label="Copy Output"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!hasOutput || Boolean(outputResult.error)}
             size="sm"
-            variant={isCopied ? "default" : "outline"}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {isCopied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                {copyFailed ? 'Copy failed' : 'Copy Output'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

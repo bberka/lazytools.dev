@@ -51,7 +51,10 @@ async function choose(page: Page, select: string, option: string) {
 /** Saves the file a button downloads and returns its name and text. */
 async function downloadWith(page: Page, button: Locator): Promise<{ name: string; text: string }> {
   const [download] = await Promise.all([page.waitForEvent('download'), button.click()]);
-  return { name: download.suggestedFilename(), text: await readFile(await download.path(), 'utf8') };
+  return {
+    name: download.suggestedFilename(),
+    text: await readFile(await download.path(), 'utf8'),
+  };
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -86,7 +89,10 @@ const RFC_1321: [text: string, md5: string][] = [
   ['abc', '900150983cd24fb0d6963f7d28e17f72'],
   ['message digest', 'f96b697d7cb7938d525a2f31aaf161d0'],
   ['abcdefghijklmnopqrstuvwxyz', 'c3fcd3d76192e4007dfb496cca67e13b'],
-  ['ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 'd174ab98d277d9f5a5611c2c9f419d9f'],
+  [
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+    'd174ab98d277d9f5a5611c2c9f419d9f',
+  ],
   [
     '12345678901234567890123456789012345678901234567890123456789012345678901234567890',
     '57edf4a22be3c955ac49da2e2107b67a',
@@ -132,7 +138,10 @@ function decryptOutsideTheTool(base64: string, password: string): string {
   const key = pbkdf2Sync(password, data.subarray(0, 16), 100_000, 32, 'sha256');
   const decipher = createDecipheriv('aes-256-gcm', key, data.subarray(16, 28));
   decipher.setAuthTag(data.subarray(data.length - 16));
-  return Buffer.concat([decipher.update(data.subarray(28, data.length - 16)), decipher.final()]).toString('utf8');
+  return Buffer.concat([
+    decipher.update(data.subarray(28, data.length - 16)),
+    decipher.final(),
+  ]).toString('utf8');
 }
 
 // The certificates were made with OpenSSL 3.5 for this spec; every expected
@@ -239,7 +248,9 @@ test.describe('Security tools', () => {
 
       // Nothing to copy before there is input.
       for (const algorithm of HASH_ALGORITHMS) {
-        await expect(page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true })).toBeDisabled();
+        await expect(
+          page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true })
+        ).toBeDisabled();
       }
 
       await page.getByRole('textbox', { name: 'Text to hash' }).fill('hello world');
@@ -247,21 +258,32 @@ test.describe('Security tools', () => {
       for (const algorithm of HASH_ALGORITHMS) {
         await expect(page.getByText(HELLO_WORLD[algorithm], { exact: true })).toBeVisible();
         // The copy button of an algorithm copies that algorithm's digest.
-        const copied = await copyWith(page, page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true }));
+        const copied = await copyWith(
+          page,
+          page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true })
+        );
         expect(copied).toBe(HELLO_WORLD[algorithm]);
-        await expect(page.getByRole('button', { name: `${algorithm} hash copied`, exact: true })).toBeVisible();
+        await expect(
+          page.getByRole('button', { name: `${algorithm} hash copied`, exact: true })
+        ).toBeVisible();
       }
 
       // Text outside ASCII is hashed as UTF-8.
       await page.getByRole('textbox', { name: 'Text to hash' }).fill('héllo wörld 👋');
-      await expect(page.getByText('b310e3a0c99a7c40f07be8e041862df6', { exact: true })).toBeVisible();
       await expect(
-        page.getByText('395591396b4fe97051476ba48689cd98b5cd16e0fe66892f7f92173b9bd50c27', { exact: true })
+        page.getByText('b310e3a0c99a7c40f07be8e041862df6', { exact: true })
+      ).toBeVisible();
+      await expect(
+        page.getByText('395591396b4fe97051476ba48689cd98b5cd16e0fe66892f7f92173b9bd50c27', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.getByText(HELLO_WORLD.MD5, { exact: true })).toBeHidden();
     });
 
-    test('computes MD5 correctly for the RFC 1321 suite and around every block boundary', async ({ page }) => {
+    test('computes MD5 correctly for the RFC 1321 suite and around every block boundary', async ({
+      page,
+    }) => {
       await openTool(page, 'hash-generator', 'Hash Generator');
       const input = page.getByRole('textbox', { name: 'Text to hash' });
 
@@ -314,7 +336,9 @@ test.describe('Security tools', () => {
       await expect(expected).toBeHidden();
       await expect(page.getByText(HELLO_WORLD['SHA-256'], { exact: true })).toBeHidden();
       for (const algorithm of HASH_ALGORITHMS) {
-        await expect(page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true })).toBeDisabled();
+        await expect(
+          page.getByRole('button', { name: `Copy ${algorithm} hash`, exact: true })
+        ).toBeDisabled();
       }
     });
 
@@ -331,15 +355,22 @@ test.describe('Security tools', () => {
       await expect(page.getByText('all-bytes.bin', { exact: true })).toBeVisible();
       await expect(page.getByText('256 B', { exact: true })).toBeVisible();
       for (const algorithm of HASH_ALGORITHMS) {
-        await expect(page.getByText(ALL_BYTES[algorithm], { exact: true }), algorithm).toBeVisible();
+        await expect(
+          page.getByText(ALL_BYTES[algorithm], { exact: true }),
+          algorithm
+        ).toBeVisible();
       }
 
       await page.getByRole('textbox', { name: 'Expected checksum' }).fill(ALL_BYTES['SHA-1']);
-      await expect(page.getByRole('main').getByRole('status')).toHaveText('Checksum verified! Matches SHA-1 hash.');
+      await expect(page.getByRole('main').getByRole('status')).toHaveText(
+        'Checksum verified! Matches SHA-1 hash.'
+      );
 
       // Removing the file brings the drop area back and forgets the digests.
       await page.getByRole('button', { name: 'Remove file' }).click();
-      await expect(page.getByRole('button', { name: 'Drop file here or click to browse' })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Drop file here or click to browse' })
+      ).toBeVisible();
       await expect(page.getByText(ALL_BYTES.MD5, { exact: true })).toBeHidden();
       await expect(page.getByRole('textbox', { name: 'Expected checksum' })).toBeHidden();
 
@@ -350,15 +381,21 @@ test.describe('Security tools', () => {
         buffer: Buffer.alloc(0),
       });
       await expect(page.getByText('empty.txt', { exact: true })).toBeVisible();
-      await expect(page.getByText('d41d8cd98f00b204e9800998ecf8427e', { exact: true })).toBeVisible();
       await expect(
-        page.getByText('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', { exact: true })
+        page.getByText('d41d8cd98f00b204e9800998ecf8427e', { exact: true })
+      ).toBeVisible();
+      await expect(
+        page.getByText('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', {
+          exact: true,
+        })
       ).toBeVisible();
 
       // Going back to text leaves the file and its digests behind.
       await page.getByRole('tab', { name: 'Text', exact: true }).click();
       await expect(page.getByRole('textbox', { name: 'Text to hash' })).toHaveValue('');
-      await expect(page.getByText('d41d8cd98f00b204e9800998ecf8427e', { exact: true })).toBeHidden();
+      await expect(
+        page.getByText('d41d8cd98f00b204e9800998ecf8427e', { exact: true })
+      ).toBeHidden();
     });
 
     test('hashes a file dropped onto the drop area', async ({ page }) => {
@@ -418,7 +455,10 @@ test.describe('Security tools', () => {
       await page.getByRole('textbox', { name: 'Plaintext password' }).fill(password);
       await page.getByRole('button', { name: 'Generate Hash' }).click();
       await expect(main.getByText('60 characters (Modular Crypt Format)')).toBeVisible();
-      const secondHash = await copyWith(page, page.getByRole('button', { name: 'Copy hash output' }));
+      const secondHash = await copyWith(
+        page,
+        page.getByRole('button', { name: 'Copy hash output' })
+      );
       expect(secondHash).toMatch(/^\$2[aby]\$05\$[./A-Za-z0-9]{53}$/);
       expect(secondHash).not.toBe(hash);
 
@@ -431,14 +471,18 @@ test.describe('Security tools', () => {
         await expect(main.getByText('Password Matches!', { exact: true })).toBeVisible();
         await expect(main.getByText('Detected: Bcrypt')).toBeVisible();
 
-        await page.getByRole('textbox', { name: 'Password to verify' }).fill('Correct horse battery staple');
+        await page
+          .getByRole('textbox', { name: 'Password to verify' })
+          .fill('Correct horse battery staple');
         await expect(main.getByText('Password Matches!', { exact: true })).toBeHidden();
         await page.getByRole('button', { name: 'Verify Password' }).click();
         await expect(main.getByText('Password Does Not Match', { exact: true })).toBeVisible();
       }
     });
 
-    test('verifies hashes published by other Bcrypt and Argon2 implementations', async ({ page }) => {
+    test('verifies hashes published by other Bcrypt and Argon2 implementations', async ({
+      page,
+    }) => {
       await openTool(page, 'password-hasher', 'Password Hasher');
       const main = page.getByRole('main');
       await page.getByRole('tab', { name: 'Verify Password' }).click();
@@ -450,12 +494,17 @@ test.describe('Security tools', () => {
         await page.getByRole('textbox', { name: 'Password to verify' }).fill(password);
         await page.getByRole('textbox', { name: 'Target hash string' }).fill(hash);
         await verify.click();
-        await expect(main.getByText('Password Matches!', { exact: true }), scheme).toBeVisible({ timeout: 20_000 });
+        await expect(main.getByText('Password Matches!', { exact: true }), scheme).toBeVisible({
+          timeout: 20_000,
+        });
         await expect(main.getByText(`Detected: ${scheme}`)).toBeVisible();
 
         await page.getByRole('textbox', { name: 'Password to verify' }).fill(`${password} `);
         await verify.click();
-        await expect(main.getByText('Password Does Not Match', { exact: true }), scheme).toBeVisible({ timeout: 20_000 });
+        await expect(
+          main.getByText('Password Does Not Match', { exact: true }),
+          scheme
+        ).toBeVisible({ timeout: 20_000 });
         await expect(main.getByText(`Detected: ${scheme}`)).toBeVisible();
       }
     });
@@ -467,14 +516,20 @@ test.describe('Security tools', () => {
       const copy = page.getByRole('button', { name: 'Copy hash output' });
       const base64 = '[A-Za-z0-9+/]';
 
-      await page.getByRole('textbox', { name: 'Plaintext password' }).fill('  spaces are part of it  ');
+      await page
+        .getByRole('textbox', { name: 'Plaintext password' })
+        .fill('  spaces are part of it  ');
       await page.getByRole('button', { name: 'Generate Hash' }).click();
       await expect(copy).toBeVisible({ timeout: 20_000 });
 
       // Defaults: Argon2id, 64 MiB, 3 passes, 4 lanes, 16-byte salt, 32-byte hash.
       const defaults = await copyWith(page, copy);
-      expect(defaults).toMatch(new RegExp(`^\\$argon2id\\$v=19\\$m=65536,t=3,p=4\\$${base64}{22}\\$${base64}{43}$`));
-      await expect(main.getByText(`${defaults.length} characters (Modular Crypt Format)`)).toBeVisible();
+      expect(defaults).toMatch(
+        new RegExp(`^\\$argon2id\\$v=19\\$m=65536,t=3,p=4\\$${base64}{22}\\$${base64}{43}$`)
+      );
+      await expect(
+        main.getByText(`${defaults.length} characters (Modular Crypt Format)`)
+      ).toBeVisible();
 
       // Changing a setting discards the hash made with the old one.
       await choose(page, 'Hashing Algorithm', 'Argon2i');
@@ -490,19 +545,27 @@ test.describe('Security tools', () => {
       await page.getByRole('button', { name: 'Generate Hash' }).click();
       await expect(copy).toBeVisible({ timeout: 20_000 });
       const tuned = await copyWith(page, copy);
-      expect(tuned).toMatch(new RegExp(`^\\$argon2i\\$v=19\\$m=16384,t=1,p=1\\$${base64}{22}\\$${base64}{22}$`));
+      expect(tuned).toMatch(
+        new RegExp(`^\\$argon2i\\$v=19\\$m=16384,t=1,p=1\\$${base64}{22}\\$${base64}{22}$`)
+      );
 
       // The tool accepts its own output, whitespace in the password included.
       await page.getByRole('tab', { name: 'Verify Password' }).click();
       await page.getByRole('textbox', { name: 'Target hash string' }).fill(defaults);
-      await page.getByRole('textbox', { name: 'Password to verify' }).fill('  spaces are part of it  ');
+      await page
+        .getByRole('textbox', { name: 'Password to verify' })
+        .fill('  spaces are part of it  ');
       await page.getByRole('button', { name: 'Verify Password' }).click();
-      await expect(main.getByText('Password Matches!', { exact: true })).toBeVisible({ timeout: 20_000 });
+      await expect(main.getByText('Password Matches!', { exact: true })).toBeVisible({
+        timeout: 20_000,
+      });
       await expect(main.getByText('Detected: Argon2 (argon2id)')).toBeVisible();
 
       await page.getByRole('textbox', { name: 'Password to verify' }).fill('spaces are part of it');
       await page.getByRole('button', { name: 'Verify Password' }).click();
-      await expect(main.getByText('Password Does Not Match', { exact: true })).toBeVisible({ timeout: 20_000 });
+      await expect(main.getByText('Password Does Not Match', { exact: true })).toBeVisible({
+        timeout: 20_000,
+      });
     });
 
     test('explains a hash it cannot check instead of calling it a mismatch', async ({ page }) => {
@@ -518,7 +581,9 @@ test.describe('Security tools', () => {
       // Not a password hash at all.
       await target.fill('5f4dcc3b5aa765d61d8327deb882cf99');
       await verify.click();
-      await expect(alert).toHaveText('Unknown hash format. Please provide a valid Bcrypt or Argon2 hash string.');
+      await expect(alert).toHaveText(
+        'Unknown hash format. Please provide a valid Bcrypt or Argon2 hash string.'
+      );
 
       // A Bcrypt hash that lost its last character while being copied.
       await target.fill(PUBLISHED_HASHES[0].hash.slice(0, -1));
@@ -567,7 +632,10 @@ test.describe('Security tools', () => {
       await expect(main.getByText('Encrypted text (80 characters)')).toBeVisible();
 
       await page.getByRole('button', { name: 'Swap input/output' }).click();
-      await expect(page.getByRole('tab', { name: 'Decrypt' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: 'Decrypt' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
       const ciphertext = page.getByRole('textbox', { name: 'Encrypted text to decrypt' });
       await expect(ciphertext).toHaveValue(/^[A-Za-z0-9+/]{78}==$/);
       expect(await ciphertext.inputValue()).not.toContain('Attack');
@@ -593,7 +661,9 @@ test.describe('Security tools', () => {
 
       // The same text never encrypts to the same output twice.
       await page.getByRole('button', { name: 'Encrypt', exact: true }).click();
-      await expect.poll(() => copyWith(page, page.getByRole('button', { name: /Copy to clipboard|Copied!/ }))).not.toBe(first);
+      await expect
+        .poll(() => copyWith(page, page.getByRole('button', { name: /Copy to clipboard|Copied!/ })))
+        .not.toBe(first);
 
       // What was encrypted elsewhere can be decrypted by the tool, line breaks and all.
       await page.getByRole('tab', { name: 'Decrypt' }).click();
@@ -602,7 +672,9 @@ test.describe('Security tools', () => {
       await page.getByRole('textbox', { name: 'Encrypted text to decrypt' }).fill(`${wrapped}\n`);
       await page.getByRole('button', { name: 'Decrypt', exact: true }).click();
       await expect(main.getByText(AES_PLAINTEXT, { exact: true })).toBeVisible();
-      await expect(main.getByText(`Decrypted text (${AES_PLAINTEXT.length} characters)`)).toBeVisible();
+      await expect(
+        main.getByText(`Decrypted text (${AES_PLAINTEXT.length} characters)`)
+      ).toBeVisible();
     });
 
     test('refuses a wrong password or damaged text and drops stale results', async ({ page }) => {
@@ -689,12 +761,21 @@ test.describe('Security tools', () => {
       await expect(page.getByRole('combobox', { name: 'Key Format' })).toHaveText('PEM (Standard)');
 
       await page.getByRole('button', { name: 'Generate Key Pair' }).click();
-      await expect(page.getByRole('button', { name: 'Copy public key' })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole('button', { name: 'Copy public key' })).toBeVisible({
+        timeout: 30_000,
+      });
 
       const publicPem = await copyWith(page, page.getByRole('button', { name: 'Copy public key' }));
-      const privatePem = await copyWith(page, page.getByRole('button', { name: 'Copy private key' }));
-      expect(publicPem).toMatch(/^-----BEGIN PUBLIC KEY-----\n([A-Za-z0-9+/=]{1,64}\n)+-----END PUBLIC KEY-----$/);
-      expect(privatePem).toMatch(/^-----BEGIN PRIVATE KEY-----\n([A-Za-z0-9+/=]{1,64}\n)+-----END PRIVATE KEY-----$/);
+      const privatePem = await copyWith(
+        page,
+        page.getByRole('button', { name: 'Copy private key' })
+      );
+      expect(publicPem).toMatch(
+        /^-----BEGIN PUBLIC KEY-----\n([A-Za-z0-9+/=]{1,64}\n)+-----END PUBLIC KEY-----$/
+      );
+      expect(privatePem).toMatch(
+        /^-----BEGIN PRIVATE KEY-----\n([A-Za-z0-9+/=]{1,64}\n)+-----END PRIVATE KEY-----$/
+      );
       await expect(main.getByText('-----BEGIN PUBLIC KEY-----')).toBeVisible();
       await expect(main.getByText('-----BEGIN PRIVATE KEY-----')).toBeVisible();
 
@@ -707,7 +788,9 @@ test.describe('Security tools', () => {
       expect(privateKey.asymmetricKeyDetails?.modulusLength).toBe(2048);
 
       // The public key is the public half of the private key.
-      const derived = createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }).toString();
+      const derived = createPublicKey(privateKey)
+        .export({ type: 'spki', format: 'pem' })
+        .toString();
       expect(derived.trim()).toBe(publicPem.trim());
 
       // What one encrypts (RSA-OAEP, SHA-256) the other decrypts.
@@ -718,7 +801,9 @@ test.describe('Security tools', () => {
       // A second run makes a different pair.
       await page.getByRole('button', { name: 'Generate Key Pair' }).click();
       await expect
-        .poll(() => copyWith(page, page.getByRole('button', { name: 'Copy public key' })), { timeout: 30_000 })
+        .poll(() => copyWith(page, page.getByRole('button', { name: 'Copy public key' })), {
+          timeout: 30_000,
+        })
         .not.toBe(publicPem);
     });
 
@@ -727,42 +812,77 @@ test.describe('Security tools', () => {
       await openTool(page, 'rsa-key-generator', 'RSA Key Pair Generator');
 
       await page.getByRole('button', { name: 'Generate Key Pair' }).click();
-      await expect(page.getByRole('button', { name: 'Download public key' })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole('button', { name: 'Download public key' })).toBeVisible({
+        timeout: 30_000,
+      });
 
-      const publicFile = await downloadWith(page, page.getByRole('button', { name: 'Download public key' }));
+      const publicFile = await downloadWith(
+        page,
+        page.getByRole('button', { name: 'Download public key' })
+      );
       expect(publicFile.name).toBe('public_key.pem');
-      expect(publicFile.text).toBe(await copyWith(page, page.getByRole('button', { name: 'Copy public key' })));
+      expect(publicFile.text).toBe(
+        await copyWith(page, page.getByRole('button', { name: 'Copy public key' }))
+      );
       expect(createPublicKey(publicFile.text).asymmetricKeyDetails?.modulusLength).toBe(2048);
 
-      const privateFile = await downloadWith(page, page.getByRole('button', { name: 'Download private key' }));
+      const privateFile = await downloadWith(
+        page,
+        page.getByRole('button', { name: 'Download private key' })
+      );
       expect(privateFile.name).toBe('private_key.pem');
-      expect(privateFile.text).toBe(await copyWith(page, page.getByRole('button', { name: 'Copy private key' })));
+      expect(privateFile.text).toBe(
+        await copyWith(page, page.getByRole('button', { name: 'Copy private key' }))
+      );
 
       // Changing the format select does not rename the PEM keys still on screen.
       await choose(page, 'Key Format', 'JWK (JSON)');
-      const stillPem = await downloadWith(page, page.getByRole('button', { name: 'Download public key' }));
+      const stillPem = await downloadWith(
+        page,
+        page.getByRole('button', { name: 'Download public key' })
+      );
       expect(stillPem.name).toBe('public_key.pem');
       expect(stillPem.text).toBe(publicFile.text);
 
       // A new run in JWK gives JSON files.
       await page.getByRole('button', { name: 'Generate Key Pair' }).click();
-      await expect(page.getByRole('main').getByText('"kty": "RSA"').first()).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole('main').getByText('"kty": "RSA"').first()).toBeVisible({
+        timeout: 30_000,
+      });
 
-      const publicJwkFile = await downloadWith(page, page.getByRole('button', { name: 'Download public key' }));
+      const publicJwkFile = await downloadWith(
+        page,
+        page.getByRole('button', { name: 'Download public key' })
+      );
       expect(publicJwkFile.name).toBe('public_key.json');
       const publicJwk = JSON.parse(publicJwkFile.text);
-      expect(publicJwk).toMatchObject({ kty: 'RSA', e: 'AQAB', alg: 'RSA-OAEP-256', key_ops: ['encrypt'] });
+      expect(publicJwk).toMatchObject({
+        kty: 'RSA',
+        e: 'AQAB',
+        alg: 'RSA-OAEP-256',
+        key_ops: ['encrypt'],
+      });
       expect(Buffer.from(publicJwk.n, 'base64url')).toHaveLength(256);
       expect(publicJwk).not.toHaveProperty('d');
 
-      const privateJwkFile = await downloadWith(page, page.getByRole('button', { name: 'Download private key' }));
+      const privateJwkFile = await downloadWith(
+        page,
+        page.getByRole('button', { name: 'Download private key' })
+      );
       expect(privateJwkFile.name).toBe('private_key.json');
       const privateJwk = JSON.parse(privateJwkFile.text);
-      expect(privateJwk).toMatchObject({ kty: 'RSA', e: 'AQAB', n: publicJwk.n, key_ops: ['decrypt'] });
+      expect(privateJwk).toMatchObject({
+        kty: 'RSA',
+        e: 'AQAB',
+        n: publicJwk.n,
+        key_ops: ['decrypt'],
+      });
       for (const member of ['d', 'p', 'q', 'dp', 'dq', 'qi']) {
         expect(privateJwk[member], member).toMatch(/^[A-Za-z0-9_-]+$/);
       }
-      expect(createPrivateKey({ key: privateJwk, format: 'jwk' }).asymmetricKeyDetails?.modulusLength).toBe(2048);
+      expect(
+        createPrivateKey({ key: privateJwk, format: 'jwk' }).asymmetricKeyDetails?.modulusLength
+      ).toBe(2048);
     });
 
     test('generates a 3072-bit pair as bare Base64', async ({ page }) => {
@@ -773,19 +893,37 @@ test.describe('Security tools', () => {
       await choose(page, 'Key Size', '3072 bits (Recommended)');
       await choose(page, 'Key Format', 'PKCS#8 (Base64)');
       await page.getByRole('button', { name: 'Generate Key Pair' }).click();
-      await expect(page.getByRole('button', { name: 'Copy public key' })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole('button', { name: 'Copy public key' })).toBeVisible({
+        timeout: 60_000,
+      });
 
-      const publicBase64 = await copyWith(page, page.getByRole('button', { name: 'Copy public key' }));
-      const privateBase64 = await copyWith(page, page.getByRole('button', { name: 'Copy private key' }));
+      const publicBase64 = await copyWith(
+        page,
+        page.getByRole('button', { name: 'Copy public key' })
+      );
+      const privateBase64 = await copyWith(
+        page,
+        page.getByRole('button', { name: 'Copy private key' })
+      );
       expect(publicBase64).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
       expect(privateBase64).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
 
-      const publicKey = createPublicKey({ key: Buffer.from(publicBase64, 'base64'), format: 'der', type: 'spki' });
-      const privateKey = createPrivateKey({ key: Buffer.from(privateBase64, 'base64'), format: 'der', type: 'pkcs8' });
+      const publicKey = createPublicKey({
+        key: Buffer.from(publicBase64, 'base64'),
+        format: 'der',
+        type: 'spki',
+      });
+      const privateKey = createPrivateKey({
+        key: Buffer.from(privateBase64, 'base64'),
+        format: 'der',
+        type: 'pkcs8',
+      });
       expect(publicKey.asymmetricKeyDetails?.modulusLength).toBe(3072);
       expect(privateKey.asymmetricKeyDetails?.modulusLength).toBe(3072);
       expect(
-        createPublicKey(privateKey).export({ type: 'spki', format: 'der' }).equals(Buffer.from(publicBase64, 'base64'))
+        createPublicKey(privateKey)
+          .export({ type: 'spki', format: 'der' })
+          .equals(Buffer.from(publicBase64, 'base64'))
       ).toBe(true);
     });
   });
@@ -833,10 +971,12 @@ test.describe('Security tools', () => {
       `);
       await expect(main.getByText('Expired')).toBeHidden();
 
-      expect(await copyWith(page, page.getByRole('button', { name: 'Copy serial number' }))).toBe('A1:B2:C3:D4:E5:F6:07');
-      expect(await copyWith(page, page.getByRole('button', { name: 'Copy SHA-256 fingerprint' }))).toBe(
-        RSA_CERTIFICATE_SHA256
+      expect(await copyWith(page, page.getByRole('button', { name: 'Copy serial number' }))).toBe(
+        'A1:B2:C3:D4:E5:F6:07'
       );
+      expect(
+        await copyWith(page, page.getByRole('button', { name: 'Copy SHA-256 fingerprint' }))
+      ).toBe(RSA_CERTIFICATE_SHA256);
 
       // Clear returns to the empty state.
       await page.getByRole('button', { name: 'Clear' }).click();
@@ -855,7 +995,9 @@ test.describe('Security tools', () => {
         `subject=C = DE, O = Müller GmbH, CN = expired.example.test\n${EXPIRED_CERTIFICATE}\nsubject=CN = Future Root CA\n${FUTURE_ROOT_CERTIFICATE}`
       );
 
-      await expect(main.getByText('This input holds 2 certificates. Showing the first one.')).toBeVisible();
+      await expect(
+        main.getByText('This input holds 2 certificates. Showing the first one.')
+      ).toBeVisible();
       await expect(main).toMatchAriaSnapshot(`
         - text: /^Expired v3 ecdsa-with-SHA256 Subject C DE O Müller GmbH CN expired\\.example\\.test Issuer DC test DC example O Example Trust CN Future Root CA Validity Not Before Jan 01, 2020, 12:00:00\\sAM UTC Not After Jan 01, 2021, 12:00:00\\sPM UTC ?\\(EXPIRED\\) Serial Number$/
         - code: 01:02:03:04:05
@@ -911,7 +1053,11 @@ test.describe('Security tools', () => {
       expect(der).toHaveLength(1155);
 
       // Binary certificate: the text box gives way to the file's name and size.
-      await upload.setInputFiles({ name: 'example.der', mimeType: 'application/x-x509-ca-cert', buffer: der });
+      await upload.setInputFiles({
+        name: 'example.der',
+        mimeType: 'application/x-x509-ca-cert',
+        buffer: der,
+      });
       await expect(main.getByText('example.der (1155 bytes)')).toBeVisible();
       await expect(page.getByRole('textbox', { name: 'PEM certificate' })).toBeHidden();
       await expect(main.getByText('example.test', { exact: true })).toHaveCount(2);
@@ -938,14 +1084,20 @@ test.describe('Security tools', () => {
           Buffer.from(`Bag Attributes\n    friendlyName: expired leaf\n${EXPIRED_CERTIFICATE}`),
         ]),
       });
-      await expect(page.getByRole('textbox', { name: 'PEM certificate' })).toHaveValue(/friendlyName: expired leaf/);
+      await expect(page.getByRole('textbox', { name: 'PEM certificate' })).toHaveValue(
+        /friendlyName: expired leaf/
+      );
       await expect(main.getByText('padded.cer (1157 bytes)')).toBeHidden();
       await expect(main.getByText('expired.example.test', { exact: true })).toBeVisible();
       await expect(main.getByText(EXPIRED_CERTIFICATE_SHA256)).toBeVisible();
       await expect(main.getByText(RSA_CERTIFICATE_SHA256)).toBeHidden();
 
       // A file that is no certificate is reported, with nothing decoded left over.
-      await upload.setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('just some notes') });
+      await upload.setInputFiles({
+        name: 'notes.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('just some notes'),
+      });
       await expect(main.getByRole('alert')).toHaveText(
         'This is not a valid X.509 certificate. It may be incomplete or damaged.'
       );
@@ -960,20 +1112,30 @@ test.describe('Security tools', () => {
       const alert = main.getByRole('alert');
 
       await input.fill('hello, is this a certificate?');
-      await expect(alert).toHaveText('Expected a PEM certificate starting with -----BEGIN CERTIFICATE-----');
+      await expect(alert).toHaveText(
+        'Expected a PEM certificate starting with -----BEGIN CERTIFICATE-----'
+      );
 
       // Other PEM blocks are named for what they are. The bodies are placeholders, not keys.
-      await input.fill('-----BEGIN PRIVATE KEY-----\nbm90IGEgcmVhbCBrZXk=\n-----END PRIVATE KEY-----');
+      await input.fill(
+        '-----BEGIN PRIVATE KEY-----\nbm90IGEgcmVhbCBrZXk=\n-----END PRIVATE KEY-----'
+      );
       await expect(alert).toHaveText(
         'This is a private key, not a certificate. Paste a block that starts with -----BEGIN CERTIFICATE-----.'
       );
-      await input.fill('-----BEGIN CERTIFICATE REQUEST-----\nbm90IGEgcmVhbCBDU1I=\n-----END CERTIFICATE REQUEST-----');
-      await expect(alert).toContainText('This is a certificate signing request (CSR), not a certificate.');
+      await input.fill(
+        '-----BEGIN CERTIFICATE REQUEST-----\nbm90IGEgcmVhbCBDU1I=\n-----END CERTIFICATE REQUEST-----'
+      );
+      await expect(alert).toContainText(
+        'This is a certificate signing request (CSR), not a certificate.'
+      );
 
       // A certificate cut off half way through.
       const lines = RSA_CERTIFICATE.trim().split('\n');
       await input.fill(lines.slice(0, 12).join('\n'));
-      await expect(alert).toHaveText('This is not a valid X.509 certificate. It may be incomplete or damaged.');
+      await expect(alert).toHaveText(
+        'This is not a valid X.509 certificate. It may be incomplete or damaged.'
+      );
       await expect(main.getByText('Fingerprints', { exact: true })).toBeHidden();
 
       // A good certificate replaces the message; emptying the box removes everything.
@@ -989,10 +1151,13 @@ test.describe('Security tools', () => {
   // ── Password Generator ──────────────────────────────────────────────────────
 
   test.describe('Password Generator', () => {
-    const copyPassword = (page: Page) => copyWith(page, page.getByRole('button', { name: 'Copy password' }));
+    const copyPassword = (page: Page) =>
+      copyWith(page, page.getByRole('button', { name: 'Copy password' }));
     const count = (text: string, pattern: RegExp) => (text.match(pattern) ?? []).length;
 
-    test('generates a 16-character password from all four sets and describes it', async ({ page }) => {
+    test('generates a 16-character password from all four sets and describes it', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'password-generator', 'Password Generator');
       const main = page.getByRole('main');
@@ -1029,7 +1194,9 @@ test.describe('Security tools', () => {
       await expect(main.getByText(second, { exact: true })).toBeVisible();
     });
 
-    test('honours length, character sets, the ambiguous filter and per-type limits', async ({ page }) => {
+    test('honours length, character sets, the ambiguous filter and per-type limits', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'password-generator', 'Password Generator');
       const main = page.getByRole('main');
@@ -1040,7 +1207,9 @@ test.describe('Security tools', () => {
       await length.focus();
       await length.press('End');
       await expect(main.getByText('Length: 256')).toBeVisible();
-      await page.getByRole('checkbox', { name: 'Exclude ambiguous characters (0, O, l, 1, i, I)' }).check();
+      await page
+        .getByRole('checkbox', { name: 'Exclude ambiguous characters (0, O, l, 1, i, I)' })
+        .check();
       const long = await copyPassword(page);
       expect(long).toHaveLength(256);
       expect(long).not.toMatch(/[0Ol1iI]/);
@@ -1053,7 +1222,9 @@ test.describe('Security tools', () => {
       expect(await copyPassword(page)).toMatch(/^[A-HJ-NP-Z]{256}$/);
 
       // Shortest: 4 characters, one from each set when all four are on.
-      await page.getByRole('checkbox', { name: 'Exclude ambiguous characters (0, O, l, 1, i, I)' }).uncheck();
+      await page
+        .getByRole('checkbox', { name: 'Exclude ambiguous characters (0, O, l, 1, i, I)' })
+        .uncheck();
       for (const set of ['Lowercase (a-z)', 'Numbers (0-9)', 'Special (!@#$...)']) {
         await page.getByRole('checkbox', { name: set }).check();
       }
@@ -1062,7 +1233,9 @@ test.describe('Security tools', () => {
       await expect(main.getByText('Length: 4')).toBeVisible();
       const short = await copyPassword(page);
       expect(short).toHaveLength(4);
-      expect([/[A-Z]/g, /[a-z]/g, /[0-9]/g, /[^A-Za-z0-9]/g].map((set) => count(short, set))).toEqual([1, 1, 1, 1]);
+      expect(
+        [/[A-Z]/g, /[a-z]/g, /[0-9]/g, /[^A-Za-z0-9]/g].map((set) => count(short, set))
+      ).toEqual([1, 1, 1, 1]);
 
       // A limit caps one type: with letters only and at most one capital, 15 of 16 are lower case.
       for (let step = 4; step < 16; step += 1) await length.press('ArrowRight');
@@ -1078,13 +1251,17 @@ test.describe('Security tools', () => {
 
       // Limits that cannot fill the length are explained, and there is nothing to copy.
       await page.getByRole('checkbox', { name: 'Lowercase (a-z)' }).uncheck();
-      await expect(main.getByText('Increase the max counts or reduce the password length.')).toBeVisible();
+      await expect(
+        main.getByText('Increase the max counts or reduce the password length.')
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy password' })).toBeDisabled();
       await expect(main.getByText(capped, { exact: true })).toBeHidden();
 
       // So is having no character set at all.
       await page.getByRole('checkbox', { name: 'Uppercase (A-Z)' }).uncheck();
-      await expect(main.getByText('Enable at least one character set with a max count above zero.')).toBeVisible();
+      await expect(
+        main.getByText('Enable at least one character set with a max count above zero.')
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy password' })).toBeDisabled();
       await expect(main.getByText(/Estimated entropy/)).toBeHidden();
 

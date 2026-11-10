@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MODE_MASK,
   PERMISSION_BITS,
@@ -59,7 +59,7 @@ const SPECIAL_VECTORS: Array<[octal: string, symbolic: string]> = [
   ['1000', '--------T'], // sticky alone
 ];
 
-test.describe('octal to symbolic', () => {
+describe('octal to symbolic', () => {
   for (const [octal, symbolic] of [...PLAIN_VECTORS, ...SPECIAL_VECTORS]) {
     test(`${octal} is ${symbolic}`, () => {
       const parsed = parseOctal(octal);
@@ -79,7 +79,7 @@ test.describe('octal to symbolic', () => {
   });
 });
 
-test.describe('symbolic to octal', () => {
+describe('symbolic to octal', () => {
   for (const [octal, symbolic] of [...PLAIN_VECTORS, ...SPECIAL_VECTORS]) {
     test(`${symbolic} is ${octal}`, () => {
       const parsed = parseSymbolic(symbolic);
@@ -102,7 +102,7 @@ test.describe('symbolic to octal', () => {
   });
 });
 
-test.describe('formatting', () => {
+describe('formatting', () => {
   test('octal is three digits without special bits and four with them', () => {
     expect(formatOctal(0o644)).toBe('644');
     expect(formatOctal(0)).toBe('000');
@@ -118,7 +118,7 @@ test.describe('formatting', () => {
   });
 });
 
-test.describe('checkbox grid', () => {
+describe('checkbox grid', () => {
   test('each of the nine bits maps to its own octal value', () => {
     const expected = {
       owner: { read: 0o400, write: 0o200, execute: 0o100 },
@@ -176,7 +176,7 @@ test.describe('checkbox grid', () => {
   });
 });
 
-test.describe('round trips', () => {
+describe('round trips', () => {
   test('every one of the 4096 modes survives octal, symbolic and grid conversion', () => {
     const failures: string[] = [];
     for (let mode = 0; mode <= MODE_MASK; mode++) {
@@ -184,7 +184,8 @@ test.describe('round trips', () => {
       if (!viaOctal.ok || viaOctal.mode !== mode) failures.push(`octal ${mode.toString(8)}`);
 
       const viaSymbolic = parseSymbolic(formatSymbolic(mode));
-      if (!viaSymbolic.ok || viaSymbolic.mode !== mode) failures.push(`symbolic ${mode.toString(8)}`);
+      if (!viaSymbolic.ok || viaSymbolic.mode !== mode)
+        failures.push(`symbolic ${mode.toString(8)}`);
 
       let rebuilt = 0;
       for (const who of PERMISSION_CLASSES) {
@@ -210,7 +211,7 @@ test.describe('round trips', () => {
   });
 });
 
-test.describe('invalid octal', () => {
+describe('invalid octal', () => {
   const bad = [
     '',
     '   ',
@@ -253,7 +254,7 @@ test.describe('invalid octal', () => {
   });
 });
 
-test.describe('invalid symbolic', () => {
+describe('invalid symbolic', () => {
   const bad = [
     '',
     '   ',
@@ -303,7 +304,7 @@ test.describe('invalid symbolic', () => {
   });
 });
 
-test.describe('commands', () => {
+describe('commands', () => {
   test('755 on a plain file name', () => {
     expect(chmodCommands(0o755)).toEqual({
       numeric: 'chmod 755 file',
@@ -350,7 +351,8 @@ test.describe('commands', () => {
     const failures: string[] = [];
     for (let mode = 0; mode <= MODE_MASK; mode++) {
       const commands = chmodCommands(mode);
-      if (parseInt(commands.numeric.split(' ')[1], 8) !== mode) failures.push(`numeric ${mode.toString(8)}`);
+      if (parseInt(commands.numeric.split(' ')[1], 8) !== mode)
+        failures.push(`numeric ${mode.toString(8)}`);
       const [, clauses] = commands.symbolic.split(' ');
       let rebuilt = 0;
       for (const clause of clauses.split(',')) {
@@ -394,7 +396,7 @@ test.describe('commands', () => {
   });
 });
 
-test.describe('explanation', () => {
+describe('explanation', () => {
   test('755 in plain language', () => {
     const explained = explainMode(0o755);
     expect(explained.classes.map((c) => c.who)).toEqual(['owner', 'group', 'others']);
@@ -457,14 +459,15 @@ test.describe('explanation', () => {
     for (let mode = 0; mode <= MODE_MASK; mode++) {
       const explained = explainMode(mode);
       const complete =
-        explained.classes.length === 3 && explained.classes.every((entry) => entry.summary.length > 0);
+        explained.classes.length === 3 &&
+        explained.classes.every((entry) => entry.summary.length > 0);
       if (!complete) failures.push(mode.toString(8));
     }
     expect(failures).toEqual([]);
   });
 });
 
-test.describe('presets', () => {
+describe('presets', () => {
   test('cover 644, 755, 600, 700, 775, 777 and 400 in that order', () => {
     expect(PRESETS.map((p) => p.octal)).toEqual(['644', '755', '600', '700', '775', '777', '400']);
   });

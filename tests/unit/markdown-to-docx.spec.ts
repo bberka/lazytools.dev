@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import JSZip from 'jszip';
 import {
   DOCX_THEME_PRESETS,
@@ -93,7 +93,7 @@ const summary = (markdown: string) =>
 
 // ---------------------------------------------------------------------------
 
-test.describe('splitting Markdown into blocks', () => {
+describe('splitting Markdown into blocks', () => {
   test('finds headings, paragraphs, lists, code, tables and rules in order', () => {
     const blocks = parseMarkdownBlocks(
       [
@@ -225,7 +225,7 @@ test.describe('splitting Markdown into blocks', () => {
   });
 });
 
-test.describe('carrying block settings across an edit', () => {
+describe('carrying block settings across an edit', () => {
   const tune = (block: MarkdownBlock, spacingAfter: number): MarkdownBlock => ({
     ...block,
     pageBreakBefore: true,
@@ -300,7 +300,7 @@ test.describe('carrying block settings across an edit', () => {
   });
 });
 
-test.describe('block spacing', () => {
+describe('block spacing', () => {
   const style = DOCX_THEME_PRESETS.modern.options;
   const [heading, paragraph, list, code, table, rule] = parseMarkdownBlocks(
     '# Title\n\ntext\n\n- item\n\n```\ncode\n```\n\n| A |\n|---|\n| 1 |\n\n---\n'
@@ -366,7 +366,7 @@ test.describe('block spacing', () => {
   });
 });
 
-test.describe('naming the document', () => {
+describe('naming the document', () => {
   test('uses the first heading without its markup', () => {
     const blocks = parseMarkdownBlocks(
       'intro\n\n## The **bold** `code` [guide](https://example.com/a)\n\n# Later\n'
@@ -381,7 +381,7 @@ test.describe('naming the document', () => {
   });
 });
 
-test.describe('flattening a list into lines', () => {
+describe('flattening a list into lines', () => {
   test('marks bullet and numbered items', () => {
     expect(summary('- a\n- b\n')).toEqual([
       ['item', 0, '•', 'a'],
@@ -439,7 +439,7 @@ test.describe('flattening a list into lines', () => {
   });
 });
 
-test.describe('the exported document', () => {
+describe('the exported document', () => {
   test('is a .docx with the body text in order', async () => {
     const { files, document } = await exportDocx(
       '# Title\n\nHello **bold** and *soft*\nbreak.\n\n- one\n- two\n\n1. first\n'
@@ -647,7 +647,8 @@ test.describe('the exported document', () => {
       '',
       '  indented();',
     ]);
-    expect(document).toContain('<w:shd w:fill="F3F4F6"/>');
+    // Newer docx releases also write w:val="clear" here; the fill is what matters.
+    expect(document).toMatch(/<w:shd w:fill="F3F4F6"[^>]*\/>/);
     expect(document.match(/<w:tbl>/g)).toHaveLength(1);
   });
 
@@ -663,6 +664,7 @@ test.describe('the exported document', () => {
       'codeline',
     ]);
     for (const part of [document, header ?? '', footer ?? '']) {
+      // oxlint-disable-next-line no-control-regex -- asserting that no control character survives
       expect(part).not.toMatch(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/);
     }
     expect(paragraphs(header ?? '')[0].text).toBe('Header');

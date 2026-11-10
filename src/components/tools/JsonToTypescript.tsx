@@ -2,13 +2,19 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Copy, Check, Trash2, FileCode, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Trash2, FileCode, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import {
   JSON_CODE_LANGUAGES,
   generateCodeFromJson,
@@ -25,8 +31,6 @@ export function JsonToTypescript() {
   const [optional, setOptional] = useState(false);
   const [readonly, setReadonly] = useState(false);
   const [semicolon, setSemicolon] = useState(true);
-
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const validation = useMemo(() => (input.trim() ? inspectJson(input) : null), [input]);
 
@@ -61,12 +65,10 @@ export function JsonToTypescript() {
             <FileCode className="h-5 w-5 text-primary" />
             JSON to Code Generator
           </CardTitle>
-          <CardDescription>
-            Generate typed models and schemas from JSON data.
-          </CardDescription>
+          <CardDescription>Generate typed models and schemas from JSON data.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <label
                 htmlFor="json-code-language"
@@ -159,7 +161,7 @@ export function JsonToTypescript() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Input area */}
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
@@ -189,8 +191,7 @@ export function JsonToTypescript() {
 
             {/* Validation Banner */}
             {validation && (
-              <div
-                role="status"
+              <output
                 className={`flex items-start gap-3 rounded-lg px-4 py-3 text-xs font-medium border transition-all duration-300 ${
                   validation.valid
                     ? 'bg-green-500/5 text-green-700 dark:text-green-400 border-green-500/20'
@@ -212,7 +213,7 @@ export function JsonToTypescript() {
                     </div>
                   </>
                 )}
-              </div>
+              </output>
             )}
           </CardContent>
         </Card>
@@ -245,25 +246,14 @@ export function JsonToTypescript() {
               </div>
             )}
 
-            <Button
-              onClick={() => copyToClipboard(outputCode)}
+            <CopyButton
+              text={outputCode}
+              label="Copy Code"
+              copiedLabel="Copied!"
               disabled={!outputCode}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
               className="w-full sm:w-auto font-medium transition-all duration-200"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Code
-                </>
-              )}
-            </Button>
+            />
           </CardContent>
         </Card>
       </div>

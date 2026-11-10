@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { sanitizePreviewHtml } from '@/lib/markdown/sanitize';
 
 // The sanitiser itself needs a DOM, so what it removes and what it keeps are
 // checked in a browser (playwright/tools/documents.spec.ts). What can be
 // pinned here is how it behaves where there is no DOM: the statically
 // prerendered page.
-test.describe('sanitizePreviewHtml without a DOM', () => {
+describe('sanitizePreviewHtml without a DOM', () => {
   const SAMPLE = '<h1 data-source-line="0">Title</h1>\n<p data-source-line="2">Text</p>\n';
 
   test('returns the trusted sample as it is, so prerender and hydration match', () => {

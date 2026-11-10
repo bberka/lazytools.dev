@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Download, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { useActionButton, useCopyToClipboard } from '@/hooks';
+import { useActionButton } from '@/hooks';
 import { downloadDataUrl, downloadText, readImageDimensions } from '@/lib/files';
 import {
   prepareQrRequest,
@@ -67,13 +68,11 @@ export function QrCodeGenerator() {
   const [margin, setMargin] = useState('2');
   const [foregroundColor, setForegroundColor] = useState('#111827');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
-  const [errorCorrectionLevel, setErrorCorrectionLevel] =
-    useState<QrErrorCorrectionLevel>('M');
+  const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<QrErrorCorrectionLevel>('M');
   const [generated, setGenerated] = useState<GeneratedQr | null>(null);
   const [error, setError] = useState('');
 
   const { executeAction, isLoading } = useActionButton();
-  const copy = useCopyToClipboard();
 
   // Each run takes a number; a result is only shown while its number is still the latest.
   const runId = useRef(0);
@@ -118,7 +117,9 @@ export function QrCodeGenerator() {
 
       // The library draws larger than asked when the content needs more modules
       // than the size has pixels, so the size shown is the one the PNG really has.
-      const { width } = await readImageDimensions(pngDataUrl).catch(() => ({ width: options.width }));
+      const { width } = await readImageDimensions(pngDataUrl).catch(() => ({
+        width: options.width,
+      }));
 
       if (id !== runId.current) return;
       setGenerated({
@@ -132,9 +133,7 @@ export function QrCodeGenerator() {
       if (id !== runId.current) return;
       setGenerated(null);
       setError(
-        generationError instanceof Error
-          ? generationError.message
-          : 'Failed to generate QR code.'
+        generationError instanceof Error ? generationError.message : 'Failed to generate QR code.'
       );
     }
   };
@@ -235,9 +234,7 @@ export function QrCodeGenerator() {
               </label>
               <Select
                 value={errorCorrectionLevel}
-                onValueChange={(value) =>
-                  setErrorCorrectionLevel(value as QrErrorCorrectionLevel)
-                }
+                onValueChange={(value) => setErrorCorrectionLevel(value as QrErrorCorrectionLevel)}
               >
                 <SelectTrigger id="qr-error-correction">
                   <SelectValue placeholder="Choose level" />
@@ -254,9 +251,8 @@ export function QrCodeGenerator() {
               </Select>
               <p className="text-xs text-muted-foreground">
                 {
-                  ERROR_CORRECTION_OPTIONS.find(
-                    (option) => option.value === errorCorrectionLevel
-                  )?.description
+                  ERROR_CORRECTION_OPTIONS.find((option) => option.value === errorCorrectionLevel)
+                    ?.description
                 }
               </p>
             </div>
@@ -265,7 +261,9 @@ export function QrCodeGenerator() {
               <span className="text-sm font-medium">Colors</span>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Foreground</span>
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                    Foreground
+                  </span>
                   <ColorPicker
                     label="Foreground"
                     value={foregroundColor}
@@ -273,7 +271,9 @@ export function QrCodeGenerator() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">Background</span>
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                    Background
+                  </span>
                   <ColorPicker
                     label="Background"
                     value={backgroundColor}
@@ -311,23 +311,7 @@ export function QrCodeGenerator() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copy.copyToClipboard(content.trim())}
-              variant={copy.isCopied ? 'default' : 'outline'}
-              disabled={!content.trim()}
-            >
-              {copy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy content
-                </>
-              )}
-            </Button>
+            <CopyButton text={content.trim()} label="Copy content" disabled={!content.trim()} />
           </div>
         </CardContent>
       </Card>
@@ -349,7 +333,6 @@ export function QrCodeGenerator() {
           {generated ? (
             <>
               <div className="flex justify-center rounded-xl border bg-muted/20 p-4 sm:p-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={generated.pngDataUrl}
                   alt="Generated QR code"
@@ -380,7 +363,8 @@ export function QrCodeGenerator() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6 text-sm text-muted-foreground">
-          QR codes are generated locally in your browser. For best scanner compatibility, keep strong contrast, a light background, and enough margin around the code.
+          QR codes are generated locally in your browser. For best scanner compatibility, keep
+          strong contrast, a light background, and enough margin around the code.
         </CardContent>
       </Card>
     </div>

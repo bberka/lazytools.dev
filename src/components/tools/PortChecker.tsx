@@ -53,13 +53,7 @@ export function PortChecker() {
       const status = await probePort(plan.host, target.port, { signal: controller.signal });
       if (controller.signal.aborted) return;
 
-      setScanResults((prev) =>
-        prev.map((p) =>
-          p.port === target.port
-            ? { ...p, status }
-            : p
-        )
-      );
+      setScanResults((prev) => prev.map((p) => (p.port === target.port ? { ...p, status } : p)));
     }
   };
 
@@ -94,7 +88,9 @@ export function PortChecker() {
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>This tool has limited capabilities due to browser security restrictions</li>
                 <li>Only HTTP/HTTPS ports can be reliably checked</li>
-                <li>Most ports will show as &quot;filtered&quot; rather than definitively open/closed</li>
+                <li>
+                  Most ports will show as &quot;filtered&quot; rather than definitively open/closed
+                </li>
                 <li>For comprehensive port scanning, use dedicated tools like nmap</li>
                 <li>Only scan systems you own or have permission to test</li>
               </ul>
@@ -130,14 +126,14 @@ export function PortChecker() {
             <Radar className="h-5 w-5" />
             Port Scanner
           </CardTitle>
-          <CardDescription>
-            Check if ports are open on a target host
-          </CardDescription>
+          <CardDescription>Check if ports are open on a target host</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div>
-              <label htmlFor={hostnameId} className="text-sm font-medium mb-2 block">Hostname or IP Address</label>
+              <label htmlFor={hostnameId} className="text-sm font-medium mb-2 block">
+                Hostname or IP Address
+              </label>
               <Input
                 id={hostnameId}
                 type="text"
@@ -161,9 +157,7 @@ export function PortChecker() {
                   placeholder="e.g., 80,443,8000-8010"
                   className="font-mono"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Maximum 50 ports per scan
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Maximum 50 ports per scan</p>
               </div>
             )}
           </div>
@@ -192,7 +186,10 @@ export function PortChecker() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -268,11 +265,10 @@ export function PortChecker() {
                     )}
                     <div>
                       <div className="font-medium">
-                        Port {result.port} <span className="text-muted-foreground">- {result.service}</span>
+                        Port {result.port}{' '}
+                        <span className="text-muted-foreground">- {result.service}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {result.protocol}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{result.protocol}</div>
                     </div>
                   </div>
                   <div>
@@ -281,10 +277,10 @@ export function PortChecker() {
                         result.status === 'open'
                           ? 'text-green-600 dark:text-green-500'
                           : result.status === 'closed'
-                          ? 'text-red-600 dark:text-red-500'
-                          : result.status === 'filtered'
-                          ? 'text-yellow-600 dark:text-yellow-500'
-                          : 'text-blue-600 dark:text-blue-500'
+                            ? 'text-red-600 dark:text-red-500'
+                            : result.status === 'filtered'
+                              ? 'text-yellow-600 dark:text-yellow-500'
+                              : 'text-blue-600 dark:text-blue-500'
                       }`}
                     >
                       {result.status.charAt(0).toUpperCase() + result.status.slice(1)}
@@ -299,10 +295,22 @@ export function PortChecker() {
 
       {/* Status Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground px-1">
-        <span><CheckCircle className="inline h-3.5 w-3.5 text-green-600 dark:text-green-500 mr-1" /><strong>Open</strong> – Port responded</span>
-        <span><XCircle className="inline h-3.5 w-3.5 text-red-600 dark:text-red-500 mr-1" /><strong>Closed</strong> – Connection refused</span>
-        <span><AlertCircle className="inline h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 mr-1" /><strong>Filtered</strong> – No response / blocked</span>
-        <span><Loader2 className="inline h-3.5 w-3.5 text-blue-600 dark:text-blue-500 mr-1" /><strong>Checking</strong> – Testing port</span>
+        <span>
+          <CheckCircle className="inline h-3.5 w-3.5 text-green-600 dark:text-green-500 mr-1" />
+          <strong>Open</strong> – Port responded
+        </span>
+        <span>
+          <XCircle className="inline h-3.5 w-3.5 text-red-600 dark:text-red-500 mr-1" />
+          <strong>Closed</strong> – Connection refused
+        </span>
+        <span>
+          <AlertCircle className="inline h-3.5 w-3.5 text-yellow-600 dark:text-yellow-500 mr-1" />
+          <strong>Filtered</strong> – No response / blocked
+        </span>
+        <span>
+          <Loader2 className="inline h-3.5 w-3.5 text-blue-600 dark:text-blue-500 mr-1" />
+          <strong>Checking</strong> – Testing port
+        </span>
       </div>
     </div>
   );

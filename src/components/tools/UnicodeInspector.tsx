@@ -3,9 +3,7 @@
 import { Fragment, useDeferredValue, useMemo, useState } from 'react';
 import {
   ArrowUp,
-  Check,
   CircleCheck,
-  Copy,
   Highlighter,
   ScanSearch,
   Table2,
@@ -14,13 +12,19 @@ import {
   WandSparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import {
   CHAR_CLASSES,
   CLASS_INFO,
@@ -34,7 +38,11 @@ import {
 
 type NormalizationChoice = NormalizationForm | 'none';
 
-const NORMALIZATION_OPTIONS: ReadonlyArray<{ value: NormalizationChoice; label: string; hint: string }> = [
+const NORMALIZATION_OPTIONS: ReadonlyArray<{
+  value: NormalizationChoice;
+  label: string;
+  hint: string;
+}> = [
   { value: 'none', label: 'None', hint: 'Leave the characters as they are.' },
   {
     value: 'NFC',
@@ -102,10 +110,15 @@ function describeCleaning(
   steps: { removeInvisible: boolean; replaceSpaces: boolean; normalization: NormalizationChoice }
 ): string {
   const parts: string[] = [];
-  if (steps.removeInvisible) parts.push(`${count(result.removed, 'invisible character', 'invisible characters')} removed`);
+  if (steps.removeInvisible)
+    parts.push(`${count(result.removed, 'invisible character', 'invisible characters')} removed`);
   if (steps.replaceSpaces) parts.push(`${count(result.replaced, 'space', 'spaces')} replaced`);
   if (steps.normalization !== 'none') {
-    parts.push(result.normalizationChanged ? `normalised to ${steps.normalization}` : `already ${steps.normalization}`);
+    parts.push(
+      result.normalizationChanged
+        ? `normalised to ${steps.normalization}`
+        : `already ${steps.normalization}`
+    );
   }
   return parts.length > 0 ? parts.join(', ') : 'No cleanup step selected';
 }
@@ -118,7 +131,6 @@ export function UnicodeInspector() {
   const [keepScriptJoiners, setKeepScriptJoiners] = useState(false);
   const [replaceSpaces, setReplaceSpaces] = useState(true);
   const [normalization, setNormalization] = useState<NormalizationChoice>('none');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Large pastes should not make typing feel slow.
   const deferredText = useDeferredValue(text);
@@ -128,7 +140,8 @@ export function UnicodeInspector() {
     [deferredText, onlySpecial, markWhitespace]
   );
   const cleaned = useMemo(
-    () => cleanText(deferredText, { removeInvisible, replaceSpaces, normalization, keepScriptJoiners }),
+    () =>
+      cleanText(deferredText, { removeInvisible, replaceSpaces, normalization, keepScriptJoiners }),
     [deferredText, removeInvisible, replaceSpaces, normalization, keepScriptJoiners]
   );
 
@@ -149,7 +162,10 @@ export function UnicodeInspector() {
     {
       label: 'Invisible or suspicious',
       value: stats.flagged,
-      hint: stats.emojiParts > 0 ? `plus ${stats.emojiParts} in emoji sequences` : 'hidden or look-alike characters',
+      hint:
+        stats.emojiParts > 0
+          ? `plus ${stats.emojiParts} in emoji sequences`
+          : 'hidden or look-alike characters',
       alert: stats.flagged > 0,
     },
   ];
@@ -167,7 +183,8 @@ export function UnicodeInspector() {
             Text to Inspect
           </CardTitle>
           <CardDescription>
-            Paste text to find zero-width, look-alike and control characters. It never leaves your browser.
+            Paste text to find zero-width, look-alike and control characters. It never leaves your
+            browser.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -228,37 +245,45 @@ export function UnicodeInspector() {
 
               {stats.graphemeMethod === 'approximate' && (
                 <p className="text-xs text-muted-foreground">
-                  Intl.Segmenter is not available in this browser, so the grapheme cluster count is an estimate.
+                  Intl.Segmenter is not available in this browser, so the grapheme cluster count is
+                  an estimate.
                 </p>
               )}
 
               {stats.flagged === 0 ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+                <output className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CircleCheck className="h-4 w-4 shrink-0 text-primary" />
                   No invisible or suspicious characters found.
-                </p>
+                </output>
               ) : (
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Invisible characters by class">
+                <fieldset
+                  className="min-w-0 flex flex-wrap gap-2"
+                  aria-label="Invisible characters by class"
+                >
                   {CHAR_CLASSES.filter((name) => (stats.byClass[name] ?? 0) > 0).map((name) => (
-                    <Badge key={name} variant="outline" title={CLASS_INFO[name].description} className="gap-1.5 font-normal">
+                    <Badge
+                      key={name}
+                      variant="outline"
+                      title={CLASS_INFO[name].description}
+                      className="gap-1.5 font-normal"
+                    >
                       {CLASS_INFO[name].label}
                       <span className="font-semibold">{stats.byClass[name]}</span>
                     </Badge>
                   ))}
-                </div>
+                </fieldset>
               )}
 
               {inspection.hiddenTagText && (
-                <div
-                  role="status"
-                  className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-                >
+                <output className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="min-w-0">
                     Tag characters in this text spell out hidden ASCII:{' '}
-                    <code className="break-all font-mono font-semibold">{inspection.hiddenTagText}</code>
+                    <code className="break-all font-mono font-semibold">
+                      {inspection.hiddenTagText}
+                    </code>
                   </p>
-                </div>
+                </output>
               )}
             </CardContent>
           </Card>
@@ -270,7 +295,8 @@ export function UnicodeInspector() {
                 Highlighted View
               </CardTitle>
               <CardDescription>
-                Invisible characters appear as labelled badges. Hover a badge for the code point and name.
+                Invisible characters appear as labelled badges. Hover a badge for the code point and
+                name.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -279,8 +305,8 @@ export function UnicodeInspector() {
                 checked={markWhitespace}
                 onCheckedChange={setMarkWhitespace}
               />
-              <div
-                role="region"
+              <section
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
                 tabIndex={0}
                 aria-label="Text with invisible characters marked"
                 className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md border border-input bg-muted/30 p-3 font-mono text-sm leading-7 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -300,12 +326,13 @@ export function UnicodeInspector() {
                     </Fragment>
                   )
                 )}
-              </div>
+              </section>
               {inspection.highlightTruncated && (
-                <p className="text-xs text-muted-foreground" role="status">
-                  The view stops after the first {inspection.highlight.filter((s) => s.kind === 'mark').length.toLocaleString()}{' '}
+                <output className="block text-xs text-muted-foreground">
+                  The view stops after the first{' '}
+                  {inspection.highlight.filter((s) => s.kind === 'mark').length.toLocaleString()}{' '}
                   marked characters. The statistics still cover the whole text.
-                </p>
+                </output>
               )}
             </CardContent>
           </Card>
@@ -319,7 +346,7 @@ export function UnicodeInspector() {
               <CardDescription>Choose what to fix. The result updates as you type.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                 <div className="space-y-3">
                   <Checkbox
                     label="Remove invisible characters"
@@ -327,8 +354,8 @@ export function UnicodeInspector() {
                     onCheckedChange={setRemoveInvisible}
                   />
                   <p className="pl-7 text-xs text-muted-foreground">
-                    Zero-width, bidirectional and control characters, soft hyphens, stray variation selectors and
-                    tags. Joiners and selectors inside emoji are kept.
+                    Zero-width, bidirectional and control characters, soft hyphens, stray variation
+                    selectors and tags. Joiners and selectors inside emoji are kept.
                   </p>
                   <div className="pl-7">
                     <Checkbox
@@ -349,7 +376,10 @@ export function UnicodeInspector() {
                   <label htmlFor="unicode-normalization" className="text-sm font-medium">
                     Normalise
                   </label>
-                  <Select value={normalization} onValueChange={(value) => setNormalization(value as NormalizationChoice)}>
+                  <Select
+                    value={normalization}
+                    onValueChange={(value) => setNormalization(value as NormalizationChoice)}
+                  >
                     <SelectTrigger id="unicode-normalization">
                       <SelectValue placeholder="Select a normalisation form" />
                     </SelectTrigger>
@@ -370,9 +400,9 @@ export function UnicodeInspector() {
                   <label htmlFor="unicode-cleaned-text" className="text-sm font-medium">
                     Cleaned text
                   </label>
-                  <span className="text-xs text-muted-foreground" role="status">
+                  <output className="text-xs text-muted-foreground">
                     {describeCleaning(cleaned, { removeInvisible, replaceSpaces, normalization })}
-                  </span>
+                  </output>
                 </div>
                 <Textarea
                   id="unicode-cleaned-text"
@@ -383,16 +413,18 @@ export function UnicodeInspector() {
                   className="bg-muted/30 font-mono text-sm"
                 />
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => copyToClipboard(cleaned.text)}
+                  <CopyButton
+                    text={cleaned.text}
+                    label="Copy Result"
                     disabled={!cleaned.text}
                     size="sm"
-                    variant={isCopied ? 'default' : 'outline'}
+                  />
+                  <Button
+                    onClick={handleUseResult}
+                    disabled={!cleaned.changed}
+                    size="sm"
+                    variant="outline"
                   >
-                    {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                    {isCopied ? 'Copied' : 'Copy Result'}
-                  </Button>
-                  <Button onClick={handleUseResult} disabled={!cleaned.changed} size="sm" variant="outline">
                     <ArrowUp className="mr-2 h-4 w-4" />
                     Use as Input
                   </Button>
@@ -408,7 +440,8 @@ export function UnicodeInspector() {
                 Characters
               </CardTitle>
               <CardDescription>
-                Every code point with its UTF-8 bytes, UTF-16 code units, HTML entity and JavaScript escape.
+                Every code point with its UTF-8 bytes, UTF-16 code units, HTML entity and JavaScript
+                escape.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -419,18 +452,33 @@ export function UnicodeInspector() {
               />
 
               {inspection.rows.length === 0 ? (
-                <p className="flex items-center gap-2 py-4 text-sm text-muted-foreground" role="status">
+                <output className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
                   <CircleCheck className="h-4 w-4 shrink-0 text-primary" />
                   No invisible or special characters found.
-                </p>
+                </output>
               ) : (
                 <div className="overflow-x-auto rounded-md border">
                   <table className="w-full min-w-[44rem] border-collapse text-left text-xs">
-                    <caption className="sr-only">Code points of the text with their encodings</caption>
+                    <caption className="sr-only">
+                      Code points of the text with their encodings
+                    </caption>
                     <thead className="bg-muted/50 text-muted-foreground">
                       <tr>
-                        {['#', 'Char', 'Code point', 'Name', 'UTF-8', 'UTF-16', 'HTML', 'JavaScript'].map((heading) => (
-                          <th key={heading} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">
+                        {[
+                          '#',
+                          'Char',
+                          'Code point',
+                          'Name',
+                          'UTF-8',
+                          'UTF-16',
+                          'HTML',
+                          'JavaScript',
+                        ].map((heading) => (
+                          <th
+                            key={heading}
+                            scope="col"
+                            className="whitespace-nowrap px-3 py-2 font-medium"
+                          >
                             {heading}
                           </th>
                         ))}
@@ -440,9 +488,14 @@ export function UnicodeInspector() {
                       {inspection.rows.map((row) => (
                         <tr
                           key={row.position}
-                          className={cn('border-t', row.flagged && !row.emojiPart && 'bg-primary/5')}
+                          className={cn(
+                            'border-t',
+                            row.flagged && !row.emojiPart && 'bg-primary/5'
+                          )}
                         >
-                          <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{row.position}</td>
+                          <td className="px-3 py-1.5 tabular-nums text-muted-foreground">
+                            {row.position}
+                          </td>
                           <td className="px-3 py-1.5">
                             {row.badge ? (
                               <CharBadge
@@ -458,7 +511,9 @@ export function UnicodeInspector() {
                           <td className="whitespace-nowrap px-3 py-1.5 font-mono">{row.hex}</td>
                           <td className="px-3 py-1.5">
                             {row.label}
-                            {row.emojiPart && <span className="text-muted-foreground"> (in emoji sequence)</span>}
+                            {row.emojiPart && (
+                              <span className="text-muted-foreground"> (in emoji sequence)</span>
+                            )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-1.5 font-mono">{row.utf8}</td>
                           <td className="whitespace-nowrap px-3 py-1.5 font-mono">{row.utf16}</td>
@@ -472,11 +527,11 @@ export function UnicodeInspector() {
               )}
 
               {inspection.rowsTruncated && (
-                <p className="text-xs text-muted-foreground" role="status">
+                <output className="block text-xs text-muted-foreground">
                   Showing the first {inspection.rows.length.toLocaleString()} of{' '}
-                  {inspection.totalRows.toLocaleString()} rows. Use the filter above to list only the special
-                  characters, or paste a shorter excerpt.
-                </p>
+                  {inspection.totalRows.toLocaleString()} rows. Use the filter above to list only
+                  the special characters, or paste a shorter excerpt.
+                </output>
               )}
             </CardContent>
           </Card>

@@ -84,7 +84,7 @@ export function DnsLookup() {
 
   const copyAllRecords = () => {
     if (!dnsResult) return;
-    const text = dnsResult.records.map(r => r.data).join('\n');
+    const text = dnsResult.records.map((r) => r.data).join('\n');
     handleCopy(text, 'all-records');
   };
 
@@ -97,9 +97,7 @@ export function DnsLookup() {
             <Server className="h-5 w-5" />
             DNS Records Lookup
           </CardTitle>
-          <CardDescription>
-            Query DNS records for any domain
-          </CardDescription>
+          <CardDescription>Query DNS records for any domain</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -112,11 +110,14 @@ export function DnsLookup() {
               className="flex-1 font-mono"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isLoading) {
-                  handleLookup();
+                  void handleLookup();
                 }
               }}
             />
-            <Select value={recordType} onValueChange={(value) => setRecordType(value as DnsRecordType)}>
+            <Select
+              value={recordType}
+              onValueChange={(value) => setRecordType(value as DnsRecordType)}
+            >
               <SelectTrigger className="w-full sm:w-32" aria-label="Record Type">
                 <SelectValue placeholder="Record type" />
               </SelectTrigger>
@@ -156,7 +157,10 @@ export function DnsLookup() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -176,17 +180,18 @@ export function DnsLookup() {
                 onClick={copyAllRecords}
                 aria-label="Copy all records"
               >
-                {copiedItem === 'all-records' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copiedItem === 'all-records' ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </TooltipSimple>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {dnsResult.records.map((record, index) => (
-                <div
-                  key={index}
-                  className="p-3 rounded-md bg-muted border border-input space-y-2"
-                >
+                <div key={index} className="p-3 rounded-md bg-muted border border-input space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -212,14 +217,16 @@ export function DnsLookup() {
                         aria-label="Copy record"
                         className="shrink-0"
                       >
-                        {copiedItem === `record-${index}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedItem === `record-${index}` ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
                   {record.name && !sameDnsName(record.name, dnsResult.name) && (
-                    <div className="text-xs text-muted-foreground">
-                      Name: {record.name}
-                    </div>
+                    <div className="text-xs text-muted-foreground">Name: {record.name}</div>
                   )}
                 </div>
               ))}
@@ -233,7 +240,13 @@ export function DnsLookup() {
         <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
             <div className="text-primary">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -245,13 +258,27 @@ export function DnsLookup() {
             <div className="text-sm space-y-2">
               <p className="font-medium">DNS Record Types</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li><strong>A</strong> - IPv4 address records</li>
-                <li><strong>AAAA</strong> - IPv6 address records</li>
-                <li><strong>MX</strong> - Mail exchange servers</li>
-                <li><strong>TXT</strong> - Text records (SPF, DKIM, etc.)</li>
-                <li><strong>NS</strong> - Nameserver records</li>
-                <li><strong>CNAME</strong> - Canonical name (alias) records</li>
-                <li><strong>SOA</strong> - Start of authority records</li>
+                <li>
+                  <strong>A</strong> - IPv4 address records
+                </li>
+                <li>
+                  <strong>AAAA</strong> - IPv6 address records
+                </li>
+                <li>
+                  <strong>MX</strong> - Mail exchange servers
+                </li>
+                <li>
+                  <strong>TXT</strong> - Text records (SPF, DKIM, etc.)
+                </li>
+                <li>
+                  <strong>NS</strong> - Nameserver records
+                </li>
+                <li>
+                  <strong>CNAME</strong> - Canonical name (alias) records
+                </li>
+                <li>
+                  <strong>SOA</strong> - Start of authority records
+                </li>
               </ul>
               <p className="text-muted-foreground mt-2">
                 Uses Google DNS-over-HTTPS for secure queries

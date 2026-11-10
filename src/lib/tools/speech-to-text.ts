@@ -53,7 +53,10 @@ export interface RecognizedText {
 }
 
 /** Reads what one `result` event adds: the results from `resultIndex` on, best alternative each. */
-export function readRecognitionResults(event: RecognitionResultsLike, lang = 'en-US'): RecognizedText {
+export function readRecognitionResults(
+  event: RecognitionResultsLike,
+  lang = 'en-US'
+): RecognizedText {
   let finalText = '';
   let interimText = '';
 
@@ -76,8 +79,10 @@ const RECOGNITION_ERROR_MESSAGES: Record<string, string> = {
   'service-not-allowed': 'Speech recognition is blocked or switched off in this browser.',
   'no-speech': 'No speech was detected. Check your microphone and try again.',
   'audio-capture': 'No microphone was found. Connect one and try again.',
-  network: 'The speech recognition service could not be reached. Check your connection and try again.',
-  'language-not-supported': 'The selected language is not supported by speech recognition in this browser.',
+  network:
+    'The speech recognition service could not be reached. Check your connection and try again.',
+  'language-not-supported':
+    'The selected language is not supported by speech recognition in this browser.',
 };
 
 /**

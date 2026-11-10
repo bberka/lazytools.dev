@@ -28,13 +28,20 @@ function toHex(red: number, green: number, blue: number): string {
  * Returns fewer than `maxColors` when the image has fewer distinct colours,
  * and none when it is fully transparent.
  */
-export function extractPalette(pixels: ArrayLike<number>, maxColors = DEFAULT_PALETTE_SIZE): string[] {
+export function extractPalette(
+  pixels: ArrayLike<number>,
+  maxColors = DEFAULT_PALETTE_SIZE
+): string[] {
   const counts = new Map<string, number>();
 
   for (let index = 0; index + 3 < pixels.length; index += 4) {
     if (pixels[index + 3] < MIN_ALPHA) continue;
 
-    const hex = toHex(quantize(pixels[index]), quantize(pixels[index + 1]), quantize(pixels[index + 2]));
+    const hex = toHex(
+      quantize(pixels[index]),
+      quantize(pixels[index + 1]),
+      quantize(pixels[index + 2])
+    );
     counts.set(hex, (counts.get(hex) ?? 0) + 1);
   }
 

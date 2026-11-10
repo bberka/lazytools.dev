@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   BLINDNESS_TYPES,
   applyColorMatrix,
@@ -10,7 +10,13 @@ import {
 const TYPES = Object.keys(BLINDNESS_TYPES) as BlindnessType[];
 
 /** One pixel through the simulation. */
-function simulate(type: BlindnessType, red: number, green: number, blue: number, alpha = 255): number[] {
+function simulate(
+  type: BlindnessType,
+  red: number,
+  green: number,
+  blue: number,
+  alpha = 255
+): number[] {
   const pixel = Uint8ClampedArray.from([red, green, blue, alpha]);
   simulateColorBlindness(pixel, type);
   return Array.from(pixel);
@@ -18,10 +24,12 @@ function simulate(type: BlindnessType, red: number, green: number, blue: number,
 
 function expectWithinOne(actual: number[], expected: number[]) {
   expect(actual).toHaveLength(expected.length);
-  actual.forEach((value, index) => expect(Math.abs(value - expected[index])).toBeLessThanOrEqual(1));
+  actual.forEach((value, index) =>
+    expect(Math.abs(value - expected[index])).toBeLessThanOrEqual(1)
+  );
 }
 
-test.describe('BLINDNESS_TYPES', () => {
+describe('BLINDNESS_TYPES', () => {
   test('lists the nine kinds in the order the tool shows them', () => {
     expect(TYPES).toEqual([
       'normal',
@@ -54,19 +62,23 @@ test.describe('BLINDNESS_TYPES', () => {
   });
 });
 
-test.describe('colorMatrixValues', () => {
+describe('colorMatrixValues', () => {
   test('writes the feColorMatrix rows with alpha untouched', () => {
     const matrix = BLINDNESS_TYPES.protanopia.matrix;
     expect(matrix).not.toBeNull();
     if (!matrix) return;
 
-    expect(colorMatrixValues(matrix)).toBe('0.567 0.433 0 0 0 0.558 0.442 0 0 0 0 0.242 0.758 0 0 0 0 0 1 0');
+    expect(colorMatrixValues(matrix)).toBe(
+      '0.567 0.433 0 0 0 0.558 0.442 0 0 0 0 0.242 0.758 0 0 0 0 0 1 0'
+    );
   });
 });
 
-test.describe('applyColorMatrix', () => {
+describe('applyColorMatrix', () => {
   test('the identity matrix returns every 8-bit value unchanged', () => {
-    const before = Uint8ClampedArray.from({ length: 256 * 4 }, (_, index) => (index % 4 === 3 ? 255 : index >> 2));
+    const before = Uint8ClampedArray.from({ length: 256 * 4 }, (_, index) =>
+      index % 4 === 3 ? 255 : index >> 2
+    );
     const after = before.slice();
 
     applyColorMatrix(after, [1, 0, 0, 0, 1, 0, 0, 0, 1]);
@@ -91,7 +103,7 @@ test.describe('applyColorMatrix', () => {
   });
 });
 
-test.describe('simulateColorBlindness', () => {
+describe('simulateColorBlindness', () => {
   test('normal vision changes nothing', () => {
     expect(simulate('normal', 12, 200, 99, 40)).toEqual([12, 200, 99, 40]);
   });

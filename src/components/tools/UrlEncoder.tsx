@@ -5,24 +5,17 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { Copy, Check, Trash2, ArrowLeftRight, Link, Unlink } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Link, Unlink } from 'lucide-react';
 import { convertUrlComponent, type UrlCodecMode } from '@/lib/tools/url-encoder';
+import { CopyButton } from '@/components/CopyButton';
 
 type Mode = UrlCodecMode;
 
 export function UrlEncoder() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<Mode>('encode');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const { output, error } = useMemo(() => convertUrlComponent(input, mode), [input, mode]);
-
-  const handleCopy = async () => {
-    if (output) {
-      await copyToClipboard(output);
-    }
-  };
 
   const handleSwap = () => {
     setInput(output);
@@ -61,7 +54,11 @@ export function UrlEncoder() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={mode === 'encode' ? 'https://example.com/search?q=hello world' : 'https%3A%2F%2Fexample.com'}
+            placeholder={
+              mode === 'encode'
+                ? 'https://example.com/search?q=hello world'
+                : 'https%3A%2F%2Fexample.com'
+            }
             aria-label={mode === 'encode' ? 'URL to encode' : 'Encoded URL to decode'}
             rows={8}
             className="font-mono"
@@ -70,7 +67,10 @@ export function UrlEncoder() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -80,33 +80,24 @@ export function UrlEncoder() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={handleCopy}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

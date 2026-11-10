@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decodeHtmlEntities, encodeHtmlEntities } from '@/lib/tools/html-encoder';
 
 // These tests run without a DOM, so they cover the built-in table (HTML 4
 // names plus &apos;) and the reference syntax. In a browser, names outside the
 // table are additionally looked up through the DOM.
 
-test.describe('encodeHtmlEntities', () => {
+describe('encodeHtmlEntities', () => {
   test('escapes the five characters that are unsafe in HTML', () => {
     expect(encodeHtmlEntities('<div class="a">Tom & Jerry\'s</div>')).toBe(
       '&lt;div class=&quot;a&quot;&gt;Tom &amp; Jerry&#39;s&lt;/div&gt;'
@@ -23,7 +23,7 @@ test.describe('encodeHtmlEntities', () => {
   });
 });
 
-test.describe('decodeHtmlEntities', () => {
+describe('decodeHtmlEntities', () => {
   test('reverses encodeHtmlEntities', () => {
     for (const text of ['<a href="x?a=1&b=2">it\'s</a>', '&amp;', '&&&', '5 < 6 > 4', '']) {
       expect(decodeHtmlEntities(encodeHtmlEntities(text))).toBe(text);
@@ -64,8 +64,12 @@ test.describe('decodeHtmlEntities', () => {
     expect(decodeHtmlEntities('&nbsp;')).toBe(' ');
     expect(decodeHtmlEntities('&copy; &reg; &trade; &euro; &pound; &yen;')).toBe('© ® ™ € £ ¥');
     expect(decodeHtmlEntities('&eacute;&Eacute;&uuml;&szlig;&ntilde;&yuml;')).toBe('éÉüßñÿ');
-    expect(decodeHtmlEntities('&mdash;&ndash;&hellip;&lsquo;&rsquo;&ldquo;&rdquo;')).toBe('—–…‘’“”');
-    expect(decodeHtmlEntities('&alpha;&Omega;&pi;&rarr;&hArr;&ne;&le;&infin;&hearts;')).toBe('αΩπ→⇔≠≤∞♥');
+    expect(decodeHtmlEntities('&mdash;&ndash;&hellip;&lsquo;&rsquo;&ldquo;&rdquo;')).toBe(
+      '—–…‘’“”'
+    );
+    expect(decodeHtmlEntities('&alpha;&Omega;&pi;&rarr;&hArr;&ne;&le;&infin;&hearts;')).toBe(
+      'αΩπ→⇔≠≤∞♥'
+    );
     expect(decodeHtmlEntities('&lang;&rang;')).toBe('⟨⟩');
   });
 
@@ -91,7 +95,9 @@ test.describe('decodeHtmlEntities', () => {
   test('leaves text that is not a reference untouched', () => {
     expect(decodeHtmlEntities('')).toBe('');
     expect(decodeHtmlEntities('a & b && c')).toBe('a & b && c');
-    expect(decodeHtmlEntities('&; &# &#x; &#xZZ; &unknownname;')).toBe('&; &# &#x; &#xZZ; &unknownname;');
+    expect(decodeHtmlEntities('&; &# &#x; &#xZZ; &unknownname;')).toBe(
+      '&; &# &#x; &#xZZ; &unknownname;'
+    );
     expect(decodeHtmlEntities('Q&A, R&D')).toBe('Q&A, R&D');
     expect(decodeHtmlEntities('?a=1&b=2&c=3')).toBe('?a=1&b=2&c=3');
   });

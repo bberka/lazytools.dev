@@ -64,22 +64,23 @@ function ipClassOf(firstOctet: number): string {
 }
 
 // Special-purpose blocks, most specific first. An address in none of them is public.
-const SPECIAL_BLOCKS: ReadonlyArray<readonly [network: IPv4Octets, prefix: number, label: string]> = [
-  [[255, 255, 255, 255], 32, 'Broadcast'],
-  [[0, 0, 0, 0], 8, 'Current network'],
-  [[10, 0, 0, 0], 8, 'Private (Class A)'],
-  [[100, 64, 0, 0], 10, 'Shared address space (CGNAT)'],
-  [[127, 0, 0, 0], 8, 'Loopback'],
-  [[169, 254, 0, 0], 16, 'APIPA (Link-local)'],
-  [[172, 16, 0, 0], 12, 'Private (Class B)'],
-  [[192, 0, 2, 0], 24, 'Documentation (TEST-NET-1)'],
-  [[192, 168, 0, 0], 16, 'Private (Class C)'],
-  [[198, 18, 0, 0], 15, 'Benchmarking'],
-  [[198, 51, 100, 0], 24, 'Documentation (TEST-NET-2)'],
-  [[203, 0, 113, 0], 24, 'Documentation (TEST-NET-3)'],
-  [[224, 0, 0, 0], 4, 'Multicast'],
-  [[240, 0, 0, 0], 4, 'Reserved'],
-];
+const SPECIAL_BLOCKS: ReadonlyArray<readonly [network: IPv4Octets, prefix: number, label: string]> =
+  [
+    [[255, 255, 255, 255], 32, 'Broadcast'],
+    [[0, 0, 0, 0], 8, 'Current network'],
+    [[10, 0, 0, 0], 8, 'Private (Class A)'],
+    [[100, 64, 0, 0], 10, 'Shared address space (CGNAT)'],
+    [[127, 0, 0, 0], 8, 'Loopback'],
+    [[169, 254, 0, 0], 16, 'APIPA (Link-local)'],
+    [[172, 16, 0, 0], 12, 'Private (Class B)'],
+    [[192, 0, 2, 0], 24, 'Documentation (TEST-NET-1)'],
+    [[192, 168, 0, 0], 16, 'Private (Class C)'],
+    [[198, 18, 0, 0], 15, 'Benchmarking'],
+    [[198, 51, 100, 0], 24, 'Documentation (TEST-NET-2)'],
+    [[203, 0, 113, 0], 24, 'Documentation (TEST-NET-3)'],
+    [[224, 0, 0, 0], 4, 'Multicast'],
+    [[240, 0, 0, 0], 4, 'Reserved'],
+  ];
 
 function ipTypeOf(address: number): string {
   for (const [network, prefix, label] of SPECIAL_BLOCKS) {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   downloadBlob,
   downloadBytes,
@@ -20,7 +20,7 @@ const TB = 1024 * GB;
 
 const file = (name: string, type = '', size = 0) => ({ name, type, size });
 
-test.describe('formatBytes', () => {
+describe('formatBytes', () => {
   test('labels whole bytes below 1 KB', () => {
     expect(formatBytes(0)).toBe('0 Bytes');
     expect(formatBytes(1)).toBe('1 Byte');
@@ -106,7 +106,7 @@ test.describe('formatBytes', () => {
   });
 });
 
-test.describe('file names', () => {
+describe('file names', () => {
   test('splitFileName splits at the last dot', () => {
     expect(splitFileName('photo.jpg')).toEqual({ base: 'photo', extension: 'jpg' });
     expect(splitFileName('photo.final.JPG')).toEqual({ base: 'photo.final', extension: 'JPG' });
@@ -143,7 +143,9 @@ test.describe('file names', () => {
   });
 
   test('outputFileName puts the suffix before the extension', () => {
-    expect(outputFileName('photo.jpg', { suffix: '-clean', extension: 'png' })).toBe('photo-clean.png');
+    expect(outputFileName('photo.jpg', { suffix: '-clean', extension: 'png' })).toBe(
+      'photo-clean.png'
+    );
     expect(outputFileName('photo.jpg', { prefix: 'x-', suffix: '-y' })).toBe('x-photo-y.jpg');
   });
 
@@ -172,7 +174,7 @@ test.describe('file names', () => {
   });
 });
 
-test.describe('matchesAccept', () => {
+describe('matchesAccept', () => {
   test('accepts everything when there is no list', () => {
     expect(matchesAccept(file('anything.bin'))).toBe(true);
     expect(matchesAccept(file('anything.bin'), '')).toBe(true);
@@ -209,10 +211,12 @@ test.describe('matchesAccept', () => {
   });
 });
 
-test.describe('validateFile', () => {
+describe('validateFile', () => {
   test('returns null for a file that passes', () => {
     expect(validateFile(file('a.png', 'image/png', 10))).toBeNull();
-    expect(validateFile(file('a.png', 'image/png', 10), { accept: 'image/*', maxSize: 10 })).toBeNull();
+    expect(
+      validateFile(file('a.png', 'image/png', 10), { accept: 'image/*', maxSize: 10 })
+    ).toBeNull();
   });
 
   test('rejects a wrong type and names what is accepted', () => {
@@ -245,17 +249,24 @@ test.describe('validateFile', () => {
   });
 
   test('allows a file exactly at the size limit', () => {
-    expect(validateFile(file('a.pdf', 'application/pdf', 10 * MB), { maxSize: 10 * MB })).toBeNull();
-    expect(validateFile(file('a.pdf', 'application/pdf', 10 * MB + 1), { maxSize: 10 * MB })?.reason).toBe('size');
+    expect(
+      validateFile(file('a.pdf', 'application/pdf', 10 * MB), { maxSize: 10 * MB })
+    ).toBeNull();
+    expect(
+      validateFile(file('a.pdf', 'application/pdf', 10 * MB + 1), { maxSize: 10 * MB })?.reason
+    ).toBe('size');
   });
 
   test('reports the type before the size', () => {
-    const rejection = validateFile(file('huge.txt', 'text/plain', GB), { accept: 'image/*', maxSize: MB });
+    const rejection = validateFile(file('huge.txt', 'text/plain', GB), {
+      accept: 'image/*',
+      maxSize: MB,
+    });
     expect(rejection?.reason).toBe('type');
   });
 });
 
-test.describe('validateFiles', () => {
+describe('validateFiles', () => {
   const rules = { accept: 'image/*', maxSize: MB };
   const photo = file('photo.jpg', 'image/jpeg', 1000);
   const icon = file('icon.png', 'image/png', 2000);
@@ -264,7 +275,11 @@ test.describe('validateFiles', () => {
   const sheet = file('sheet.csv', 'text/csv', 10);
 
   test('accepts everything when nothing is wrong', () => {
-    expect(validateFiles([photo, icon], rules)).toEqual({ accepted: [photo, icon], rejected: [], error: null });
+    expect(validateFiles([photo, icon], rules)).toEqual({
+      accepted: [photo, icon],
+      rejected: [],
+      error: null,
+    });
     expect(validateFiles([], rules)).toEqual({ accepted: [], rejected: [], error: null });
   });
 
@@ -296,7 +311,7 @@ test.describe('validateFiles', () => {
 
 // The download functions only reach for `document`, `URL` and `setTimeout`,
 // so hand-written stand-ins are enough to check what they do with them.
-test.describe('downloads', () => {
+describe('downloads', () => {
   interface FakeBrowser {
     /** Every link click, with whether the link was in the document at the time. */
     clicks: Array<{ href: string; download: string; attached: boolean }>;
@@ -341,7 +356,11 @@ test.describe('downloads', () => {
           style: {},
           click() {
             if (browser.failClick) throw new Error('click failed');
-            browser.clicks.push({ href: link.href, download: link.download, attached: browser.attached > 0 });
+            browser.clicks.push({
+              href: link.href,
+              download: link.download,
+              attached: browser.attached > 0,
+            });
           },
           remove() {
             browser.attached -= 1;
@@ -384,7 +403,9 @@ test.describe('downloads', () => {
     const browser = withFakeBrowser(() => downloadBlob(blob, 'images.zip'));
 
     expect(browser.blobs).toEqual([blob]);
-    expect(browser.clicks).toEqual([{ href: 'blob:fake/1', download: 'images.zip', attached: true }]);
+    expect(browser.clicks).toEqual([
+      { href: 'blob:fake/1', download: 'images.zip', attached: true },
+    ]);
     expect(browser.attached).toBe(0);
   });
 
@@ -433,9 +454,16 @@ test.describe('downloads', () => {
       downloadBytes(bytes.buffer, 'out.bin');
     });
 
-    expect(browser.blobs.map((blob) => blob.type)).toEqual(['application/pdf', 'application/octet-stream']);
-    expect(Array.from(new Uint8Array(await browser.blobs[0].arrayBuffer()))).toEqual([37, 80, 68, 70]);
-    expect(Array.from(new Uint8Array(await browser.blobs[1].arrayBuffer()))).toEqual([37, 80, 68, 70]);
+    expect(browser.blobs.map((blob) => blob.type)).toEqual([
+      'application/pdf',
+      'application/octet-stream',
+    ]);
+    expect(Array.from(new Uint8Array(await browser.blobs[0].arrayBuffer()))).toEqual([
+      37, 80, 68, 70,
+    ]);
+    expect(Array.from(new Uint8Array(await browser.blobs[1].arrayBuffer()))).toEqual([
+      37, 80, 68, 70,
+    ]);
   });
 
   test('downloadDataUrl links straight to the data URL and makes no object URL', () => {

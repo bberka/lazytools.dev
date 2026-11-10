@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, Dices, Info, KeyRound, Loader2, QrCode, Timer, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  Copy,
+  Dices,
+  Info,
+  KeyRound,
+  Loader2,
+  QrCode,
+  Timer,
+  Trash2,
+} from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,9 +98,10 @@ export function TotpGenerator() {
   const [codes, setCodes] = useState<ComputedCodes | null>(null);
   const [qr, setQr] = useState<RenderedQr | null>(null);
 
-  const secretCopy = useCopyToClipboard();
-
-  const options = useMemo<TotpOptions>(() => ({ algorithm, digits, period }), [algorithm, digits, period]);
+  const options = useMemo<TotpOptions>(
+    () => ({ algorithm, digits, period }),
+    [algorithm, digits, period]
+  );
 
   const hasSecret = secret.trim() !== '';
   const secretCheck = useMemo(() => (hasSecret ? decodeBase32(secret) : null), [hasSecret, secret]);
@@ -114,7 +127,7 @@ export function TotpGenerator() {
     if (!secretIsValid || counter === null) return;
 
     let cancelled = false;
-    computeTotpWindow(secret, options, counter * period * 1000).then((result) => {
+    void computeTotpWindow(secret, options, counter * period * 1000).then((result) => {
       if (!cancelled) setCodes({ key: codesKey, result });
     });
     return () => {
@@ -186,7 +199,8 @@ export function TotpGenerator() {
             Secret and Options
           </CardTitle>
           <CardDescription>
-            Paste a Base32 secret, or generate a random one, to get time-based one-time codes (RFC 6238).
+            Paste a Base32 secret, or generate a random one, to get time-based one-time codes (RFC
+            6238).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -205,7 +219,11 @@ export function TotpGenerator() {
               spellCheck={false}
               aria-invalid={codeError ? true : undefined}
               aria-describedby={codeError ? 'totp-secret-error' : undefined}
-              className={codeError ? 'border-destructive font-mono focus-visible:ring-destructive' : 'font-mono'}
+              className={
+                codeError
+                  ? 'border-destructive font-mono focus-visible:ring-destructive'
+                  : 'font-mono'
+              }
             />
             {codeError && (
               <div
@@ -218,16 +236,20 @@ export function TotpGenerator() {
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Letters A-Z and digits 2-7. Lower case, spaces, hyphens and trailing = padding are fine.
+              Letters A-Z and digits 2-7. Lower case, spaces, hyphens and trailing = padding are
+              fine.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label htmlFor="totp-algorithm" className="text-sm font-medium">
                 Algorithm
               </label>
-              <Select value={algorithm} onValueChange={(value) => setAlgorithm(value as TotpAlgorithm)}>
+              <Select
+                value={algorithm}
+                onValueChange={(value) => setAlgorithm(value as TotpAlgorithm)}
+              >
                 <SelectTrigger id="totp-algorithm">
                   <SelectValue placeholder="Choose algorithm" />
                 </SelectTrigger>
@@ -292,8 +314,9 @@ export function TotpGenerator() {
 
           {usesNonDefaultOptions && (
             <p className="text-xs text-muted-foreground">
-              Many authenticator apps, including Google Authenticator, ignore these settings and always use
-              SHA-1, 6 digits and 30 seconds. Check that your app supports the ones you pick.
+              Many authenticator apps, including Google Authenticator, ignore these settings and
+              always use SHA-1, 6 digits and 30 seconds. Check that your app supports the ones you
+              pick.
             </p>
           )}
 
@@ -302,24 +325,12 @@ export function TotpGenerator() {
               <Dices className="mr-2 h-4 w-4" />
               Generate random secret
             </Button>
-            <Button
+            <CopyButton
+              text={secret.trim()}
+              label="Copy secret"
               type="button"
-              variant={secretCopy.isCopied ? 'default' : 'outline'}
               disabled={!hasSecret}
-              onClick={() => secretCopy.copyToClipboard(secret.trim())}
-            >
-              {secretCopy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy secret
-                </>
-              )}
-            </Button>
+            />
             <Button type="button" variant="outline" onClick={handleClear}>
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
@@ -360,13 +371,18 @@ export function TotpGenerator() {
                     )}
                     data-testid="totp-current-code"
                   >
-                    {currentCodes ? formatCode(currentCodes.current) : digits === 8 ? '---- ----' : '--- ---'}
+                    {currentCodes
+                      ? formatCode(currentCodes.current)
+                      : digits === 8
+                        ? '---- ----'
+                        : '--- ---'}
                   </span>
                   <CopyIconButton text={currentCodes?.current ?? ''} label="Copy current code" />
                 </div>
 
                 <div className="mx-auto max-w-sm space-y-1.5">
                   <div
+                    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a styled countdown bar; <progress> cannot be styled to match
                     role="progressbar"
                     aria-label="Time until the code changes"
                     aria-valuemin={0}
@@ -425,7 +441,8 @@ export function TotpGenerator() {
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>
                     This secret is only {currentCodes.secretBits} bits. RFC 4226 asks for at least{' '}
-                    {MIN_SECRET_BITS} bits, and 160 bits is the usual size. Fine for testing, weak for real use.
+                    {MIN_SECRET_BITS} bits, and 160 bits is the usual size. Fine for testing, weak
+                    for real use.
                   </span>
                 </div>
               )}
@@ -441,11 +458,12 @@ export function TotpGenerator() {
             Authenticator Link and QR Code
           </CardTitle>
           <CardDescription>
-            Add an issuer and account name, then scan the QR code with an authenticator app to import the secret.
+            Add an issuer and account name, then scan the QR code with an authenticator app to
+            import the secret.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="totp-issuer" className="text-sm font-medium">
                 Issuer (optional)
@@ -473,7 +491,7 @@ export function TotpGenerator() {
           </div>
 
           {uri ? (
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-w-0 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">otpauth:// link</span>
@@ -486,15 +504,14 @@ export function TotpGenerator() {
                   {uri}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  With no issuer or account the label reads &ldquo;Account&rdquo;. The link contains your secret,
-                  so treat it like a password.
+                  With no issuer or account the label reads &ldquo;Account&rdquo;. The link contains
+                  your secret, so treat it like a password.
                 </p>
               </div>
 
               <div className="flex items-center justify-center md:justify-end">
                 {qr ? (
                   qr.dataUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={qr.dataUrl}
                       alt="QR code for the otpauth link"
@@ -511,7 +528,9 @@ export function TotpGenerator() {
                       className="flex max-w-[256px] items-start gap-1.5 text-xs text-destructive"
                     >
                       <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <span>The QR code could not be drawn. Try a shorter issuer or account name.</span>
+                      <span>
+                        The QR code could not be drawn. Try a shorter issuer or account name.
+                      </span>
                     </div>
                   )
                 ) : (
@@ -537,9 +556,9 @@ export function TotpGenerator() {
         <CardContent className="flex items-start gap-2 py-4 text-sm text-muted-foreground sm:py-6">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Codes are calculated in your browser with the Web Crypto API, using your device clock. The secret is
-            never sent anywhere or stored, so it is gone when you leave this page. If a code is rejected, check
-            that your device clock is correct.
+            Codes are calculated in your browser with the Web Crypto API, using your device clock.
+            The secret is never sent anywhere or stored, so it is gone when you leave this page. If
+            a code is rejected, check that your device clock is correct.
           </span>
         </CardContent>
       </Card>

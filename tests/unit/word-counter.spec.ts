@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { analyzeText, countCharacters, formatDuration } from '@/lib/tools/word-counter';
 
 const count = (text: string, includeNumbers = true) => analyzeText(text, { includeNumbers });
 
-test.describe('analyzeText', () => {
+describe('analyzeText', () => {
   test('counts an ordinary paragraph', () => {
     const stats = count('The quick brown fox. It jumps over the lazy dog!');
 
@@ -99,7 +99,9 @@ test.describe('analyzeText', () => {
 
   test('counts an e-mail address and a web address as one word each', () => {
     expect(count('Mail ada@example.com or visit https://example.com/docs today').words).toBe(6);
-    expect(count('Mail ada@example.com or visit https://example.com/docs today', false).words).toBe(6);
+    expect(count('Mail ada@example.com or visit https://example.com/docs today', false).words).toBe(
+      6
+    );
     expect(count('See www.example.com/a?b=1&c=2.').words).toBe(2);
     expect(count('See www.example.com/a?b=1&c=2.').longestWord).toBe('www.example.com/a?b=1&c=2');
     expect(count('Write to first.last+tag@mail.example.co.uk, please').longestWord).toBe(
@@ -160,7 +162,7 @@ test.describe('analyzeText', () => {
   });
 });
 
-test.describe('countCharacters', () => {
+describe('countCharacters', () => {
   test('counts plain text by length', () => {
     expect(countCharacters('')).toBe(0);
     expect(countCharacters('hello')).toBe(5);
@@ -176,7 +178,7 @@ test.describe('countCharacters', () => {
   });
 });
 
-test.describe('formatDuration', () => {
+describe('formatDuration', () => {
   test('formats seconds, whole minutes and both', () => {
     expect(formatDuration(0.75)).toBe('45 sec');
     expect(formatDuration(3)).toBe('3 min');

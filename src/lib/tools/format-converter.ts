@@ -37,9 +37,7 @@ export interface ConvertResult {
   error: ConvertError | null;
 }
 
-// ---------------------------------------------------------------------------
 // CSV
-// ---------------------------------------------------------------------------
 
 /**
  * Splits CSV text into rows of cells. A quote opens a quoted field only at
@@ -180,7 +178,7 @@ function csvCell(value: unknown, delimiter: CsvDelimiter): string {
     // A nested list or object has no CSV form; JSON keeps it readable.
     text = stringifyJson(value);
   } else {
-    text = String(value);
+    text = String(value as string | number | boolean | bigint | symbol);
   }
 
   const needsQuotes =
@@ -240,9 +238,7 @@ function dataToCsv(data: unknown, delimiter: CsvDelimiter, useHeaders: boolean):
   return lines.join('\n');
 }
 
-// ---------------------------------------------------------------------------
 // XML
-// ---------------------------------------------------------------------------
 
 /** Keys xml-js gives a meaning to in its compact form; they are not elements. */
 const XML_PROLOG_KEYS = new Set(['_declaration', '_instruction', '_doctype', '_comment']);
@@ -281,7 +277,11 @@ function xmlNamePart(text: string): string {
 function xmlName(key: string, prefixes: ReadonlySet<string>): string {
   const colon = key.indexOf(':');
   const prefix = key.slice(0, colon);
-  if (colon > 0 && key.indexOf(':', colon + 1) === -1 && (prefix === 'xml' || prefixes.has(prefix))) {
+  if (
+    colon > 0 &&
+    key.indexOf(':', colon + 1) === -1 &&
+    (prefix === 'xml' || prefixes.has(prefix))
+  ) {
     return `${prefix}:${xmlNamePart(key.slice(colon + 1))}`;
   }
   return xmlNamePart(key);
@@ -362,9 +362,7 @@ function toXmlDocument(data: unknown): Record<string, unknown> {
   return Object.fromEntries([...prolog, ['root', Object.fromEntries(body)]]);
 }
 
-// ---------------------------------------------------------------------------
 // Readers and writers
-// ---------------------------------------------------------------------------
 
 class LoadError extends Error {}
 
@@ -395,7 +393,11 @@ function describeXmlError(error: unknown): string {
     : firstLine(error, 'Invalid XML');
 }
 
-async function readData(text: string, format: DataFormat, options: Required<ConvertOptions>): Promise<unknown> {
+async function readData(
+  text: string,
+  format: DataFormat,
+  options: Required<ConvertOptions>
+): Promise<unknown> {
   switch (format) {
     case 'json':
       return parseJson(text);
@@ -430,7 +432,11 @@ async function readData(text: string, format: DataFormat, options: Required<Conv
   }
 }
 
-async function writeData(data: unknown, format: DataFormat, options: Required<ConvertOptions>): Promise<string> {
+async function writeData(
+  data: unknown,
+  format: DataFormat,
+  options: Required<ConvertOptions>
+): Promise<string> {
   // An empty YAML document parses to nothing at all; every format has null.
   const value = data === undefined ? null : data;
 

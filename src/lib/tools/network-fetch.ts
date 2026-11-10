@@ -36,7 +36,7 @@ export class RequestTimeoutError extends Error {
   }
 }
 
-export const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 export const defaultFetch: FetchLike = (input, init) => fetch(input, init);
 
@@ -70,9 +70,13 @@ export async function withDeadline<T>(
   }, timeoutMs);
 
   const stopped = new Promise<never>((_, reject) => {
-    controller.signal.addEventListener('abort', () => reject(new Error('The request was cancelled')), {
-      once: true,
-    });
+    controller.signal.addEventListener(
+      'abort',
+      () => reject(new Error('The request was cancelled')),
+      {
+        once: true,
+      }
+    );
   });
   // Whichever side loses the race below must not surface as an unhandled rejection.
   stopped.catch(() => undefined);

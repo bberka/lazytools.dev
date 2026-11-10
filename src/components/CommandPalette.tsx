@@ -3,14 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
-import {
-  Search,
-  Clock,
-  Star,
-  ArrowRight,
-  Settings,
-  type LucideIcon,
-} from 'lucide-react';
+import { Search, Clock, Star, ArrowRight, Settings, type LucideIcon } from 'lucide-react';
 import { toolCatalog } from '@/lib/catalog';
 import {
   APP_COMMANDS,
@@ -31,7 +24,7 @@ import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { TooltipSimple } from './ui/tooltip';
 
 // One row of the list: a tool to open or a command to run
@@ -61,8 +54,11 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   return (
     <TooltipSimple content={tag.name}>
       <span
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an emoji span is named with role="img", the standard way to label an emoji
+        role="img"
+        aria-label={tag.name}
         className={cn(
-          "inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105",
+          'inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105',
           styles.bg,
           styles.text,
           styles.border
@@ -163,21 +159,12 @@ export function CommandPalette() {
     };
   }, [open, search, recentTools.length, favorites.length]);
 
-  // Get tool data for recent tools
-  const recentToolsData = useMemo(
-    () => toolCatalog.byIds(recentTools),
-    [recentTools]
-  );
+  const recentToolsData = useMemo(() => toolCatalog.byIds(recentTools), [recentTools]);
 
-  // Get tool data for favorites
-  const favoriteToolsData = useMemo(
-    () => toolCatalog.byIds(favorites),
-    [favorites]
-  );
+  const favoriteToolsData = useMemo(() => toolCatalog.byIds(favorites), [favorites]);
 
   // Group remaining tools by tag
   const groupedTools = useMemo(() => {
-    // Get all tool IDs that are already in recent or favorites
     const displayedIds = new Set([...recentTools, ...favorites]);
 
     return toolCatalog.groupByTag(
@@ -185,7 +172,6 @@ export function CommandPalette() {
     );
   }, [recentTools, favorites]);
 
-  // Get search results sorted by score
   const searchedTools = useMemo(() => {
     if (!search) return [];
     return toolCatalog.search(search);
@@ -245,9 +231,7 @@ export function CommandPalette() {
             <TagIconBadge key={tagId} tagId={tagId} />
           ))}
         </div>
-        {look.arrow && (
-          <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
-        )}
+        {look.arrow && <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />}
       </>
     ),
     onSelect: () => openTool(tool.id),
@@ -455,7 +439,7 @@ export function CommandPalette() {
           {/* Results */}
           <Command.List
             ref={listRef}
-            className="flex-1 overflow-y-auto p-2 scrollbar-thin"
+            className="flex-1 overflow-y-auto p-2"
             style={{
               scrollPaddingBlockStart: '0.5rem',
               scrollPaddingBlockEnd: '0.5rem',
@@ -481,16 +465,10 @@ export function CommandPalette() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex flex-wrap gap-3">
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    ↑↓
-                  </kbd>{' '}
-                  navigate
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↑↓</kbd> navigate
                 </span>
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    ↵
-                  </kbd>{' '}
-                  open
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↵</kbd> open
                 </span>
                 <span className="hidden sm:inline">
                   <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
@@ -530,10 +508,7 @@ export function CommandPalette() {
                   </button>
                 </TooltipSimple>
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    esc
-                  </kbd>{' '}
-                  close
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">esc</kbd> close
                 </span>
               </div>
             </div>

@@ -3,6 +3,8 @@
 // family comes from WebCrypto (`globalThis.crypto`); MD5 is not in WebCrypto
 // and is computed here.
 
+import { bytesToHex } from './bytes';
+
 export const HASH_ALGORITHMS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
 export type HashAlgorithm = (typeof HASH_ALGORITHMS)[number];
 
@@ -19,22 +21,17 @@ export const EMPTY_HASHES: HashSet = {
 
 const SHA_ALGORITHMS = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
 
-function toHex(bytes: Uint8Array): string {
-  let hex = '';
-  for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
-  return hex;
-}
-
 // ── MD5 (RFC 1321) ────────────────────────────────────────────────────────────
 
 const MD5_SHIFTS = [
-  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
-  5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
-  4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
-  6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14,
+  20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6,
+  10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ];
 
-const MD5_CONSTANTS = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000));
+const MD5_CONSTANTS = Array.from({ length: 64 }, (_, i) =>
+  Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000)
+);
 
 /**
  * MD5 of raw bytes. It works on the bytes as they are, so a file hashes to the
@@ -106,7 +103,7 @@ function md5Hex(bytes: Uint8Array): string {
   digest.setInt32(4, b0, true);
   digest.setInt32(8, c0, true);
   digest.setInt32(12, d0, true);
-  return toHex(new Uint8Array(digest.buffer));
+  return bytesToHex(new Uint8Array(digest.buffer));
 }
 
 // ── Interface ─────────────────────────────────────────────────────────────────
@@ -127,7 +124,7 @@ export async function computeHashes(data: string | ArrayBuffer | Uint8Array): Pr
   await Promise.all(
     SHA_ALGORITHMS.map(async (algorithm) => {
       const digest = await crypto.subtle.digest(algorithm, bytes as Uint8Array<ArrayBuffer>);
-      hashes[algorithm] = toHex(new Uint8Array(digest));
+      hashes[algorithm] = bytesToHex(new Uint8Array(digest));
     })
   );
   return hashes;
@@ -141,5 +138,8 @@ export async function computeHashes(data: string | ArrayBuffer | Uint8Array): Pr
 export function findMatchingAlgorithm(hashes: HashSet, expected: string): HashAlgorithm | null {
   const wanted = expected.trim().toLowerCase();
   if (!wanted) return null;
-  return HASH_ALGORITHMS.find((algorithm) => hashes[algorithm] !== '' && hashes[algorithm] === wanted) ?? null;
+  return (
+    HASH_ALGORITHMS.find((algorithm) => hashes[algorithm] !== '' && hashes[algorithm] === wanted) ??
+    null
+  );
 }

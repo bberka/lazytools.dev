@@ -51,7 +51,9 @@ async function readClipboard(page: Page) {
 async function printedDocument(page: Page) {
   const frame = page.locator('iframe[aria-hidden="true"]');
   await expect(frame).toHaveCount(1);
-  return frame.evaluate((el: HTMLIFrameElement) => el.contentDocument?.documentElement.outerHTML ?? '');
+  return frame.evaluate(
+    (el: HTMLIFrameElement) => el.contentDocument?.documentElement.outerHTML ?? ''
+  );
 }
 
 /** The `<w:p>` paragraphs of a Word XML part, table cells included, with their text. */
@@ -116,14 +118,19 @@ test.describe('Document tools', () => {
     const editor = (page: Page) => page.getByRole('textbox', { name: 'Markdown input' });
     const sheet = (page: Page) => page.locator('.markdown-print-preview');
 
-    test('renders the preview as you type and jumps to a line on double-click', async ({ page }) => {
+    test('renders the preview as you type and jumps to a line on double-click', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
       await editor(page).fill(SOURCE);
 
       const preview = sheet(page);
       await expect(preview.getByRole('heading', { level: 1, name: 'Hello World' })).toBeVisible();
       await expect(preview.locator('strong')).toHaveText('bold');
-      await expect(preview.getByRole('link', { name: 'link' })).toHaveAttribute('href', 'https://example.com');
+      await expect(preview.getByRole('link', { name: 'link' })).toHaveAttribute(
+        'href',
+        'https://example.com'
+      );
       await expect(preview.getByRole('listitem')).toHaveText(['one', 'two']);
       await expect(preview.getByRole('columnheader')).toHaveText(['A', 'B']);
       await expect(preview.getByRole('cell')).toHaveText(['1', '2']);
@@ -138,11 +145,14 @@ test.describe('Document tools', () => {
         .toBe('# Hello World\n\n'.length);
     });
 
-    test('exports PDF, HTML, text and PNG under the name of the first heading', async ({ page }) => {
+    test('exports PDF, HTML, text and PNG under the name of the first heading', async ({
+      page,
+    }) => {
       test.slow(); // the image capture takes a while on a busy machine
       await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
       // A title with characters no file system accepts, and an ampersand for the title element.
-      const source = '# Fish & Chips: Q1/Q2?\n\nSome **bold** text and a [link](https://example.com).\n';
+      const source =
+        '# Fish & Chips: Q1/Q2?\n\nSome **bold** text and a [link](https://example.com).\n';
       await editor(page).fill(source);
 
       await page.getByRole('button', { name: 'Export as PDF' }).click();
@@ -174,7 +184,9 @@ test.describe('Document tools', () => {
       expect(height).toBeGreaterThan(0);
     });
 
-    test('strips active content from the preview and keeps what the preview is for', async ({ page }) => {
+    test('strips active content from the preview and keeps what the preview is for', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
       await editor(page).fill(
         [
@@ -215,14 +227,19 @@ test.describe('Document tools', () => {
 
       // The harmless parts are kept: images, highlighted code, the maths markup
       // with its inline styles and the source lines that double-click reads.
-      await expect(preview.getByRole('img', { name: 'dot' })).toHaveAttribute('src', /^data:image\/gif/);
+      await expect(preview.getByRole('img', { name: 'dot' })).toHaveAttribute(
+        'src',
+        /^data:image\/gif/
+      );
       await expect(preview.locator('pre.hljs code span[class^="hljs-"]').first()).toBeVisible();
       await expect(preview.locator('.katex-mathml annotation')).toHaveText('E=mc^2');
       await expect(preview.locator('.katex-html [style]').first()).toBeAttached();
       await expect(preview.locator('h1[data-source-line="0"]')).toHaveCount(1);
     });
 
-    test('sizes the sheet to the page setup and has nothing to export when empty', async ({ page }) => {
+    test('sizes the sheet to the page setup and has nothing to export when empty', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-editor', 'Markdown Editor & Exporter');
       await expect(page.getByText('Margins: 16 mm')).toBeVisible();
       await expect(sheet(page)).toHaveCSS('max-width', '794px');
@@ -250,24 +267,38 @@ test.describe('Document tools', () => {
   // ---------------------------------------------------------------------------
   test.describe('Markdown to DOCX', () => {
     const editor = (page: Page) => page.getByRole('textbox', { name: 'Markdown input' });
-    const downloadButton = (page: Page) => page.getByRole('button', { name: 'Download Word (.docx)' });
+    const downloadButton = (page: Page) =>
+      page.getByRole('button', { name: 'Download Word (.docx)' });
 
     test('lists the blocks of the sample and downloads it as a Word document', async ({ page }) => {
       await openTool(page, 'markdown-to-docx', 'Markdown to DOCX Converter');
 
-      const badges = { H1: 1, H2: 1, H3: 2, PARAGRAPH: 2, LIST: 1, CODE: 1, TABLE: 1, 'PAGE BREAK': 0 };
+      const badges = {
+        H1: 1,
+        H2: 1,
+        H3: 2,
+        PARAGRAPH: 2,
+        LIST: 1,
+        CODE: 1,
+        TABLE: 1,
+        'PAGE BREAK': 0,
+      };
       for (const [badge, count] of Object.entries(badges)) {
         await expect(page.getByText(badge, { exact: true }), badge).toHaveCount(count);
       }
       await page.getByRole('tab', { name: 'HTML Preview' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Project Implementation Plan' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Project Implementation Plan' })
+      ).toBeVisible();
 
       const file = await download(page, downloadButton(page));
       expect(file.name).toBe('Project Implementation Plan.docx');
       const { document, header, footer } = await readDocx(file.bytes);
       const texts = paragraphs(document).map((paragraph) => paragraph.text);
       expect(texts[0]).toBe('Project Implementation Plan');
-      expect(texts).toContain('•  Keep With Next: Headings will never be split from their following text.');
+      expect(texts).toContain(
+        '•  Keep With Next: Headings will never be split from their following text.'
+      );
       expect(texts).toContain('function convertMarkdown(mdText) {');
       expect(texts).toContain('Perfect Indents');
       expect(document).toContain('<w:pStyle w:val="Heading1"/>');
@@ -293,9 +324,13 @@ test.describe('Document tools', () => {
       await page.getByRole('tab', { name: 'Typography' }).click();
       // Every preset's own line spacing has to be one the list offers.
       await choose(page, 'Theme Preset', 'Elegant Serif (Georgia)');
-      await expect(page.getByRole('combobox', { name: 'Line Spacing' })).toHaveText('1.35 (Relaxed)');
+      await expect(page.getByRole('combobox', { name: 'Line Spacing' })).toHaveText(
+        '1.35 (Relaxed)'
+      );
       await choose(page, 'Theme Preset', 'Corporate Professional');
-      await expect(page.getByRole('combobox', { name: 'Font Family' })).toHaveText('Calibri (Standard Office)');
+      await expect(page.getByRole('combobox', { name: 'Font Family' })).toHaveText(
+        'Calibri (Standard Office)'
+      );
 
       // Blocks are Title, First paragraph, Second paragraph, in that order.
       await page.getByRole('switch', { name: 'Force page break before block' }).nth(2).click();
@@ -311,7 +346,11 @@ test.describe('Document tools', () => {
       expect(document).toContain('w:w="15840"');
       expect(document).toContain('w:ascii="Calibri"');
       const [title, first, second] = paragraphs(document);
-      expect([title.text, first.text, second.text]).toEqual(['Title', 'First paragraph', 'Second paragraph']);
+      expect([title.text, first.text, second.text]).toEqual([
+        'Title',
+        'First paragraph',
+        'Second paragraph',
+      ]);
       expect(title.xml).not.toContain('<w:pageBreakBefore/>');
       expect(first.xml).not.toContain('<w:pageBreakBefore/>');
       expect(second.xml).toContain('<w:pageBreakBefore/>');
@@ -322,18 +361,24 @@ test.describe('Document tools', () => {
       expect(footer).not.toContain('PAGE');
     });
 
-    test('names the file after the heading and has nothing to download when empty', async ({ page }) => {
+    test('names the file after the heading and has nothing to download when empty', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-to-docx', 'Markdown to DOCX Converter');
 
       // Markup in the heading is not part of the name, and neither are characters a file cannot have.
       await editor(page).fill('# **Bold** and `code` / Q1: plan\n\nBody text');
       const file = await download(page, downloadButton(page));
       expect(file.name).toBe('Bold and code Q1 plan.docx');
-      expect(paragraphs((await readDocx(file.bytes)).document)[0].text).toBe('Bold and code / Q1: plan');
+      expect(paragraphs((await readDocx(file.bytes)).document)[0].text).toBe(
+        'Bold and code / Q1: plan'
+      );
 
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(editor(page)).toHaveValue('');
-      await expect(page.getByText('No content blocks. Write some Markdown to begin!')).toBeVisible();
+      await expect(
+        page.getByText('No content blocks. Write some Markdown to begin!')
+      ).toBeVisible();
       await expect(downloadButton(page)).toBeDisabled();
       await editor(page).fill('  \n\n   ');
       await expect(downloadButton(page)).toBeDisabled();
@@ -389,7 +434,10 @@ test.describe('Document tools', () => {
       'Export\tReady',
     ].join('\n');
 
-    test('converts the sample to Markdown and plain text and copies the result', async ({ page, context }) => {
+    test('converts the sample to Markdown and plain text and copies the result', async ({
+      page,
+      context,
+    }) => {
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       await openTool(page, 'html-converter', 'HTML Converter');
 
@@ -399,7 +447,9 @@ test.describe('Document tools', () => {
       expect(await readClipboard(page)).toBe(SAMPLE_MARKDOWN);
 
       await choose(page, 'Format', 'Plain text');
-      await expect(page.getByRole('textbox', { name: 'Plain text output' })).toHaveValue(SAMPLE_TEXT);
+      await expect(page.getByRole('textbox', { name: 'Plain text output' })).toHaveValue(
+        SAMPLE_TEXT
+      );
       await page.getByRole('button', { name: 'Copy text' }).click();
       await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
       expect(await readClipboard(page)).toBe(SAMPLE_TEXT);
@@ -449,10 +499,14 @@ test.describe('Document tools', () => {
       await choose(page, 'Format', 'Plain text');
       const text = await download(page, exportButton(page));
       expect(text.name).toBe('quarterly report.txt');
-      expect(text.text).toBe('Quarterly\n\nRevenue is up by 12%, see report.\n\n- North\n- South\n  - City');
+      expect(text.text).toBe(
+        'Quarterly\n\nRevenue is up by 12%, see report.\n\n- North\n- South\n  - City'
+      );
     });
 
-    test('ignores scripts, saves a snapshot PDF and has nothing to export when cleared', async ({ page }) => {
+    test('ignores scripts, saves a snapshot PDF and has nothing to export when cleared', async ({
+      page,
+    }) => {
       test.slow(); // the snapshot is taken with a canvas capture
       await openTool(page, 'html-converter', 'HTML Converter');
       await input(page).fill(
@@ -494,7 +548,8 @@ test.describe('Document tools', () => {
       await page
         .getByRole('textbox', { name: 'Markdown input' })
         .fill(`<img src="x" onerror="document.title = 'hacked'">`);
-      if (slug === 'markdown-to-docx') await page.getByRole('tab', { name: 'HTML Preview' }).click();
+      if (slug === 'markdown-to-docx')
+        await page.getByRole('tab', { name: 'HTML Preview' }).click();
       const image = page.locator('img[src="x"]');
       await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete)).toBe(true);
       await page.evaluate(() => new Promise(requestAnimationFrame)); // let the error event run

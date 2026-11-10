@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   base64ToBytes,
   bytesToBase64,
@@ -18,7 +18,7 @@ const RFC_VECTORS: Array<[text: string, base64: string]> = [
   ['foobar', 'Zm9vYmFy'],
 ];
 
-test.describe('encodeBase64 / decodeBase64', () => {
+describe('encodeBase64 / decodeBase64', () => {
   test('match the RFC 4648 test vectors in both directions', () => {
     for (const [text, base64] of RFC_VECTORS) {
       expect(encodeBase64(text)).toBe(base64);
@@ -51,7 +51,7 @@ test.describe('encodeBase64 / decodeBase64', () => {
   });
 });
 
-test.describe('base64ToBytes', () => {
+describe('base64ToBytes', () => {
   test('accepts input without padding', () => {
     expect(decodeBase64('SGVsbG8')).toBe('Hello');
     expect(decodeBase64('Zg')).toBe('f');
@@ -65,7 +65,9 @@ test.describe('base64ToBytes', () => {
     expect(Array.from(base64ToBytes('-_8'))).toEqual([0xfb, 0xff]);
     expect(Array.from(base64ToBytes('+/8='))).toEqual([0xfb, 0xff]);
     // The header of a typical JWT.
-    expect(decodeBase64('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')).toBe('{"alg":"HS256","typ":"JWT"}');
+    expect(decodeBase64('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')).toBe(
+      '{"alg":"HS256","typ":"JWT"}'
+    );
   });
 
   test('names the first character that is not Base64', () => {
@@ -84,7 +86,7 @@ test.describe('base64ToBytes', () => {
   });
 });
 
-test.describe('convertBase64', () => {
+describe('convertBase64', () => {
   test('returns nothing for empty input in either direction', () => {
     expect(convertBase64('', 'encode')).toEqual({ output: '', error: '' });
     expect(convertBase64('', 'decode')).toEqual({ output: '', error: '' });

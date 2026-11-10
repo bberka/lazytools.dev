@@ -1,19 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlignLeft, Check, Copy, Eraser, Timer, Type } from 'lucide-react';
+import { AlignLeft, Eraser, Timer, Type } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { analyzeText, formatDuration } from '@/lib/tools/word-counter';
 
 export function WordCounter() {
   const [text, setText] = useState('');
   const [includeNumbers, setIncludeNumbers] = useState(true);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const stats = useMemo(() => analyzeText(text, { includeNumbers }), [includeNumbers, text]);
 
@@ -38,10 +37,6 @@ export function WordCounter() {
 
   const handleClear = () => {
     setText('');
-  };
-
-  const handleCopy = async () => {
-    await copyToClipboard(text);
   };
 
   return (
@@ -74,25 +69,13 @@ export function WordCounter() {
             />
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                onClick={handleCopy}
+              <CopyButton
+                text={text}
+                label="Copy Text"
                 disabled={!text}
-                variant={isCopied ? 'default' : 'outline'}
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Text
-                  </>
-                )}
-              </Button>
+              />
               <Button
                 onClick={handleClear}
                 disabled={!text}
@@ -108,7 +91,7 @@ export function WordCounter() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {statCards.map((stat) => {
           const Icon = stat.icon;
 
@@ -121,7 +104,9 @@ export function WordCounter() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-semibold tracking-tight">{stat.value.toLocaleString()}</div>
+                <div className="text-3xl font-semibold tracking-tight">
+                  {stat.value.toLocaleString()}
+                </div>
               </CardContent>
             </Card>
           );
@@ -138,7 +123,7 @@ export function WordCounter() {
             Lightweight estimates for reading, speaking, and text complexity.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {insights.map((insight) => (
             <div
               key={insight.label}

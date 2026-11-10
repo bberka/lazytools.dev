@@ -15,10 +15,7 @@ export async function generateStaticParams() {
   }));
 }
 
-// Generate metadata for each tool page
-export async function generateMetadata({
-  params,
-}: ToolPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ToolPageProps): Promise<Metadata> {
   const { slug } = await params;
   const tool = toolCatalog.get(slug)?.tool;
 

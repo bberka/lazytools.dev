@@ -1,11 +1,12 @@
 'use client';
 
-import { useId, useMemo, useState, useSyncExternalStore } from 'react';
-import { CalendarDays, Check, Copy, Trash2 } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+import { CalendarDays, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
-import { useCopyToClipboard } from '@/hooks';
+import { useHydrated } from '@/hooks';
 import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   calculateAge,
@@ -18,13 +19,10 @@ function getTodayValue(): string {
   return toDateInputValue(new Date());
 }
 
-const noSubscription = () => () => {};
-
 function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
   const id = useId();
   const [birthDate, setBirthDate] = useState('1990-06-15');
   const [targetDate, setTargetDate] = useState(initialTargetDate);
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => {
     if (!birthDate || !targetDate) {
@@ -92,7 +90,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div role="group" aria-labelledby={`${id}-birth`}>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-birth`}>
               <span id={`${id}-birth`} className="mb-2 block text-sm font-medium">
                 Birth date
               </span>
@@ -107,8 +105,8 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 }}
                 error={!parseDateInput(birthDate) && !!birthDate}
               />
-            </div>
-            <div role="group" aria-labelledby={`${id}-target`}>
+            </fieldset>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-target`}>
               <span id={`${id}-target`} className="mb-2 block text-sm font-medium">
                 Age at
               </span>
@@ -123,7 +121,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 }}
                 error={!parseDateInput(targetDate) && !!targetDate}
               />
-            </div>
+            </fieldset>
           </div>
 
           {result.error && (
@@ -137,23 +135,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>
@@ -161,7 +143,9 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Result</CardTitle>
-          <CardDescription>{result.error ? 'Fix the selected dates to continue.' : result.detail}</CardDescription>
+          <CardDescription>
+            {result.error ? 'Fix the selected dates to continue.' : result.detail}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -169,7 +153,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
           </div>
 
           {result.breakdown && (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Total months
@@ -201,7 +185,8 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 </div>
                 <div className="mt-1 font-semibold">{result.breakdown.nextBirthdayLabel}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Turns {result.breakdown.nextBirthdayAge} in {formatCount(result.breakdown.nextBirthdayDaysAway)} day
+                  Turns {result.breakdown.nextBirthdayAge} in{' '}
+                  {formatCount(result.breakdown.nextBirthdayDaysAway)} day
                   {result.breakdown.nextBirthdayDaysAway === 1 ? '' : 's'}
                 </div>
               </div>
@@ -218,11 +203,7 @@ export function AgeCalculator() {
   // it would be the build date: stale for every visitor and a hydration
   // mismatch. The HTML and the first client render leave the date empty, and
   // the form is mounted again with the visitor's date once hydrated.
-  const hydrated = useSyncExternalStore(
-    noSubscription,
-    () => true,
-    () => false
-  );
+  const hydrated = useHydrated();
   const [today] = useState(getTodayValue);
 
   return hydrated ? (

@@ -1,5 +1,10 @@
-import { test, expect } from '@playwright/test';
-import { fetchJson, RequestTimeoutError, withDeadline, type FetchLike } from '@/lib/tools/network-fetch';
+import { describe, expect, test } from 'vite-plus/test';
+import {
+  fetchJson,
+  RequestTimeoutError,
+  withDeadline,
+  type FetchLike,
+} from '@/lib/tools/network-fetch';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -7,10 +12,12 @@ const json = (body: unknown, status = 200) =>
 /** A request that never answers but gives up when aborted, like the real fetch. */
 const hang: FetchLike = (_input, init) =>
   new Promise((_, reject) => {
-    init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    init?.signal?.addEventListener('abort', () =>
+      reject(new DOMException('Aborted', 'AbortError'))
+    );
   });
 
-test.describe('fetchJson', () => {
+describe('fetchJson', () => {
   test('returns the parsed body and status of an OK response', async () => {
     const urls: string[] = [];
     const fetchImpl: FetchLike = async (input) => {
@@ -36,26 +43,39 @@ test.describe('fetchJson', () => {
   });
 
   test('leaves data undefined when the body is not JSON', async () => {
-    const fetchImpl: FetchLike = async () => new Response('<html>captive portal</html>', { status: 200 });
-    expect(await fetchJson('https://api.example/x', { fetchImpl })).toEqual({ ok: true, status: 200, data: undefined });
+    const fetchImpl: FetchLike = async () =>
+      new Response('<html>captive portal</html>', { status: 200 });
+    expect(await fetchJson('https://api.example/x', { fetchImpl })).toEqual({
+      ok: true,
+      status: 200,
+      data: undefined,
+    });
   });
 
   test('rejects with the network error when the request fails', async () => {
     const fetchImpl: FetchLike = async () => {
       throw new TypeError('Failed to fetch');
     };
-    await expect(fetchJson('https://api.example/x', { fetchImpl })).rejects.toThrow('Failed to fetch');
+    await expect(fetchJson('https://api.example/x', { fetchImpl })).rejects.toThrow(
+      'Failed to fetch'
+    );
   });
 
   // Regression: the lookups called fetch with no deadline, so a hanging API left them loading forever.
   test('times out a request that never answers', async () => {
-    const error = await fetchJson('https://api.example/x', { fetchImpl: hang, timeoutMs: 20 }).catch((e) => e);
+    const error = await fetchJson('https://api.example/x', {
+      fetchImpl: hang,
+      timeoutMs: 20,
+    }).catch((e) => e);
     expect(error).toBeInstanceOf(RequestTimeoutError);
   });
 
   test('times out a body that stalls after the headers arrived', async () => {
-    const fetchImpl: FetchLike = async () => new Response(new ReadableStream({ start() {} }), { status: 200 });
-    const error = await fetchJson('https://api.example/x', { fetchImpl, timeoutMs: 20 }).catch((e) => e);
+    const fetchImpl: FetchLike = async () =>
+      new Response(new ReadableStream({ start() {} }), { status: 200 });
+    const error = await fetchJson('https://api.example/x', { fetchImpl, timeoutMs: 20 }).catch(
+      (e) => e
+    );
     expect(error).toBeInstanceOf(RequestTimeoutError);
   });
 
@@ -83,12 +103,14 @@ test.describe('fetchJson', () => {
       return json({});
     };
 
-    await expect(fetchJson('https://api.example/x', { fetchImpl, signal: controller.signal })).rejects.toThrow();
+    await expect(
+      fetchJson('https://api.example/x', { fetchImpl, signal: controller.signal })
+    ).rejects.toThrow();
     expect(called).toBe(false);
   });
 });
 
-test.describe('withDeadline', () => {
+describe('withDeadline', () => {
   test('resolves with the result of the task', async () => {
     expect(await withDeadline(async () => 42, { timeoutMs: 1000 })).toBe(42);
   });

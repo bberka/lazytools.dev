@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildOtpauthUri,
   computeTotpWindow,
@@ -54,7 +54,7 @@ const RFC_4226_VECTORS: Array<{ counter: number; truncated: number; hotp: string
 
 const SHA1_OPTIONS: TotpOptions = { algorithm: 'SHA-1', digits: 6, period: 30 };
 
-test.describe('decodeBase32', () => {
+describe('decodeBase32', () => {
   test('decodes the RFC 4648 test vectors, padded and unpadded', () => {
     const vectors: Array<[string, string]> = [
       ['f', 'MY======'],
@@ -85,7 +85,12 @@ test.describe('decodeBase32', () => {
   });
 
   test('ignores spaces, tabs, line breaks and hyphens between groups', () => {
-    for (const input of ['MZXW 6YTB OI', 'mzxw-6ytb-oi', ' MZXW\t6YTB\nOI\r\n', 'M Z X W 6 Y T B O I']) {
+    for (const input of [
+      'MZXW 6YTB OI',
+      'mzxw-6ytb-oi',
+      ' MZXW\t6YTB\nOI\r\n',
+      'M Z X W 6 Y T B O I',
+    ]) {
       const result = decodeBase32(input);
       expect(result.ok).toBe(true);
       if (result.ok) expect(text(result.bytes)).toBe('foobar');
@@ -102,7 +107,9 @@ test.describe('decodeBase32', () => {
     const result = decodeBase32('JBSWY3DPEHPK3PXP');
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(Array.from(result.bytes)).toEqual([0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x21, 0xde, 0xad, 0xbe, 0xef]);
+      expect(Array.from(result.bytes)).toEqual([
+        0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x21, 0xde, 0xad, 0xbe, 0xef,
+      ]);
     }
   });
 
@@ -147,7 +154,7 @@ test.describe('decodeBase32', () => {
   });
 
   test('rejects padding of the wrong length', () => {
-    for (const input of ['MY=', 'MY=======', 'MZXW6YTBOI=', 'MZXW6===='] ) {
+    for (const input of ['MY=', 'MY=======', 'MZXW6YTBOI=', 'MZXW6====']) {
       const result = decodeBase32(input);
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error).toMatch(/padding/i);
@@ -163,7 +170,7 @@ test.describe('decodeBase32', () => {
   });
 });
 
-test.describe('encodeBase32', () => {
+describe('encodeBase32', () => {
   test('matches the RFC 4648 test vectors', () => {
     expect(encodeBase32(ascii(''))).toBe('');
     expect(encodeBase32(ascii('f'))).toBe('MY');
@@ -195,7 +202,7 @@ test.describe('encodeBase32', () => {
   });
 });
 
-test.describe('hotp (RFC 4226 Appendix D)', () => {
+describe('hotp (RFC 4226 Appendix D)', () => {
   const key = ascii(RFC_6238_SEEDS['SHA-1']);
 
   test('reproduces the 6-digit HOTP values for counters 0-9', async () => {
@@ -233,7 +240,7 @@ test.describe('hotp (RFC 4226 Appendix D)', () => {
   });
 });
 
-test.describe('totp (RFC 6238 Appendix B)', () => {
+describe('totp (RFC 6238 Appendix B)', () => {
   for (const algorithm of Object.keys(RFC_6238_SEEDS) as TotpAlgorithm[]) {
     test(`reproduces every ${algorithm} vector with 8 digits`, async () => {
       const key = ascii(RFC_6238_SEEDS[algorithm]);
@@ -278,7 +285,7 @@ test.describe('totp (RFC 6238 Appendix B)', () => {
   });
 });
 
-test.describe('totpCounter and secondsRemaining', () => {
+describe('totpCounter and secondsRemaining', () => {
   test('counts whole periods since the Unix epoch', () => {
     expect(totpCounter(0, 30)).toBe(0);
     expect(totpCounter(29_999, 30)).toBe(0);
@@ -304,7 +311,7 @@ test.describe('totpCounter and secondsRemaining', () => {
   });
 });
 
-test.describe('computeTotpWindow', () => {
+describe('computeTotpWindow', () => {
   const seed = encodeBase32(ascii(RFC_6238_SEEDS['SHA-1']));
   const options8: TotpOptions = { algorithm: 'SHA-1', digits: 8, period: 30 };
 
@@ -338,7 +345,8 @@ test.describe('computeTotpWindow', () => {
           vector.time * 1000
         );
         expect(result.ok).toBe(true);
-        if (result.ok) expect(result.current, `${algorithm} at ${vector.time}s`).toBe(vector[algorithm]);
+        if (result.ok)
+          expect(result.current, `${algorithm} at ${vector.time}s`).toBe(vector[algorithm]);
       }
     }
   });
@@ -361,7 +369,11 @@ test.describe('computeTotpWindow', () => {
     expect(secret).toMatch(/={4}$/);
 
     const grouped = secret.toLowerCase().replace(/(.{4})/g, '$1 ');
-    const result = await computeTotpWindow(grouped, { algorithm: 'SHA-256', digits: 8, period: 30 }, 59_000);
+    const result = await computeTotpWindow(
+      grouped,
+      { algorithm: 'SHA-256', digits: 8, period: 30 },
+      59_000
+    );
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -391,7 +403,9 @@ test.describe('computeTotpWindow', () => {
       expect(result.counter).toBe(1);
       expect(result.current).toBe('94287082');
       expect(result.previous).toBe('84755224');
-      expect(result.next).toBe(await hotp(ascii(RFC_6238_SEEDS['SHA-1']), 2, { algorithm: 'SHA-1', digits: 8 }));
+      expect(result.next).toBe(
+        await hotp(ascii(RFC_6238_SEEDS['SHA-1']), 2, { algorithm: 'SHA-1', digits: 8 })
+      );
       expect(result.secondsRemaining).toBe(1);
     }
   });
@@ -425,13 +439,17 @@ test.describe('computeTotpWindow', () => {
     ];
 
     for (const [override, time] of bad) {
-      const result = await computeTotpWindow(seed, { ...SHA1_OPTIONS, ...override } as TotpOptions, time);
+      const result = await computeTotpWindow(
+        seed,
+        { ...SHA1_OPTIONS, ...override } as TotpOptions,
+        time
+      );
       expect(result.ok, JSON.stringify(override)).toBe(false);
     }
   });
 });
 
-test.describe('buildOtpauthUri', () => {
+describe('buildOtpauthUri', () => {
   test('builds the Key URI Format link with every parameter', () => {
     const result = buildOtpauthUri({
       ...SHA1_OPTIONS,
@@ -480,7 +498,12 @@ test.describe('buildOtpauthUri', () => {
     const issuerOnly = buildOtpauthUri({ ...SHA1_OPTIONS, secret: 'MZXW6YTB', issuer: 'ACME' });
     const accountOnly = buildOtpauthUri({ ...SHA1_OPTIONS, secret: 'MZXW6YTB', account: 'alice' });
     const neither = buildOtpauthUri({ ...SHA1_OPTIONS, secret: 'MZXW6YTB' });
-    const blanks = buildOtpauthUri({ ...SHA1_OPTIONS, secret: 'MZXW6YTB', issuer: '  ', account: '' });
+    const blanks = buildOtpauthUri({
+      ...SHA1_OPTIONS,
+      secret: 'MZXW6YTB',
+      issuer: '  ',
+      account: '',
+    });
 
     expect(issuerOnly.ok && issuerOnly.uri).toBe(
       'otpauth://totp/ACME?secret=MZXW6YTB&issuer=ACME&algorithm=SHA1&digits=6&period=30'
@@ -556,7 +579,7 @@ test.describe('buildOtpauthUri', () => {
   });
 });
 
-test.describe('generateSecret', () => {
+describe('generateSecret', () => {
   test('makes a 160-bit secret as 32 Base32 characters', () => {
     const secret = generateSecret();
 
@@ -589,7 +612,7 @@ test.describe('generateSecret', () => {
   });
 });
 
-test.describe('formatCode', () => {
+describe('formatCode', () => {
   test('groups six digits as 3 + 3 and eight digits as 4 + 4', () => {
     expect(formatCode('123456')).toBe('123 456');
     expect(formatCode('007081')).toBe('007 081');

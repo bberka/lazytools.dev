@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { analyzeResumeText } from '@/lib/utils/resume-ats-analyzer';
+import { describe, expect, test } from 'vite-plus/test';
+import { analyzeResumeText } from '@/lib/tools/resume-ats-analyzer';
 
 const englishResume = `
 John Doe
@@ -78,7 +78,7 @@ Zertifikate
 Cloud-Zertifizierung
 `;
 
-test.describe('ATS analyzer language support', () => {
+describe('ATS analyzer language support', () => {
   test('preserves English behavior and exposes the English readability profile', () => {
     const analysis = analyzeResumeText(
       englishResume,
@@ -248,7 +248,7 @@ Berufserfahrung
 const hasPhone = (text: string) =>
   analyzeResumeText(text, 1, undefined, { resumeLanguage: 'en' }).contactChecks.phone;
 
-test.describe('ATS analyzer phone detection', () => {
+describe('ATS analyzer phone detection', () => {
   test('finds phone numbers in the usual formats', () => {
     const phones = [
       '+1 555 123 4567',
@@ -324,7 +324,7 @@ test.describe('ATS analyzer phone detection', () => {
   });
 });
 
-test.describe('ATS analyzer bullets, headings and keywords', () => {
+describe('ATS analyzer bullets, headings and keywords', () => {
   // Only - * • ‣ ▪ ◦ were counted, so a résumé written in Google Docs (●, ○)
   // or Word (■, –) had "0 bullets" and was told to use more of them.
   test('counts the bullet glyphs word processors use', () => {
@@ -337,7 +337,8 @@ test.describe('ATS analyzer bullets, headings and keywords', () => {
   test('counts a bullet whose text starts on the next line, and nothing else', () => {
     expect(analyzeResumeText('●\nBuilt a thing\n●\nLed a team', 1).bulletCount).toBe(2);
     expect(
-      analyzeResumeText('Plain line\nnot - a bullet\n-nospace\n1. numbered\n2019–2022', 1).bulletCount
+      analyzeResumeText('Plain line\nnot - a bullet\n-nospace\n1. numbered\n2019–2022', 1)
+        .bulletCount
     ).toBe(0);
   });
 

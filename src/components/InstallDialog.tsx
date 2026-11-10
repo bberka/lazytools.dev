@@ -42,7 +42,7 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
 
   const handleInstallPWA = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
+    void deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
@@ -59,7 +59,8 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
             Install LazyTools
           </DialogTitle>
           <DialogDescription className="text-center sm:text-left text-muted-foreground text-sm">
-            Choose how you want to run LazyTools. Both options run completely offline and keep your data private in your browser.
+            Choose how you want to run LazyTools. Both options run completely offline and keep your
+            data private in your browser.
           </DialogDescription>
         </DialogHeader>
 
@@ -75,7 +76,8 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
                   Full Desktop App
                 </h3>
                 <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
-                  Install the native app for Windows, macOS, or Linux. Ideal for standalone execution, native performance, and quick taskbar access.
+                  Install the native app for Windows, macOS, or Linux. Ideal for standalone
+                  execution, native performance, and quick taskbar access.
                 </p>
               </div>
             </div>
@@ -110,7 +112,8 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
                   Web App (PWA)
                 </h3>
                 <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
-                  Install directly from your browser. Adds a home screen icon and opens in a standalone window without large downloads.
+                  Install directly from your browser. Adds a home screen icon and opens in a
+                  standalone window without large downloads.
                 </p>
               </div>
             </div>
@@ -129,7 +132,10 @@ export function InstallDialog({ isOpen, onClose }: InstallDialogProps) {
                   <div className="flex gap-2 items-start text-[11px] text-muted-foreground leading-snug">
                     <Info className="h-3.5 w-3.5 text-purple-400 shrink-0 mt-0.5" />
                     <span>
-                      To install: tap your browser&apos;s menu (or <span className="font-semibold text-foreground">Share</span> on iOS Safari) and select <span className="font-semibold text-foreground">Add to Home Screen</span>.
+                      To install: tap your browser&apos;s menu (or{' '}
+                      <span className="font-semibold text-foreground">Share</span> on iOS Safari)
+                      and select{' '}
+                      <span className="font-semibold text-foreground">Add to Home Screen</span>.
                     </span>
                   </div>
                 </div>

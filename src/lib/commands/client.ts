@@ -15,7 +15,7 @@ export interface AppCommandRunner {
    * Performs a command and returns the message that confirms it. Showing the
    * message is up to the caller.
    */
-  run(command: AppCommand): string;
+  run: (command: AppCommand) => string;
 }
 
 /** Connects the app commands to the app's contexts. */

@@ -1,6 +1,8 @@
 // HMAC generator logic. Plain functions only: no React, no DOM, so it runs in
 // the browser and in Node. WebCrypto comes from `globalThis.crypto`.
 
+import { bytesToHex } from './bytes';
+
 export const HMAC_ALGORITHMS = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
 export type HmacAlgorithm = (typeof HMAC_ALGORITHMS)[number];
 
@@ -49,9 +51,7 @@ export function digestLength(algorithm: HmacAlgorithm): number {
   return DIGEST_BYTES[algorithm];
 }
 
-// ---------------------------------------------------------------------------
 // Decoding
-// ---------------------------------------------------------------------------
 
 const BASE64_STANDARD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const BASE64_URL_SAFE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -92,7 +92,8 @@ function parseBase64(input: string, strict: boolean): Decoded {
     return { ok: false, error: 'Invalid Base64: the padding does not fit the length.' };
   }
   const stray = /[^A-Za-z0-9+/_-]/.exec(body);
-  if (stray) return { ok: false, error: `Invalid Base64: "${stray[0]}" is not a Base64 character.` };
+  if (stray)
+    return { ok: false, error: `Invalid Base64: "${stray[0]}" is not a Base64 character.` };
   if (/[+/]/.test(body) && /[-_]/.test(body)) {
     return {
       ok: false,
@@ -120,7 +121,8 @@ function parseBase64(input: string, strict: boolean): Decoded {
   if (strict && accumulator !== 0) {
     return {
       ok: false,
-      error: 'Invalid Base64: the last character carries stray bits, so this is not a canonical encoding.',
+      error:
+        'Invalid Base64: the last character carries stray bits, so this is not a canonical encoding.',
     };
   }
   return { ok: true, bytes };
@@ -143,9 +145,7 @@ export function decodeKey(text: string, encoding: KeyEncoding): Decoded {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Encoding
-// ---------------------------------------------------------------------------
 
 function toBase64(bytes: Uint8Array, urlSafe: boolean): string {
   const alphabet = urlSafe ? BASE64_URL_SAFE : BASE64_STANDARD;
@@ -164,30 +164,43 @@ function toBase64(bytes: Uint8Array, urlSafe: boolean): string {
  * Formats a digest. Hex is lower case unless `uppercase` is set. Base64 is
  * standard and padded; Base64URL uses `-` and `_` and has no padding.
  */
-export function encodeDigest(digest: Uint8Array, encoding: SignatureEncoding, uppercase = false): string {
+export function encodeDigest(
+  digest: Uint8Array,
+  encoding: SignatureEncoding,
+  uppercase = false
+): string {
   if (encoding === 'hex') {
-    const hex = Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    const hex = bytesToHex(digest);
     return uppercase ? hex.toUpperCase() : hex;
   }
   return toBase64(digest, encoding === 'base64url');
 }
 
-// ---------------------------------------------------------------------------
 // HMAC
-// ---------------------------------------------------------------------------
 
 /**
  * HMAC of raw bytes. Throws if WebCrypto is unavailable (for example on an
  * insecure origin); `computeHmac` turns that into an error result.
  */
-export async function hmacDigest(algorithm: HmacAlgorithm, key: Bytes, data: Bytes): Promise<Bytes> {
+export async function hmacDigest(
+  algorithm: HmacAlgorithm,
+  key: Bytes,
+  data: Bytes
+): Promise<Bytes> {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new Error('WebCrypto is not available here. Open the tool over HTTPS or localhost.');
+  if (!subtle)
+    throw new Error('WebCrypto is not available here. Open the tool over HTTPS or localhost.');
 
   // HMAC zero-pads a short key up to the block size, so an empty key is the
   // same as a single zero byte. WebCrypto itself rejects zero-length keys.
   const keyData = key.length === 0 ? new Uint8Array(1) : key;
-  const cryptoKey = await subtle.importKey('raw', keyData, { name: 'HMAC', hash: algorithm }, false, ['sign']);
+  const cryptoKey = await subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: algorithm },
+    false,
+    ['sign']
+  );
   return new Uint8Array(await subtle.sign('HMAC', cryptoKey, data));
 }
 
@@ -203,13 +216,14 @@ export async function computeHmac(request: HmacRequest): Promise<HmacResult> {
     const digest = await hmacDigest(request.algorithm, key.bytes, data);
     return { ok: true, digest, keyBytes: key.bytes.length };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'Could not compute the HMAC.' };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not compute the HMAC.',
+    };
   }
 }
 
-// ---------------------------------------------------------------------------
 // Verification
-// ---------------------------------------------------------------------------
 
 /**
  * Compares two byte strings without stopping at the first difference. The loop

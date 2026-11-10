@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { planPageSlices } from '@/lib/export/snapshot-pdf';
 import {
   MARKDOWN_PREVIEW_CSS,
@@ -11,7 +11,7 @@ import { createMarkdownParser, type MarkdownToken } from '@/lib/markdown/parser'
 
 const countOf = (haystack: string, needle: string) => haystack.split(needle).length - 1;
 
-test.describe('preview rendering', () => {
+describe('preview rendering', () => {
   test('renders headings', () => {
     const html = previewMarkdown.render('# One\n\n## Two\n');
 
@@ -125,7 +125,7 @@ test.describe('preview rendering', () => {
   });
 });
 
-test.describe('source line mapping', () => {
+describe('source line mapping', () => {
   const source = [
     '# Title', // 0
     '',
@@ -200,7 +200,7 @@ test.describe('source line mapping', () => {
   });
 });
 
-test.describe('standalone export template', () => {
+describe('standalone export template', () => {
   const bodyHtml = '<h1>Quarterly Report</h1>\n<p>unique-body-marker</p>';
 
   test('wraps the content once with the given title', () => {
@@ -267,7 +267,7 @@ test.describe('standalone export template', () => {
   });
 });
 
-test.describe('DOCX-side parser', () => {
+describe('DOCX-side parser', () => {
   const docxMarkdown = createMarkdownParser();
 
   // How the source was split up, without the attributes and rendering
@@ -369,7 +369,7 @@ test.describe('DOCX-side parser', () => {
   });
 });
 
-test.describe('snapshot PDF paging', () => {
+describe('snapshot PDF paging', () => {
   test('cuts a capture into page-high slices with the remainder last', () => {
     expect(planPageSlices(2500, 1000)).toEqual([
       { sourceY: 0, height: 1000 },

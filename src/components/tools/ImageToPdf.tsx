@@ -35,7 +35,11 @@ export function ImageToPdf() {
     setImages((prev) => [...prev, ...newImages]);
   };
 
-  const intake = useFileIntake({ accept: 'image/jpeg,image/png', multiple: true, onFiles: addImages });
+  const intake = useFileIntake({
+    accept: 'image/jpeg,image/png',
+    multiple: true,
+    onFiles: addImages,
+  });
 
   const generatePdf = async () => {
     if (images.length === 0) return;
@@ -91,7 +95,10 @@ export function ImageToPdf() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm break-words">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm break-words"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -109,7 +116,10 @@ export function ImageToPdf() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {images.map((img) => (
-                <div key={img.id} className="relative group aspect-square border rounded-md overflow-hidden bg-muted">
+                <div
+                  key={img.id}
+                  className="relative group aspect-square border rounded-md overflow-hidden bg-muted"
+                >
                   <ImageThumbnail file={img.file} />
                   {/* Hidden until hover only where there is a pointer to hover with; touch screens and keyboard focus always show it. */}
                   <button

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   MOCK_FIELD_TYPES,
   columnNames,
@@ -26,31 +26,43 @@ function column(dataset: { rows: unknown[][] }, index: number): unknown[] {
   return dataset.rows.map((row) => row[index]);
 }
 
-test.describe('columnNames', () => {
+describe('columnNames', () => {
   test('keeps distinct names as typed', () => {
-    expect(columnNames([field('id', 'id_seq'), field('Full Name', 'full_name')])).toEqual(['id', 'Full Name']);
+    expect(columnNames([field('id', 'id_seq'), field('Full Name', 'full_name')])).toEqual([
+      'id',
+      'Full Name',
+    ]);
   });
 
   test('names a blank column after its field id', () => {
-    expect(columnNames([field('', 'city', '7'), field('   ', 'state', '8')])).toEqual(['field_7', 'field_8']);
+    expect(columnNames([field('', 'city', '7'), field('   ', 'state', '8')])).toEqual([
+      'field_7',
+      'field_8',
+    ]);
   });
 
   test('numbers a name that is already taken', () => {
-    expect(columnNames([field('email', 'email', '1'), field('email', 'email', '2'), field('email', 'city', '3')])).toEqual([
-      'email',
-      'email_2',
-      'email_3',
-    ]);
+    expect(
+      columnNames([
+        field('email', 'email', '1'),
+        field('email', 'email', '2'),
+        field('email', 'city', '3'),
+      ])
+    ).toEqual(['email', 'email_2', 'email_3']);
   });
 
   test('does not number a name into one that is taken too', () => {
     expect(
-      columnNames([field('email', 'email', '1'), field('email_2', 'city', '2'), field('email', 'email', '3')])
+      columnNames([
+        field('email', 'email', '1'),
+        field('email_2', 'city', '2'),
+        field('email', 'email', '3'),
+      ])
     ).toEqual(['email', 'email_2', 'email_3']);
   });
 });
 
-test.describe('generateMockData', () => {
+describe('generateMockData', () => {
   test('makes the requested rows with one value per field', () => {
     const fields = [field('id', 'id_seq'), field('name', 'full_name'), field('active', 'boolean')];
     const dataset = generateMockData(fields, 25, { random: seeded(1) });
@@ -91,7 +103,17 @@ test.describe('generateMockData', () => {
       expect(value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect((value as string) >= '1980-01-01' && (value as string) <= '2023-12-31').toBe(true);
     }
-    for (const type of ['first_name', 'last_name', 'full_name', 'city', 'state', 'country', 'company', 'job', 'text']) {
+    for (const type of [
+      'first_name',
+      'last_name',
+      'full_name',
+      'city',
+      'state',
+      'country',
+      'company',
+      'job',
+      'text',
+    ]) {
       for (const value of values(type)) {
         expect(typeof value, type).toBe('string');
         expect(value, type).not.toBe('');
@@ -146,7 +168,9 @@ test.describe('generateMockData', () => {
       Denver: 'CO',
       'El Paso': 'TX',
     };
-    const dataset = generateMockData([field('state', 'state'), field('city', 'city')], 300, { random: seeded(5) });
+    const dataset = generateMockData([field('state', 'state'), field('city', 'city')], 300, {
+      random: seeded(5),
+    });
 
     const cities = new Set<string>();
     for (const [state, city] of dataset.rows as string[][]) {
@@ -172,14 +196,29 @@ test.describe('generateMockData', () => {
 
     const [header, firstRow] = mockDataToCsv(dataset).split('\n');
     expect(header).toBe('"value","value_2"');
-    expect(firstRow).toBe(`"1","${objects[0].value_2}"`);
+    expect(firstRow).toBe(`"1","${String(objects[0].value_2)}"`);
   });
 });
 
-test.describe('mockDataToJson', () => {
+describe('mockDataToJson', () => {
   test('writes one object per row, keyed by column name in order', () => {
-    const json = mockDataToJson({ columns: ['id', 'name', 'ok'], rows: [[1, 'Ann', true], [2, 'Bob', false]] });
-    expect(json).toBe(JSON.stringify([{ id: 1, name: 'Ann', ok: true }, { id: 2, name: 'Bob', ok: false }], null, 2));
+    const json = mockDataToJson({
+      columns: ['id', 'name', 'ok'],
+      rows: [
+        [1, 'Ann', true],
+        [2, 'Bob', false],
+      ],
+    });
+    expect(json).toBe(
+      JSON.stringify(
+        [
+          { id: 1, name: 'Ann', ok: true },
+          { id: 2, name: 'Bob', ok: false },
+        ],
+        null,
+        2
+      )
+    );
   });
 
   test('keeps a column called __proto__', () => {
@@ -192,13 +231,18 @@ test.describe('mockDataToJson', () => {
   });
 });
 
-test.describe('mockDataToCsv', () => {
+describe('mockDataToCsv', () => {
   test('quotes every field and doubles quotes inside them', () => {
     const csv = mockDataToCsv({
       columns: ['id', 'say "hi"', 'note'],
-      rows: [[1, 'a "b" c', 'x,y'], [2, true, 'line']],
+      rows: [
+        [1, 'a "b" c', 'x,y'],
+        [2, true, 'line'],
+      ],
     });
-    expect(csv).toBe(['"id","say ""hi""","note"', '"1","a ""b"" c","x,y"', '"2","true","line"'].join('\n'));
+    expect(csv).toBe(
+      ['"id","say ""hi""","note"', '"1","a ""b"" c","x,y"', '"2","true","line"'].join('\n')
+    );
   });
 
   test('is empty when there are no rows', () => {

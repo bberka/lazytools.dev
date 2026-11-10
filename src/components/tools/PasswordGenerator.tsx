@@ -8,15 +8,9 @@ import { Slider } from '../ui/slider';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Copy, Check, RefreshCw, Shield, KeyRound } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { useCopyToClipboard, useHydrated } from '@/hooks';
 import {
   clampInteger,
   countCharacterTypes,
@@ -60,7 +54,7 @@ interface Output {
 }
 
 export function PasswordGenerator() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const [mode, setMode] = useState<GenerationMode>('random');
   const [length, setLength] = useState(16);
   const [uppercase, setUppercase] = useState(true);
@@ -88,10 +82,6 @@ export function PasswordGenerator() {
   const [manualOutput, setManualOutput] = useState<Output | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const settings = useMemo<GeneratorSettings>(() => {
     if (mode === 'pin') {
@@ -170,26 +160,25 @@ export function PasswordGenerator() {
     setManualOutput({ settings, result: generatePassword(settings), refresh: refreshNonce });
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(password);
-  };
-
   const counts = useMemo(() => countCharacterTypes(password), [password]);
 
-  const [strengthAnalysis, setStrengthAnalysis] = useState<ZxcvbnResult | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [strengthFailed, setStrengthFailed] = useState(false);
+  // The estimate belongs to the password it was made for. Until one is in for
+  // the current password the strength is being evaluated; a null analysis means
+  // the estimate failed.
+  const [strengthOutcome, setStrengthOutcome] = useState<{
+    password: string;
+    analysis: ZxcvbnResult | null;
+  } | null>(null);
+  const hasOutcome = strengthOutcome?.password === password;
+  const strengthAnalysis = hasOutcome && !hasError ? strengthOutcome.analysis : null;
+  const strengthFailed = hasOutcome && strengthOutcome.analysis === null;
+  const isEvaluating = password !== '' && !hasError && !hasOutcome;
 
   useEffect(() => {
-    if (!password || hasError) {
-      setStrengthAnalysis(null);
-      return;
-    }
+    if (!password || hasError) return;
 
     let isCurrent = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    setIsEvaluating(true);
-    setStrengthFailed(false);
 
     const evaluate = async () => {
       try {
@@ -217,30 +206,24 @@ export function PasswordGenerator() {
 
         if (!isCurrent) return;
 
-        setStrengthAnalysis({
+        const analysis: ZxcvbnResult = {
           score: result.score,
           feedback: {
             warning: result.feedback.warning || undefined,
             suggestions: result.feedback.suggestions || [],
           },
           crackTimesDisplay: {
-            offlineFastHashing1e10PerSecond: result.crackTimesDisplay.offlineFastHashing1e10PerSecond,
+            offlineFastHashing1e10PerSecond:
+              result.crackTimesDisplay.offlineFastHashing1e10PerSecond,
             offlineSlowHashing1e4PerSecond: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond,
             onlineNoThrottling10PerSecond: result.crackTimesDisplay.onlineNoThrottling10PerSecond,
           },
           entropyBits: Math.round(Math.log2(result.guesses)),
-        });
+        };
+        setStrengthOutcome({ password, analysis });
       } catch (e) {
         console.error('zxcvbn evaluation failed', e);
-        // The estimate still on screen belongs to an earlier password.
-        if (isCurrent) {
-          setStrengthAnalysis(null);
-          setStrengthFailed(true);
-        }
-      } finally {
-        if (isCurrent) {
-          setIsEvaluating(false);
-        }
+        if (isCurrent) setStrengthOutcome({ password, analysis: null });
       }
     };
 
@@ -265,13 +248,14 @@ export function PasswordGenerator() {
             Password Generator
           </CardTitle>
           <CardDescription>
-            Instant regeneration, stricter character controls, and wallet-style recovery phrases in one place.
+            Instant regeneration, stricter character controls, and wallet-style recovery phrases in
+            one place.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Generation mode</label>
+              <span className="text-sm font-medium">Generation mode</span>
               <Select value={mode} onValueChange={(value) => setMode(value as GenerationMode)}>
                 <SelectTrigger aria-label="Generation mode">
                   <SelectValue placeholder="Select a mode" />
@@ -287,7 +271,9 @@ export function PasswordGenerator() {
             <div className="flex items-center justify-between rounded-xl border border-border/70 px-4 py-3">
               <div>
                 <p className="text-sm font-medium">Auto-generate</p>
-                <p className="text-xs text-muted-foreground">Refresh the output whenever settings change.</p>
+                <p className="text-xs text-muted-foreground">
+                  Refresh the output whenever settings change.
+                </p>
               </div>
               <Switch
                 checked={autoGenerate}
@@ -306,7 +292,14 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Length: {length}</label>
-                <Slider aria-label="Length" value={length} onChange={setLength} min={4} max={256} step={1} />
+                <Slider
+                  aria-label="Length"
+                  value={length}
+                  onChange={setLength}
+                  min={4}
+                  max={256}
+                  step={1}
+                />
               </div>
 
               <div className="space-y-3">
@@ -317,7 +310,7 @@ export function PasswordGenerator() {
                 <Checkbox checked={special} onChange={setSpecial} label="Special (!@#$...)" />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Checkbox
                   checked={excludeAmbiguous}
                   onChange={setExcludeAmbiguous}
@@ -333,7 +326,7 @@ export function PasswordGenerator() {
               <div className="space-y-3">
                 <p className="text-sm font-medium">Maximum characters by type</p>
                 <div className="rounded-xl border border-border/70 p-4 space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <LimitInput
                       label="Max uppercase"
                       checked={limitUppercase}
@@ -384,11 +377,21 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">PIN length: {pinLength}</label>
-                <Slider aria-label="PIN length" value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
+                <Slider
+                  aria-label="PIN length"
+                  value={pinLength}
+                  onChange={setPinLength}
+                  min={4}
+                  max={24}
+                  step={1}
+                />
               </div>
               <div>
-                <label className="mb-3 block text-sm font-medium">Digits per group: {pinGrouping}</label>
-                <Slider aria-label="Digits per group"
+                <label className="mb-3 block text-sm font-medium">
+                  Digits per group: {pinGrouping}
+                </label>
+                <Slider
+                  aria-label="Digits per group"
                   value={pinGrouping}
                   onChange={(value) => setPinGrouping(clampInteger(value, 2, 6))}
                   min={2}
@@ -403,13 +406,23 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Word count: {wordCount}</label>
-                <Slider aria-label="Word count" value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
+                <Slider
+                  aria-label="Word count"
+                  value={wordCount}
+                  onChange={setWordCount}
+                  min={3}
+                  max={12}
+                  step={1}
+                />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Separator</label>
-                  <Select value={separator} onValueChange={(value) => setSeparator(value as PassphraseSeparator)}>
+                  <span className="text-sm font-medium">Separator</span>
+                  <Select
+                    value={separator}
+                    onValueChange={(value) => setSeparator(value as PassphraseSeparator)}
+                  >
                     <SelectTrigger aria-label="Separator">
                       <SelectValue placeholder="Choose a separator" />
                     </SelectTrigger>
@@ -506,7 +519,7 @@ export function PasswordGenerator() {
                 <Button
                   variant={isCopied ? 'default' : 'ghost'}
                   size="icon"
-                  onClick={handleCopy}
+                  onClick={() => copyToClipboard(password)}
                   disabled={hasError}
                   aria-label="Copy password"
                 >
@@ -548,43 +561,59 @@ export function PasswordGenerator() {
             )}
 
             {/* Warnings and Suggestions */}
-            {!hasError && !isEvaluating && strengthAnalysis && (strengthAnalysis.feedback.warning || strengthAnalysis.feedback.suggestions.length > 0) && (
-              <div className="p-3.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-1.5">
-                {strengthAnalysis.feedback.warning && (
-                  <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-500 flex items-center gap-1.5">
-                    ⚠️ {strengthAnalysis.feedback.warning}
-                  </p>
-                )}
-                {strengthAnalysis.feedback.suggestions.length > 0 && (
-                  <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 pl-1">
-                    {strengthAnalysis.feedback.suggestions.map((suggestion, idx) => (
-                      <li key={idx}>{suggestion}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            {!hasError &&
+              !isEvaluating &&
+              strengthAnalysis &&
+              (strengthAnalysis.feedback.warning ||
+                strengthAnalysis.feedback.suggestions.length > 0) && (
+                <div className="p-3.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-1.5">
+                  {strengthAnalysis.feedback.warning && (
+                    <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-500 flex items-center gap-1.5">
+                      ⚠️ {strengthAnalysis.feedback.warning}
+                    </p>
+                  )}
+                  {strengthAnalysis.feedback.suggestions.length > 0 && (
+                    <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 pl-1">
+                      {strengthAnalysis.feedback.suggestions.map((suggestion, idx) => (
+                        <li key={idx}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
             {/* Estimated time-to-crack metrics */}
             {!hasError && !isEvaluating && strengthAnalysis && (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fast Crack (Offline)</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.offlineFastHashing1e10PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Fast Crack (Offline)
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.offlineFastHashing1e10PerSecond}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Slow Crack (Offline)</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.offlineSlowHashing1e4PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Slow Crack (Offline)
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.offlineSlowHashing1e4PerSecond}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Online Crack</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.onlineNoThrottling10PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Online Crack
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.onlineNoThrottling10PerSecond}
+                  </p>
                 </div>
               </div>
             )}
 
             {!hasError && output.settings.mode === 'random' && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard label="Uppercase" value={counts.uppercase} />
                 <StatCard label="Lowercase" value={counts.lowercase} />
                 <StatCard label="Numbers" value={counts.numbers} />
@@ -593,7 +622,7 @@ export function PasswordGenerator() {
             )}
 
             {!hasError && output.settings.mode === 'passphrase' && (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatCard label="Words" value={output.settings.wordCount} />
                 <StatCard
                   label="Separator"
@@ -637,12 +666,7 @@ function LimitInput({
 }) {
   return (
     <div className="space-y-3 rounded-xl border border-border/60 p-3">
-      <Checkbox
-        checked={checked}
-        onChange={onCheckedChange}
-        disabled={disabled}
-        label={label}
-      />
+      <Checkbox checked={checked} onChange={onCheckedChange} disabled={disabled} label={label} />
       <Input
         type="number"
         min={0}
@@ -659,7 +683,9 @@ function LimitInput({
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 font-mono text-lg">{value}</p>
     </div>
   );

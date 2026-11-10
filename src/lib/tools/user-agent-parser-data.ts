@@ -40,11 +40,9 @@ export interface UserAgentSample {
   userAgent: string;
 }
 
-// ---------------------------------------------------------------------------
 // Command-line tools and HTTP libraries. Anchored to the start of the string:
 // these send nothing but their own product token, and the anchor keeps a
 // browser that merely mentions one of them from matching.
-// ---------------------------------------------------------------------------
 
 export const HTTP_CLIENT_RULES: readonly NamedRule[] = [
   { name: 'curl', pattern: /^curl\/([\d.]+)/i },
@@ -64,10 +62,8 @@ export const HTTP_CLIENT_RULES: readonly NamedRule[] = [
   { name: 'axios', pattern: /^axios\/([\d.]+)/i },
 ];
 
-// ---------------------------------------------------------------------------
 // Named crawlers and fetchers. More specific variants come before the family
 // name they share (Googlebot-Image before Googlebot).
-// ---------------------------------------------------------------------------
 
 export const BOT_RULES: readonly NamedRule[] = [
   { name: 'Googlebot-Image', pattern: /\bGooglebot-Image\/([\d.]+)/i },
@@ -122,16 +118,15 @@ export const BOT_RULES: readonly NamedRule[] = [
  * bot, crawler or spider, with an optional version. Group 1 is the whole
  * token, group 2 the version.
  */
-export const GENERIC_BOT_PATTERN = /(?:^|[\s;(,/])([A-Za-z0-9._+-]*(?:bot|crawler|spider))\b(?:[/\s_-]v?(\d[\d.]*))?/i;
+export const GENERIC_BOT_PATTERN =
+  /(?:^|[\s;(,/])([A-Za-z0-9._+-]*(?:bot|crawler|spider))\b(?:[/\s_-]v?(\d[\d.]*))?/i;
 
 /** Tokens that end in "bot" but belong to a phone maker, not a crawler. */
 export const NOT_A_BOT = new Set(['cubot']);
 
-// ---------------------------------------------------------------------------
 // Browsers. Read top to bottom: forks and wrappers first, then the engines
 // they are built on. Anything that carries a Chrome/ or Safari/ token as well
 // as its own has to sit above those two.
-// ---------------------------------------------------------------------------
 
 export const BROWSER_RULES: readonly NamedRule[] = [
   { name: 'Samsung Internet', pattern: /\bSamsungBrowser\/([\d.]+)/i },
@@ -184,12 +179,10 @@ export const SAFARI_WITHOUT_VERSION = /\bAppleWebKit\/[\d.]+.*\bSafari\//i;
 /** An iOS app's embedded web view: WebKit and Mobile/, but no Safari/ token. */
 export const IOS_WEBVIEW_PATTERN = /\bAppleWebKit\/[\d.]+ \(KHTML, like Gecko\) Mobile\/\w+/i;
 
-// ---------------------------------------------------------------------------
 // Operating systems
-// ---------------------------------------------------------------------------
 
 /** "Windows NT x.y" to the name people use. Windows 11 still says 10.0. */
-export const WINDOWS_NT_VERSIONS: Readonly<Record<string, string>> = {
+const WINDOWS_NT_VERSIONS: Readonly<Record<string, string>> = {
   '4.0': 'NT 4.0',
   '5.0': '2000',
   '5.1': 'XP',
@@ -209,7 +202,11 @@ export const OS_RULES: readonly OsRule[] = [
     pattern: /\bWindows NT ([\d.]+)/i,
     version: (match) => WINDOWS_NT_VERSIONS[match[1]] ?? `NT ${match[1]}`,
   },
-  { name: 'Windows', pattern: /\bWin(?:dows)?[ _]?(95|98|ME)\b/i, version: (match) => match[1].toUpperCase() },
+  {
+    name: 'Windows',
+    pattern: /\bWin(?:dows)?[ _]?(95|98|ME)\b/i,
+    version: (match) => match[1].toUpperCase(),
+  },
   // iOS says "like Mac OS X", so it has to be read before macOS.
   { name: 'iOS', pattern: /\bOS ([\d_]+) like Mac OS X/i },
   { name: 'iOS', pattern: /\biOS[ /]([\d_.]+)/ },
@@ -259,12 +256,14 @@ export const DESKTOP_OPERATING_SYSTEMS: ReadonlySet<string> = new Set([
   'SunOS',
 ]);
 
-// ---------------------------------------------------------------------------
 // Devices
-// ---------------------------------------------------------------------------
 
 export const CONSOLE_RULES: readonly DeviceRule[] = [
-  { pattern: /\bPlayStation[ ](\d|Vita|Portable)\b/i, vendor: 'Sony', model: (match) => `PlayStation ${match[1]}` },
+  {
+    pattern: /\bPlayStation[ ](\d|Vita|Portable)\b/i,
+    vendor: 'Sony',
+    model: (match) => `PlayStation ${match[1]}`,
+  },
   { pattern: /\bPlayStation\b/i, vendor: 'Sony', model: () => 'PlayStation' },
   {
     pattern: /\bXbox[ ](One(?: [SX])?|Series [SX]|360)\b/i,
@@ -287,7 +286,11 @@ export const TV_RULES: readonly DeviceRule[] = [
   { pattern: /\bAFT[A-Z0-9]{1,6}\b/, vendor: 'Amazon', model: (match) => `Fire TV (${match[0]})` },
   { pattern: /\bBRAVIA\b/i, vendor: 'Sony', model: () => null },
   // Generic smart-TV markers. The vendor is not named, so it stays unknown.
-  { pattern: /\b(?:SMART-?TV|HbbTV|NetCast|GoogleTV|Android ?TV|Web0S)\b|\bTV Safari\//i, vendor: null, model: () => null },
+  {
+    pattern: /\b(?:SMART-?TV|HbbTV|NetCast|GoogleTV|Android ?TV|Web0S)\b|\bTV Safari\//i,
+    vendor: null,
+    model: () => null,
+  },
 ];
 
 /** Vendors that name themselves in a Windows Phone UA: "...; Touch; NOKIA; Lumia 920)". */
@@ -314,12 +317,14 @@ export const ANDROID_VENDOR_RULES: readonly VendorRule[] = [
   { vendor: 'Google', pattern: /^(?:Pixel|Nexus)\b/i },
   {
     vendor: 'Samsung',
-    pattern: /^(?:SAMSUNG[-_ ]?)?(?:SM|GT|SCH|SGH|SHV|SHW|SPH|SCV|SCG|SC)-[A-Z0-9]+|^SAMSUNG\b|^Galaxy\b/i,
+    pattern:
+      /^(?:SAMSUNG[-_ ]?)?(?:SM|GT|SCH|SGH|SHV|SHW|SPH|SCV|SCG|SC)-[A-Z0-9]+|^SAMSUNG\b|^Galaxy\b/i,
     strip: /^SAMSUNG[-_ ]?/i,
   },
   {
     vendor: 'Xiaomi',
-    pattern: /^(?:Redmi|POCO|Xiaomi|MIX\b|Mi ?(?:\d|Pad|Note|Max|Mix|A\d)|M\d{4}[A-Z]\d+[A-Z]*$|2\d{6,7}[A-Z]{1,2}\w*$)/i,
+    pattern:
+      /^(?:Redmi|POCO|Xiaomi|MIX\b|Mi ?(?:\d|Pad|Note|Max|Mix|A\d)|M\d{4}[A-Z]\d+[A-Z]*$|2\d{6,7}[A-Z]{1,2}\w*$)/i,
   },
   { vendor: 'Honor', pattern: /^HONOR\b/i },
   {
@@ -346,9 +351,7 @@ export const ANDROID_VENDOR_RULES: readonly VendorRule[] = [
   { vendor: 'Infinix', pattern: /^Infinix\b/i },
 ];
 
-// ---------------------------------------------------------------------------
 // CPU architecture. A UA states it only sometimes, so "no match" means unknown.
-// ---------------------------------------------------------------------------
 
 export const CPU_RULES: readonly CpuRule[] = [
   { architecture: 'arm64', pattern: /\b(?:aarch64|arm64|arm_64|armv8[ab]?)\b/i },
@@ -359,9 +362,7 @@ export const CPU_RULES: readonly CpuRule[] = [
   { architecture: 'ppc', pattern: /\b(?:ppc|powerpc)(?:64)?\b/i },
 ];
 
-// ---------------------------------------------------------------------------
 // Sample strings offered in the Select. All are real-world shapes.
-// ---------------------------------------------------------------------------
 
 export const USER_AGENT_SAMPLES: readonly UserAgentSample[] = [
   {

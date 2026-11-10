@@ -13,6 +13,7 @@ import {
   degrees,
   type PDFPage,
 } from 'pdf-lib';
+import { openFileChooser } from '../support/file-chooser';
 
 // End-to-end flows of the PDF editing tools: Edit Pages, Merge, Split,
 // Compress and Watermark. Every fixture is built in memory and every result is
@@ -216,20 +217,22 @@ function makeNoisePng(width: number, height: number): Buffer {
 
 /** Picks files through the drop area's file chooser, the way a click does. */
 async function chooseFiles(page: Page, opener: Locator, files: Upload | Upload[]) {
-  const chooser = page.waitForEvent('filechooser');
-  await opener.click();
-  await (await chooser).setFiles(files);
+  const chooser = await openFileChooser(page, () => opener.click());
+  await chooser.setFiles(files);
 }
 
 /** Drops files on an element, as a drag from the file manager does. */
 async function dropFiles(page: Page, target: Locator, files: Upload[]) {
-  const dataTransfer = await page.evaluateHandle((items) => {
-    const transfer = new DataTransfer();
-    for (const item of items) {
-      transfer.items.add(new File([new Uint8Array(item.bytes)], item.name, { type: item.type }));
-    }
-    return transfer;
-  }, files.map((file) => ({ name: file.name, type: file.mimeType, bytes: Array.from(file.buffer) })));
+  const dataTransfer = await page.evaluateHandle(
+    (items) => {
+      const transfer = new DataTransfer();
+      for (const item of items) {
+        transfer.items.add(new File([new Uint8Array(item.bytes)], item.name, { type: item.type }));
+      }
+      return transfer;
+    },
+    files.map((file) => ({ name: file.name, type: file.mimeType, bytes: Array.from(file.buffer) }))
+  );
 
   await target.dispatchEvent('drop', { dataTransfer });
 }
@@ -331,15 +334,6 @@ async function canvasInk(canvas: Locator): Promise<Ink> {
   });
 }
 
-/** Alpha (0 to 255) of one pixel of a canvas. */
-async function canvasAlpha(canvas: Locator, x: number, y: number): Promise<number> {
-  return canvas.evaluate(
-    (node, at) =>
-      (node as HTMLCanvasElement).getContext('2d')!.getImageData(at.x, at.y, 1, 1).data[3],
-    { x, y }
-  );
-}
-
 // ── Reading a PDF back ────────────────────────────────────────────────────────
 
 async function openPdfBytes(bytes: Buffer): Promise<PDFDocument> {
@@ -350,7 +344,9 @@ async function openPdfBytes(bytes: Buffer): Promise<PDFDocument> {
 /** Width, height and /Rotate of every page, in order. */
 async function pageShapes(bytes: Buffer): Promise<Array<[number, number, number]>> {
   const doc = await openPdfBytes(bytes);
-  return doc.getPages().map((page) => [page.getWidth(), page.getHeight(), page.getRotation().angle]);
+  return doc
+    .getPages()
+    .map((page) => [page.getWidth(), page.getHeight(), page.getRotation().angle]);
 }
 
 function decodeStream(stream: unknown): string {
@@ -509,7 +505,15 @@ interface Layer {
   rgb(x: number, y: number): [number, number, number];
   alpha(x: number, y: number): number;
   /** Bounding box and centre of everything that is not transparent, in pixels. */
-  ink(): { count: number; left: number; top: number; right: number; bottom: number; cx: number; cy: number };
+  ink(): {
+    count: number;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    cx: number;
+    cy: number;
+  };
   /** The colours of the pixels that are fully opaque, as "r,g,b". */
   solidColours(): Set<string>;
 }
@@ -552,7 +556,8 @@ function readLayer(image: PageImage): Layer {
     solidColours: () => {
       const colours = new Set<string>();
       for (let at = 0; at < width * height; at++) {
-        if (alpha[at] === 255) colours.add(`${colour[at * 3]},${colour[at * 3 + 1]},${colour[at * 3 + 2]}`);
+        if (alpha[at] === 255)
+          colours.add(`${colour[at * 3]},${colour[at * 3 + 1]},${colour[at * 3 + 2]}`);
       }
       return colours;
     },
@@ -692,7 +697,9 @@ test.describe('PDF editing tools', () => {
         [410, 510, 0],
         [200, 300, 0],
       ]);
-      await expect(page.getByRole('status')).toHaveText('Merged 3 files (4 pages) into merged.pdf.');
+      await expect(page.getByRole('status')).toHaveText(
+        'Merged 3 files (4 pages) into merged.pdf.'
+      );
 
       // Removing a file changes what the next merge contains.
       await page.getByRole('button', { name: 'Remove body.pdf' }).click();
@@ -704,10 +711,14 @@ test.describe('PDF editing tools', () => {
         [600, 700, 0],
         [200, 300, 0],
       ]);
-      await expect(page.getByRole('status')).toHaveText('Merged 2 files (2 pages) into merged.pdf.');
+      await expect(page.getByRole('status')).toHaveText(
+        'Merged 2 files (2 pages) into merged.pdf.'
+      );
     });
 
-    test('one file cannot be merged, and dropped files are taken like picked ones', async ({ page }) => {
+    test('one file cannot be merged, and dropped files are taken like picked ones', async ({
+      page,
+    }) => {
       await page.goto('/tools/pdf-merge/');
       const panel = page.getByRole('tabpanel', { name: 'Merge' });
 
@@ -759,7 +770,11 @@ test.describe('PDF editing tools', () => {
       await page.getByRole('button', { name: 'Remove broken.pdf' }).click();
       await expect(alertWith(page, 'broken.pdf')).toHaveCount(0);
 
-      await chooseFiles(page, dropzone(page), pdfUpload('locked.pdf', await makeMarkedEncryptedPdf()));
+      await chooseFiles(
+        page,
+        dropzone(page),
+        pdfUpload('locked.pdf', await makeMarkedEncryptedPdf())
+      );
       await page.getByRole('button', { name: 'Merge PDFs' }).click();
 
       await expect(alertWith(page, 'locked.pdf')).toHaveText(
@@ -890,7 +905,11 @@ test.describe('PDF editing tools', () => {
       await rangeField(page).fill('1');
       await expect(extract(page)).toBeDisabled();
 
-      await chooseFiles(page, dropzone(page), pdfUpload('locked.pdf', await makeMarkedEncryptedPdf()));
+      await chooseFiles(
+        page,
+        dropzone(page),
+        pdfUpload('locked.pdf', await makeMarkedEncryptedPdf())
+      );
       await expect(alertWith(page, 'password-protected')).toHaveText(
         'Error: This PDF is password-protected or encrypted. Remove the protection and try again.'
       );
@@ -915,8 +934,10 @@ test.describe('PDF editing tools', () => {
   });
 
   test.describe('Compress PDF', () => {
-    const dropzone = (page: Page) => page.getByRole('button', { name: 'Click to upload a PDF file' });
-    const compress = (page: Page) => page.getByRole('button', { name: 'Compress PDF', exact: true });
+    const dropzone = (page: Page) =>
+      page.getByRole('button', { name: 'Click to upload a PDF file' });
+    const compress = (page: Page) =>
+      page.getByRole('button', { name: 'Compress PDF', exact: true });
     const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     /** The three figures of the result card, as the panel prints them. */
@@ -972,7 +993,9 @@ test.describe('PDF editing tools', () => {
       return Buffer.from(await doc.save({ useObjectStreams: false }));
     }
 
-    test('Compress Images redraws every page as a JPEG and reports the saving', async ({ page }) => {
+    test('Compress Images redraws every page as a JPEG and reports the saving', async ({
+      page,
+    }) => {
       const source = await makeScanPdf();
 
       await page.goto('/tools/pdf-compress/');
@@ -984,10 +1007,9 @@ test.describe('PDF editing tools', () => {
       // Defaults: image mode at the middle level. The labels give the resolution of each level.
       const mode = page.getByRole('group', { name: 'Compression Mode' });
       const level = page.getByRole('group', { name: 'Compression Level' });
-      await expect(mode.getByRole('button', { name: /^Compress Images \(Recommended\)/ })).toHaveAttribute(
-        'aria-pressed',
-        'true'
-      );
+      await expect(
+        mode.getByRole('button', { name: /^Compress Images \(Recommended\)/ })
+      ).toHaveAttribute('aria-pressed', 'true');
       await expect(level.getByRole('button')).toHaveText([
         /^Low\s*Clear \(144 DPI\)$/,
         /^Medium\s*Balanced \(108 DPI\)$/,
@@ -999,7 +1021,10 @@ test.describe('PDF editing tools', () => {
       );
 
       await level.getByRole('button', { name: /^High/ }).click();
-      await expect(level.getByRole('button', { name: /^High/ })).toHaveAttribute('aria-pressed', 'true');
+      await expect(level.getByRole('button', { name: /^High/ })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(level.getByRole('button', { name: /^Medium/ })).toHaveAttribute(
         'aria-pressed',
         'false'
@@ -1012,7 +1037,11 @@ test.describe('PDF editing tools', () => {
       expect(result.name).toBe('compressed-scan.pdf');
       expect(result.bytes.length).toBeLessThan(source.length);
       await expect(panel).toContainText(
-        figures(source.length, result.bytes.length, savedPercent(source.length, result.bytes.length))
+        figures(
+          source.length,
+          result.bytes.length,
+          savedPercent(source.length, result.bytes.length)
+        )
       );
 
       // Same pages, each now one JPEG drawn over the whole page. 72 DPI is one pixel per point.
@@ -1058,7 +1087,10 @@ test.describe('PDF editing tools', () => {
       await expect(panel).not.toContainText('Compression Successful!');
       await expect(page.getByRole('button', { name: 'Download PDF' })).toHaveCount(0);
 
-      const result = await downloadFrom(page, page.getByRole('button', { name: 'Download Anyway' }));
+      const result = await downloadFrom(
+        page,
+        page.getByRole('button', { name: 'Download Anyway' })
+      );
       expect(result.name).toBe('compressed-tiny.pdf');
       expect(result.bytes.length).toBeGreaterThan(source.length);
       await expect(panel).toContainText(figures(source.length, result.bytes.length, '0%'));
@@ -1067,13 +1099,20 @@ test.describe('PDF editing tools', () => {
       const doc = await openPdfBytes(result.bytes);
       expect(await pageShapes(result.bytes)).toEqual([[200, 100, 0]]);
       expect(
-        [...imagesOf(doc.getPage(0)).values()].map((image) => [image.width, image.height, image.filter])
+        [...imagesOf(doc.getPage(0)).values()].map((image) => [
+          image.width,
+          image.height,
+          image.filter,
+        ])
       ).toEqual([[400, 200, '/DCTDecode']]);
 
       // Back to the settings, which are as they were left.
       await page.getByRole('button', { name: 'Try Other Settings' }).click();
       await expect(panel).not.toContainText('No Size Reduction');
-      await expect(level.getByRole('button', { name: /^Low/ })).toHaveAttribute('aria-pressed', 'true');
+      await expect(level.getByRole('button', { name: /^Low/ })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       // Structure mode has no levels.
       await page.getByRole('button', { name: /^Optimize Structure/ }).click();
@@ -1105,18 +1144,24 @@ test.describe('PDF editing tools', () => {
       expect(result.name).toBe('compressed-quarterly.pdf');
       expect(result.bytes.length).toBeLessThan(source.length);
       await expect(panel).toContainText(
-        figures(source.length, result.bytes.length, savedPercent(source.length, result.bytes.length))
+        figures(
+          source.length,
+          result.bytes.length,
+          savedPercent(source.length, result.bytes.length)
+        )
       );
 
       const doc = await openPdfBytes(result.bytes);
-      expect([
-        doc.getTitle(),
-        doc.getAuthor(),
-        doc.getSubject(),
-        doc.getKeywords(),
-        doc.getCreator(),
-        doc.getProducer(),
-      ].map((value) => value ?? '')).toEqual(['', '', '', '', '', '']);
+      expect(
+        [
+          doc.getTitle(),
+          doc.getAuthor(),
+          doc.getSubject(),
+          doc.getKeywords(),
+          doc.getCreator(),
+          doc.getProducer(),
+        ].map((value) => value ?? '')
+      ).toEqual(['', '', '', '', '', '']);
       expect(doc.catalog.get(PDFName.of('Metadata'))).toBeUndefined();
 
       // Nothing in the file still spells out the title or the author.
@@ -1183,11 +1228,13 @@ test.describe('PDF editing tools', () => {
   });
 
   test.describe('PDF Watermark', () => {
-    const dropzone = (page: Page) => page.getByRole('button', { name: 'Click to upload a PDF file' });
+    const dropzone = (page: Page) =>
+      page.getByRole('button', { name: 'Click to upload a PDF file' });
     const stamp = (page: Page) => page.getByRole('button', { name: 'Watermark PDF', exact: true });
     const textField = (page: Page) => page.getByLabel('Watermark Text');
     // The watermark is drawn on the second canvas, laid over the picture of page 1.
-    const overlay = (page: Page) => page.getByRole('tabpanel', { name: 'Watermark' }).locator('canvas').nth(1);
+    const overlay = (page: Page) =>
+      page.getByRole('tabpanel', { name: 'Watermark' }).locator('canvas').nth(1);
     // The sliders have no accessible name; in text mode they are Font Size, Angle and Opacity, in that order.
     const slider = (page: Page, index: number) =>
       page.getByRole('tabpanel', { name: 'Watermark' }).getByRole('slider').nth(index);
@@ -1199,7 +1246,9 @@ test.describe('PDF editing tools', () => {
     async function load(page: Page, name: string, pdf: Buffer) {
       await page.goto('/tools/pdf-watermark/');
       await chooseFiles(page, dropzone(page), pdfUpload(name, pdf));
-      await expect(page.getByRole('tabpanel', { name: 'Watermark' })).toContainText('Watermark Settings');
+      await expect(page.getByRole('tabpanel', { name: 'Watermark' })).toContainText(
+        'Watermark Settings'
+      );
       await expect(dropzone(page)).toContainText(name);
     }
 
@@ -1226,7 +1275,10 @@ test.describe('PDF editing tools', () => {
       // Defaults
       await expect(textField(page)).toHaveValue('CONFIDENTIAL');
       await expect(page.getByRole('combobox', { name: 'Font Family' })).toHaveText('Helvetica');
-      await expect(page.getByRole('button', { name: 'Red', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Red', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(page.getByRole('combobox', { name: 'Placement' })).toHaveText('Center');
       await expect(page.getByRole('combobox', { name: 'Page Range' })).toHaveText('All Pages');
       await expect(panel).toContainText(/Font Size\s*48px/);
@@ -1248,7 +1300,9 @@ test.describe('PDF editing tools', () => {
       const capHeight = 0.718 * 48;
 
       const doc = await openPdfBytes(marked.bytes);
-      expect(await pageShapes(marked.bytes)).toEqual(THREE_PAGES.map(([width, height]) => [width, height, 0]));
+      expect(await pageShapes(marked.bytes)).toEqual(
+        THREE_PAGES.map(([width, height]) => [width, height, 0])
+      );
 
       for (const markedPage of doc.getPages()) {
         const { texts, images } = drawnOn(markedPage);
@@ -1270,11 +1324,15 @@ test.describe('PDF editing tools', () => {
 
         // The middle of the letters sits on the middle of the page.
         const [middleX, middleY] = applyMatrix(text.matrix, textWidth / 2, capHeight / 2);
-        expect(Math.hypot(middleX - markedPage.getWidth() / 2, middleY - markedPage.getHeight() / 2)).toBeLessThan(10);
+        expect(
+          Math.hypot(middleX - markedPage.getWidth() / 2, middleY - markedPage.getHeight() / 2)
+        ).toBeLessThan(10);
       }
     });
 
-    test('text, font, colour, angle, opacity, placement and page range reach the file', async ({ page }) => {
+    test('text, font, colour, angle, opacity, placement and page range reach the file', async ({
+      page,
+    }) => {
       await load(page, 'contract.pdf', await makePdf(THREE_PAGES));
       const panel = page.getByRole('tabpanel', { name: 'Watermark' });
       await expect.poll(async () => (await canvasInk(overlay(page))).count).toBeGreaterThan(0);
@@ -1282,8 +1340,14 @@ test.describe('PDF editing tools', () => {
       await textField(page).fill('DRAFT');
       await chooseOption(page, 'Font Family', 'Courier');
       await page.getByRole('button', { name: 'Blue', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Blue', exact: true })).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.getByRole('button', { name: 'Red', exact: true })).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.getByRole('button', { name: 'Blue', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await expect(page.getByRole('button', { name: 'Red', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
 
       // Angle from -45 to 0, opacity to its maximum.
       await press(slider(page, 1), 'PageUp', 4);
@@ -1347,7 +1411,9 @@ test.describe('PDF editing tools', () => {
         expect(copies.length).toBeGreaterThanOrEqual(4);
         expect(new Set(copies.map((copy) => copy.text))).toEqual(new Set(['DRAFT']));
         // Every copy starts on the page, and no two start at the same place.
-        const starts = copies.map((copy) => `${copy.matrix[4].toFixed(1)},${copy.matrix[5].toFixed(1)}`);
+        const starts = copies.map(
+          (copy) => `${copy.matrix[4].toFixed(1)},${copy.matrix[5].toFixed(1)}`
+        );
         expect(new Set(starts).size).toBe(copies.length);
         for (const copy of copies) {
           expect(copy.matrix[4]).toBeGreaterThanOrEqual(0);
@@ -1358,7 +1424,9 @@ test.describe('PDF editing tools', () => {
       }
     });
 
-    test('a range without pages and blank text do not download an unmarked copy', async ({ page }) => {
+    test('a range without pages and blank text do not download an unmarked copy', async ({
+      page,
+    }) => {
       const downloads = watchDownloads(page);
       await load(page, 'contract.pdf', await makePdf(THREE_PAGES));
 
@@ -1388,7 +1456,9 @@ test.describe('PDF editing tools', () => {
 
       // Clear empties the tool.
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
-      await expect(page.getByRole('tabpanel', { name: 'Watermark' })).not.toContainText('Watermark Settings');
+      await expect(page.getByRole('tabpanel', { name: 'Watermark' })).not.toContainText(
+        'Watermark Settings'
+      );
       await expect(dropzone(page)).not.toContainText('contract.pdf');
     });
 
@@ -1462,13 +1532,18 @@ test.describe('PDF editing tools', () => {
       await expect.poll(async () => (await canvasInk(overlay(page))).count).toBeGreaterThan(0);
 
       await page.getByRole('button', { name: 'Image', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Image', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Image', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(panel).toContainText('No file chosen');
       await expect(stamp(page)).toBeDisabled();
       // With no image there is nothing in the preview.
       await expect.poll(async () => (await canvasInk(overlay(page))).count).toBe(0);
 
-      const imageButton = page.getByRole('button', { name: 'Choose File, watermark image (PNG/JPG)' });
+      const imageButton = page.getByRole('button', {
+        name: 'Choose File, watermark image (PNG/JPG)',
+      });
 
       // Not an image: refused next to the control.
       await chooseFiles(page, imageButton, {
@@ -1481,7 +1556,11 @@ test.describe('PDF editing tools', () => {
       );
       await expect(stamp(page)).toBeDisabled();
 
-      await chooseFiles(page, imageButton, { name: 'logo.png', mimeType: 'image/png', buffer: logo });
+      await chooseFiles(page, imageButton, {
+        name: 'logo.png',
+        mimeType: 'image/png',
+        buffer: logo,
+      });
       await expect(panel).toContainText('logo.png');
       await expect(alertWith(page, 'notes.txt')).toHaveCount(0);
       await expect(panel).toContainText(/Scale\s*50%/);
@@ -1489,7 +1568,9 @@ test.describe('PDF editing tools', () => {
       // 40 x 20 pixels at 50% is 20 x 10 points, in the middle of the 400 x 400 preview.
       await expect.poll(async () => (await canvasInk(overlay(page))).count).toBeGreaterThan(0);
       const centred = await canvasInk(overlay(page));
-      expect([centred.left, centred.top, centred.right, centred.bottom]).toEqual([190, 195, 209, 204]);
+      expect([centred.left, centred.top, centred.right, centred.bottom]).toEqual([
+        190, 195, 209, 204,
+      ]);
 
       const marked = await downloadFrom(page, stamp(page));
       expect(marked.name).toBe('watermarked-contract.pdf');
@@ -1535,13 +1616,17 @@ test.describe('PDF editing tools', () => {
       expect(downloads).toHaveLength(2);
     });
 
-    test('reads the image format from the file, and reports an image it cannot read', async ({ page }) => {
+    test('reads the image format from the file, and reports an image it cannot read', async ({
+      page,
+    }) => {
       const downloads = watchDownloads(page);
       await load(page, 'contract.pdf', await makePdf([[400, 400]]));
       const panel = page.getByRole('tabpanel', { name: 'Watermark' });
 
       await page.getByRole('button', { name: 'Image', exact: true }).click();
-      const imageButton = page.getByRole('button', { name: 'Choose File, watermark image (PNG/JPG)' });
+      const imageButton = page.getByRole('button', {
+        name: 'Choose File, watermark image (PNG/JPG)',
+      });
 
       // A PNG that calls itself a JPEG is still stamped.
       await chooseFiles(page, imageButton, {
@@ -1564,7 +1649,9 @@ test.describe('PDF editing tools', () => {
         mimeType: 'image/png',
         buffer: Buffer.from('not an image at all'),
       });
-      await expect(alertWith(page, 'Unable to load')).toHaveText('Unable to load the selected image.');
+      await expect(alertWith(page, 'Unable to load')).toHaveText(
+        'Unable to load the selected image.'
+      );
 
       await stamp(page).click();
       await expect(alertWith(page, 'Error')).toHaveText(
@@ -1597,11 +1684,15 @@ test.describe('PDF editing tools', () => {
 
       // An image in the upper left corner of the page as shown.
       await page.getByRole('button', { name: 'Image', exact: true }).click();
-      await chooseFiles(page, page.getByRole('button', { name: 'Choose File, watermark image (PNG/JPG)' }), {
-        name: 'logo.png',
-        mimeType: 'image/png',
-        buffer: logo,
-      });
+      await chooseFiles(
+        page,
+        page.getByRole('button', { name: 'Choose File, watermark image (PNG/JPG)' }),
+        {
+          name: 'logo.png',
+          mimeType: 'image/png',
+          buffer: logo,
+        }
+      );
       await expect(panel).toContainText('logo.png');
       await chooseOption(page, 'Placement', 'Top-Left');
 
@@ -1715,7 +1806,9 @@ test.describe('PDF editing tools', () => {
       return [x, y];
     }
 
-    test('reorders, rotates and deletes pages, and exports what the list shows', async ({ page }) => {
+    test('reorders, rotates and deletes pages, and exports what the list shows', async ({
+      page,
+    }) => {
       const source = await makePdf([
         { size: [320, 240], label: 'A' },
         { size: [300, 300], label: 'B' },
@@ -1740,7 +1833,10 @@ test.describe('PDF editing tools', () => {
           page.getByRole('button', { name: `Select page ${number}` }).locator('img')
         ).toHaveAttribute('src', /^data:image\/png;base64,.{100,}/);
       }
-      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expectWorkspace(page, 320, 240);
       await expect(page.getByRole('button', { name: 'Move page 1 up' })).toBeDisabled();
       await expect(page.getByRole('button', { name: 'Move page 4 down' })).toBeDisabled();
@@ -1762,7 +1858,10 @@ test.describe('PDF editing tools', () => {
         'Source Page: 4',
       ]);
       // Page A stays the open one wherever it is in the list.
-      await expect(page.getByRole('button', { name: 'Select page 2' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Select page 2' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       // Selecting a page opens it; turning it turns the workspace.
       await page.getByRole('button', { name: 'Select page 3' }).click();
@@ -1775,7 +1874,10 @@ test.describe('PDF editing tools', () => {
       // A is turned upside down without being opened.
       await page.getByRole('button', { name: 'Rotate page 2' }).click();
       await page.getByRole('button', { name: 'Rotate page 2' }).click();
-      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       // D goes, then B.
       await page.getByRole('button', { name: 'Delete page 4' }).click();
@@ -1794,14 +1896,15 @@ test.describe('PDF editing tools', () => {
 
       // The pages are the source pages, not pictures of them.
       const doc = await openPdfBytes(edited.bytes);
-      expect(doc.getPages().map((editedPage) => drawnOn(editedPage).texts.map((text) => text.text))).toEqual([
-        ['C'],
-        ['A'],
-      ]);
+      expect(
+        doc.getPages().map((editedPage) => drawnOn(editedPage).texts.map((text) => text.text))
+      ).toEqual([['C'], ['A']]);
       expect(doc.getPages().map((editedPage) => imagesOf(editedPage).size)).toEqual([0, 0]);
     });
 
-    test('deleting the open page opens another, and the last page cannot be deleted', async ({ page }) => {
+    test('deleting the open page opens another, and the last page cannot be deleted', async ({
+      page,
+    }) => {
       await load(
         page,
         'pair.pdf',
@@ -1816,7 +1919,10 @@ test.describe('PDF editing tools', () => {
 
       await page.getByRole('button', { name: 'Delete page 1' }).click();
       await expect(sourcePages(page)).toHaveText(['Source Page: 2']);
-      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Select page 1' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expectWorkspace(page, 240, 320);
       await expect(page.getByRole('button', { name: 'Delete page 1' })).toBeDisabled();
 
@@ -1852,8 +1958,14 @@ test.describe('PDF editing tools', () => {
       await expectWorkspace(page, 320, 240);
 
       await page.getByRole('button', { name: 'Draw / Sign' }).click();
-      await expect(page.getByRole('button', { name: 'Draw / Sign' })).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.getByRole('button', { name: 'Red brush' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Draw / Sign' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await expect(page.getByRole('button', { name: 'Red brush' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(page.getByRole('button', { name: 'Undo last stroke' })).toBeDisabled();
 
       // The widest brush, in blue. The size slider has no accessible name; it is the only one shown.
@@ -1922,7 +2034,9 @@ test.describe('PDF editing tools', () => {
       expect(Math.abs(ink.bottom / scale - shown.bottom / 1.25)).toBeLessThanOrEqual(1.5);
     });
 
-    test('a tap leaves a dot, and marks on turned pages land where they were made', async ({ page }) => {
+    test('a tap leaves a dot, and marks on turned pages land where they were made', async ({
+      page,
+    }) => {
       // Page 2 is turned in the file, page 3 gets turned in the editor: both are shown 240 wide and 320 tall.
       await load(
         page,
@@ -1977,7 +2091,11 @@ test.describe('PDF editing tools', () => {
         const pixelsPerPoint = layer.width / 240;
         expect(Math.abs((ink.right - ink.left + 1) / pixelsPerPoint - 12)).toBeLessThanOrEqual(1.5);
 
-        const [x, y] = applyMatrix(images[0].matrix, ink.cx / layer.width, 1 - ink.cy / layer.height);
+        const [x, y] = applyMatrix(
+          images[0].matrix,
+          ink.cx / layer.width,
+          1 - ink.cy / layer.height
+        );
         const [fromLeft, fromBottom] = shownAt(turned, x, y);
         expect(Math.abs(fromLeft - 0.25 * 240)).toBeLessThanOrEqual(2);
         expect(Math.abs(320 - fromBottom - 0.1 * 320)).toBeLessThanOrEqual(2);
@@ -2009,7 +2127,10 @@ test.describe('PDF editing tools', () => {
       await expect(note).toBeVisible();
       await expect(note).toHaveCSS('font-size', '36px');
       await expect(note).toHaveCSS('color', 'rgb(255, 0, 0)');
-      await expect(page.getByRole('button', { name: 'Pan & Select' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Pan & Select' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       // Double-click to edit, Enter to finish.
       await note.dblclick();
@@ -2027,7 +2148,9 @@ test.describe('PDF editing tools', () => {
       const before = (await edited.boundingBox())!;
       await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
       await page.mouse.down();
-      await page.mouse.move(before.x + before.width / 2 + 50, before.y + before.height / 2 + 30, { steps: 8 });
+      await page.mouse.move(before.x + before.width / 2 + 50, before.y + before.height / 2 + 30, {
+        steps: 8,
+      });
       await page.mouse.up();
       // The box eases into its new place, so wait for it to arrive.
       await expect
@@ -2070,7 +2193,9 @@ test.describe('PDF editing tools', () => {
       expect(inFile.top).toBeGreaterThanOrEqual(onScreen.top - 2);
       expect(inFile.bottom).toBeLessThanOrEqual(onScreen.bottom + 2);
       const widthOnScreen = onScreen.right - onScreen.left;
-      expect(Math.abs(inFile.right - inFile.left - widthOnScreen)).toBeLessThanOrEqual(0.06 * widthOnScreen);
+      expect(Math.abs(inFile.right - inFile.left - widthOnScreen)).toBeLessThanOrEqual(
+        0.06 * widthOnScreen
+      );
 
       // The remove button shows when the pointer is over the text.
       const remove = page.getByRole('button', { name: 'Remove text' });
@@ -2119,7 +2244,17 @@ test.describe('PDF editing tools', () => {
       expect(downloads).toEqual([]);
 
       // A good file afterwards replaces the page list and the error.
-      await chooseFiles(page, dropzone(page), pdfUpload('good.pdf', await makePdf([[320, 240], [240, 320]])));
+      await chooseFiles(
+        page,
+        dropzone(page),
+        pdfUpload(
+          'good.pdf',
+          await makePdf([
+            [320, 240],
+            [240, 320],
+          ])
+        )
+      );
       await expect(panel).toContainText('Page Layout (2 Pages)');
       await expect(alertWith(page, 'Error')).toHaveCount(0);
       const edited = await downloadFrom(page, download(page));

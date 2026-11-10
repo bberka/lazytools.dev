@@ -1,11 +1,24 @@
-import { test, expect } from '@playwright/test';
-import { parseExifSections, uniqueFileNames, type ExifSection } from '@/lib/tools/exif-viewer-remover';
+import { describe, expect, test } from 'vite-plus/test';
+import {
+  parseExifSections,
+  uniqueFileNames,
+  type ExifSection,
+} from '@/lib/tools/exif-viewer-remover';
 
 // ── A tiny EXIF writer ────────────────────────────────────────────────────────
 // Builds a JPEG that is nothing but an APP1 EXIF segment, in either byte
 // order, so each test states exactly the tags it is about.
 
-const TYPE = { BYTE: 1, ASCII: 2, SHORT: 3, LONG: 4, RATIONAL: 5, UNDEFINED: 7, SLONG: 9, SRATIONAL: 10 } as const;
+const TYPE = {
+  BYTE: 1,
+  ASCII: 2,
+  SHORT: 3,
+  LONG: 4,
+  RATIONAL: 5,
+  UNDEFINED: 7,
+  SLONG: 9,
+  SRATIONAL: 10,
+} as const;
 
 interface Entry {
   tag: number;
@@ -23,7 +36,12 @@ function writer(littleEndian: boolean) {
     return littleEndian ? bytes : bytes.reverse();
   };
   const u32 = (value: number) => {
-    const bytes = [value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, (value >>> 24) & 0xff];
+    const bytes = [
+      value & 0xff,
+      (value >>> 8) & 0xff,
+      (value >>> 16) & 0xff,
+      (value >>> 24) & 0xff,
+    ];
     return littleEndian ? bytes : bytes.reverse();
   };
 
@@ -65,7 +83,9 @@ const padded = (length: number) => length + (length % 2);
 
 function directorySize(entries: Entry[]): number {
   const stored = entries.filter((entry) => entry.data.length > 4 && entry.pointer === undefined);
-  return 2 + entries.length * 12 + 4 + stored.reduce((sum, entry) => sum + padded(entry.data.length), 0);
+  return (
+    2 + entries.length * 12 + 4 + stored.reduce((sum, entry) => sum + padded(entry.data.length), 0)
+  );
 }
 
 function writeDirectory(entries: Entry[], start: number, littleEndian: boolean): number[] {
@@ -80,10 +100,13 @@ function writeDirectory(entries: Entry[], start: number, littleEndian: boolean):
     if (entry.pointer !== undefined) {
       directory.push(...u32(entry.pointer));
     } else if (entry.data.length <= 4) {
-      directory.push(...entry.data, ...new Array<number>(4 - entry.data.length).fill(0));
+      directory.push(...entry.data, ...Array.from({ length: 4 - entry.data.length }, () => 0));
     } else {
       directory.push(...u32(storedAt));
-      stored.push(...entry.data, ...new Array<number>(padded(entry.data.length) - entry.data.length).fill(0));
+      stored.push(
+        ...entry.data,
+        ...Array.from({ length: padded(entry.data.length) - entry.data.length }, () => 0)
+      );
       storedAt += padded(entry.data.length);
     }
   }
@@ -125,7 +148,17 @@ function jpegWithExif({ littleEndian = true, image = [], exif, gps }: ExifLayout
   const segment = [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff]; // "Exif\0\0"
   const length = segment.length + 2;
 
-  return Uint8Array.from([0xff, 0xd8, 0xff, 0xe1, length >> 8, length & 0xff, ...segment, 0xff, 0xd9]).buffer;
+  return Uint8Array.from([
+    0xff,
+    0xd8,
+    0xff,
+    0xe1,
+    length >> 8,
+    length & 0xff,
+    ...segment,
+    0xff,
+    0xd9,
+  ]).buffer;
 }
 
 function fieldsOf(sections: ExifSection[], title: string): Record<string, string> {
@@ -135,7 +168,7 @@ function fieldsOf(sections: ExifSection[], title: string): Record<string, string
 
 // ── Reading ───────────────────────────────────────────────────────────────────
 
-test.describe('parseExifSections', () => {
+describe('parseExifSections', () => {
   for (const littleEndian of [true, false]) {
     const order = littleEndian ? 'little-endian' : 'big-endian';
 
@@ -144,7 +177,11 @@ test.describe('parseExifSections', () => {
       const sections = parseExifSections(
         jpegWithExif({
           littleEndian,
-          image: [w.ascii(0x010f, 'Canon'), w.ascii(0x0110, 'Canon EOS 5D Mark IV'), w.short(0x0112, 6)],
+          image: [
+            w.ascii(0x010f, 'Canon'),
+            w.ascii(0x0110, 'Canon EOS 5D Mark IV'),
+            w.short(0x0112, 6),
+          ],
           exif: [
             w.rational(0x829a, [1, 250]),
             w.rational(0x829d, [28, 10]),
@@ -186,11 +223,14 @@ test.describe('parseExifSections', () => {
   test('returns nothing for data that is not a JPEG with EXIF', () => {
     expect(parseExifSections(new ArrayBuffer(0))).toEqual([]);
     expect(parseExifSections(Uint8Array.from([0xff, 0xd8]).buffer)).toEqual([]);
-    expect(parseExifSections(Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).buffer)).toEqual([]);
+    expect(
+      parseExifSections(Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).buffer)
+    ).toEqual([]);
     // A JPEG whose only segment is JFIF.
     expect(
       parseExifSections(
-        Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0, 7, 0x4a, 0x46, 0x49, 0x46, 0, 0xff, 0xd9]).buffer
+        Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0, 7, 0x4a, 0x46, 0x49, 0x46, 0, 0xff, 0xd9])
+          .buffer
       )
     ).toEqual([]);
   });
@@ -233,7 +273,10 @@ test.describe('parseExifSections', () => {
       jpegWithExif({ image: [w.ascii(0x013b, 'José Müller'), w.ascii(0x8298, '© 2024 写真家 📷')] })
     );
 
-    expect(fieldsOf(sections, 'Image')).toEqual({ Artist: 'José Müller', Copyright: '© 2024 写真家 📷' });
+    expect(fieldsOf(sections, 'Image')).toEqual({
+      Artist: 'José Müller',
+      Copyright: '© 2024 写真家 📷',
+    });
   });
 
   test('falls back to Latin-1 for bytes that are not UTF-8', () => {
@@ -248,7 +291,9 @@ test.describe('parseExifSections', () => {
   test('keeps long UTF-8 text readable when the read limit falls inside a character', () => {
     // 1 + 2 x 1000 bytes: the 1024-byte read limit lands on the first half of an "é".
     const w = writer(true);
-    const sections = parseExifSections(jpegWithExif({ image: [w.ascii(0x8298, `x${'é'.repeat(1000)}`)] }));
+    const sections = parseExifSections(
+      jpegWithExif({ image: [w.ascii(0x8298, `x${'é'.repeat(1000)}`)] })
+    );
 
     expect(fieldsOf(sections, 'Image')).toEqual({ Copyright: `x${'é'.repeat(139)}...` });
   });
@@ -259,7 +304,10 @@ test.describe('parseExifSections', () => {
       jpegWithExif({ image: [w.ascii(0x0131, 'x'.repeat(500)), w.ascii(0x013b, '')] })
     );
 
-    expect(fieldsOf(sections, 'Image')).toEqual({ Software: `${'x'.repeat(140)}...`, Artist: 'Empty' });
+    expect(fieldsOf(sections, 'Image')).toEqual({
+      Software: `${'x'.repeat(140)}...`,
+      Artist: 'Empty',
+    });
   });
 
   test('leaves the maker note out', () => {
@@ -284,11 +332,18 @@ test.describe('parseExifSections', () => {
       fieldsOf(parseExifSections(jpegWithExif({ exif: [w.undefinedBytes(0x9286, ascii)] })), 'EXIF')
     ).toEqual({ Comment: 'Sunset at the pier' });
     expect(
-      fieldsOf(parseExifSections(jpegWithExif({ exif: [w.undefinedBytes(0x9286, unicode)] })), 'EXIF')
+      fieldsOf(
+        parseExifSections(jpegWithExif({ exif: [w.undefinedBytes(0x9286, unicode)] })),
+        'EXIF'
+      )
     ).toEqual({ Comment: 'Hi…' });
     expect(
       fieldsOf(
-        parseExifSections(jpegWithExif({ exif: [w.undefinedBytes(0x9286, [0x41, 0x53, 0x43, 0x49, 0x49, 0, 0, 0])] })),
+        parseExifSections(
+          jpegWithExif({
+            exif: [w.undefinedBytes(0x9286, [0x41, 0x53, 0x43, 0x49, 0x49, 0, 0, 0])],
+          })
+        ),
         'EXIF'
       )
     ).toEqual({ Comment: 'Empty' });
@@ -298,22 +353,35 @@ test.describe('parseExifSections', () => {
     const w = writer(true);
     const sections = parseExifSections(
       jpegWithExif({
-        exif: [w.undefinedBytes(0x9000, [0x30, 0x32, 0x33, 0x32]), w.undefinedBytes(0x9101, [1, 2, 3, 0])],
+        exif: [
+          w.undefinedBytes(0x9000, [0x30, 0x32, 0x33, 0x32]),
+          w.undefinedBytes(0x9101, [1, 2, 3, 0]),
+        ],
       })
     );
 
-    expect(fieldsOf(sections, 'EXIF')).toEqual({ 'Tag 0x9000': '0232', 'Tag 0x9101': '1, 2, 3, 0' });
+    expect(fieldsOf(sections, 'EXIF')).toEqual({
+      'Tag 0x9000': '0232',
+      'Tag 0x9101': '1, 2, 3, 0',
+    });
   });
 
   test('summarises a long list of numbers instead of printing all of it', () => {
     // Padding blocks left by editors run to thousands of bytes.
     const w = writer(true);
     const sections = parseExifSections(
-      jpegWithExif({ image: [w.undefinedBytes(0xea1c, new Array<number>(2060).fill(0))] })
+      jpegWithExif({
+        image: [
+          w.undefinedBytes(
+            0xea1c,
+            Array.from({ length: 2060 }, () => 0)
+          ),
+        ],
+      })
     );
 
     expect(fieldsOf(sections, 'Image')).toEqual({
-      'Tag 0xea1c': `${new Array<number>(16).fill(0).join(', ')}, ... (2060 values)`,
+      'Tag 0xea1c': `${Array.from({ length: 16 }, () => 0).join(', ')}, ... (2060 values)`,
     });
   });
 
@@ -330,7 +398,10 @@ test.describe('parseExifSections', () => {
     const w = writer(true);
     const layout = (pointer: number): ExifLayout => ({
       image: [w.ascii(0x010f, 'Nikon')],
-      exif: [{ tag: 0x829a, type: TYPE.RATIONAL, count: 1, data: [], pointer }, w.short(0x8827, 200)],
+      exif: [
+        { tag: 0x829a, type: TYPE.RATIONAL, count: 1, data: [], pointer },
+        w.short(0x8827, 200),
+      ],
     });
     const fileLength = jpegWithExif(layout(0)).byteLength;
     const sections = parseExifSections(jpegWithExif(layout(fileLength - TIFF_START - 3)));
@@ -343,11 +414,17 @@ test.describe('parseExifSections', () => {
     const w = writer(true);
     const sections = parseExifSections(
       jpegWithExif({
-        image: [{ tag: 0x010f, type: TYPE.ASCII, count: 20, data: [], pointer: 0x00ffffff }, w.short(0x0112, 1)],
+        image: [
+          { tag: 0x010f, type: TYPE.ASCII, count: 20, data: [], pointer: 0x00ffffff },
+          w.short(0x0112, 1),
+        ],
       })
     );
 
-    expect(fieldsOf(sections, 'Image')).toEqual({ 'Camera Make': 'Out of bounds', Orientation: '1' });
+    expect(fieldsOf(sections, 'Image')).toEqual({
+      'Camera Make': 'Out of bounds',
+      Orientation: '1',
+    });
   });
 
   test('survives absurd counts and directories that point at themselves', () => {
@@ -400,7 +477,7 @@ test.describe('parseExifSections', () => {
 
 // ── Batch file names ──────────────────────────────────────────────────────────
 
-test.describe('uniqueFileNames', () => {
+describe('uniqueFileNames', () => {
   test('leaves distinct names alone', () => {
     expect(uniqueFileNames(['a-clean.jpg', 'b-clean.jpg', 'a-clean.png'])).toEqual([
       'a-clean.jpg',
@@ -425,8 +502,16 @@ test.describe('uniqueFileNames', () => {
   });
 
   test('does not hand out a name another file already has', () => {
-    expect(uniqueFileNames(['a.jpg', 'a.jpg', 'a (2).jpg'])).toEqual(['a.jpg', 'a (2).jpg', 'a (2) (2).jpg']);
-    expect(uniqueFileNames(['a (2).jpg', 'a.jpg', 'a.jpg'])).toEqual(['a (2).jpg', 'a.jpg', 'a (3).jpg']);
+    expect(uniqueFileNames(['a.jpg', 'a.jpg', 'a (2).jpg'])).toEqual([
+      'a.jpg',
+      'a (2).jpg',
+      'a (2) (2).jpg',
+    ]);
+    expect(uniqueFileNames(['a (2).jpg', 'a.jpg', 'a.jpg'])).toEqual([
+      'a (2).jpg',
+      'a.jpg',
+      'a (3).jpg',
+    ]);
   });
 
   test('handles names without an extension', () => {

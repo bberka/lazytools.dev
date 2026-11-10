@@ -29,7 +29,8 @@ export interface CharClassInfo {
 export const CLASS_INFO: Record<CharClass, CharClassInfo> = {
   'zero-width': {
     label: 'Zero-width',
-    description: 'Joiners, word joiners, the byte order mark and invisible operators. They take no space.',
+    description:
+      'Joiners, word joiners, the byte order mark and invisible operators. They take no space.',
     flagged: true,
     removable: true,
   },
@@ -59,7 +60,8 @@ export const CLASS_INFO: Record<CharClass, CharClassInfo> = {
   },
   'variation-selector': {
     label: 'Variation selector',
-    description: 'Picks a glyph variant of the previous character. VS15 and VS16 are normal in emoji.',
+    description:
+      'Picks a glyph variant of the previous character. VS15 and VS16 are normal in emoji.',
     flagged: true,
     removable: true,
   },
@@ -95,7 +97,8 @@ export const CLASS_INFO: Record<CharClass, CharClassInfo> = {
   },
   malformed: {
     label: 'Replacement or malformed',
-    description: 'Replacement characters, object placeholders, noncharacters and unpaired surrogates.',
+    description:
+      'Replacement characters, object placeholders, noncharacters and unpaired surrogates.',
     flagged: true,
     removable: false,
   },
@@ -112,7 +115,12 @@ export interface CharEntry {
   className: CharClass;
 }
 
-const entry = (codePoint: number, short: string, name: string, className: CharClass): CharEntry => ({
+const entry = (
+  codePoint: number,
+  short: string,
+  name: string,
+  className: CharClass
+): CharEntry => ({
   codePoint,
   short,
   name,
@@ -217,12 +225,19 @@ function buildVariationSelectorEntries(): CharEntry[] {
     entries.push(entry(0xfe00 + n - 1, `VS${n}`, `Variation selector-${n}`, 'variation-selector'));
   }
   for (let n = 17; n <= 256; n++) {
-    entries.push(entry(0xe0100 + n - 17, `VS${n}`, `Variation selector-${n}`, 'variation-selector'));
+    entries.push(
+      entry(0xe0100 + n - 17, `VS${n}`, `Variation selector-${n}`, 'variation-selector')
+    );
   }
   // Mongolian free variation selectors.
   [0x180b, 0x180c, 0x180d, 0x180f].forEach((codePoint, index) => {
     entries.push(
-      entry(codePoint, `FVS${index + 1}`, `Mongolian free variation selector ${index + 1}`, 'variation-selector')
+      entry(
+        codePoint,
+        `FVS${index + 1}`,
+        `Mongolian free variation selector ${index + 1}`,
+        'variation-selector'
+      )
     );
   });
   return entries;

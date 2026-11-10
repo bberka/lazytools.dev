@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import JSZip from 'jszip';
 import { pdfTextToDocx, pdfTextToParagraphs } from '@/lib/tools/pdf-to-word';
 
@@ -16,7 +16,11 @@ async function readDocx(docx: Blob) {
   const zip = await JSZip.loadAsync(await docx.arrayBuffer());
   const xml = await zip.file('word/document.xml')!.async('string');
   const unescape = (text: string) =>
-    text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+    text
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&');
 
   const paragraphs = Array.from(xml.matchAll(/<w:p>(.*?)<\/w:p>/gs), ([, body]) =>
     Array.from(body.matchAll(/<w:t[^>]*>(.*?)<\/w:t>/gs), ([, text]) => unescape(text)).join('')
@@ -25,7 +29,7 @@ async function readDocx(docx: Blob) {
   return { xml, paragraphs };
 }
 
-test.describe('pdfTextToParagraphs', () => {
+describe('pdfTextToParagraphs', () => {
   test('makes one paragraph per page, with an empty one between pages', () => {
     expect(pdfTextToParagraphs(['Page one text', 'Page two text', 'Page three'])).toEqual([
       'Page one text',
@@ -83,13 +87,19 @@ test.describe('pdfTextToParagraphs', () => {
   });
 });
 
-test.describe('pdfTextToDocx', () => {
+describe('pdfTextToDocx', () => {
   test('writes a Word document with the paragraphs of the PDF', async () => {
     const docx = await pdfTextToDocx(['First  page', 'Second page: a < b & c > d']);
 
     expect(docx).not.toBeNull();
-    expect(docx!.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    expect((await readDocx(docx!)).paragraphs).toEqual(['First page', '', 'Second page: a < b & c > d']);
+    expect(docx!.type).toBe(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    expect((await readDocx(docx!)).paragraphs).toEqual([
+      'First page',
+      '',
+      'Second page: a < b & c > d',
+    ]);
   });
 
   // A scanned PDF used to give a .docx with nothing in it and no explanation.

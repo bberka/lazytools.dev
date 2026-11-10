@@ -8,13 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 import { Input } from '../ui/input';
 import { Slider } from '../ui/slider';
 import { Switch } from '../ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import {
   Copy,
@@ -29,7 +23,7 @@ import {
   Info,
   Calendar,
   Layers,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -140,7 +134,10 @@ function GeneratedIdRow({ item, index, batch, copied, onInspect, onCopy }: Gener
           <span className="font-mono text-base font-bold select-all tracking-tight break-all text-primary">
             {item.id}
           </span>
-          <Badge variant="outline" className="text-[10px] py-0 font-mono tracking-wider shrink-0 uppercase">
+          <Badge
+            variant="outline"
+            className="text-[10px] py-0 font-mono tracking-wider shrink-0 uppercase"
+          >
             {batch.preset}
           </Badge>
         </div>
@@ -151,17 +148,20 @@ function GeneratedIdRow({ item, index, batch, copied, onInspect, onCopy }: Gener
           </span>
           {batch.layout.datacenterBits > 0 && (
             <span>
-              {rowLabel(labels.datacenter, 'Node A')}: <strong className="font-mono text-foreground">{item.datacenterId}</strong>
+              {rowLabel(labels.datacenter, 'Node A')}:{' '}
+              <strong className="font-mono text-foreground">{item.datacenterId}</strong>
             </span>
           )}
           {batch.layout.workerBits > 0 && (
             <span>
-              {rowLabel(labels.worker, 'Node B')}: <strong className="font-mono text-foreground">{item.workerId}</strong>
+              {rowLabel(labels.worker, 'Node B')}:{' '}
+              <strong className="font-mono text-foreground">{item.workerId}</strong>
             </span>
           )}
           {batch.layout.processBits > 0 && (
             <span>
-              {rowLabel(labels.process, 'Node C')}: <strong className="font-mono text-foreground">{item.processId}</strong>
+              {rowLabel(labels.process, 'Node C')}:{' '}
+              <strong className="font-mono text-foreground">{item.processId}</strong>
             </span>
           )}
           <span>
@@ -222,7 +222,9 @@ export function SnowflakeGenerator() {
   // Decoder State. The layout follows the decoder preset unless it is customized.
   const [decodeIdInput, setDecodeIdInput] = useState<string>('');
   const [decoderPreset, setDecoderPreset] = useState<PresetType>('twitter');
-  const [decoderLayout, setDecoderLayout] = useState<SnowflakeLayout>(SNOWFLAKE_PRESETS.twitter.layout);
+  const [decoderLayout, setDecoderLayout] = useState<SnowflakeLayout>(
+    SNOWFLAKE_PRESETS.twitter.layout
+  );
   // When the ID on show was entered; the relative time is measured from here.
   const [decodedAt, setDecodedAt] = useState<number>(0);
 
@@ -257,7 +259,6 @@ export function SnowflakeGenerator() {
     setDecodedAt(Date.now());
   };
 
-  // Handle custom epoch date change
   const handleEpochDateChange = (val: string) => {
     setEpochDateStr(val);
     const parsed = Date.parse(val);
@@ -323,7 +324,10 @@ export function SnowflakeGenerator() {
   );
 
   const successData = decodedData && decodedData.ok ? decodedData.value : null;
-  const decodedDate = useMemo(() => (successData ? new Date(successData.timestamp) : null), [successData]);
+  const decodedDate = useMemo(
+    () => (successData ? new Date(successData.timestamp) : null),
+    [successData]
+  );
 
   // Visual Bit Segments for Interactive Binary Visualizer
   const bitSlices = useMemo(() => {
@@ -394,13 +398,15 @@ export function SnowflakeGenerator() {
     void copyToClipboard(generated.ids.map((item) => item.id).join('\n'));
   };
 
-  // Export as JSON
   const handleExportJson = () => {
     if (!generated) return;
-    downloadText(JSON.stringify(generated.ids, null, 2), `snowflake-ids-${Date.now()}.json`, 'application/json');
+    downloadText(
+      JSON.stringify(generated.ids, null, 2),
+      `snowflake-ids-${Date.now()}.json`,
+      'application/json'
+    );
   };
 
-  // Export as CSV
   const handleExportCsv = () => {
     if (!generated) return;
     downloadText(snowflakeIdsToCsv(generated.ids), `snowflake-ids-${Date.now()}.csv`, 'text/csv');
@@ -409,7 +415,11 @@ export function SnowflakeGenerator() {
   return (
     <div className="space-y-6">
       {/* Custom Tabs */}
-      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'generate' | 'decode')} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as 'generate' | 'decode')}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-2 h-auto">
           <TabsTrigger value="generate" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
@@ -423,7 +433,7 @@ export function SnowflakeGenerator() {
       </Tabs>
 
       {activeTab === 'generate' && (
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
           {/* Generator settings */}
           <div className="lg:col-span-5 space-y-6">
             <Card className="shadow-lg border-border/60">
@@ -437,8 +447,13 @@ export function SnowflakeGenerator() {
               <CardContent className="space-y-4">
                 {/* Preset selection */}
                 <div className="space-y-2">
-                  <label htmlFor="snowflake-preset" className="text-sm font-medium">Preset Format</label>
-                  <Select value={preset} onValueChange={(val) => handlePresetChange(val as PresetType)}>
+                  <label htmlFor="snowflake-preset" className="text-sm font-medium">
+                    Preset Format
+                  </label>
+                  <Select
+                    value={preset}
+                    onValueChange={(val) => handlePresetChange(val as PresetType)}
+                  >
                     <SelectTrigger id="snowflake-preset" className="w-full">
                       <SelectValue placeholder="Select preset layout" />
                     </SelectTrigger>
@@ -457,7 +472,7 @@ export function SnowflakeGenerator() {
                   <div className="grid grid-cols-2 gap-y-1">
                     <div>Timestamp Epoch:</div>
                     <TooltipSimple content={formatEpochLabel(layout.epoch)}>
-                      <div className="font-mono text-[11px] text-right truncate">
+                      <div className="font-mono text-[11px] text-right break-words">
                         {formatEpochLabel(layout.epoch)}
                       </div>
                     </TooltipSimple>
@@ -489,52 +504,102 @@ export function SnowflakeGenerator() {
                 {/* Custom Configuration Settings */}
                 {preset === 'custom' && (
                   <div className="space-y-4 rounded-xl border border-border/85 bg-muted/10 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Bit Allocations</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Custom Bit Allocations
+                    </p>
 
                     <div className="space-y-3">
                       <div>
                         <label className="flex justify-between text-xs mb-1 font-medium">
                           <span>Timestamp Width:</span>
-                          <span className="font-mono text-primary font-bold">{timestampBits} bits</span>
+                          <span className="font-mono text-primary font-bold">
+                            {timestampBits} bits
+                          </span>
                         </label>
-                        <Slider aria-label="Timestamp Width" value={timestampBits} min={20} max={50} step={1} onChange={(bits) => handleWidthChange('timestampBits', bits)} />
+                        <Slider
+                          aria-label="Timestamp Width"
+                          value={timestampBits}
+                          min={20}
+                          max={50}
+                          step={1}
+                          onChange={(bits) => handleWidthChange('timestampBits', bits)}
+                        />
                       </div>
 
                       <div>
                         <label className="flex justify-between text-xs mb-1 font-medium">
                           <span>Node A Width (e.g. Datacenter):</span>
-                          <span className="font-mono text-primary font-bold">{datacenterBits} bits</span>
+                          <span className="font-mono text-primary font-bold">
+                            {datacenterBits} bits
+                          </span>
                         </label>
-                        <Slider aria-label="Node A Width" value={datacenterBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('datacenterBits', bits)} />
+                        <Slider
+                          aria-label="Node A Width"
+                          value={datacenterBits}
+                          min={0}
+                          max={20}
+                          step={1}
+                          onChange={(bits) => handleWidthChange('datacenterBits', bits)}
+                        />
                       </div>
 
                       <div>
                         <label className="flex justify-between text-xs mb-1 font-medium">
                           <span>Node B Width (e.g. Worker):</span>
-                          <span className="font-mono text-primary font-bold">{workerBits} bits</span>
+                          <span className="font-mono text-primary font-bold">
+                            {workerBits} bits
+                          </span>
                         </label>
-                        <Slider aria-label="Node B Width" value={workerBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('workerBits', bits)} />
+                        <Slider
+                          aria-label="Node B Width"
+                          value={workerBits}
+                          min={0}
+                          max={20}
+                          step={1}
+                          onChange={(bits) => handleWidthChange('workerBits', bits)}
+                        />
                       </div>
 
                       <div>
                         <label className="flex justify-between text-xs mb-1 font-medium">
                           <span>Node C Width (e.g. Process):</span>
-                          <span className="font-mono text-primary font-bold">{processBits} bits</span>
+                          <span className="font-mono text-primary font-bold">
+                            {processBits} bits
+                          </span>
                         </label>
-                        <Slider aria-label="Node C Width" value={processBits} min={0} max={20} step={1} onChange={(bits) => handleWidthChange('processBits', bits)} />
+                        <Slider
+                          aria-label="Node C Width"
+                          value={processBits}
+                          min={0}
+                          max={20}
+                          step={1}
+                          onChange={(bits) => handleWidthChange('processBits', bits)}
+                        />
                       </div>
 
                       <div>
                         <label className="flex justify-between text-xs mb-1 font-medium">
                           <span>Sequence Width:</span>
-                          <span className="font-mono text-primary font-bold">{sequenceBits} bits</span>
+                          <span className="font-mono text-primary font-bold">
+                            {sequenceBits} bits
+                          </span>
                         </label>
-                        <Slider aria-label="Sequence Width" value={sequenceBits} min={6} max={20} step={1} onChange={(bits) => handleWidthChange('sequenceBits', bits)} />
+                        <Slider
+                          aria-label="Sequence Width"
+                          value={sequenceBits}
+                          min={6}
+                          max={20}
+                          step={1}
+                          onChange={(bits) => handleWidthChange('sequenceBits', bits)}
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-2 mt-4">
-                      <label htmlFor="snowflake-custom-epoch" className="text-xs font-semibold flex items-center gap-1.5">
+                      <label
+                        htmlFor="snowflake-custom-epoch"
+                        className="text-xs font-semibold flex items-center gap-1.5"
+                      >
                         <Calendar className="h-3.5 w-3.5 text-primary" />
                         Custom Epoch
                       </label>
@@ -553,7 +618,10 @@ export function SnowflakeGenerator() {
                     </div>
 
                     {bitConfigError && (
-                      <div role="alert" className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive font-medium">
+                      <div
+                        role="alert"
+                        className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive font-medium"
+                      >
                         {bitConfigError}
                       </div>
                     )}
@@ -562,21 +630,29 @@ export function SnowflakeGenerator() {
 
                 {/* Values Inputs (Ranges based on active bits configuration) */}
                 <div className="space-y-4 pt-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Parameter Values</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Parameter Values
+                  </p>
 
                   {datacenterBits > 0 && (
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-xs">
                         <span>{presetLabels.datacenter || 'Datacenter ID'}:</span>
-                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{datacenterId}</span>
+                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">
+                          {datacenterId}
+                        </span>
                       </div>
                       <NodeValueInput
                         value={datacenterId}
                         max={maxDatacenterVal}
                         label={presetLabels.datacenter || 'Datacenter ID'}
-                        onValueChange={(next) => setDatacenterId(clampFieldValue(next, datacenterBits))}
+                        onValueChange={(next) =>
+                          setDatacenterId(clampFieldValue(next, datacenterBits))
+                        }
                       />
-                      <span className="text-[10px] text-muted-foreground">Range: 0 - {maxDatacenterVal} ({datacenterBits} bits)</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Range: 0 - {maxDatacenterVal} ({datacenterBits} bits)
+                      </span>
                     </div>
                   )}
 
@@ -584,7 +660,9 @@ export function SnowflakeGenerator() {
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-xs">
                         <span>{presetLabels.worker || 'Worker ID'}:</span>
-                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{workerId}</span>
+                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">
+                          {workerId}
+                        </span>
                       </div>
                       <NodeValueInput
                         value={workerId}
@@ -592,7 +670,9 @@ export function SnowflakeGenerator() {
                         label={presetLabels.worker || 'Worker ID'}
                         onValueChange={(next) => setWorkerId(clampFieldValue(next, workerBits))}
                       />
-                      <span className="text-[10px] text-muted-foreground">Range: 0 - {maxWorkerVal} ({workerBits} bits)</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Range: 0 - {maxWorkerVal} ({workerBits} bits)
+                      </span>
                     </div>
                   )}
 
@@ -600,7 +680,9 @@ export function SnowflakeGenerator() {
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-xs">
                         <span>{presetLabels.process || 'Process ID'}:</span>
-                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{processId}</span>
+                        <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">
+                          {processId}
+                        </span>
                       </div>
                       <NodeValueInput
                         value={processId}
@@ -608,14 +690,18 @@ export function SnowflakeGenerator() {
                         label={presetLabels.process || 'Process ID'}
                         onValueChange={(next) => setProcessId(clampFieldValue(next, processBits))}
                       />
-                      <span className="text-[10px] text-muted-foreground">Range: 0 - {maxProcessVal} ({processBits} bits)</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Range: 0 - {maxProcessVal} ({processBits} bits)
+                      </span>
                     </div>
                   )}
 
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs">
                       <span>Start Sequence:</span>
-                      <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">{sequenceVal}</span>
+                      <span className="font-mono font-bold bg-muted px-1.5 py-0.5 rounded">
+                        {sequenceVal}
+                      </span>
                     </div>
                     <NodeValueInput
                       value={sequenceVal}
@@ -623,7 +709,9 @@ export function SnowflakeGenerator() {
                       label="Start Sequence"
                       onValueChange={(next) => setSequenceVal(clampFieldValue(next, sequenceBits))}
                     />
-                    <span className="text-[10px] text-muted-foreground">Range: 0 - {maxSequenceVal} ({sequenceBits} bits)</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      Range: 0 - {maxSequenceVal} ({sequenceBits} bits)
+                    </span>
                   </div>
                 </div>
 
@@ -632,14 +720,22 @@ export function SnowflakeGenerator() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">Use Current Time</p>
-                      <p className="text-xs text-muted-foreground">Set Snowflake timestamp to Date.now()</p>
+                      <p className="text-xs text-muted-foreground">
+                        Set Snowflake timestamp to Date.now()
+                      </p>
                     </div>
-                    <Switch checked={useCurrentTime} onCheckedChange={setUseCurrentTime} aria-label="Use Current Time" />
+                    <Switch
+                      checked={useCurrentTime}
+                      onCheckedChange={setUseCurrentTime}
+                      aria-label="Use Current Time"
+                    />
                   </div>
 
                   {!useCurrentTime && (
                     <div className="space-y-1.5">
-                      <label htmlFor="snowflake-custom-time" className="text-xs font-medium">Custom Timestamp Date</label>
+                      <label htmlFor="snowflake-custom-time" className="text-xs font-medium">
+                        Custom Timestamp Date
+                      </label>
                       <Input
                         id="snowflake-custom-time"
                         type="datetime-local"
@@ -653,7 +749,14 @@ export function SnowflakeGenerator() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Count to Generate: {count}</label>
-                    <Slider aria-label="Count to Generate" value={count} min={1} max={100} step={1} onChange={setCount} />
+                    <Slider
+                      aria-label="Count to Generate"
+                      value={count}
+                      min={1}
+                      max={100}
+                      step={1}
+                      onChange={setCount}
+                    />
                   </div>
                 </div>
 
@@ -667,7 +770,10 @@ export function SnowflakeGenerator() {
                 </Button>
 
                 {generateError && (
-                  <div role="alert" className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive font-medium">
+                  <div
+                    role="alert"
+                    className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive font-medium"
+                  >
                     {generateError}
                   </div>
                 )}
@@ -689,23 +795,50 @@ export function SnowflakeGenerator() {
                 {generated && (
                   <div className="flex items-center gap-2 shrink-0">
                     <TooltipSimple content="Copy all IDs">
-                      <Button variant="ghost" size="sm" onClick={handleCopyAll} aria-label="Copy all IDs">
-                        {copiedAll ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyAll}
+                        aria-label="Copy all IDs"
+                      >
+                        {copiedAll ? (
+                          <Check className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                         <span className="ml-1.5 hidden sm:inline">Copy All</span>
                       </Button>
                     </TooltipSimple>
                     <TooltipSimple content="Export CSV">
-                      <Button variant="ghost" size="icon" onClick={handleExportCsv} aria-label="Export CSV" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleExportCsv}
+                        aria-label="Export CSV"
+                        className="h-8 w-8"
+                      >
                         <FileSpreadsheet className="h-4 w-4" />
                       </Button>
                     </TooltipSimple>
                     <TooltipSimple content="Export JSON">
-                      <Button variant="ghost" size="icon" onClick={handleExportJson} aria-label="Export JSON" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleExportJson}
+                        aria-label="Export JSON"
+                        className="h-8 w-8"
+                      >
                         <FileJson className="h-4 w-4" />
                       </Button>
                     </TooltipSimple>
                     <TooltipSimple content="Clear IDs">
-                      <Button variant="ghost" size="icon" onClick={handleClearGenerated} aria-label="Clear IDs" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleClearGenerated}
+                        aria-label="Clear IDs"
+                        className="h-8 w-8"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipSimple>
@@ -768,7 +901,10 @@ export function SnowflakeGenerator() {
                   />
                 </div>
                 <div className="w-full sm:w-64">
-                  <Select value={decoderPreset} onValueChange={(val) => handleDecoderPresetChange(val as PresetType)}>
+                  <Select
+                    value={decoderPreset}
+                    onValueChange={(val) => handleDecoderPresetChange(val as PresetType)}
+                  >
                     <SelectTrigger aria-label="Decoder preset" className="h-11">
                       <SelectValue placeholder="Decoder Presets" />
                     </SelectTrigger>
@@ -784,9 +920,11 @@ export function SnowflakeGenerator() {
 
               {/* Custom decoder parameters if custom is selected */}
               {decoderPreset === 'custom' && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4 rounded-xl border border-border/80 bg-muted/10">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4 rounded-xl border border-border/80 bg-muted/10">
                   <div className="space-y-1">
-                    <label htmlFor="snowflake-dec-timestamp-bits" className="text-xs font-semibold">Timestamp Bits</label>
+                    <label htmlFor="snowflake-dec-timestamp-bits" className="text-xs font-semibold">
+                      Timestamp Bits
+                    </label>
                     <Input
                       id="snowflake-dec-timestamp-bits"
                       type="number"
@@ -799,7 +937,12 @@ export function SnowflakeGenerator() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="snowflake-dec-datacenter-bits" className="text-xs font-semibold">Node A Bits</label>
+                    <label
+                      htmlFor="snowflake-dec-datacenter-bits"
+                      className="text-xs font-semibold"
+                    >
+                      Node A Bits
+                    </label>
                     <Input
                       id="snowflake-dec-datacenter-bits"
                       type="number"
@@ -812,7 +955,9 @@ export function SnowflakeGenerator() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="snowflake-dec-worker-bits" className="text-xs font-semibold">Node B Bits</label>
+                    <label htmlFor="snowflake-dec-worker-bits" className="text-xs font-semibold">
+                      Node B Bits
+                    </label>
                     <Input
                       id="snowflake-dec-worker-bits"
                       type="number"
@@ -825,7 +970,9 @@ export function SnowflakeGenerator() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="snowflake-dec-process-bits" className="text-xs font-semibold">Node C Bits</label>
+                    <label htmlFor="snowflake-dec-process-bits" className="text-xs font-semibold">
+                      Node C Bits
+                    </label>
                     <Input
                       id="snowflake-dec-process-bits"
                       type="number"
@@ -838,7 +985,9 @@ export function SnowflakeGenerator() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="snowflake-dec-sequence-bits" className="text-xs font-semibold">Sequence Bits</label>
+                    <label htmlFor="snowflake-dec-sequence-bits" className="text-xs font-semibold">
+                      Sequence Bits
+                    </label>
                     <Input
                       id="snowflake-dec-sequence-bits"
                       type="number"
@@ -851,7 +1000,9 @@ export function SnowflakeGenerator() {
                     />
                   </div>
                   <div className="sm:col-span-2 lg:col-span-5 space-y-1 mt-1">
-                    <label htmlFor="snowflake-dec-epoch" className="text-xs font-semibold">Custom Decoder Epoch (ms)</label>
+                    <label htmlFor="snowflake-dec-epoch" className="text-xs font-semibold">
+                      Custom Decoder Epoch (ms)
+                    </label>
                     <Input
                       id="snowflake-dec-epoch"
                       type="number"
@@ -879,23 +1030,56 @@ export function SnowflakeGenerator() {
                         Binary Bit Breakdown (64-bit)
                       </CardTitle>
                       <CardDescription>
-                        Visual color-coded bit distribution. Hover over bits to view specific bit values.
+                        Visual color-coded bit distribution. Hover, tap or focus a bit to view its
+                        value.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Grid representation */}
-                      <div className="flex flex-wrap gap-[3px] sm:gap-[5px] justify-center p-4 bg-muted/30 rounded-xl border">
+                      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- one tab stop for the whole bit grid; the arrow keys move between the bits */}
+                      <div
+                        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the bit grid is laid out with CSS grid and carries its own key handling, which a <fieldset> would not
+                        role="group"
+                        aria-label="64 bits, most significant first"
+                        className="grid grid-cols-8 gap-1 p-4 bg-muted/30 rounded-xl border sm:flex sm:flex-wrap sm:justify-center sm:gap-[5px]"
+                        onKeyDown={(e) => {
+                          // One tab stop for the whole grid; the arrow keys move between bits.
+                          const step =
+                            e.key === 'ArrowRight' || e.key === 'ArrowDown'
+                              ? 1
+                              : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+                                ? -1
+                                : e.key === 'Home'
+                                  ? -64
+                                  : e.key === 'End'
+                                    ? 64
+                                    : 0;
+                          if (step === 0) return;
+                          e.preventDefault();
+                          const current = hoveredBitIndex ?? 0;
+                          const next = Math.max(0, Math.min(63, current + step));
+                          setHoveredBitIndex(next);
+                          e.currentTarget
+                            .querySelectorAll<HTMLButtonElement>('button')
+                            [next]?.focus();
+                        }}
+                      >
                         {bitSlices.map((bit, idx) => (
-                          <div
+                          <button
+                            type="button"
                             key={idx}
+                            aria-label={`Bit ${63 - idx}: ${bit.val}`}
+                            tabIndex={idx === (hoveredBitIndex ?? 0) ? 0 : -1}
                             onMouseEnter={() => setHoveredBitIndex(idx)}
                             onMouseLeave={() => setHoveredBitIndex(null)}
-                            className={`w-[13px] h-7 sm:w-5 sm:h-9 rounded-[2px] border flex items-center justify-center text-[9px] sm:text-xs font-bold cursor-crosshair select-none transition-all ${
+                            onFocus={() => setHoveredBitIndex(idx)}
+                            onClick={() => setHoveredBitIndex(idx)}
+                            className={`h-9 w-full sm:w-5 rounded-[2px] border flex items-center justify-center text-xs font-bold cursor-crosshair select-none transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                               bit.color
                             } ${hoveredBitIndex === idx ? 'ring-2 ring-primary scale-110' : ''}`}
                           >
                             {bit.val}
-                          </div>
+                          </button>
                         ))}
                       </div>
 
@@ -915,7 +1099,9 @@ export function SnowflakeGenerator() {
                               </Badge>
                             </div>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Value:</span>
+                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                Value:
+                              </span>
                               <span className="font-mono font-black text-lg text-primary">
                                 {hoveredBit.val}
                               </span>
@@ -927,7 +1113,8 @@ export function SnowflakeGenerator() {
                         ) : (
                           <div className="text-center text-muted-foreground text-xs flex items-center justify-center gap-1.5">
                             <Info className="h-4 w-4 stroke-[1.5]" />
-                            Hover over any bit block in the layout above to inspect details.
+                            Hover over, tap or focus any bit block in the layout above to inspect
+                            details.
                           </div>
                         )}
                       </div>
@@ -947,19 +1134,27 @@ export function SnowflakeGenerator() {
                         {decoderLayout.datacenterBits > 0 && (
                           <div className="flex items-center gap-2">
                             <span className="w-3.5 h-3.5 rounded bg-purple-500"></span>
-                            <span>{decoderLabels.datacenter || 'Datacenter'} ({decoderLayout.datacenterBits} bits)</span>
+                            <span>
+                              {decoderLabels.datacenter || 'Datacenter'} (
+                              {decoderLayout.datacenterBits} bits)
+                            </span>
                           </div>
                         )}
                         {decoderLayout.workerBits > 0 && (
                           <div className="flex items-center gap-2">
                             <span className="w-3.5 h-3.5 rounded bg-pink-500"></span>
-                            <span>{decoderLabels.worker || 'Worker'} ({decoderLayout.workerBits} bits)</span>
+                            <span>
+                              {decoderLabels.worker || 'Worker'} ({decoderLayout.workerBits} bits)
+                            </span>
                           </div>
                         )}
                         {decoderLayout.processBits > 0 && (
                           <div className="flex items-center gap-2">
                             <span className="w-3.5 h-3.5 rounded bg-teal-500"></span>
-                            <span>{decoderLabels.process || 'Process'} ({decoderLayout.processBits} bits)</span>
+                            <span>
+                              {decoderLabels.process || 'Process'} ({decoderLayout.processBits}{' '}
+                              bits)
+                            </span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
@@ -970,7 +1165,9 @@ export function SnowflakeGenerator() {
 
                       {/* Formatted binary splits */}
                       <div className="space-y-1.5 pt-2 border-t">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Binary Bit String:</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          Binary Bit String:
+                        </span>
                         <div className="font-mono text-xs sm:text-sm bg-muted rounded-lg p-3 break-all flex flex-wrap gap-x-2 gap-y-1 font-semibold leading-relaxed">
                           {successData.segments.map((segment) => (
                             <span key={segment.field} className={BIT_TEXT_CLASS[segment.field]}>
@@ -991,63 +1188,97 @@ export function SnowflakeGenerator() {
                     <CardContent className="p-0 border-t">
                       <div className="divide-y divide-border/60 text-sm">
                         <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                          <div className="w-1/3 text-muted-foreground font-medium">UTC Timestamp Date</div>
-                          <div className="w-2/3 font-mono font-bold text-foreground select-all">{decodedDate.toUTCString()}</div>
-                        </div>
-
-                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                          <div className="w-1/3 text-muted-foreground font-medium">Local Time</div>
-                          <div className="w-2/3 font-mono font-bold text-foreground select-all">{decodedDate.toLocaleString()}</div>
-                        </div>
-
-                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                          <div className="w-1/3 text-muted-foreground font-medium">Relative Time</div>
-                          <div className="w-2/3 text-foreground font-medium">{relativeTimeLabel(successData.timestamp, decodedAt)}</div>
-                        </div>
-
-                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                          <div className="w-1/3 text-muted-foreground font-medium">Unix Milliseconds Offset</div>
-                          <div className="w-2/3 font-mono text-foreground">
-                            {successData.offset} <span className="text-xs text-muted-foreground">(from Epoch base)</span>
+                          <div className="w-1/3 text-muted-foreground font-medium">
+                            UTC Timestamp Date
+                          </div>
+                          <div className="w-2/3 font-mono font-bold text-foreground select-all">
+                            {decodedDate.toUTCString()}
                           </div>
                         </div>
 
                         <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                          <div className="w-1/3 text-muted-foreground font-medium">Raw Timestamp (ms)</div>
-                          <div className="w-2/3 font-mono text-foreground">{successData.timestamp}</div>
+                          <div className="w-1/3 text-muted-foreground font-medium">Local Time</div>
+                          <div className="w-2/3 font-mono font-bold text-foreground select-all">
+                            {decodedDate.toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
+                          <div className="w-1/3 text-muted-foreground font-medium">
+                            Relative Time
+                          </div>
+                          <div className="w-2/3 text-foreground font-medium">
+                            {relativeTimeLabel(successData.timestamp, decodedAt)}
+                          </div>
+                        </div>
+
+                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
+                          <div className="w-1/3 text-muted-foreground font-medium">
+                            Unix Milliseconds Offset
+                          </div>
+                          <div className="w-2/3 font-mono text-foreground">
+                            {successData.offset}{' '}
+                            <span className="text-xs text-muted-foreground">(from Epoch base)</span>
+                          </div>
+                        </div>
+
+                        <div className="flex py-3.5 px-4 sm:px-6 items-center">
+                          <div className="w-1/3 text-muted-foreground font-medium">
+                            Raw Timestamp (ms)
+                          </div>
+                          <div className="w-2/3 font-mono text-foreground">
+                            {successData.timestamp}
+                          </div>
                         </div>
 
                         {decoderLayout.datacenterBits > 0 && (
                           <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                            <div className="w-1/3 text-muted-foreground font-medium">{decoderLabels.datacenter || 'Datacenter ID'}</div>
-                            <div className="w-2/3 font-mono text-foreground font-bold">{successData.datacenterId}</div>
+                            <div className="w-1/3 text-muted-foreground font-medium">
+                              {decoderLabels.datacenter || 'Datacenter ID'}
+                            </div>
+                            <div className="w-2/3 font-mono text-foreground font-bold">
+                              {successData.datacenterId}
+                            </div>
                           </div>
                         )}
 
                         {decoderLayout.workerBits > 0 && (
                           <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                            <div className="w-1/3 text-muted-foreground font-medium">{decoderLabels.worker || 'Worker ID'}</div>
-                            <div className="w-2/3 font-mono text-foreground font-bold">{successData.workerId}</div>
+                            <div className="w-1/3 text-muted-foreground font-medium">
+                              {decoderLabels.worker || 'Worker ID'}
+                            </div>
+                            <div className="w-2/3 font-mono text-foreground font-bold">
+                              {successData.workerId}
+                            </div>
                           </div>
                         )}
 
                         {decoderLayout.processBits > 0 && (
                           <div className="flex py-3.5 px-4 sm:px-6 items-center">
-                            <div className="w-1/3 text-muted-foreground font-medium">{decoderLabels.process || 'Process ID'}</div>
-                            <div className="w-2/3 font-mono text-foreground font-bold">{successData.processId}</div>
+                            <div className="w-1/3 text-muted-foreground font-medium">
+                              {decoderLabels.process || 'Process ID'}
+                            </div>
+                            <div className="w-2/3 font-mono text-foreground font-bold">
+                              {successData.processId}
+                            </div>
                           </div>
                         )}
 
                         <div className="flex py-3.5 px-4 sm:px-6 items-center">
                           <div className="w-1/3 text-muted-foreground font-medium">Sequence ID</div>
-                          <div className="w-2/3 font-mono text-foreground font-bold">{successData.sequence}</div>
+                          <div className="w-2/3 font-mono text-foreground font-bold">
+                            {successData.sequence}
+                          </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 </>
               ) : (
-                <div role="alert" className="rounded-xl bg-destructive/10 p-4 border border-destructive/20 text-destructive text-sm font-medium">
+                <div
+                  role="alert"
+                  className="rounded-xl bg-destructive/10 p-4 border border-destructive/20 text-destructive text-sm font-medium"
+                >
                   {decodedData.ok ? '' : decodedData.error}
                 </div>
               )}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useId, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
-import { ArrowRightLeft, Check, Clock3, Copy, Trash2 } from 'lucide-react';
+import { useId, useMemo, useState, type KeyboardEvent } from 'react';
+import { ArrowRightLeft, Clock3, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCopyToClipboard } from '@/hooks';
+import { useHydrated } from '@/hooks';
 import { toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   COMMON_TIME_ZONES,
@@ -29,7 +30,7 @@ import {
   toZonedInputValue,
   type TimeZoneOption,
 } from '@/lib/tools/timezone-converter';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
@@ -56,8 +57,6 @@ function getLocalDefaults(): Defaults {
     minute: String(now.getMinutes()).padStart(2, '0'),
   };
 }
-
-const noSubscription = () => () => {};
 
 function TimeZonePicker({
   label,
@@ -87,7 +86,10 @@ function TimeZonePicker({
     setSearch('');
     // Start on the current zone when it is in the list that opens.
     setHighlightedIndex(
-      Math.max(0, COMMON_TIME_ZONE_OPTIONS.findIndex((option) => option.value === value))
+      Math.max(
+        0,
+        COMMON_TIME_ZONE_OPTIONS.findIndex((option) => option.value === value)
+      )
     );
   };
 
@@ -164,7 +166,9 @@ function TimeZonePicker({
               }}
               placeholder="Search time zones..."
               className="h-9"
+              // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user just opened the picker to search it, so the search field takes focus
               autoFocus
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options
               role="combobox"
               aria-label={`Search ${label} time zones`}
               aria-expanded
@@ -174,11 +178,13 @@ function TimeZonePicker({
             />
           </div>
           <ScrollArea className="h-60">
+            {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options */}
             <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`} className="p-1">
               {filteredOptions.map((option, index) => (
                 <button
                   key={option.value}
                   id={optionId(index)}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options
                   role="option"
                   aria-selected={value === option.value}
                   tabIndex={-1}
@@ -195,7 +201,9 @@ function TimeZonePicker({
                 </button>
               ))}
               {filteredOptions.length === 0 && (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching time zones</div>
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No matching time zones
+                </div>
               )}
             </div>
           </ScrollArea>
@@ -212,7 +220,6 @@ function Converter({ defaults }: { defaults: Defaults }) {
   const [date, setDate] = useState(defaults.date);
   const [hour, setHour] = useState(defaults.hour);
   const [minute, setMinute] = useState(defaults.minute);
-  const copyResult = useCopyToClipboard();
 
   const timeZoneOptions = useMemo(
     () => toTimeZoneOptions(listTimeZones(undefined, [defaults.timeZone])),
@@ -280,7 +287,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div role="group" aria-labelledby={`${id}-datetime`}>
+          <fieldset className="min-w-0" aria-labelledby={`${id}-datetime`}>
             <span id={`${id}-datetime`} className="mb-2 block text-sm font-medium">
               Date and time
             </span>
@@ -305,7 +312,9 @@ function Converter({ defaults }: { defaults: Defaults }) {
                   <SelectContent className="max-h-60">
                     <SelectGroup>
                       {HOURS.map((h) => (
-                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
@@ -324,16 +333,18 @@ function Converter({ defaults }: { defaults: Defaults }) {
                   <SelectContent className="max-h-60">
                     <SelectGroup>
                       {MINUTES.map((m) => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <TimeZonePicker
               label="From"
               value={sourceTimeZone}
@@ -376,23 +387,11 @@ function Converter({ defaults }: { defaults: Defaults }) {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(converted?.targetInputValue ?? '')}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
+            <CopyButton
+              text={converted?.targetInputValue ?? ''}
+              label="Copy result"
               disabled={!converted}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            />
           </div>
         </CardContent>
       </Card>
@@ -400,7 +399,9 @@ function Converter({ defaults }: { defaults: Defaults }) {
       <Card>
         <CardHeader>
           <CardTitle>Converted Time</CardTitle>
-          <CardDescription>{error ? 'Adjust the date, time, or zone selection.' : detail}</CardDescription>
+          <CardDescription>
+            {error ? 'Adjust the date, time, or zone selection.' : detail}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md bg-muted p-4 font-mono text-xl font-semibold tracking-tight sm:text-2xl">
@@ -408,7 +409,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
           </div>
 
           {converted && (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Source time
@@ -447,11 +448,7 @@ export function TimezoneConverter() {
   // machine's clock and zone into it gives every visitor stale values and a
   // hydration mismatch, so the HTML and the first client render use fixed
   // defaults and the form is mounted again with local ones once hydrated.
-  const hydrated = useSyncExternalStore(
-    noSubscription,
-    () => true,
-    () => false
-  );
+  const hydrated = useHydrated();
   const [localDefaults] = useState(getLocalDefaults);
 
   return hydrated ? (

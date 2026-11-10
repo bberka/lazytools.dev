@@ -39,9 +39,7 @@ export const MAX_STOPS = 10;
 const FALLBACK_COLOR = '#000000';
 const HEX_COLOR = /^#?([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-// ---------------------------------------------------------------------------
 // Numbers
-// ---------------------------------------------------------------------------
 
 function roundTo(value: number, digits = 2): number {
   const factor = 10 ** digits;
@@ -69,9 +67,7 @@ export function formatNumber(value: number): string {
   return String(roundTo(value));
 }
 
-// ---------------------------------------------------------------------------
 // Colours
-// ---------------------------------------------------------------------------
 
 /**
  * Returns a lower-case #rrggbb (or #rrggbbaa) colour. Short forms are
@@ -119,9 +115,7 @@ function hslToColor(hue: number, saturation: number, lightness: number): string 
   return toColor([channel(0), channel(8), channel(4), 255]);
 }
 
-// ---------------------------------------------------------------------------
 // Stops
-// ---------------------------------------------------------------------------
 
 function sanitiseStop(stop: ColorStop): ColorStop {
   return { id: stop.id, color: normaliseColor(stop.color), position: clampPercent(stop.position) };
@@ -204,7 +198,7 @@ export function moveStop(stops: ColorStop[], id: string, direction: 'up' | 'down
 export function updateStop(
   stops: ColorStop[],
   id: string,
-  patch: Partial<Pick<ColorStop, 'color' | 'position'>>,
+  patch: Partial<Pick<ColorStop, 'color' | 'position'>>
 ): ColorStop[] {
   return stops.map((stop) => {
     if (stop.id !== id) return stop;
@@ -222,9 +216,7 @@ export function repeatsVisibly(model: GradientModel): boolean {
   return stops[0].position > 0 || stops[stops.length - 1].position < 100;
 }
 
-// ---------------------------------------------------------------------------
 // Output
-// ---------------------------------------------------------------------------
 
 /** The gradient function on its own, e.g. `linear-gradient(90deg, #f00 0%, #00f 100%)`. */
 export function buildGradientValue(model: GradientModel): string {
@@ -244,7 +236,7 @@ export function buildGradientValue(model: GradientModel): string {
   }
 
   const stops = resolveStops(model.stops).map(
-    (stop) => `${stop.color} ${formatNumber(stop.position)}%`,
+    (stop) => `${stop.color} ${formatNumber(stop.position)}%`
   );
   return `${model.repeating ? 'repeating-' : ''}${type}-gradient(${[head, ...stops].join(', ')})`;
 }
@@ -271,9 +263,7 @@ export function buildTailwindClass(model: GradientModel): string {
   return `bg-[${escapeTailwindValue(buildGradientValue(model))}]`;
 }
 
-// ---------------------------------------------------------------------------
 // Starting points
-// ---------------------------------------------------------------------------
 
 function stopsFrom(pairs: Array<[string, number]>): ColorStop[] {
   return pairs.map(([color, position], index) => ({
@@ -302,7 +292,7 @@ function preset(
   id: string,
   name: string,
   overrides: Partial<Omit<GradientModel, 'stops'>>,
-  stops: Array<[string, number]>,
+  stops: Array<[string, number]>
 ): GradientPreset {
   return { id, name, model: { ...createDefaultModel(), ...overrides, stops: stopsFrom(stops) } };
 }
@@ -356,7 +346,7 @@ export const GRADIENT_PRESETS: GradientPreset[] = [
  */
 export function randomGradient(
   current: GradientModel,
-  random: () => number = Math.random,
+  random: () => number = Math.random
 ): GradientModel {
   const next = () => {
     const value = random();

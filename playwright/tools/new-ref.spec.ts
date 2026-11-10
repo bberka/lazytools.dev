@@ -55,14 +55,19 @@ test.describe('Reference tools', () => {
   // ---------------------------------------------------------------------------
   test.describe('HTTP Status Codes', () => {
     const search = (page: Page) => page.getByRole('textbox', { name: 'Search HTTP status codes' });
-    const table = (page: Page) => page.getByRole('list', { name: 'HTTP status codes', exact: true });
+    const table = (page: Page) =>
+      page.getByRole('list', { name: 'HTTP status codes', exact: true });
     const rows = (page: Page) => table(page).getByRole('listitem');
     const phrases = (page: Page) => table(page).getByRole('heading', { level: 3 });
     const summary = (page: Page) => page.getByText(/^Showing \d+ of \d+ status codes$/);
     const chip = (page: Page, name: string) =>
-      page.getByRole('group', { name: 'Filter by class' }).getByRole('button', { name, exact: true });
+      page
+        .getByRole('group', { name: 'Filter by class' })
+        .getByRole('button', { name, exact: true });
 
-    test('narrows the table by code prefix, words and class, with live counts', async ({ page }) => {
+    test('narrows the table by code prefix, words and class, with live counts', async ({
+      page,
+    }) => {
       await openTool(page, 'http-status-codes', 'HTTP Status Codes');
       await expect(summary(page)).toHaveText('Showing 63 of 63 status codes');
       await expect(rows(page)).toHaveCount(63);
@@ -112,7 +117,10 @@ test.describe('Reference tools', () => {
       await search(page).fill('timeout');
       await expect(phrases(page)).toHaveText(['Request Timeout', 'Gateway Timeout']);
       await chip(page, '5xx Server Error, 1 matching').click();
-      await expect(chip(page, '5xx Server Error, 1 matching')).toHaveAttribute('aria-pressed', 'true');
+      await expect(chip(page, '5xx Server Error, 1 matching')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(chip(page, 'All classes, 2 matching')).toHaveAttribute('aria-pressed', 'false');
       await expect(phrases(page)).toHaveText(['Gateway Timeout']);
       await expect(summary(page)).toHaveText('Showing 1 of 63 status codes');
@@ -147,14 +155,18 @@ test.describe('Reference tools', () => {
       await page.keyboard.press('ArrowDown');
       await expect(page.getByRole('button', { name: 'Copy 100 Continue' })).toBeFocused();
       await page.keyboard.press('ArrowDown');
-      await expect(page.getByRole('button', { name: 'Copy 101 Switching Protocols' })).toBeFocused();
+      await expect(
+        page.getByRole('button', { name: 'Copy 101 Switching Protocols' })
+      ).toBeFocused();
       await page.keyboard.press('ArrowUp');
       await expect(page.getByRole('button', { name: 'Copy 100 Continue' })).toBeFocused();
       await page.keyboard.press('ArrowUp');
       await expect(search(page)).toBeFocused();
     });
 
-    test('explains an empty result, and Clear or Escape brings the whole table back', async ({ page }) => {
+    test('explains an empty result, and Clear or Escape brings the whole table back', async ({
+      page,
+    }) => {
       await openTool(page, 'http-status-codes', 'HTTP Status Codes');
       const clear = page.getByRole('button', { name: 'Clear', exact: true });
       await expect(clear).toBeDisabled();
@@ -201,7 +213,8 @@ test.describe('Reference tools', () => {
     const sample = (page: Page) => page.getByRole('combobox', { name: 'Sample user agents' });
     const input = (page: Page) => page.getByRole('textbox', { name: 'User-Agent', exact: true });
     const json = (page: Page) => page.getByRole('textbox', { name: 'JSON', exact: true });
-    const notesHeading = (page: Page) => page.getByRole('heading', { level: 3, name: 'Good to know' });
+    const notesHeading = (page: Page) =>
+      page.getByRole('heading', { level: 3, name: 'Good to know' });
     const notes = (page: Page) => notesHeading(page).locator('xpath=..').getByRole('listitem');
 
     async function chooseSample(page: Page, label: string) {
@@ -220,7 +233,7 @@ test.describe('Reference tools', () => {
         .locator('xpath=following-sibling::dd[1]');
     }
 
-    test('parses a sample into its fields and JSON, copies it, and reads the browser\'s own string', async ({
+    test("parses a sample into its fields and JSON, copies it, and reads the browser's own string", async ({
       page,
       context,
     }) => {
@@ -239,14 +252,18 @@ test.describe('Reference tools', () => {
         });
       });
       await openTool(page, 'user-agent-parser', 'User-Agent Parser');
-      await expect(page.getByText('Paste a User-Agent string, pick a sample', { exact: false })).toBeVisible();
+      await expect(
+        page.getByText('Paste a User-Agent string, pick a sample', { exact: false })
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Clear' })).toBeDisabled();
 
       await chooseSample(page, 'Chrome on Windows');
       const windowsUa =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
       await expect(input(page)).toHaveValue(windowsUa);
-      await expect(page.getByText('Chrome 126.0.0.0 on Windows 10 or 11', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Chrome 126.0.0.0 on Windows 10 or 11', { exact: true })
+      ).toBeVisible();
       await expect(field(page, 'Browser', 'Name')).toHaveText('Chrome');
       await expect(field(page, 'Rendering engine', 'Name')).toHaveText('Blink');
       await expect(field(page, 'Operating system', 'Version')).toHaveText('10 or 11');
@@ -277,28 +294,40 @@ test.describe('Reference tools', () => {
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(input(page)).toHaveValue('');
       await expect(sample(page)).toHaveText('Choose a sample...');
-      await expect(page.getByRole('heading', { level: 3, name: 'Browser', exact: true })).toHaveCount(0);
+      await expect(
+        page.getByRole('heading', { level: 3, name: 'Browser', exact: true })
+      ).toHaveCount(0);
 
       await page.getByRole('button', { name: "Use my browser's" }).click();
       await expect(input(page)).toHaveValue(OWN_UA);
       await expect(page.getByText('Chrome 126.0.0.0 on Linux', { exact: true })).toBeVisible();
       await expect(field(page, 'Operating system', 'Version')).toHaveText('unknown');
       await expect(field(page, 'Device', 'CPU architecture')).toHaveText('x86_64');
-      const hints = page.getByRole('heading', { level: 3, name: "This browser's client hints" }).locator('xpath=..');
+      const hints = page
+        .getByRole('heading', { level: 3, name: "This browser's client hints" })
+        .locator('xpath=..');
       await expect(hints.getByText('Chromium 126', { exact: true })).toBeVisible();
       await expect(hints.getByText('Not/A)Brand 8', { exact: true })).toBeVisible();
-      await expect(hints.getByText('Mobile', { exact: true }).locator('xpath=following-sibling::dd[1]')).toHaveText('No');
-      await expect(hints.getByText('Platform', { exact: true }).locator('xpath=following-sibling::dd[1]')).toHaveText('Linux');
+      await expect(
+        hints.getByText('Mobile', { exact: true }).locator('xpath=following-sibling::dd[1]')
+      ).toHaveText('No');
+      await expect(
+        hints.getByText('Platform', { exact: true }).locator('xpath=following-sibling::dd[1]')
+      ).toHaveText('Linux');
 
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(hints).toHaveCount(0);
     });
 
-    test('cleans a pasted header and tells a phone, a crawler and a command-line client apart', async ({ page }) => {
+    test('cleans a pasted header and tells a phone, a crawler and a command-line client apart', async ({
+      page,
+    }) => {
       await openTool(page, 'user-agent-parser', 'User-Agent Parser');
 
       await input(page).fill(PIXEL_UA);
-      await expect(page.getByText('Chrome 126.0.6478.122 on Android 14', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Chrome 126.0.6478.122 on Android 14', { exact: true })
+      ).toBeVisible();
       await expect(field(page, 'Operating system', 'Version')).toHaveText('14');
       await expect(field(page, 'Device', 'Type')).toHaveText('Mobile');
       await expect(field(page, 'Device', 'Vendor')).toHaveText('Google');
@@ -313,7 +342,9 @@ test.describe('Reference tools', () => {
       await input(page).fill(`${PIXEL_UA} `);
       await expect(sample(page)).toHaveText('Choose a sample...');
 
-      await input(page).fill('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+      await input(page).fill(
+        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+      );
       await expect(page.getByText('Bot or crawler', { exact: true })).toBeVisible();
       await expect(field(page, 'Bot', 'Name')).toHaveText('Googlebot');
       await expect(field(page, 'Bot', 'Version')).toHaveText('2.1');
@@ -331,12 +362,18 @@ test.describe('Reference tools', () => {
       expect(JSON.parse(await json(page).inputValue()).userAgent).toBe('curl/8.4.0');
     });
 
-    test('reports empty, unrecognised and oversized input, and a browser without client hints', async ({ page }) => {
+    test('reports empty, unrecognised and oversized input, and a browser without client hints', async ({
+      page,
+    }) => {
       await openTool(page, 'user-agent-parser', 'User-Agent Parser');
-      const oversized = page.getByRole('alert').filter({ hasText: 'A User-Agent is at most 8192 characters long.' });
+      const oversized = page
+        .getByRole('alert')
+        .filter({ hasText: 'A User-Agent is at most 8192 characters long.' });
 
       await input(page).fill('   \n  ');
-      await expect(page.getByText('Paste a User-Agent string, pick a sample', { exact: false })).toBeVisible();
+      await expect(
+        page.getByText('Paste a User-Agent string, pick a sample', { exact: false })
+      ).toBeVisible();
       await expect(json(page)).toHaveCount(0);
 
       await input(page).fill('hello world');
@@ -395,22 +432,36 @@ test.describe('Reference tools', () => {
       await expect(amount(page)).toHaveValue('200000');
       await expect(rate(page)).toHaveValue('6');
       await expect(term(page)).toHaveValue('30');
-      await expect(page.getByText('$200,000.00 at 6% over 30 years', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('$200,000.00 at 6% over 30 years', { exact: true })
+      ).toBeVisible();
       await expect(monthly(page)).toHaveText('$1,199.10');
       await expect(stat(page, 'Total interest')).toHaveText('$231,677.04');
       await expect(stat(page, 'Total paid')).toHaveText('$431,677.04');
       await expect(stat(page, 'Payments')).toHaveText('360');
       await expect(page.getByText('30 years', { exact: true })).toBeVisible();
-      await expect(page.getByText('The last payment is $1,200.14, which clears the remaining balance.')).toBeVisible();
+      await expect(
+        page.getByText('The last payment is $1,200.14, which clears the remaining balance.')
+      ).toBeVisible();
       await expect(page.getByText('What the extra payment saves')).toHaveCount(0);
 
       // Every payment is a row; the last one is adjusted so the balance ends at exactly zero.
       const months = table(page).locator('tbody tr');
       await expect(months).toHaveCount(360);
       await expect(months.first().getByRole('rowheader')).toHaveText('1');
-      await expect(months.first().getByRole('cell')).toHaveText(['$1,199.10', '$199.10', '$1,000.00', '$199,800.90']);
+      await expect(months.first().getByRole('cell')).toHaveText([
+        '$1,199.10',
+        '$199.10',
+        '$1,000.00',
+        '$199,800.90',
+      ]);
       await expect(months.last().getByRole('rowheader')).toHaveText('360');
-      await expect(months.last().getByRole('cell')).toHaveText(['$1,200.14', '$1,194.17', '$5.97', '$0.00']);
+      await expect(months.last().getByRole('cell')).toHaveText([
+        '$1,200.14',
+        '$1,194.17',
+        '$5.97',
+        '$0.00',
+      ]);
       await expect(table(page).locator('tfoot').getByRole('cell')).toHaveText([
         '$431,677.04',
         '$200,000.00',
@@ -422,25 +473,37 @@ test.describe('Reference tools', () => {
       const years = table(page).locator('tbody tr');
       await expect(years).toHaveCount(30);
       await expect(years.first().getByRole('rowheader')).toHaveText('Year 1');
-      await expect(years.first().getByRole('cell')).toHaveText(['$14,389.20', '$2,456.01', '$11,933.19', '$197,543.99']);
+      await expect(years.first().getByRole('cell')).toHaveText([
+        '$14,389.20',
+        '$2,456.01',
+        '$11,933.19',
+        '$197,543.99',
+      ]);
       await expect(years.last().getByRole('rowheader')).toHaveText('Year 30');
-      await expect(years.last().getByRole('cell')).toHaveText(['$14,390.24', '$13,933.23', '$457.01', '$0.00']);
+      await expect(years.last().getByRole('cell')).toHaveText([
+        '$14,390.24',
+        '$13,933.23',
+        '$457.01',
+        '$0.00',
+      ]);
 
       await page.getByRole('button', { name: 'Copy summary' }).click();
       await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
-      await expect.poll(() => readClipboard(page)).toBe(
-        [
-          'Loan summary',
-          'Loan amount: $200,000.00',
-          'Interest rate: 6% per year',
-          'Term: 30 years (360 monthly payments)',
-          'Monthly payment: $1,199.10',
-          'Number of payments: 360',
-          'Final payment: $1,200.14',
-          'Total interest: $231,677.04',
-          'Total paid: $431,677.04',
-        ].join('\n')
-      );
+      await expect
+        .poll(() => readClipboard(page))
+        .toBe(
+          [
+            'Loan summary',
+            'Loan amount: $200,000.00',
+            'Interest rate: 6% per year',
+            'Term: 30 years (360 monthly payments)',
+            'Monthly payment: $1,199.10',
+            'Number of payments: 360',
+            'Final payment: $1,200.14',
+            'Total interest: $231,677.04',
+            'Total paid: $431,677.04',
+          ].join('\n')
+        );
 
       const downloadPromise = page.waitForEvent('download');
       await page.getByRole('button', { name: 'Download CSV' }).click();
@@ -457,7 +520,9 @@ test.describe('Reference tools', () => {
       expect(lines[361]).toBe('');
     });
 
-    test('shows what an extra payment saves, and handles a term in months and another currency', async ({ page }) => {
+    test('shows what an extra payment saves, and handles a term in months and another currency', async ({
+      page,
+    }) => {
       await openTool(page, 'loan-calculator', 'Loan & Mortgage Calculator');
 
       await extra(page).fill('200');
@@ -470,7 +535,9 @@ test.describe('Reference tools', () => {
       await expect(page.getByText('Paid off in 21 years instead of 30 years')).toBeVisible();
       await expect(stat(page, 'Interest saved')).toHaveText('$79,800.86');
       await expect(page.getByText('$151,876.18 instead of $231,677.04')).toBeVisible();
-      await expect(page.getByText('The last payment is $702.08, which clears the remaining balance.')).toBeVisible();
+      await expect(
+        page.getByText('The last payment is $702.08, which clears the remaining balance.')
+      ).toBeVisible();
       await expect(table(page).locator('tbody tr')).toHaveCount(252);
       await extra(page).fill('');
       await expect(page.getByText('What the extra payment saves')).toHaveCount(0);
@@ -479,14 +546,20 @@ test.describe('Reference tools', () => {
       await amount(page).fill('10000');
       await rate(page).fill('5');
       await term(page).fill('18');
-      await expect(page.getByText('$10,000.00 at 5% over 1 year 6 months', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('$10,000.00 at 5% over 1 year 6 months', { exact: true })
+      ).toBeVisible();
       await expect(monthly(page)).toHaveText('$577.81');
       await expect(stat(page, 'Total interest')).toHaveText('$400.47');
       await expect(stat(page, 'Total paid')).toHaveText('$10,400.47');
       await expect(stat(page, 'Payments')).toHaveText('18');
-      await expect(page.getByText('The last payment is $577.70, which clears the remaining balance.')).toBeVisible();
+      await expect(
+        page.getByText('The last payment is $577.70, which clears the remaining balance.')
+      ).toBeVisible();
       await page.getByRole('switch', { name: 'Group by year' }).click();
-      await expect(table(page).locator('tbody tr').nth(1).getByRole('rowheader')).toHaveText(/^Year 2\s*\(6 mo\)$/);
+      await expect(table(page).locator('tbody tr').nth(1).getByRole('rowheader')).toHaveText(
+        /^Year 2\s*\(6 mo\)$/
+      );
 
       // A currency without cents is worked in whole units.
       await choose(page, 'Currency', 'JPY - Japanese Yen');
@@ -507,13 +580,48 @@ test.describe('Reference tools', () => {
       const problem = (message: string) => page.getByRole('alert').filter({ hasText: message });
 
       const cases = [
-        { field: amount, bad: 'abc', message: 'Enter a number such as 6.5. Use a period for decimals.', good: '200000' },
-        { field: amount, bad: '0', message: 'Loan amount must be greater than zero.', good: '200000' },
-        { field: rate, bad: '6,5', message: 'Enter a number such as 6.5. Use a period for decimals.', good: '6' },
-        { field: rate, bad: '150', message: 'Interest rate must be between 0 and 100 percent.', good: '6' },
-        { field: rate, bad: '', message: 'Enter the annual interest rate (0 for no interest).', good: '6' },
-        { field: term, bad: '2.1', message: 'Loan term must be a whole number of months (2.5 years is 30 months).', good: '30' },
-        { field: term, bad: '101', message: 'Loan term can be at most 100 years (1,200 months).', good: '30' },
+        {
+          field: amount,
+          bad: 'abc',
+          message: 'Enter a number such as 6.5. Use a period for decimals.',
+          good: '200000',
+        },
+        {
+          field: amount,
+          bad: '0',
+          message: 'Loan amount must be greater than zero.',
+          good: '200000',
+        },
+        {
+          field: rate,
+          bad: '6,5',
+          message: 'Enter a number such as 6.5. Use a period for decimals.',
+          good: '6',
+        },
+        {
+          field: rate,
+          bad: '150',
+          message: 'Interest rate must be between 0 and 100 percent.',
+          good: '6',
+        },
+        {
+          field: rate,
+          bad: '',
+          message: 'Enter the annual interest rate (0 for no interest).',
+          good: '6',
+        },
+        {
+          field: term,
+          bad: '2.1',
+          message: 'Loan term must be a whole number of months (2.5 years is 30 months).',
+          good: '30',
+        },
+        {
+          field: term,
+          bad: '101',
+          message: 'Loan term can be at most 100 years (1,200 months).',
+          good: '30',
+        },
         { field: extra, bad: '-5', message: 'Extra payment cannot be negative.', good: '' },
       ];
       for (const { field, bad, message, good } of cases) {
@@ -521,7 +629,9 @@ test.describe('Reference tools', () => {
         await expect(problem(message), `${bad} -> ${message}`).toBeVisible();
         await expect(field(page)).toHaveAttribute('aria-invalid', 'true');
         await expect(field(page)).toHaveAccessibleDescription(message);
-        await expect(page.getByText('Fix the highlighted fields to see the repayment.')).toBeVisible();
+        await expect(
+          page.getByText('Fix the highlighted fields to see the repayment.')
+        ).toBeVisible();
         await expect(monthly(page)).toHaveCount(0);
         await expect(table(page)).toHaveCount(0);
 
@@ -536,7 +646,9 @@ test.describe('Reference tools', () => {
 
       await page.getByRole('button', { name: 'Clear' }).click();
       for (const field of [amount, rate, term, extra]) await expect(field(page)).toHaveValue('');
-      await expect(page.getByText('Enter a loan amount, interest rate and term to see the repayment.')).toBeVisible();
+      await expect(
+        page.getByText('Enter a loan amount, interest rate and term to see the repayment.')
+      ).toBeVisible();
       await expect(monthly(page)).toHaveCount(0);
       await expect(table(page)).toHaveCount(0);
     });

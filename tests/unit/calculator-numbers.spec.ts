@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { formatNumber, readNumber } from '@/lib/tools/calculator-numbers';
 
 const number = (value: number) => ({ kind: 'number', value });
 const EMPTY = { kind: 'empty' };
 const INVALID = { kind: 'invalid' };
 
-test.describe('readNumber', () => {
+describe('readNumber', () => {
   test('reads plain, signed, fractional and exponent numbers', () => {
     expect(readNumber('42')).toEqual(number(42));
     expect(readNumber('  42  ')).toEqual(number(42));
@@ -67,7 +67,15 @@ test.describe('readNumber', () => {
   // Typing 1,000,000 a key at a time passes through "1,000," and "1,000,0",
   // which are no number yet but are not a mistake either.
   test('treats a number grouped in thousands and cut off after a comma as empty', () => {
-    for (const text of ['1,000,', '1,000,0', '1,000,00', '1,250,5', '12,34,', '1,00,0', '-1,000,0']) {
+    for (const text of [
+      '1,000,',
+      '1,000,0',
+      '1,000,00',
+      '1,250,5',
+      '12,34,',
+      '1,00,0',
+      '-1,000,0',
+    ]) {
       expect(readNumber(text), text).toEqual(EMPTY);
     }
 
@@ -107,7 +115,7 @@ test.describe('readNumber', () => {
   });
 });
 
-test.describe('formatNumber', () => {
+describe('formatNumber', () => {
   const twoDecimals = { minFractionDigits: 2, maxFractionDigits: 2 };
   const keepsSmall = { ...twoDecimals, minSignificantDigits: 2 };
 

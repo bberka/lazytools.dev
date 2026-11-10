@@ -56,14 +56,12 @@ export function ColorContrastChecker() {
             <Eye className="h-5 w-5" />
             Color Contrast Checker
           </CardTitle>
-          <CardDescription>
-            Check color contrast ratios for WCAG 2.1 compliance
-          </CardDescription>
+          <CardDescription>Check color contrast ratios for WCAG 2.1 compliance</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Foreground Color (Text)</label>
+              <span className="text-sm font-medium">Foreground Color (Text)</span>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Foreground color"
@@ -85,7 +83,7 @@ export function ColorContrastChecker() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Background Color</label>
+              <span className="text-sm font-medium">Background Color</span>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Background color"
@@ -150,10 +148,14 @@ export function ColorContrastChecker() {
         {contrastResult ? (
           <CardContent className="space-y-4">
             <div className="text-center">
-              <div className={`text-4xl font-bold sm:text-5xl ${LEVEL_COLORS[contrastResult.level]}`}>
+              <div
+                className={`text-4xl font-bold sm:text-5xl ${LEVEL_COLORS[contrastResult.level]}`}
+              >
                 {contrastResult.ratioLabel}
               </div>
-              <div className={`mt-2 text-base font-medium sm:text-lg ${LEVEL_COLORS[contrastResult.level]}`}>
+              <div
+                className={`mt-2 text-base font-medium sm:text-lg ${LEVEL_COLORS[contrastResult.level]}`}
+              >
                 {contrastResult.level}
               </div>
             </div>
@@ -196,9 +198,9 @@ export function ColorContrastChecker() {
           </CardContent>
         ) : (
           <CardContent>
-            <div role="status" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <output className="block bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
               {contrast.error}
-            </div>
+            </output>
           </CardContent>
         )}
       </Card>
@@ -220,10 +222,18 @@ export function ColorContrastChecker() {
             <div className="text-sm space-y-2">
               <p className="font-medium">WCAG 2.1 Contrast Requirements</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li><strong>AA (Minimum)</strong> - 4.5:1 for normal text, 3:1 for large text</li>
-                <li><strong>AAA (Enhanced)</strong> - 7:1 for normal text, 4.5:1 for large text</li>
-                <li><strong>Large Text</strong> - 18px or larger, or 14px bold or larger</li>
-                <li>Higher ratios provide better accessibility for users with vision impairments</li>
+                <li>
+                  <strong>AA (Minimum)</strong> - 4.5:1 for normal text, 3:1 for large text
+                </li>
+                <li>
+                  <strong>AAA (Enhanced)</strong> - 7:1 for normal text, 4.5:1 for large text
+                </li>
+                <li>
+                  <strong>Large Text</strong> - 18px or larger, or 14px bold or larger
+                </li>
+                <li>
+                  Higher ratios provide better accessibility for users with vision impairments
+                </li>
                 <li>Colors update in real-time as you type or use color pickers</li>
               </ul>
             </div>

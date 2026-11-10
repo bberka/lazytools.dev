@@ -210,7 +210,10 @@ export function PdfCompress() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -221,7 +224,7 @@ export function PdfCompress() {
             <CardTitle className="text-sm font-semibold">Compression Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div className="space-y-3" role="group" aria-labelledby={modeLabelId}>
+            <fieldset className="min-w-0 space-y-3" aria-labelledby={modeLabelId}>
               <p
                 id={modeLabelId}
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
@@ -234,15 +237,16 @@ export function PdfCompress() {
                   aria-pressed={compressionMode === 'image'}
                   onClick={() => setCompressionMode('image')}
                   className={cn(
-                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    'p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     compressionMode === 'image'
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border/80 bg-card"
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border/80 bg-card'
                   )}
                 >
                   <span className="font-semibold text-sm">Compress Images (Recommended)</span>
                   <span className="text-xs text-muted-foreground">
-                    Re-compress images and layouts. High size reduction, best for scans and slide decks.
+                    Re-compress images and layouts. High size reduction, best for scans and slide
+                    decks.
                   </span>
                 </button>
 
@@ -251,10 +255,10 @@ export function PdfCompress() {
                   aria-pressed={compressionMode === 'structure'}
                   onClick={() => setCompressionMode('structure')}
                   className={cn(
-                    "p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    'p-4 rounded-xl border text-left transition-all hover:bg-muted/30 flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     compressionMode === 'structure'
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border/80 bg-card"
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border/80 bg-card'
                   )}
                 >
                   <span className="font-semibold text-sm">Optimize Structure</span>
@@ -263,10 +267,10 @@ export function PdfCompress() {
                   </span>
                 </button>
               </div>
-            </div>
+            </fieldset>
 
             {compressionMode === 'image' && (
-              <div className="space-y-3" role="group" aria-labelledby={levelLabelId}>
+              <fieldset className="min-w-0 space-y-3" aria-labelledby={levelLabelId}>
                 <p
                   id={levelLabelId}
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
@@ -281,10 +285,10 @@ export function PdfCompress() {
                       aria-pressed={compressionLevel === lvl.id}
                       onClick={() => setCompressionLevel(lvl.id)}
                       className={cn(
-                        "p-3 rounded-lg border text-center transition-all hover:bg-muted/20 flex flex-col items-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        'p-3 rounded-lg border text-center transition-all hover:bg-muted/20 flex flex-col items-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         compressionLevel === lvl.id
-                          ? "border-primary bg-primary/5 font-semibold"
-                          : "border-border/80 bg-card text-muted-foreground"
+                          ? 'border-primary bg-primary/5 font-semibold'
+                          : 'border-border/80 bg-card text-muted-foreground'
                       )}
                     >
                       <span className="text-sm">{lvl.name}</span>
@@ -292,7 +296,7 @@ export function PdfCompress() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
             )}
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -309,6 +313,7 @@ export function PdfCompress() {
 
       {compressing && (
         <Card
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Card renders a <div>, which cannot become an <output>
           role="status"
           className="border-border/60 shadow-md p-4 sm:p-8 flex flex-col items-center justify-center space-y-4"
         >
@@ -335,8 +340,8 @@ export function PdfCompress() {
       {result && (
         <Card
           className={cn(
-            "border-border/60 shadow-lg",
-            result.smaller && "bg-emerald-500/5 border-emerald-500/20"
+            'border-border/60 shadow-lg',
+            result.smaller && 'bg-emerald-500/5 border-emerald-500/20'
           )}
         >
           <CardHeader>
@@ -364,7 +369,9 @@ export function PdfCompress() {
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
                   Original Size
                 </span>
-                <span className="text-lg font-bold mt-1">{formatBytes(result.originalSize, SIZE_FORMAT)}</span>
+                <span className="text-lg font-bold mt-1">
+                  {formatBytes(result.originalSize, SIZE_FORMAT)}
+                </span>
               </div>
               <div className="p-4 rounded-xl border bg-card/50 flex flex-col">
                 <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">

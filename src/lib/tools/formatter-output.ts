@@ -52,7 +52,10 @@ export interface TreeBranch {
  * but not described, so a huge or self-referencing value costs nothing until
  * the reader expands it.
  */
-export function describeTreeNode(value: unknown, vocabulary: TreeVocabulary): TreeLeaf | TreeBranch {
+export function describeTreeNode(
+  value: unknown,
+  vocabulary: TreeVocabulary
+): TreeLeaf | TreeBranch {
   if (value === null || value === undefined) {
     return { kind: 'leaf', type: 'empty', text: vocabulary.empty };
   }
@@ -95,5 +98,9 @@ export function describeTreeNode(value: unknown, vocabulary: TreeVocabulary): Tr
   }
 
   // Functions and symbols cannot come out of a parser; show them as text.
-  return { kind: 'leaf', type: 'empty', text: String(value) };
+  return {
+    kind: 'leaf',
+    type: 'empty',
+    text: String(value as undefined | symbol | ((...args: never[]) => unknown)),
+  };
 }

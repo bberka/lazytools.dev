@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { buildBoxShadow, type ShadowLayer } from '@/lib/tools/box-shadow-visualizer';
 
 const layer = (overrides: Partial<ShadowLayer> = {}): ShadowLayer => ({
@@ -15,7 +15,7 @@ const layer = (overrides: Partial<ShadowLayer> = {}): ShadowLayer => ({
   ...overrides,
 });
 
-test.describe('buildBoxShadow', () => {
+describe('buildBoxShadow', () => {
   test('writes one layer', () => {
     expect(buildBoxShadow([layer()])).toEqual({
       value: '0px 8px 16px -4px rgba(0, 0, 0, 0.15)',
@@ -39,7 +39,9 @@ test.describe('buildBoxShadow', () => {
   });
 
   test('marks inset layers', () => {
-    const output = buildBoxShadow([layer({ inset: true, offsetX: 3, offsetY: 3, blur: 6, spread: 0 })]);
+    const output = buildBoxShadow([
+      layer({ inset: true, offsetX: 3, offsetY: 3, blur: 6, spread: 0 }),
+    ]);
 
     expect(output.value).toBe('inset 3px 3px 6px 0px rgba(0, 0, 0, 0.15)');
     expect(output.tailwind).toBe('shadow-[inset_3px_3px_6px_0px_rgba(0,0,0,0.15)]');
@@ -72,17 +74,27 @@ test.describe('buildBoxShadow', () => {
   });
 
   test('accepts three-digit and lower-case colours', () => {
-    expect(buildBoxShadow([layer({ color: '#0af' })]).value).toBe('0px 8px 16px -4px rgba(0, 170, 255, 0.15)');
-    expect(buildBoxShadow([layer({ color: 'ec4899' })]).value).toBe('0px 8px 16px -4px rgba(236, 72, 153, 0.15)');
+    expect(buildBoxShadow([layer({ color: '#0af' })]).value).toBe(
+      '0px 8px 16px -4px rgba(0, 170, 255, 0.15)'
+    );
+    expect(buildBoxShadow([layer({ color: 'ec4899' })]).value).toBe(
+      '0px 8px 16px -4px rgba(236, 72, 153, 0.15)'
+    );
   });
 
   test('does not invent a colour from text that is not a hex colour', () => {
     // Defect: "red" was read as the hex digits "rr", "ee", "dd" and came out
     // cyan (0, 238, 221), and "#f00a" came out orange-red (240, 10, 0), in the
     // preview and the copied code.
-    expect(buildBoxShadow([layer({ color: 'red' })]).value).toBe('0px 8px 16px -4px rgba(0, 0, 0, 0.15)');
-    expect(buildBoxShadow([layer({ color: '#f00a' })]).value).toBe('0px 8px 16px -4px rgba(0, 0, 0, 0.15)');
-    expect(buildBoxShadow([layer({ color: '' })]).value).toBe('0px 8px 16px -4px rgba(0, 0, 0, 0.15)');
+    expect(buildBoxShadow([layer({ color: 'red' })]).value).toBe(
+      '0px 8px 16px -4px rgba(0, 0, 0, 0.15)'
+    );
+    expect(buildBoxShadow([layer({ color: '#f00a' })]).value).toBe(
+      '0px 8px 16px -4px rgba(0, 0, 0, 0.15)'
+    );
+    expect(buildBoxShadow([layer({ color: '' })]).value).toBe(
+      '0px 8px 16px -4px rgba(0, 0, 0, 0.15)'
+    );
   });
 
   test('keeps negative offsets and spread', () => {

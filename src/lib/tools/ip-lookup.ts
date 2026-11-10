@@ -62,7 +62,9 @@ function text(value: unknown): string | undefined {
 
 function coordinate(value: unknown, limit: number): number | null {
   const number = typeof value === 'string' && value.trim() ? Number(value) : value;
-  return typeof number === 'number' && Number.isFinite(number) && Math.abs(number) <= limit ? number : null;
+  return typeof number === 'number' && Number.isFinite(number) && Math.abs(number) <= limit
+    ? number
+    : null;
 }
 
 /**
@@ -152,7 +154,10 @@ const PROVIDERS: readonly Provider[] = [
  * caller's own public address. Resolves with the details, or with a message
  * that can be shown as it is; it does not reject.
  */
-export async function lookupIp(input: string, options: IpLookupOptions = {}): Promise<IpLookupOutcome> {
+export async function lookupIp(
+  input: string,
+  options: IpLookupOptions = {}
+): Promise<IpLookupOutcome> {
   const { signal, timeoutMs = PROVIDER_TIMEOUT_MS, fetchImpl } = options;
 
   const typed = input.trim();

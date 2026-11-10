@@ -77,7 +77,7 @@ interface SliderFieldProps {
 function SliderField({ label, valueLabel, value, min, max, onChange }: SliderFieldProps) {
   const labelId = useId();
   return (
-    <div role="group" aria-labelledby={labelId} className="space-y-1">
+    <fieldset aria-labelledby={labelId} className="min-w-0 space-y-1">
       <div className="flex items-center justify-between gap-2">
         <span id={labelId} className={SECTION_LABEL}>
           {label}
@@ -87,7 +87,7 @@ function SliderField({ label, valueLabel, value, min, max, onChange }: SliderFie
         </span>
       </div>
       <Slider aria-labelledby={labelId} value={value} min={min} max={max} onChange={onChange} />
-    </div>
+    </fieldset>
   );
 }
 
@@ -143,14 +143,22 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
     <li className="space-y-1 rounded-lg border border-border bg-muted/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="w-12 text-xs font-semibold text-muted-foreground">{name}</span>
-        <div
-          role="group"
+        <fieldset
           aria-label={`${name} colour`}
           className="min-w-0 flex-1 basis-32 sm:w-36 sm:flex-none"
         >
-          <ColorPicker label={`${name} colour`} value={stop.color} onChange={onColor} className="h-9" />
-        </div>
-        <PercentInput label={`${name} position in percent`} value={stop.position} onChange={onPosition} />
+          <ColorPicker
+            label={`${name} colour`}
+            value={stop.color}
+            onChange={onColor}
+            className="h-9"
+          />
+        </fieldset>
+        <PercentInput
+          label={`${name} position in percent`}
+          value={stop.position}
+          onChange={onPosition}
+        />
         <div className="ml-auto flex items-center gap-0.5">
           <TooltipSimple content="Move up">
             <Button
@@ -190,7 +198,14 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
           </TooltipSimple>
         </div>
       </div>
-      <Slider aria-label={`${name} position`} value={stop.position} min={0} max={100} step={1} onChange={onPosition} />
+      <Slider
+        aria-label={`${name} position`}
+        value={stop.position}
+        min={0}
+        max={100}
+        step={1}
+        onChange={onPosition}
+      />
     </li>
   );
 }
@@ -230,7 +245,8 @@ export function CssGradientGenerator() {
   const repeatId = useId();
   const shapeId = useId();
 
-  const patch = (changes: Partial<GradientModel>) => setModel((current) => ({ ...current, ...changes }));
+  const patch = (changes: Partial<GradientModel>) =>
+    setModel((current) => ({ ...current, ...changes }));
   const patchStops = (edit: (stops: ColorStop[]) => ColorStop[]) =>
     setModel((current) => ({ ...current, stops: edit(current.stops) }));
 
@@ -241,22 +257,23 @@ export function CssGradientGenerator() {
   const usesAngle = model.type !== 'radial';
   const usesPosition = model.type !== 'linear';
   const stopsInOrder = model.stops.every(
-    (stop, index) => index === 0 || model.stops[index - 1].position <= stop.position,
+    (stop, index) => index === 0 || model.stops[index - 1].position <= stop.position
   );
   const repeatNotice = model.repeating && !repeatsVisibly(model);
 
   const applyPreset = (preset: GradientPreset) => setModel(preset.model);
 
-  const copyStatus = cssCopy.isError || tailwindCopy.isError
-    ? 'Copy failed. Select the text and copy it by hand.'
-    : cssCopy.isCopied
-      ? 'CSS copied to the clipboard.'
-      : tailwindCopy.isCopied
-        ? 'Tailwind class copied to the clipboard.'
-        : '';
+  const copyStatus =
+    cssCopy.isError || tailwindCopy.isError
+      ? 'Copy failed. Select the text and copy it by hand.'
+      : cssCopy.isCopied
+        ? 'CSS copied to the clipboard.'
+        : tailwindCopy.isCopied
+          ? 'Tailwind class copied to the clipboard.'
+          : '';
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 lg:items-start">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:items-start">
       {/* Preview */}
       <Card className="lg:col-start-2 lg:row-start-1">
         <CardHeader>
@@ -268,6 +285,7 @@ export function CssGradientGenerator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a styled <div> preview is named with role="img"; <img> needs an image source
             role="img"
             aria-label="Gradient preview"
             className="h-48 w-full rounded-lg border border-border sm:h-64 lg:h-72"
@@ -322,7 +340,10 @@ export function CssGradientGenerator() {
             <CardDescription>Pick a type, then set its direction and shape.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Tabs value={model.type} onValueChange={(next) => patch({ type: next as GradientType })}>
+            <Tabs
+              value={model.type}
+              onValueChange={(next) => patch({ type: next as GradientType })}
+            >
               <TabsList aria-label="Gradient type" className="grid h-auto w-full grid-cols-3">
                 <TabsTrigger value="linear">Linear</TabsTrigger>
                 <TabsTrigger value="radial">Radial</TabsTrigger>
@@ -345,16 +366,13 @@ export function CssGradientGenerator() {
             </div>
 
             {repeatNotice && (
-              <div
-                role="status"
-                className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground"
-              >
+              <output className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
                   The stops already run from 0% to 100%, so nothing repeats yet. Move the last stop
                   to a smaller value, such as 20%, to see the pattern tile.
                 </span>
-              </div>
+              </output>
             )}
 
             {usesAngle && (
@@ -373,7 +391,10 @@ export function CssGradientGenerator() {
                 <label htmlFor={shapeId} className={SECTION_LABEL}>
                   Shape
                 </label>
-                <Select value={model.shape} onValueChange={(next) => patch({ shape: next as RadialShape })}>
+                <Select
+                  value={model.shape}
+                  onValueChange={(next) => patch({ shape: next as RadialShape })}
+                >
                   <SelectTrigger id={shapeId} className="h-9">
                     <SelectValue placeholder="Select a shape" />
                   </SelectTrigger>
@@ -388,7 +409,7 @@ export function CssGradientGenerator() {
             )}
 
             {usesPosition && (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <SliderField
                   label="Position X"
                   valueLabel={`${formatNumber(clampPercent(model.positionX))}%`}
@@ -477,9 +498,7 @@ export function CssGradientGenerator() {
             The Tailwind class is an arbitrary value for Tailwind v4, with spaces written as
             underscores.
           </p>
-          <span role="status" className="sr-only">
-            {copyStatus}
-          </span>
+          <output className="sr-only">{copyStatus}</output>
         </CardContent>
       </Card>
     </div>

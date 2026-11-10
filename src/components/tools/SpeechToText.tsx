@@ -1,24 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
-import {
-  Mic,
-  MicOff,
-  Copy,
-  Check,
-  Trash2,
-  Download,
-  AlertCircle,
-  FileDown,
-} from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { Mic, MicOff, Copy, Check, Trash2, Download, AlertCircle, FileDown } from 'lucide-react';
+import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
+import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
+import { getAudioContextClass } from '@/lib/web-audio';
 import {
   appendTranscript,
   describeRecognitionError,
@@ -103,20 +95,18 @@ interface ListeningSession {
 
 function getSpeechRecognitionClass(): SpeechRecognitionConstructor | null {
   if (typeof window === 'undefined') return null;
-  const win = window as unknown as Record<string, unknown>;
-  return ((win.SpeechRecognition || win.webkitSpeechRecognition) as SpeechRecognitionConstructor) || null;
+  const win = window as Window & {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return win.SpeechRecognition ?? win.webkitSpeechRecognition ?? null;
 }
 
-// Whether the browser can recognize speech never changes while the page is open, so there is nothing to subscribe to.
-const subscribeToNothing = () => () => {};
 const canRecognizeSpeech = () => getSpeechRecognitionClass() !== null;
 
 export function SpeechToText() {
-  // The prerendered page cannot know the browser, so it counts as supported
-  // there and the real answer follows once the page is live. A useState
-  // initializer gave a first client render that differed from the prerendered
-  // HTML in every browser without speech recognition.
-  const isSupported = useSyncExternalStore(subscribeToNothing, canRecognizeSpeech, () => true);
+  // Counts as supported in the prerendered page; the real answer follows once it is live.
+  const isSupported = useBrowserFeature(canRecognizeSpeech, true);
 
   const [isListening, setIsListening] = useState(false);
   // From the press of Start Recording until the recognizer reports that it is running.
@@ -138,7 +128,7 @@ export function SpeechToText() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  
+
   // UI HTML element refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -160,8 +150,7 @@ export function SpeechToText() {
       audioCtxRef.current = null;
     }
     analyserRef.current = null;
-    
-    // Draw horizontal rest line on canvas
+
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -193,7 +182,6 @@ export function SpeechToText() {
 
       analyser.getByteTimeDomainData(dataArray);
 
-      // Clear Canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.lineWidth = 3;
@@ -243,8 +231,7 @@ export function SpeechToText() {
       }
       streamRef.current = stream;
 
-      const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
-      const AudioContextClass = window.AudioContext || win.webkitAudioContext;
+      const AudioContextClass = getAudioContextClass();
       if (!AudioContextClass) throw new Error('AudioContext is not supported by your browser');
 
       const audioCtx = new AudioContextClass();
@@ -370,7 +357,6 @@ export function SpeechToText() {
     }
   };
 
-  // Toggle Transcription Playback
   const handleToggleListening = async () => {
     if (isListening) {
       stopListening();
@@ -388,20 +374,17 @@ export function SpeechToText() {
     setError('');
   };
 
-  // Export File Options
   const handleDownloadFile = (format: TranscriptFormat) => {
     if (!transcript) return;
     downloadText(transcript, transcriptFileName(format, new Date()));
   };
 
-  // Handle auto-scrolling transcript when text changes
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [transcript, interim]);
 
-  // Clean up audio streams and SpeechRecognition on unmount
   useEffect(() => {
     return () => {
       const session = sessionRef.current;
@@ -414,7 +397,6 @@ export function SpeechToText() {
     };
   }, []);
 
-  // Draw flat line on initial canvas render
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -443,11 +425,10 @@ export function SpeechToText() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <p>
-            The Speech Recognition API is not natively supported or enabled by default in your current browser.
+            The Speech Recognition API is not natively supported or enabled by default in your
+            current browser.
           </p>
-          <p className="font-semibold text-foreground">
-            Recommended Browsers for transcription:
-          </p>
+          <p className="font-semibold text-foreground">Recommended Browsers for transcription:</p>
           <ul className="list-disc list-inside space-y-1.5 pl-2">
             <li>Google Chrome (Desktop & Mobile)</li>
             <li>Microsoft Edge (Desktop)</li>
@@ -514,12 +495,13 @@ export function SpeechToText() {
 
             {/* Audio Waveform Canvas */}
             <div className="space-y-2.5">
-              <label id="stt-waveform-label" className="text-sm font-medium">
+              <span id="stt-waveform-label" className="text-sm font-medium">
                 Voice Input Waveform
-              </label>
+              </span>
               <div className="relative h-20 w-full rounded-lg border bg-gradient-to-br from-indigo-950/20 to-purple-950/20 dark:from-indigo-950/40 dark:to-purple-950/40 p-1 border-indigo-500/10 overflow-hidden">
                 <canvas
                   ref={canvasRef}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <canvas> waveform is named with role="img"; <img> cannot draw on it
                   role="img"
                   aria-labelledby="stt-waveform-label"
                   width={400}
@@ -556,7 +538,7 @@ export function SpeechToText() {
             {/* Transcription Output Container */}
             <div
               ref={scrollContainerRef}
-              className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto scrollbar-thin font-sans text-base leading-relaxed select-text whitespace-pre-wrap flex flex-col justify-start"
+              className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto font-sans text-base leading-relaxed select-text whitespace-pre-wrap flex flex-col justify-start"
             >
               {transcript || interim ? (
                 <div>
@@ -604,7 +586,7 @@ export function SpeechToText() {
                     </>
                   )}
                 </Button>
-                
+
                 {isListening && (
                   <span className="flex items-center gap-2.5 text-xs text-red-500 font-semibold uppercase tracking-wider animate-pulse ml-1">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#dc2626]" />

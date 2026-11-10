@@ -75,7 +75,9 @@ export function SvgPathEditor() {
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label htmlFor={`${fieldId}-viewbox`} className="text-sm font-medium">ViewBox</label>
+              <label htmlFor={`${fieldId}-viewbox`} className="text-sm font-medium">
+                ViewBox
+              </label>
               <Input
                 id={`${fieldId}-viewbox`}
                 type="text"
@@ -92,7 +94,9 @@ export function SvgPathEditor() {
               )}
             </div>
             <div className="space-y-2">
-              <label htmlFor={`${fieldId}-stroke-width`} className="text-sm font-medium">Stroke Width</label>
+              <label htmlFor={`${fieldId}-stroke-width`} className="text-sm font-medium">
+                Stroke Width
+              </label>
               <Input
                 id={`${fieldId}-stroke-width`}
                 type="number"
@@ -104,7 +108,9 @@ export function SvgPathEditor() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor={`${fieldId}-stroke`} className="text-sm font-medium">Stroke Color</label>
+              <label htmlFor={`${fieldId}-stroke`} className="text-sm font-medium">
+                Stroke Color
+              </label>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Stroke color"
@@ -124,7 +130,9 @@ export function SvgPathEditor() {
               </div>
             </div>
             <div className="space-y-2">
-              <label htmlFor={`${fieldId}-fill`} className="text-sm font-medium">Fill Color</label>
+              <label htmlFor={`${fieldId}-fill`} className="text-sm font-medium">
+                Fill Color
+              </label>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Fill color"
@@ -161,9 +169,9 @@ export function SvgPathEditor() {
 
       {/* Error */}
       {error && (
-        <div role="status" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <output className="block bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
-        </div>
+        </output>
       )}
 
       {/* Preview: shown for broken paths too, since SVG draws a path up to its first error */}
@@ -175,20 +183,27 @@ export function SvgPathEditor() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-center items-center p-4 sm:p-8 bg-muted rounded-md">
-              <svg
-                viewBox={viewBoxValid ? viewBox : undefined}
-                className="max-w-full h-auto border border-input"
-                style={{ maxHeight: '400px' }}
-                role="img"
-                aria-label="Path preview"
-              >
-                <path
-                  d={pathData}
-                  stroke={strokeColor}
-                  strokeWidth={strokeWidth}
-                  fill={fillColor}
-                />
-              </svg>
+              {error ? (
+                <p className="text-sm text-muted-foreground">
+                  Fix the path data to see the preview.
+                </p>
+              ) : (
+                <svg
+                  viewBox={viewBoxValid ? viewBox : undefined}
+                  className="max-w-full h-auto border border-input"
+                  style={{ maxHeight: '400px' }}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an <svg> drawing is named with role="img" and aria-label; <img> cannot draw it
+                  role="img"
+                  aria-label="Path preview"
+                >
+                  <path
+                    d={pathData}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    fill={fillColor}
+                  />
+                </svg>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -204,34 +219,26 @@ export function SvgPathEditor() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Total Commands
-                </label>
+                <span className="text-sm font-medium text-muted-foreground">Total Commands</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {pathInfo.commandCount}
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Path Length
-                </label>
+                <span className="text-sm font-medium text-muted-foreground">Path Length</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {pathInfo.length} characters
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Command Types
-                </label>
+                <span className="text-sm font-medium text-muted-foreground">Command Types</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {Object.keys(pathInfo.commands).length}
                 </div>
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">
-                Command Breakdown
-              </label>
+              <span className="text-sm font-medium text-muted-foreground">Command Breakdown</span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(pathInfo.commands).map(([cmd, count]) => (
                   <div key={cmd} className="p-2 rounded-md bg-muted text-sm">
@@ -279,7 +286,7 @@ export function SvgPathEditor() {
             </div>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[60px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[60px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {optimizedPath}
             </pre>
           </CardContent>
@@ -303,14 +310,30 @@ export function SvgPathEditor() {
             <div className="text-sm space-y-2">
               <p className="font-medium">SVG Path Commands</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li><strong>M/m</strong> - Move to (absolute/relative)</li>
-                <li><strong>L/l</strong> - Line to (absolute/relative)</li>
-                <li><strong>H/h</strong> - Horizontal line (absolute/relative)</li>
-                <li><strong>V/v</strong> - Vertical line (absolute/relative)</li>
-                <li><strong>C/c</strong> - Cubic Bézier curve (absolute/relative)</li>
-                <li><strong>Q/q</strong> - Quadratic Bézier curve (absolute/relative)</li>
-                <li><strong>A/a</strong> - Elliptical arc (absolute/relative)</li>
-                <li><strong>Z/z</strong> - Close path</li>
+                <li>
+                  <strong>M/m</strong> - Move to (absolute/relative)
+                </li>
+                <li>
+                  <strong>L/l</strong> - Line to (absolute/relative)
+                </li>
+                <li>
+                  <strong>H/h</strong> - Horizontal line (absolute/relative)
+                </li>
+                <li>
+                  <strong>V/v</strong> - Vertical line (absolute/relative)
+                </li>
+                <li>
+                  <strong>C/c</strong> - Cubic Bézier curve (absolute/relative)
+                </li>
+                <li>
+                  <strong>Q/q</strong> - Quadratic Bézier curve (absolute/relative)
+                </li>
+                <li>
+                  <strong>A/a</strong> - Elliptical arc (absolute/relative)
+                </li>
+                <li>
+                  <strong>Z/z</strong> - Close path
+                </li>
               </ul>
             </div>
           </div>

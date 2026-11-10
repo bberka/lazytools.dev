@@ -53,9 +53,112 @@ export const MOCK_FIELD_TYPES: ReadonlyArray<{ value: string; label: string }> =
   { value: 'text', label: 'Text / Paragraph' },
 ];
 
-const FIRST_NAMES = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Charles', 'Karen', 'Christopher', 'Nancy', 'Daniel', 'Lisa', 'Matthew', 'Betty', 'Anthony', 'Margaret', 'Mark', 'Sandra', 'Donald', 'Ashley', 'Steven', 'Dorothy', 'Paul', 'Kimberly', 'Andrew', 'Emily', 'Joshua', 'Donna'];
-const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores'];
-const STREETS = ['Main St', 'Oak Ave', 'Pine Rd', 'Maple Dr', 'Cedar Ln', 'Elm St', 'View Rd', 'Broadway', 'Washington St', 'Park Ln', 'Lake Dr', 'Sunset Blvd', 'River Rd', 'Forest Ave', 'Highland Dr', 'Meadow Ln', 'Hillside Ave', 'Spring St', 'Valley Rd', 'Ridge Dr'];
+const FIRST_NAMES = [
+  'James',
+  'Mary',
+  'John',
+  'Patricia',
+  'Robert',
+  'Jennifer',
+  'Michael',
+  'Linda',
+  'William',
+  'Elizabeth',
+  'David',
+  'Barbara',
+  'Richard',
+  'Susan',
+  'Joseph',
+  'Jessica',
+  'Thomas',
+  'Sarah',
+  'Charles',
+  'Karen',
+  'Christopher',
+  'Nancy',
+  'Daniel',
+  'Lisa',
+  'Matthew',
+  'Betty',
+  'Anthony',
+  'Margaret',
+  'Mark',
+  'Sandra',
+  'Donald',
+  'Ashley',
+  'Steven',
+  'Dorothy',
+  'Paul',
+  'Kimberly',
+  'Andrew',
+  'Emily',
+  'Joshua',
+  'Donna',
+];
+const LAST_NAMES = [
+  'Smith',
+  'Johnson',
+  'Williams',
+  'Brown',
+  'Jones',
+  'Garcia',
+  'Miller',
+  'Davis',
+  'Rodriguez',
+  'Martinez',
+  'Hernandez',
+  'Lopez',
+  'Gonzalez',
+  'Wilson',
+  'Anderson',
+  'Thomas',
+  'Taylor',
+  'Moore',
+  'Jackson',
+  'Martin',
+  'Lee',
+  'Perez',
+  'Thompson',
+  'White',
+  'Harris',
+  'Sanchez',
+  'Clark',
+  'Ramirez',
+  'Lewis',
+  'Robinson',
+  'Walker',
+  'Young',
+  'Allen',
+  'King',
+  'Wright',
+  'Scott',
+  'Torres',
+  'Nguyen',
+  'Hill',
+  'Flores',
+];
+const STREETS = [
+  'Main St',
+  'Oak Ave',
+  'Pine Rd',
+  'Maple Dr',
+  'Cedar Ln',
+  'Elm St',
+  'View Rd',
+  'Broadway',
+  'Washington St',
+  'Park Ln',
+  'Lake Dr',
+  'Sunset Blvd',
+  'River Rd',
+  'Forest Ave',
+  'Highland Dr',
+  'Meadow Ln',
+  'Hillside Ave',
+  'Spring St',
+  'Valley Rd',
+  'Ridge Dr',
+];
 /** A city and the state it is in, so the two agree when a row has both. */
 const LOCATIONS: ReadonlyArray<readonly [city: string, state: string]> = [
   ['New York', 'NY'],
@@ -79,11 +182,88 @@ const LOCATIONS: ReadonlyArray<readonly [city: string, state: string]> = [
   ['Denver', 'CO'],
   ['El Paso', 'TX'],
 ];
-const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Australia', 'Japan', 'Brazil', 'India', 'South Africa', 'Italy', 'Spain', 'Mexico', 'South Korea', 'Netherlands', 'Sweden', 'Switzerland', 'Singapore', 'New Zealand', 'Ireland'];
-const COMPANIES = ['Acme Corp', 'Globex', 'Initech', 'Umbrella Corp', 'Vehement Capital', 'Hooli', 'Soylent Corp', 'Wonka Industries', 'Stark Industries', 'Wayne Enterprises', 'Cyberdyne Systems', 'Oscorp', 'Tyrell Corp', 'Dunder Mifflin', 'Aperture Science', 'Virtucon', 'MomCorp', 'Sterling Cooper', 'Gekko & Co', 'Bluth Company'];
-const DOMAINS = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'example.com', 'company.com', 'mail.com', 'protonmail.com'];
-const JOBS = ['Software Engineer', 'Product Manager', 'Data Analyst', 'Product Designer', 'Marketing Specialist', 'Sales Representative', 'HR Manager', 'Accountant', 'Operations Coordinator', 'Customer Support Specialist', 'System Administrator', 'Financial Analyst', 'Content Writer', 'Project Manager', 'Data Scientist', 'Research Assistant'];
-const PHRASES = ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.', 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.', 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', 'Curabitur pretium tincidunt lacus. Nulla gravida orci a odio.', 'Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.'];
+const COUNTRIES = [
+  'United States',
+  'Canada',
+  'United Kingdom',
+  'Germany',
+  'France',
+  'Australia',
+  'Japan',
+  'Brazil',
+  'India',
+  'South Africa',
+  'Italy',
+  'Spain',
+  'Mexico',
+  'South Korea',
+  'Netherlands',
+  'Sweden',
+  'Switzerland',
+  'Singapore',
+  'New Zealand',
+  'Ireland',
+];
+const COMPANIES = [
+  'Acme Corp',
+  'Globex',
+  'Initech',
+  'Umbrella Corp',
+  'Vehement Capital',
+  'Hooli',
+  'Soylent Corp',
+  'Wonka Industries',
+  'Stark Industries',
+  'Wayne Enterprises',
+  'Cyberdyne Systems',
+  'Oscorp',
+  'Tyrell Corp',
+  'Dunder Mifflin',
+  'Aperture Science',
+  'Virtucon',
+  'MomCorp',
+  'Sterling Cooper',
+  'Gekko & Co',
+  'Bluth Company',
+];
+const DOMAINS = [
+  'gmail.com',
+  'yahoo.com',
+  'outlook.com',
+  'hotmail.com',
+  'example.com',
+  'company.com',
+  'mail.com',
+  'protonmail.com',
+];
+const JOBS = [
+  'Software Engineer',
+  'Product Manager',
+  'Data Analyst',
+  'Product Designer',
+  'Marketing Specialist',
+  'Sales Representative',
+  'HR Manager',
+  'Accountant',
+  'Operations Coordinator',
+  'Customer Support Specialist',
+  'System Administrator',
+  'Financial Analyst',
+  'Content Writer',
+  'Project Manager',
+  'Data Scientist',
+  'Research Assistant',
+];
+const PHRASES = [
+  'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+  'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.',
+  'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+  'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+  'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+  'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+  'Curabitur pretium tincidunt lacus. Nulla gravida orci a odio.',
+  'Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.',
+];
 
 const DATE_START = Date.UTC(1980, 0, 1);
 const DATE_END = Date.UTC(2023, 11, 31);
@@ -117,7 +297,8 @@ export function generateMockData(
 ): MockDataset {
   const random = options.random ?? Math.random;
   const integer = (min: number, max: number) => min + Math.floor(random() * (max - min + 1));
-  const pick = <T>(items: ReadonlyArray<T>): T => items[Math.min(items.length - 1, integer(0, items.length - 1))];
+  const pick = <T>(items: ReadonlyArray<T>): T =>
+    items[Math.min(items.length - 1, integer(0, items.length - 1))];
   // UUIDs follow the injected sequence when there is one, and use the secure source otherwise.
   const uuid = options.random
     ? () => uuidV4({ randomBytes: (length) => Uint8Array.from({ length }, () => integer(0, 255)) })
@@ -171,7 +352,9 @@ export function generateMockData(
           case 'job':
             return pick(JOBS);
           case 'date':
-            return new Date(DATE_START + random() * (DATE_END - DATE_START)).toISOString().split('T')[0];
+            return new Date(DATE_START + random() * (DATE_END - DATE_START))
+              .toISOString()
+              .split('T')[0];
           case 'boolean':
             return random() > 0.5;
           case 'text':

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ROMAN_MAX,
   ROMAN_MIN,
@@ -24,7 +24,7 @@ const KNOWN: ReadonlyArray<readonly [number, string]> = [
   [3999, 'MMMCMXCIX'],
 ];
 
-test.describe('toRoman', () => {
+describe('toRoman', () => {
   test('writes known numbers', () => {
     for (const [value, roman] of KNOWN) {
       expect(toRoman(value), String(value)).toBe(roman);
@@ -38,7 +38,7 @@ test.describe('toRoman', () => {
   });
 });
 
-test.describe('fromRoman', () => {
+describe('fromRoman', () => {
   test('reads known numerals', () => {
     for (const [value, roman] of KNOWN) {
       expect(fromRoman(roman), roman).toBe(value);
@@ -51,7 +51,21 @@ test.describe('fromRoman', () => {
   });
 
   test('returns null for anything that is not a standard numeral', () => {
-    for (const text of ['', '   ', 'IIII', 'VV', 'VX', 'IC', 'IL', 'XM', 'IIV', 'MMMM', 'ABC', 'X I', '12']) {
+    for (const text of [
+      '',
+      '   ',
+      'IIII',
+      'VV',
+      'VX',
+      'IC',
+      'IL',
+      'XM',
+      'IIV',
+      'MMMM',
+      'ABC',
+      'X I',
+      '12',
+    ]) {
       expect(fromRoman(text), JSON.stringify(text)).toBeNull();
     }
   });
@@ -66,7 +80,7 @@ test.describe('fromRoman', () => {
   });
 });
 
-test.describe('parseDecimal', () => {
+describe('parseDecimal', () => {
   test('reads whole numbers from 1 to 3999', () => {
     expect(parseDecimal('1')).toBe(1);
     expect(parseDecimal('1994')).toBe(1994);
@@ -81,13 +95,25 @@ test.describe('parseDecimal', () => {
   });
 
   test('returns null out of range and for anything but digits', () => {
-    for (const text of ['', '0', '000', '4000', '99999999999999999999', '-5', '+5', '12.5', '1e3', 'abc', '1 2']) {
+    for (const text of [
+      '',
+      '0',
+      '000',
+      '4000',
+      '99999999999999999999',
+      '-5',
+      '+5',
+      '12.5',
+      '1e3',
+      'abc',
+      '1 2',
+    ]) {
       expect(parseDecimal(text), JSON.stringify(text)).toBeNull();
     }
   });
 });
 
-test.describe('cleanRomanInput', () => {
+describe('cleanRomanInput', () => {
   test('upper-cases numeral letters', () => {
     expect(cleanRomanInput('mcmxciv')).toBe('MCMXCIV');
   });

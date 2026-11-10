@@ -47,9 +47,7 @@ export interface SqlFormatResult {
   error: string;
 }
 
-// ---------------------------------------------------------------------------
 // Formatting
-// ---------------------------------------------------------------------------
 
 type SqlFormatterModule = typeof import('sql-formatter');
 
@@ -76,7 +74,10 @@ function describeFormatError(error: unknown): string {
 }
 
 /** Formats SQL. Blank text gives empty output; a failure is reported in `error`. */
-export async function formatSql(sql: string, settings: SqlFormatSettings): Promise<SqlFormatResult> {
+export async function formatSql(
+  sql: string,
+  settings: SqlFormatSettings
+): Promise<SqlFormatResult> {
   if (!sql.trim()) {
     return { output: '', error: '' };
   }
@@ -106,9 +107,7 @@ export async function formatSql(sql: string, settings: SqlFormatSettings): Promi
   }
 }
 
-// ---------------------------------------------------------------------------
 // Minifying
-// ---------------------------------------------------------------------------
 
 /** Dialects where a backslash escapes the next character inside '...'. */
 const BACKSLASH_IN_SINGLE_QUOTES: ReadonlySet<SqlDialect> = new Set<SqlDialect>([
@@ -318,7 +317,10 @@ export function minifySql(sql: string, dialect: SqlDialect = 'sql'): string {
       if (character === "'" && prefix === 'E' && ESCAPE_STRING_PREFIX.has(dialect)) {
         backslashEscapes = true;
       }
-      if (RAW_STRING_PREFIX.has(dialect) && (prefix === 'R' || prefix === 'RB' || prefix === 'BR')) {
+      if (
+        RAW_STRING_PREFIX.has(dialect) &&
+        (prefix === 'R' || prefix === 'RB' || prefix === 'BR')
+      ) {
         backslashEscapes = false;
       }
 
@@ -340,11 +342,7 @@ export function minifySql(sql: string, dialect: SqlDialect = 'sql'): string {
       continue;
     }
 
-    if (
-      character === '$' &&
-      DOLLAR_QUOTES.has(dialect) &&
-      !WORD_CHARACTER.test(code.slice(-1))
-    ) {
+    if (character === '$' && DOLLAR_QUOTES.has(dialect) && !WORD_CHARACTER.test(code.slice(-1))) {
       DOLLAR_TAG.lastIndex = index;
       const tag = DOLLAR_TAG.exec(sql)?.[0];
       if (tag) {

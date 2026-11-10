@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { preferences, usePreference } from '@/lib/preferences/client';
@@ -72,7 +72,7 @@ function withWindow<T>(fakeWindow: object, run: () => T): T {
   }
 }
 
-test.describe('preferences store: stored data', () => {
+describe('preferences store: stored data', () => {
   test('keeps the storage key names existing users already have', () => {
     expect(PREFERENCE_STORAGE_KEYS).toEqual(STORED);
   });
@@ -160,7 +160,7 @@ test.describe('preferences store: stored data', () => {
   });
 });
 
-test.describe('preferences store: corrupt stored values', () => {
+describe('preferences store: corrupt stored values', () => {
   test('falls back to the default for values it cannot use', () => {
     const cases: Array<[key: PreferenceKey, raw: string]> = [
       ['theme', 'blue'],
@@ -214,7 +214,7 @@ test.describe('preferences store: corrupt stored values', () => {
   });
 });
 
-test.describe('preferences store: favorites', () => {
+describe('preferences store: favorites', () => {
   test('toggle adds a tool at the end and removes it when toggled again', () => {
     const storage = createMemoryStorage();
     const store = createPreferencesStore(storage);
@@ -263,7 +263,7 @@ test.describe('preferences store: favorites', () => {
   });
 });
 
-test.describe('preferences store: recent tools', () => {
+describe('preferences store: recent tools', () => {
   test('lists the most recent tool first', () => {
     const store = createPreferencesStore(createMemoryStorage());
 
@@ -302,7 +302,7 @@ test.describe('preferences store: recent tools', () => {
   });
 });
 
-test.describe('preferences store: subscribers', () => {
+describe('preferences store: subscribers', () => {
   test('tells the subscribers of a preference when it is written', () => {
     const store = createPreferencesStore(createMemoryStorage());
     const seen: string[][] = [];
@@ -383,7 +383,7 @@ test.describe('preferences store: subscribers', () => {
   });
 });
 
-test.describe('preferences store: changes from another tab', () => {
+describe('preferences store: changes from another tab', () => {
   test('picks up the new value and tells the subscribers of that preference', () => {
     const storage = createMemoryStorage({ [STORED.favorites]: '["a"]' });
     const store = createPreferencesStore(storage);
@@ -499,7 +499,7 @@ test.describe('preferences store: changes from another tab', () => {
   });
 });
 
-test.describe('preferences store: storage that drops writes', () => {
+describe('preferences store: storage that drops writes', () => {
   test('keeps the change for the session and still tells subscribers', () => {
     const storage: PreferenceStorage = {
       getItem: () => null,
@@ -528,7 +528,7 @@ test.describe('preferences store: storage that drops writes', () => {
   });
 });
 
-test.describe('browser storage adapter', () => {
+describe('browser storage adapter', () => {
   test('is inert where there is no window, as during the static build', () => {
     expect(typeof window).toBe('undefined');
     const storage = createBrowserStorage();
@@ -620,7 +620,7 @@ test.describe('browser storage adapter', () => {
   });
 });
 
-test.describe('usePreference', () => {
+describe('usePreference', () => {
   function Probe() {
     const theme = usePreference('theme');
     const favorites = usePreference('favorites');

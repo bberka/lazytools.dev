@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CURL_TARGET_LANGUAGES,
   PLACEHOLDER_URL,
@@ -16,7 +16,7 @@ const EXAMPLE = `curl -X POST https://api.example.com/v1/users \\
   -H "Authorization: Bearer token123" \\
   -d '{"name": "Ada", "role": "admin"}'`;
 
-test.describe('parseCurl', () => {
+describe('parseCurl', () => {
   test('reads method, URL, headers and body', () => {
     expect(parseCurl(EXAMPLE)).toEqual({
       url: 'https://api.example.com/v1/users',
@@ -63,7 +63,9 @@ test.describe('parseCurl', () => {
   });
 
   test('in double quotes, a backslash only escapes quote, backslash, dollar and backtick', () => {
-    const request = parseCurl(String.raw`curl https://x.test -d "{\"a\":\"b\nc\",\"cost\":\"\$5\",\"p\":\"\\\\\"}"`);
+    const request = parseCurl(
+      String.raw`curl https://x.test -d "{\"a\":\"b\nc\",\"cost\":\"\$5\",\"p\":\"\\\\\"}"`
+    );
     expect(request.data).toBe(String.raw`{"a":"b\nc","cost":"$5","p":"\\"}`);
   });
 
@@ -136,7 +138,9 @@ test.describe('parseCurl', () => {
   test('falls back to a placeholder URL and says so', () => {
     const request = parseCurl('curl -X POST');
     expect(request.url).toBe(PLACEHOLDER_URL);
-    expect(request.warnings).toEqual(['No URL found in the command, so a placeholder URL is used.']);
+    expect(request.warnings).toEqual([
+      'No URL found in the command, so a placeholder URL is used.',
+    ]);
     expect(parseCurl('hello world').url).toBe(PLACEHOLDER_URL);
   });
 
@@ -207,7 +211,9 @@ test.describe('parseCurl', () => {
     expect(parseCurl('curl https://x.test -d a=1').headers).toEqual({
       'Content-Type': 'application/x-www-form-urlencoded',
     });
-    expect(parseCurl(`curl https://x.test -d '{}' -H 'content-type: application/json'`).headers).toEqual({
+    expect(
+      parseCurl(`curl https://x.test -d '{}' -H 'content-type: application/json'`).headers
+    ).toEqual({
       'content-type': 'application/json',
     });
     expect(parseCurl('curl https://x.test').headers).toEqual({});
@@ -264,7 +270,9 @@ test.describe('parseCurl', () => {
     expect(parseCurl('curl https://x.test -F file=@a.png -F name=x')).toMatchObject({
       method: 'POST',
       data: '',
-      warnings: ['Multipart form fields (-F) are not converted. Add them to the request body by hand.'],
+      warnings: [
+        'Multipart form fields (-F) are not converted. Add them to the request body by hand.',
+      ],
     });
 
     const fileBody = parseCurl('curl https://x.test -d @body.json');
@@ -285,7 +293,7 @@ test.describe('parseCurl', () => {
   });
 });
 
-test.describe('generateRequestCode', () => {
+describe('generateRequestCode', () => {
   test('writes the fetch snippet', () => {
     expect(convert(EXAMPLE, 'js-fetch')).toBe(
       [
@@ -406,8 +414,12 @@ test.describe('generateRequestCode', () => {
     const command = String.raw`curl https://x.test --data-raw $'a\x1bb\tc'`;
     expect(convert(command, 'js-fetch')).toContain(String.raw`const raw = "a\u001bb\tc";`);
     expect(convert(command, 'rust-reqwest')).toContain(String.raw`.body("a\u{1b}b\tc")`);
-    expect(convert(command, 'swift-urlsession')).toContain(String.raw`"a\u{1b}b\tc".data(using: .utf8)`);
-    expect(convert(command, 'php-curl')).toContain(String.raw`CURLOPT_POSTFIELDS => "a\u{1b}b\tc",`);
+    expect(convert(command, 'swift-urlsession')).toContain(
+      String.raw`"a\u{1b}b\tc".data(using: .utf8)`
+    );
+    expect(convert(command, 'php-curl')).toContain(
+      String.raw`CURLOPT_POSTFIELDS => "a\u{1b}b\tc",`
+    );
   });
 
   // reqwest has no client.options(), so that line did not compile.
@@ -464,7 +476,10 @@ test.describe('generateRequestCode', () => {
 
   // package:http has no http.options(), and http.get() takes no body.
   test('builds a Request in Dart when no helper fits', () => {
-    const options = convert(`curl -X OPTIONS https://x.test -H 'Origin: https://a.test'`, 'dart-http');
+    const options = convert(
+      `curl -X OPTIONS https://x.test -H 'Origin: https://a.test'`,
+      'dart-http'
+    );
     expect(options).toContain('final request = http.Request("OPTIONS", url);');
     expect(options).toContain('request.headers.addAll(headers);');
     expect(options).toContain('await http.Response.fromStream(await request.send());');
@@ -500,7 +515,7 @@ test.describe('generateRequestCode', () => {
   });
 
   test('keeps backticks and carriage returns intact in a Go body', () => {
-    expect(convert('curl https://x.test -d \'a`b\'', 'go-http')).toContain(
+    expect(convert("curl https://x.test -d 'a`b'", 'go-http')).toContain(
       'payload := strings.NewReader(`a` + "`" + `b`)'
     );
     expect(convert(String.raw`curl https://x.test --data-raw $'a\r\nb'`, 'go-http')).toContain(
@@ -509,7 +524,7 @@ test.describe('generateRequestCode', () => {
   });
 });
 
-test.describe('snippetNotes', () => {
+describe('snippetNotes', () => {
   const notesFor = (command: string, language: CurlTargetLanguage) =>
     snippetNotes(parseCurl(command), language);
 

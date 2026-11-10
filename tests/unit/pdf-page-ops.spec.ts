@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFDocument, degrees } from 'pdf-lib';
 import {
   PdfToolError,
@@ -18,7 +18,7 @@ import { createEncryptedPdf, createPdf, createPdfWithPages, pageSizes } from './
 
 const notAPdf = new TextEncoder().encode('just some text');
 
-test.describe('loadPdf', () => {
+describe('loadPdf', () => {
   test('opens bytes, buffers and files', async () => {
     const bytes = await createPdf([
       [200, 300],
@@ -62,7 +62,7 @@ test.describe('loadPdf', () => {
   });
 });
 
-test.describe('describePdfFailure', () => {
+describe('describePdfFailure', () => {
   test('shows a PdfToolError as it is and prefixes anything else', () => {
     expect(describePdfFailure(new PdfToolError('No pages match "9".'), 'Failed to split PDF')).toBe(
       'No pages match "9".'
@@ -75,7 +75,7 @@ test.describe('describePdfFailure', () => {
   });
 });
 
-test.describe('mergePdfs', () => {
+describe('mergePdfs', () => {
   test('joins the documents in the given order', async () => {
     const first = await createPdf([
       [100, 100],
@@ -121,7 +121,7 @@ test.describe('mergePdfs', () => {
   });
 });
 
-test.describe('formatPageList', () => {
+describe('formatPageList', () => {
   test('collapses runs of pages into ranges', () => {
     expect(formatPageList([1, 2, 3, 5])).toBe('1-3, 5');
     expect(formatPageList([4])).toBe('4');
@@ -131,7 +131,7 @@ test.describe('formatPageList', () => {
   });
 });
 
-test.describe('extractPdfPages', () => {
+describe('extractPdfPages', () => {
   const sizes: Array<[number, number]> = [
     [100, 100],
     [200, 200],
@@ -174,7 +174,7 @@ test.describe('extractPdfPages', () => {
   });
 });
 
-test.describe('noPagesMessage', () => {
+describe('noPagesMessage', () => {
   test('names the list and the pages that exist', () => {
     expect(noPagesMessage(' 7 ', 3)).toBe('No pages match "7". This PDF has pages 1 to 3.');
     expect(noPagesMessage('2', 1)).toBe('No pages match "2". This PDF has only page 1.');
@@ -182,7 +182,7 @@ test.describe('noPagesMessage', () => {
   });
 });
 
-test.describe('quarterTurn', () => {
+describe('quarterTurn', () => {
   test('brings rotations into 0, 90, 180 and 270', () => {
     expect(quarterTurn(0)).toBe(0);
     expect(quarterTurn(90)).toBe(90);
@@ -198,7 +198,7 @@ test.describe('quarterTurn', () => {
   });
 });
 
-test.describe('pageFrame', () => {
+describe('pageFrame', () => {
   async function frameOf(
     setup: Parameters<typeof createPdfWithPages>[0][number]
   ): Promise<PageFrame> {
@@ -273,7 +273,7 @@ test.describe('pageFrame', () => {
   });
 });
 
-test.describe('uprightSize', () => {
+describe('uprightSize', () => {
   const frame = (rotation: PageFrame['rotation']): PageFrame => ({
     x: 0,
     y: 0,
@@ -290,7 +290,7 @@ test.describe('uprightSize', () => {
   });
 });
 
-test.describe('toPageSpace', () => {
+describe('toPageSpace', () => {
   const frame = (rotation: PageFrame['rotation'], x = 0, y = 0): PageFrame => ({
     x,
     y,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { decodeJwt, isJwtExpired, jwtTimes } from '@/lib/tools/jwt-decoder';
 
 // The example token from jwt.io.
@@ -14,7 +14,7 @@ function token(header: unknown, payload: unknown, signature = 'c2ln'): string {
   return `${segment(header)}.${segment(payload)}.${signature}`;
 }
 
-test.describe('decodeJwt', () => {
+describe('decodeJwt', () => {
   test('decodes the header, the payload and keeps the signature', () => {
     expect(decodeJwt(SAMPLE)).toEqual({
       header: { alg: 'HS256', typ: 'JWT' },
@@ -72,15 +72,25 @@ test.describe('decodeJwt', () => {
   });
 
   test('names the segment that is not base64url', () => {
-    expect(() => decodeJwt(`!!!.${segment({})}.x`)).toThrow('Invalid base64url encoding in the header.');
-    expect(() => decodeJwt(`${segment({})}.a.x`)).toThrow('Invalid base64url encoding in the payload.');
+    expect(() => decodeJwt(`!!!.${segment({})}.x`)).toThrow(
+      'Invalid base64url encoding in the header.'
+    );
+    expect(() => decodeJwt(`${segment({})}.a.x`)).toThrow(
+      'Invalid base64url encoding in the payload.'
+    );
     // Bytes that are not UTF-8 text.
-    expect(() => decodeJwt(`${segment({})}.__79.x`)).toThrow('Invalid base64url encoding in the payload.');
+    expect(() => decodeJwt(`${segment({})}.__79.x`)).toThrow(
+      'Invalid base64url encoding in the payload.'
+    );
   });
 
   test('names the segment that is not JSON', () => {
-    expect(() => decodeJwt(`${segment('hello')}.${segment({})}.x`)).toThrow('The header is not valid JSON.');
-    expect(() => decodeJwt(`${segment({})}.${segment('{"a":')}.x`)).toThrow('The payload is not valid JSON.');
+    expect(() => decodeJwt(`${segment('hello')}.${segment({})}.x`)).toThrow(
+      'The header is not valid JSON.'
+    );
+    expect(() => decodeJwt(`${segment({})}.${segment('{"a":')}.x`)).toThrow(
+      'The payload is not valid JSON.'
+    );
     expect(() => decodeJwt('..')).toThrow('The header is not valid JSON.');
   });
 
@@ -88,13 +98,15 @@ test.describe('decodeJwt', () => {
   // was accepted, and reading claims from a null payload crashed the tool.
   test('rejects a header or payload that is not a JSON object', () => {
     for (const value of ['null', '42', '"text"', '[1,2]', 'true']) {
-      expect(() => decodeJwt(token({ alg: 'none' }, value)), value).toThrow('The payload must be a JSON object.');
+      expect(() => decodeJwt(token({ alg: 'none' }, value)), value).toThrow(
+        'The payload must be a JSON object.'
+      );
       expect(() => decodeJwt(token(value, {})), value).toThrow('The header must be a JSON object.');
     }
   });
 });
 
-test.describe('jwtTimes', () => {
+describe('jwtTimes', () => {
   test('reads iat, exp and nbf', () => {
     expect(jwtTimes({ iat: 1516239022, exp: 1516242622, nbf: 1516239000 })).toEqual({
       issuedAt: 1516239022,
@@ -114,11 +126,15 @@ test.describe('jwtTimes', () => {
 
   // Defect: a claim of 0 (the Unix epoch) was treated as missing and not shown.
   test('keeps a claim of zero', () => {
-    expect(jwtTimes({ iat: 0, exp: 0, nbf: 0 })).toEqual({ issuedAt: 0, expiresAt: 0, notBefore: 0 });
+    expect(jwtTimes({ iat: 0, exp: 0, nbf: 0 })).toEqual({
+      issuedAt: 0,
+      expiresAt: 0,
+      notBefore: 0,
+    });
   });
 });
 
-test.describe('isJwtExpired', () => {
+describe('isJwtExpired', () => {
   const now = Date.UTC(2024, 0, 1, 12, 0, 0);
 
   test('compares exp, in seconds, with the given time, in milliseconds', () => {

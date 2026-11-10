@@ -10,6 +10,7 @@
 
 import type * as JsYaml from 'js-yaml';
 import { stringifyJson } from './json-formatter';
+import { plural } from '@/lib/text';
 
 export interface YamlValidation {
   valid: boolean;
@@ -68,10 +69,6 @@ function toBigInt(scalar: string): bigint | null {
   }
 }
 
-function plural(count: number, noun: string): string {
-  return `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
-}
-
 function summarizeDocument(value: unknown): string {
   if (Array.isArray(value)) {
     return `Top-level sequence with ${plural(value.length, 'item')}`;
@@ -113,7 +110,8 @@ function createYamlTools(yaml: typeof JsYaml): YamlTools {
 
   // A timestamp is written back the way it was typed. Left to js-yaml, the date
   // 2024-01-01 would come out as the date-time 2024-01-01T00:00:00.000Z.
-  const builtInTimestamp = (yaml as unknown as { types: { timestamp: JsYaml.Type } }).types.timestamp;
+  const builtInTimestamp = (yaml as unknown as { types: { timestamp: JsYaml.Type } }).types
+    .timestamp;
   const writtenAs = new WeakMap<Date, string>();
 
   const sourceTimestamp = new yaml.Type('tag:yaml.org,2002:timestamp', {

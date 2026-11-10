@@ -106,7 +106,10 @@ export function PdfMerge() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -128,14 +131,13 @@ export function PdfMerge() {
               <p className="text-sm text-muted-foreground">Add at least one more PDF to merge.</p>
             )}
             {pdfFiles.map((f, index) => (
-              <div
-                key={f.id}
-                className="flex items-center gap-3 p-3 border rounded-md bg-card"
-              >
+              <div key={f.id} className="flex items-center gap-3 p-3 border rounded-md bg-card">
                 <FileText aria-hidden="true" className="h-5 w-5 text-red-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{f.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatBytes(f.size, SIZE_FORMAT)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatBytes(f.size, SIZE_FORMAT)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
                   {/* The order is fixed while it is being merged, so the result matches the list. */}
@@ -170,11 +172,7 @@ export function PdfMerge() {
                 </div>
               </div>
             ))}
-            {status && (
-              <p role="status" className="text-sm text-muted-foreground">
-                {status}
-              </p>
-            )}
+            {status && <output className="block text-sm text-muted-foreground">{status}</output>}
           </CardContent>
         </Card>
       )}

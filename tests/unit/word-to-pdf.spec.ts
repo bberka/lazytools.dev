@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFArray, PDFDocument, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import mammoth from 'mammoth';
@@ -15,7 +15,7 @@ const layout = (text: string, maxWidth = 20, linesPerPage = 100) =>
 
 const lines = (text: string, maxWidth = 20) => layout(text, maxWidth).flat();
 
-test.describe('layoutTextPages', () => {
+describe('layoutTextPages', () => {
   test('breaks lines at spaces and keeps every line inside the width', () => {
     const wrapped = lines('The quick brown fox jumps over the lazy dog', 12);
 
@@ -112,7 +112,7 @@ test.describe('layoutTextPages', () => {
   });
 });
 
-test.describe('textToPdf', () => {
+describe('textToPdf', () => {
   // The font the tool fetches from /fonts at run time.
   const roboto = readFileSync(join(process.cwd(), 'public', 'fonts', 'Roboto-Regular.ttf'));
 
@@ -153,7 +153,9 @@ test.describe('textToPdf', () => {
     expect(pdf.unsupportedCharacters).toBe(0);
     expect(doc.getPageCount()).toBe(1);
     expect(doc.getPage(0).getSize()).toEqual(A4);
-    expect(await drawnText(pdf.bytes)).toEqual([[{ x: MARGIN, y: A4.height - MARGIN, lineCount: 1 }]]);
+    expect(await drawnText(pdf.bytes)).toEqual([
+      [{ x: MARGIN, y: A4.height - MARGIN, lineCount: 1 }],
+    ]);
   });
 
   // Each paragraph break used to be drawn inside one drawText call: three
@@ -182,7 +184,9 @@ test.describe('textToPdf', () => {
     ];
     const docx = await Packer.toBuffer(
       new Document({
-        sections: [{ children: paragraphs.map((text) => new Paragraph({ children: [new TextRun(text)] })) }],
+        sections: [
+          { children: paragraphs.map((text) => new Paragraph({ children: [new TextRun(text)] })) },
+        ],
       })
     );
 
@@ -257,11 +261,15 @@ test.describe('textToPdf', () => {
 
     // The PDF holds exactly these lines.
     const drawn = await drawnText((await textToPdf(text, roboto)).bytes);
-    expect(drawn.map((page) => page.length)).toEqual(pages.map((page) => page.filter(Boolean).length));
+    expect(drawn.map((page) => page.length)).toEqual(
+      pages.map((page) => page.filter(Boolean).length)
+    );
   });
 
   test('counts the characters the font has no glyph for', async () => {
-    expect((await textToPdf('Grüße, Ελληνικά, Привет, naïve café', roboto)).unsupportedCharacters).toBe(0);
+    expect(
+      (await textToPdf('Grüße, Ελληνικά, Привет, naïve café', roboto)).unsupportedCharacters
+    ).toBe(0);
     expect((await textToPdf('Hello 你好 and 😀', roboto)).unsupportedCharacters).toBe(3);
     // Zero-width and unusual spaces are not characters anyone would miss.
     expect((await textToPdf('a\u{200B}b\u{3000}c\u{2009}d', roboto)).unsupportedCharacters).toBe(0);

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   calculateClamp,
   clampChart,
@@ -23,9 +23,10 @@ const DEFAULTS: ClampInput = {
   outputUnit: 'rem',
 };
 
-const calculate = (overrides: Partial<ClampInput> = {}) => calculateClamp({ ...DEFAULTS, ...overrides });
+const calculate = (overrides: Partial<ClampInput> = {}) =>
+  calculateClamp({ ...DEFAULTS, ...overrides });
 
-test.describe('parseDecimal', () => {
+describe('parseDecimal', () => {
   test('reads plain decimals', () => {
     expect(parseDecimal('16')).toBe(16);
     expect(parseDecimal(' 1.5 ')).toBe(1.5);
@@ -43,13 +44,28 @@ test.describe('parseDecimal', () => {
 
   test('rejects text that is not just a number', () => {
     // Defect: "16px" and "12abc" were read as 16 and 12.
-    for (const text of ['', '   ', 'abc', '16px', '12abc', '1e3', '1.2.3', '1,2,3', '1.234,5', '-', '.', ',', 'NaN', 'Infinity']) {
+    for (const text of [
+      '',
+      '   ',
+      'abc',
+      '16px',
+      '12abc',
+      '1e3',
+      '1.2.3',
+      '1,2,3',
+      '1.234,5',
+      '-',
+      '.',
+      ',',
+      'NaN',
+      'Infinity',
+    ]) {
       expect(Number.isNaN(parseDecimal(text)), JSON.stringify(text)).toBe(true);
     }
   });
 });
 
-test.describe('roundTo', () => {
+describe('roundTo', () => {
   test('rounds half up without binary-fraction misses', () => {
     expect(roundTo(1.005, 2)).toBe(1.01);
     expect(roundTo(0.45454545)).toBe(0.4545);
@@ -61,7 +77,7 @@ test.describe('roundTo', () => {
   });
 });
 
-test.describe('calculateClamp', () => {
+describe('calculateClamp', () => {
   test('builds the default fluid font size in rem', () => {
     // Slope: (32 - 16) / (1200 - 320) = 0.0181818 px per px, so 1.8182vw.
     // Intercept: 16 - 0.0181818 * 320 = 10.1818px = 0.6364rem.
@@ -102,7 +118,9 @@ test.describe('calculateClamp', () => {
   });
 
   test('uses a different base font size for rem values', () => {
-    expect(calculate({ baseFontSize: '10' }).clamp).toBe('clamp(1.6rem, 1.0182rem + 1.8182vw, 3.2rem)');
+    expect(calculate({ baseFontSize: '10' }).clamp).toBe(
+      'clamp(1.6rem, 1.0182rem + 1.8182vw, 3.2rem)'
+    );
   });
 
   test('falls back to 16px when the base font size is left blank', () => {
@@ -121,9 +139,15 @@ test.describe('calculateClamp', () => {
 
   test('simplifies the preferred value when a term vanishes', () => {
     // The line through (0, 0) has no intercept; equal sizes have no slope.
-    expect(calculate({ minSize: '10', maxSize: '20', minViewport: '500', maxViewport: '1000', outputUnit: 'px' }).clamp).toBe(
-      'clamp(10px, 2vw, 20px)'
-    );
+    expect(
+      calculate({
+        minSize: '10',
+        maxSize: '20',
+        minViewport: '500',
+        maxViewport: '1000',
+        outputUnit: 'px',
+      }).clamp
+    ).toBe('clamp(10px, 2vw, 20px)');
     expect(calculate({ minSize: '16', maxSize: '16' }).clamp).toBe('clamp(1rem, 1rem, 1rem)');
     expect(calculate({ minSize: '0', maxSize: '0' }).clamp).toBe('clamp(0rem, 0rem, 0rem)');
   });
@@ -143,12 +167,19 @@ test.describe('calculateClamp', () => {
   });
 
   test('gives the same value when the viewports are entered the other way round', () => {
-    const swapped = calculate({ minSize: '32', maxSize: '16', minViewport: '1200', maxViewport: '320' });
+    const swapped = calculate({
+      minSize: '32',
+      maxSize: '16',
+      minViewport: '1200',
+      maxViewport: '320',
+    });
     expect(swapped.clamp).toBe(calculate().clamp);
   });
 
   test('accepts comma decimals in every field', () => {
-    expect(calculate({ minSize: '1,5', minSizeUnit: 'rem', maxSize: '2,5', maxSizeUnit: 'rem' }).clamp).toBe(
+    expect(
+      calculate({ minSize: '1,5', minSizeUnit: 'rem', maxSize: '2,5', maxSizeUnit: 'rem' }).clamp
+    ).toBe(
       calculate({ minSize: '1.5', minSizeUnit: 'rem', maxSize: '2.5', maxSizeUnit: 'rem' }).clamp
     );
     expect(calculate({ minSize: '1,5', minSizeUnit: 'rem' }).minSizePx).toBe(24);
@@ -189,15 +220,25 @@ test.describe('calculateClamp', () => {
   test('asks for numbers when a field is empty or not a number', () => {
     const message = 'Please enter valid numbers in all fields to compute.';
 
-    expect(calculate({ minSize: '' })).toMatchObject({ error: message, clamp: '', css: '', tailwind: '', scss: '' });
+    expect(calculate({ minSize: '' })).toMatchObject({
+      error: message,
+      clamp: '',
+      css: '',
+      tailwind: '',
+      scss: '',
+    });
     expect(calculate({ maxSize: 'abc' }).error).toBe(message);
     expect(calculate({ minViewport: '  ' }).error).toBe(message);
     expect(calculate({ maxViewport: '1200px' }).error).toBe(message);
-    expect(calculate({ minSize: '', maxSize: '', minViewport: '', maxViewport: '' }).error).toBe(message);
+    expect(calculate({ minSize: '', maxSize: '', minViewport: '', maxViewport: '' }).error).toBe(
+      message
+    );
   });
 
   test('refuses equal or negative viewports', () => {
-    expect(calculate({ minViewport: '800', maxViewport: '800' }).error).toBe('Min and Max viewports cannot be equal.');
+    expect(calculate({ minViewport: '800', maxViewport: '800' }).error).toBe(
+      'Min and Max viewports cannot be equal.'
+    );
     expect(calculate({ minViewport: '20', minViewportUnit: 'rem', maxViewport: '320' }).error).toBe(
       'Min and Max viewports cannot be equal.'
     );
@@ -209,13 +250,13 @@ test.describe('calculateClamp', () => {
   });
 
   test('allows negative sizes, for margins that pull', () => {
-    expect(calculate({ minSize: '-8', maxSize: '-32', property: 'margin', outputUnit: 'px' }).clamp).toBe(
-      'clamp(-32px, 0.7273px - 2.7273vw, -8px)'
-    );
+    expect(
+      calculate({ minSize: '-8', maxSize: '-32', property: 'margin', outputUnit: 'px' }).clamp
+    ).toBe('clamp(-32px, 0.7273px - 2.7273vw, -8px)');
   });
 });
 
-test.describe('sizeAtViewport', () => {
+describe('sizeAtViewport', () => {
   const calculation = calculate();
 
   test('holds the limits outside the fluid range', () => {
@@ -255,7 +296,7 @@ test.describe('sizeAtViewport', () => {
   });
 });
 
-test.describe('clampChart', () => {
+describe('clampChart', () => {
   test('pads the fluid range by a quarter on each side', () => {
     expect(clampChart(calculate())).toEqual({
       xMin: 100,
@@ -286,7 +327,10 @@ test.describe('clampChart', () => {
   });
 
   test('gives a flat line some height', () => {
-    expect(clampChart(calculate({ minSize: '16', maxSize: '16' }))).toMatchObject({ yMin: 13.5, yMax: 18.5 });
+    expect(clampChart(calculate({ minSize: '16', maxSize: '16' }))).toMatchObject({
+      yMin: 13.5,
+      yMax: 18.5,
+    });
   });
 
   test('makes room below zero for negative sizes', () => {

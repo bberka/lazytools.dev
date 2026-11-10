@@ -1,8 +1,8 @@
 # Agent Guide
 
-This guide is for coding agents working in this repository. It is grounded in the current docs and codebase structure.
+This guide is for coding agents working in this repository. It reflects the current docs and codebase structure.
 
-## Project Snapshot
+## Project snapshot
 
 - Product: LazyTools, a privacy-first collection of browser-side web utilities, developer tools, and productivity helpers.
 - Live site: `https://lazytools.dev/`.
@@ -14,25 +14,28 @@ This guide is for coding agents working in this repository. It is grounded in th
 
 ## Commands
 
-- Install: `npm install`
-- Dev server: `npm run dev`
-- Production static build: `npm run build`
-- Typecheck: `npm run typecheck`
-- Lint: `npm run lint`
-- Fix lint: `npm run lint:fix`
-- Format: `npm run format`
-- Unit tests: `npm run test:unit`
-- E2E tests: `npm run test:e2e`
-- E2E tests against the static export: `npm run build && npm run test:e2e:export`
-- E2E UI runner: `npm run test:e2e:ui`
-- Install Playwright browsers: `npm run test:e2e:install`
-- Bundle analysis: `npm run analyze`
-- Desktop dev: `npm run desktop:dev`
-- Desktop build: `npm run desktop:build`
+The package manager is pnpm, pinned in `package.json`. Vite+ (`vp`, from the `vite-plus` dev dependency) runs lint, format and unit tests; Next.js still builds and serves the app. A pre-commit hook runs `vp check --fix` on staged files.
 
-For normal code changes, at minimum run `npm run typecheck` and the most relevant focused verification. Before considering a change complete, prefer `npm run build`; docs explicitly call this out as the completion gate.
+- Install: `pnpm install`
+- Dev server: `pnpm run dev`
+- Production static build: `pnpm run build`
+- Typecheck: `pnpm run typecheck`
+- Lint: `pnpm run lint`
+- Fix lint: `pnpm run lint:fix`
+- Format: `pnpm run format` (check only: `pnpm run format:check`)
+- Format, lint and type check in one go: `pnpm run check` (`vp check`; `vp check --fix` applies fixes)
+- Unit tests: `pnpm run test:unit` (single run); `pnpm run test:unit:watch` for watch mode
+- E2E tests: `pnpm run test:e2e`
+- E2E tests against the static export: `pnpm run build && pnpm run test:e2e:export`
+- E2E UI runner: `pnpm run test:e2e:ui`
+- Install Playwright browsers: `pnpm run test:e2e:install`
+- Bundle analysis: `pnpm run analyze`
+- Desktop dev: `pnpm run desktop:dev`
+- Desktop build: `pnpm run desktop:build`
 
-## High-Value Docs
+For normal code changes, at minimum run `pnpm run typecheck` and the most relevant focused verification. Before considering a change complete, prefer `pnpm run build`; docs explicitly call this out as the completion gate.
+
+## High-value docs
 
 - `docs/README.md`: product overview, stack, setup, deployment.
 - `docs/ARCHITECTURE.md`: rendering model, static export, route generation, tool wiring.
@@ -40,7 +43,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `docs/ROADMAP.md`: current priorities and tool expansion backlog.
 - `docs/PROPOSED_BACKLOG.md`: detailed proposed tools, client-side implementation notes, library ideas.
 
-## Core Architecture
+## Core architecture
 
 - `src/app/layout.tsx` defines global metadata, font setup, theme flicker prevention, providers, header, footer, PWA registration, Tauri handling, and command palette.
 - `src/app/page.tsx` renders the home page shell.
@@ -56,12 +59,13 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `src/lib/home` owns home-page session state (`sessionStorage` keys, restore, reset) and the grid keyboard-navigation maths.
 - `src/lib/commands` defines each app command once (label, shortcut, action, feedback). The command palette, the settings dialog, and the single global shortcut listener in `CommandPalette.tsx` work from it.
 - `src/lib/files`, `src/hooks/useFileIntake.ts`, `src/hooks/useObjectUrl.ts`, and `src/components/FileDropzone.tsx` cover taking files in (picker, drag-and-drop, validation, reading) and handing them back (downloads, file names, size labels). Tools must use these instead of their own file inputs, `FileReader` code, or download anchors.
+- `src/components/CopyButton.tsx` is the labelled copy button (own `useCopyToClipboard` state, `label`, `copiedLabel`, `errorLabel`, icon-only when no `label`); `src/hooks/useBrowserFeature.ts` is the SSR-safe browser feature check. `src/lib/text` holds `splitLines`, `lineEnding`, `plural` and `numberReader`; use them instead of private copies in tool logic.
 - `src/lib/pdf` owns pdfjs loading, the bundled worker, opening documents, rendering pages, and text extraction. `src/lib/markdown` owns the Markdown parser configuration and export template. `src/lib/export` holds the snapshot-PDF and print helpers.
 - `src/lib/tools/*` holds the pure logic of individual tools, covered by unit tests.
 - `src/components/ui/*` contains shadcn-style primitives. Avoid editing these for page-level layout fixes.
 - `src/components/tools/*` contains individual client-side tool implementations.
 
-## Tool Registry Rules
+## Tool registry rules
 
 - Add or edit tool metadata in `src/lib/utils/tool-registry.ts` first.
 - Each registry key is the route slug, for example `/tools/json-formatter` comes from `json-formatter`.
@@ -71,7 +75,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - The catalog (`src/lib/catalog`) is derived from the registry; do not duplicate tool metadata elsewhere.
 - `src/app/tools/[slug]/page.tsx`, sitemap generation, home search/filtering, route coverage tests, and service-worker precache generation all depend on the registry.
 
-## Adding A Tool
+## Adding a tool
 
 1. Create a client component under `src/components/tools/ExampleTool.tsx` with `'use client';` if it uses browser APIs, state, effects, or event handlers.
 2. Export a named component matching the registry import, for example `export function ExampleTool()`.
@@ -81,20 +85,21 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 6. Lazy-load heavy libraries inside the tool when practical, especially PDF, image, crypto, OCR, parser, or export dependencies.
 7. Put logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. Use the shared file, PDF, and Markdown modules rather than private copies.
 8. Verify `/tools/<slug>` in dev, home search, tag filtering, favorites, recents, and command palette navigation.
-9. Run `npm run typecheck`, `npm run test:unit`, and `npm run build`; add or run Playwright tests for core flows or route behavior when relevant.
+9. Run `pnpm run typecheck`, `pnpm run test:unit`, and `pnpm run build`; add or run Playwright tests for core flows or route behavior when relevant.
 
-## UI And UX Conventions
+## UI and UX conventions
 
 - Preserve the existing visual language: card-based tool pages, Tailwind utility classes, shadcn-style primitives, Lucide icons, dark mode.
 - Always use the UI components in `src/components/ui/` (e.g., `Select`, `Slider`, `Switch`, `Checkbox`, `Input`, `Button`, `ColorPicker`) instead of browser native inputs (like `<select>`, `<input type="range">`, `<input type="checkbox">`, `<input type="color">`). If a Shadcn UI primitive is needed but doesn't exist, add it to the project rather than using native browser fallbacks.
 - Ensure all custom interactive dropdowns, select menus, search palettes, and key-navigable lists support full keyboard accessibility. Users must be able to use `ArrowUp` and `ArrowDown` to change highlights, and `Enter`/`Space` to select values. Highlight states must match programmatic focus where appropriate.
-- Avoid styling overrides using hardcoded colors (e.g. `bg-blue-500` or `text-slate-900`) for standard elements. Always prefer Tailwind theme variables and semantic classes (`bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`, etc.) to guarantee seamless light/dark mode compatibility.
+- Avoid styling overrides using hardcoded colors (e.g. `bg-blue-500` or `text-slate-900`) for standard elements. Always prefer Tailwind theme variables and semantic classes (`bg-accent`, `text-accent-foreground`, `border-input`, `text-muted-foreground`, etc.) so they work in both light and dark mode.
 - Always use the common ColorPicker component (`@/components/ui/color-picker`) when color selection is needed, rather than browser native inputs or custom color fields (unless building a dedicated color picker page).
 - Mobile is the default. Add larger layouts at `sm`, `md`, and up.
 - Keep tool pages compact on phones. The default `<Card>` primitives (headers, contents, and footers) are configured to automatically drop to `p-4` on mobile (screens < `sm`) and scale to `p-6` on desktop. Avoid overriding this to restore larger paddings on small screens. Homepage tool cards are even more compact: they use `p-3 sm:p-5` in normal mode and `p-2 sm:p-4` in compact mode.
 - Avoid using static large grid/flexbox gaps (like `gap-6` or `gap-8`) which cause excessive empty space when elements stack vertically on mobile. Instead, use responsive spacing like `gap-4 sm:gap-6` or `gap-4 sm:gap-8`.
 - For large padding containers (e.g., drag-and-drop file dropzones or result previews), use responsive paddings like `p-4 sm:p-8` instead of a static `p-8` class.
 - Keep empty state placeholders and instructions compact on mobile using responsive vertical paddings (like `py-4 sm:py-8` or `py-6 sm:py-12`) instead of hardcoded tall paddings like `py-8` or `py-12`.
+- Scrollbars are styled once, globally, in `src/styles/globals.css` (thin, no arrow buttons, no track fill). Do not add per-component scrollbar classes; `ScrollArea` matches the same look.
 - Avoid horizontal overflow. Action rows should wrap or stack on small screens.
 - Avoid nested full cards unless the grouping genuinely needs it; prefer lighter bordered panels inside cards.
 - Use real-time processing for lightweight converters, encoders, formatters, and text transforms.
@@ -103,7 +108,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Include copy and clear actions for user-facing text output.
 - Preserve light mode, dark mode, compact mode, full-width mode, mobile, and desktop behavior.
 
-## Static Export Constraints
+## Static export constraints
 
 - Do not add request-time server rendering assumptions.
 - Keep route data static-safe.
@@ -112,52 +117,52 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - External lookup tools must call public CORS-enabled HTTPS APIs from the browser and handle failures gracefully.
 - Next image optimization is disabled for static export; use compatible image patterns.
 
-## State And Persistence
+## State and persistence
 
 - Theme, favorites, recent tools, compact mode, and full-width mode use `localStorage` through the preferences store in `src/lib/preferences`. Do not write `dev-toolbox:*` keys anywhere else. There is no per-tool settings storage.
 - Home search/filter/scroll restoration uses `sessionStorage` through `src/lib/home`.
 - Theme initialization is intentionally duplicated early in `layout.tsx` to prevent flicker before hydration.
 - Always guard direct browser storage, DOM, window, navigator, clipboard, canvas, file, audio, and crypto APIs behind client-only execution.
 
-## PWA And Service Worker
+## PWA and service worker
 
 - `public/sw.js` implements static asset caching, route precache loading, network-first navigation, and stale-while-revalidate static assets.
 - `src/app/sw-precache.js/route.ts` is a static route handler that emits `/sw-precache.js` from the registry during `next build`, the same way the sitemap is emitted.
-- If tool routes change, `npm run build` regenerates the precache list. There is no separate generation script.
+- If tool routes change, `pnpm run build` regenerates the precache list. There is no separate generation script.
 - Do not add a `public/sw-precache.js` file; it would conflict with the route.
 
-## Desktop And Release
+## Desktop and release
 
 - Tauri config lives in `src-tauri/tauri.conf.json`.
-- Desktop dev uses `devUrl: http://localhost:3000` and `beforeDevCommand: npm run dev`.
-- Desktop build uses `beforeBuildCommand: npm run build` and packages `../out`.
+- Desktop dev uses `devUrl: http://localhost:3000` and `beforeDevCommand: pnpm run dev`.
+- Desktop build uses `beforeBuildCommand: pnpm run build` and packages `../out`.
 - Release workflow `.github/workflows/release-desktop.yml` runs on `v*` tags, syncs versions, builds web assets, builds Tauri installers, and drafts a GitHub release.
 - `scripts/sync-version.js` updates `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml` from a tag/version argument.
 
 ## Testing
 
-- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `npm run test:unit` (`playwright.unit.config.ts`). They use the Playwright test runner but need no browser and no dev server; import the module under test with the `@/` alias.
+- Unit tests for pure logic live in `tests/unit/*.spec.ts` and run with `pnpm run test:unit` (`vp test run`). They use Vitest as bundled by Vite+, configured in the `test` block of `vite.config.ts`, and need no browser and no dev server. Import `describe`, `test`, `expect`, `vi` from `vite-plus/test` (not `vitest` or `@playwright/test`) and the module under test with the `@/` alias.
 - Put tool logic that can be a plain function in `src/lib/` and cover it with a unit test rather than an e2e test.
-- Playwright e2e config is in `playwright.config.ts`.
-- `npm run test:e2e` runs against `http://localhost:3000` and starts `npm run dev` automatically.
-- `npm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
+- Playwright is e2e only; its config is `playwright.config.ts` and its specs live in `playwright/`.
+- `pnpm run test:e2e` runs against `http://localhost:3000` and starts `pnpm run dev` automatically.
+- `pnpm run test:e2e:export` runs the suite on Chromium against the static export in `out/`, served by `scripts/serve-export.mjs`. Build first. It is much faster than the dev server, which compiles every tool route on first request, and it tests what ships; prefer it for full runs. Set `E2E_PORT` to move it off port 3000 when a dev server is running.
 - Projects cover Chromium, Firefox, and WebKit; route coverage skips non-Chromium for speed.
 - `playwright/route-coverage.spec.ts` iterates every catalog entry and verifies each tool page renders.
 - `playwright/smoke.spec.ts` covers search, favorites, command palette navigation, and JSON Formatter behavior.
 - `playwright/tools/*.spec.ts` drive every tool through its main flow and an edge case, one spec per tool group, on Chromium only. A test marked `test.fixme` documents a known open defect; remove the marker when you fix it.
 - For UI changes, manually verify mobile and desktop widths, light/dark mode, compact mode, and full-width mode when affected.
 
-## Code Style
+## Code style
 
 - TypeScript is strict; avoid `any` unless a dynamic API genuinely requires it.
 - Use the `@/*` path aliases from `tsconfig.json`.
 - React components are function components with hooks.
-- ESLint extends Next core web vitals and TypeScript configs, with React hooks immutability, purity, and set-state-in-effect as warnings.
+- Oxlint runs type-aware with the TypeScript, React, Next.js, jsx-a11y and import plugins, configured in `vite.config.ts`. Fix findings; where a rule is a false positive for a deliberate ARIA pattern, disable it on that line with a reason (`// oxlint-disable-next-line <rule> -- <reason>`). Oxfmt formats the code (`pnpm run format`).
 - Keep changes focused. Prefer the smallest correct change over broad refactors.
 - Do not edit generated/build output such as `.next/`, `out/`, `tsconfig.tsbuildinfo`, Playwright reports, or Tauri `target/` unless explicitly requested.
 - Do not include unrelated generated files in commits or PRs.
 
-## Common Pitfalls
+## Common pitfalls
 
 - Registry description length outside 40-65 characters will throw at import/build time.
 - Missing or mismatched named exports in tool components are caught by typecheck/build through lazy component loaders.
@@ -166,11 +171,11 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - Browser APIs used during render or in server components will break static/server execution.
 - PWA service workers can create stale behavior during local testing; Playwright blocks service workers by default.
 
-## Agent Workflow
+## Agent workflow
 
 1. Read the relevant docs before changing behavior: start with `docs/ARCHITECTURE.md` and `docs/CONTRIBUTING.md`.
 2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `src/lib/catalog`, and the relevant `src/components/tools/*` and `src/lib/tools/*` files.
 3. Keep privacy-first and static-export compatibility as non-negotiable constraints.
 4. Make minimal targeted edits and avoid touching shared UI primitives for one-off layout fixes.
-5. Run the narrowest useful checks first, then `npm run build` when feasible.
+5. Run the narrowest useful checks first, then `pnpm run build` when feasible.
 6. Report exactly what changed and what was verified.

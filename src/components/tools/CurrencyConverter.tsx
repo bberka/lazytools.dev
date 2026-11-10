@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRightLeft, Check, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useActionButton, useCopyToClipboard } from '@/hooks';
+import { useActionButton } from '@/hooks';
 import {
   CURRENCIES,
   convertCurrency,
@@ -48,7 +49,6 @@ export function CurrencyConverter() {
   const activeRequest = useRef<AbortController | null>(null);
 
   const { executeAction, isLoading } = useActionButton();
-  const copyResult = useCopyToClipboard();
 
   useEffect(() => {
     return () => {
@@ -131,7 +131,7 @@ export function CurrencyConverter() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <div>
               <label htmlFor="currency-from" className="mb-2 block text-sm font-medium">
                 From
@@ -185,7 +185,7 @@ export function CurrencyConverter() {
             </div>
           </div>
 
-          <div role="group" aria-labelledby="currency-date-label">
+          <fieldset className="min-w-0" aria-labelledby="currency-date-label">
             <span id="currency-date-label" className="mb-2 block text-sm font-medium">
               Reference date
             </span>
@@ -199,7 +199,7 @@ export function CurrencyConverter() {
             <p className="mt-2 text-xs text-muted-foreground">
               Leave blank to use the latest available rate.
             </p>
-          </div>
+          </fieldset>
 
           {error && (
             <div
@@ -228,23 +228,7 @@ export function CurrencyConverter() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(copyValue)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!copyValue}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={copyValue} label="Copy result" disabled={!copyValue} />
           </div>
         </CardContent>
       </Card>
@@ -264,7 +248,7 @@ export function CurrencyConverter() {
           </div>
 
           {result && (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Conversion
@@ -283,9 +267,7 @@ export function CurrencyConverter() {
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Symbols
-                </div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Symbols</div>
                 <div className="mt-1 font-semibold">
                   {getCurrencySymbol(result.base)} to {getCurrencySymbol(result.quote)}
                 </div>
@@ -297,7 +279,8 @@ export function CurrencyConverter() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-4 text-sm text-muted-foreground sm:pt-6">
-          Rates are fetched from Frankfurter when you click convert. These are reference rates and can change as newer published data becomes available.
+          Rates are fetched from Frankfurter when you click convert. These are reference rates and
+          can change as newer published data becomes available.
         </CardContent>
       </Card>
     </div>

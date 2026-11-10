@@ -138,11 +138,13 @@ export function SvgToPng() {
             <Code className="h-5 w-5" />
             SVG to PNG Converter
           </CardTitle>
-          <CardDescription>Rasterize SVG code or files into high-resolution PNG images</CardDescription>
+          <CardDescription>
+            Rasterize SVG code or files into high-resolution PNG images
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Upload SVG File</label>
+            <span className="text-sm font-medium">Upload SVG File</span>
             <FileDropzone
               intake={intake}
               label="Drag & drop an SVG file here or click to browse"
@@ -158,7 +160,9 @@ export function SvgToPng() {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor={`${id}-code`} className="text-sm font-medium">Or Paste SVG Code</label>
+            <label htmlFor={`${id}-code`} className="text-sm font-medium">
+              Or Paste SVG Code
+            </label>
             <Textarea
               id={`${id}-code`}
               value={svgCode}
@@ -169,7 +173,9 @@ export function SvgToPng() {
           </div>
           <div className="flex items-center gap-4">
             <div className="space-y-2 flex-1">
-              <label htmlFor={`${id}-scale`} className="text-sm font-medium">Resolution Scale: {scale}x</label>
+              <label htmlFor={`${id}-scale`} className="text-sm font-medium">
+                Resolution Scale: {scale}x
+              </label>
               <Input
                 id={`${id}-scale`}
                 type="number"
@@ -190,7 +196,11 @@ export function SvgToPng() {
             </div>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={convertSvgToPng} disabled={!svgCode.trim() || processing} className="flex-1">
+            <Button
+              onClick={convertSvgToPng}
+              disabled={!svgCode.trim() || processing}
+              className="flex-1"
+            >
               {processing ? 'Rasterizing...' : 'Convert to PNG'}
             </Button>
             <Button variant="outline" onClick={handleClear}>

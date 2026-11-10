@@ -330,9 +330,9 @@ export function MarkdownConverter() {
           <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label id="markdown-export-format" className="text-sm font-medium">
+                <span id="markdown-export-format" className="text-sm font-medium">
                   Export format
-                </label>
+                </span>
                 <Select
                   value={exportFormat}
                   onValueChange={(value) => setExportFormat(value as ExportFormat)}
@@ -355,9 +355,9 @@ export function MarkdownConverter() {
 
               {(showPdfOptions || showImageOptions) && (
                 <div className="space-y-2">
-                  <label id="markdown-export-page-size" className="text-sm font-medium">
+                  <span id="markdown-export-page-size" className="text-sm font-medium">
                     Page size
-                  </label>
+                  </span>
                   <Select
                     value={pageSize}
                     onValueChange={(value) => setPageSize(value as PageSize)}
@@ -381,9 +381,9 @@ export function MarkdownConverter() {
               <div className="space-y-4 rounded-md border p-3 sm:p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label id="markdown-export-orientation" className="text-sm font-medium">
+                    <span id="markdown-export-orientation" className="text-sm font-medium">
                       Orientation
-                    </label>
+                    </span>
                     <Select
                       value={orientation}
                       onValueChange={(value) => setOrientation(value as Orientation)}
@@ -401,17 +401,14 @@ export function MarkdownConverter() {
                     </Select>
                   </div>
 
-                  <div
-                    className="space-y-2"
-                    role="group"
-                    aria-labelledby="markdown-export-measure"
-                  >
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby="markdown-export-measure">
                     <label id="markdown-export-measure" className="text-sm font-medium">
                       {showPdfOptions ? 'Margins' : 'Render scale'}:{' '}
                       {showPdfOptions ? `${margin} mm` : `${scale}x`}
                     </label>
                     {showPdfOptions ? (
-                      <Slider aria-labelledby="markdown-export-measure"
+                      <Slider
+                        aria-labelledby="markdown-export-measure"
                         value={margin}
                         onChange={setMargin}
                         min={0}
@@ -420,7 +417,8 @@ export function MarkdownConverter() {
                         disabled={exporting}
                       />
                     ) : (
-                      <Slider aria-labelledby="markdown-export-measure"
+                      <Slider
+                        aria-labelledby="markdown-export-measure"
                         value={scale}
                         onChange={setScale}
                         min={1}
@@ -429,24 +427,23 @@ export function MarkdownConverter() {
                         disabled={exporting}
                       />
                     )}
-                  </div>
+                  </fieldset>
                 </div>
 
-                <div
-                  className="space-y-2"
-                  role="group"
+                <fieldset
+                  className="min-w-0 space-y-2"
                   aria-labelledby="markdown-export-background"
                 >
-                  <label id="markdown-export-background" className="text-sm font-medium">
+                  <span id="markdown-export-background" className="text-sm font-medium">
                     Background
-                  </label>
+                  </span>
                   <ColorPicker
                     label="Background"
                     value={backgroundColor}
                     onChange={setBackgroundColor}
                     disabled={exporting}
                   />
-                </div>
+                </fieldset>
 
                 {showPdfOptions && (
                   <Checkbox

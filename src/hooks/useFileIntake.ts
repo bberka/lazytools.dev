@@ -79,11 +79,17 @@ export function useFileIntake(options: FileIntakeOptions): FileIntake {
     const result = validateFiles(candidates, { accept, maxSize });
     const rejected =
       source === 'picker'
-        ? result.rejected.filter((rejection) => rejection.reason !== 'type' || rejection.file.type !== '')
+        ? result.rejected.filter(
+            (rejection) => rejection.reason !== 'type' || rejection.file.type !== ''
+          )
         : result.rejected;
-    const accepted = candidates.filter((file) => !rejected.some((rejection) => rejection.file === file));
+    const accepted = candidates.filter(
+      (file) => !rejected.some((rejection) => rejection.file === file)
+    );
 
-    setError(rejected.length === result.rejected.length ? result.error : (rejected[0]?.message ?? null));
+    setError(
+      rejected.length === result.rejected.length ? result.error : (rejected[0]?.message ?? null)
+    );
     if (rejected.length > 0) onReject?.(rejected);
     if (accepted.length > 0) onFiles(accepted);
   };

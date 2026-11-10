@@ -27,9 +27,8 @@ export interface Failure {
   error: string;
 }
 
-export const TOTP_ALGORITHMS: readonly TotpAlgorithm[] = ['SHA-1', 'SHA-256', 'SHA-512'];
-export const TOTP_DIGITS: readonly TotpDigits[] = [6, 8];
-export const TOTP_PERIODS: readonly number[] = [30, 60];
+const TOTP_ALGORITHMS: readonly TotpAlgorithm[] = ['SHA-1', 'SHA-256', 'SHA-512'];
+const TOTP_DIGITS: readonly TotpDigits[] = [6, 8];
 
 export const DEFAULT_TOTP_OPTIONS: TotpOptions = { algorithm: 'SHA-1', digits: 6, period: 30 };
 
@@ -111,7 +110,10 @@ export function decodeBase32(input: string): Base32Result {
 }
 
 /** Encodes bytes as upper-case Base32, without padding unless `padded` is set. */
-export function encodeBase32(bytes: Uint8Array, { padded = false }: { padded?: boolean } = {}): string {
+export function encodeBase32(
+  bytes: Uint8Array,
+  { padded = false }: { padded?: boolean } = {}
+): string {
   let output = '';
   let buffer = 0;
   let bits = 0;
@@ -164,12 +166,17 @@ export async function hotp(
   message.setUint32(0, Math.floor(counter / 2 ** 32));
   message.setUint32(4, counter % 2 ** 32);
 
-  const cryptoKey = await subtle.importKey('raw', key, { name: 'HMAC', hash: algorithm }, false, ['sign']);
+  const cryptoKey = await subtle.importKey('raw', key, { name: 'HMAC', hash: algorithm }, false, [
+    'sign',
+  ]);
   const mac = new Uint8Array(await subtle.sign('HMAC', cryptoKey, message));
 
   const offset = mac[mac.length - 1] & 0x0f;
   const binary =
-    ((mac[offset] & 0x7f) << 24) | (mac[offset + 1] << 16) | (mac[offset + 2] << 8) | mac[offset + 3];
+    ((mac[offset] & 0x7f) << 24) |
+    (mac[offset + 1] << 16) |
+    (mac[offset + 2] << 8) |
+    mac[offset + 3];
 
   return String(binary % 10 ** digits).padStart(digits, '0');
 }
@@ -186,7 +193,11 @@ export function secondsRemaining(timeMs: number, period: number): number {
 }
 
 /** TOTP (RFC 6238) for the moment `timeMs` (milliseconds since the Unix epoch). */
-export function totp(key: Uint8Array<ArrayBuffer>, timeMs: number, options: TotpOptions): Promise<string> {
+export function totp(
+  key: Uint8Array<ArrayBuffer>,
+  timeMs: number,
+  options: TotpOptions
+): Promise<string> {
   return hotp(key, totpCounter(timeMs, options.period), options);
 }
 
@@ -291,7 +302,10 @@ export function buildOtpauthUri(input: OtpauthInput): OtpauthResult {
 
   const issuer = cleanLabelPart(input.issuer);
   const account = cleanLabelPart(input.account);
-  const secret = input.secret.replace(/[\s-]+/g, '').replace(/=+$/, '').toUpperCase();
+  const secret = input.secret
+    .replace(/[\s-]+/g, '')
+    .replace(/=+$/, '')
+    .toUpperCase();
 
   const label =
     issuer && account

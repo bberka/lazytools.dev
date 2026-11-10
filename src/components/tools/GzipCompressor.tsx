@@ -5,10 +5,10 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { Copy, Check, Trash2, ArrowLeftRight, FolderArchive, FolderOpen } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, FolderArchive, FolderOpen } from 'lucide-react';
 import { formatBytes, type FormatBytesOptions } from '@/lib/files';
 import { runGzip, sizeChangeLabel, type GzipMode } from '@/lib/tools/gzip-compressor';
+import { CopyButton } from '@/components/CopyButton';
 
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
@@ -19,7 +19,6 @@ export function GzipCompressor() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<{ inputSize: number; outputSize: number } | null>(null);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Each run takes a number; a result is only shown while its number is still the latest.
   const runId = useRef(0);
@@ -75,7 +74,8 @@ export function GzipCompressor() {
     resetResult();
   };
 
-  const sizeChange = stats && mode === 'compress' ? sizeChangeLabel(stats.inputSize, stats.outputSize) : null;
+  const sizeChange =
+    stats && mode === 'compress' ? sizeChangeLabel(stats.inputSize, stats.outputSize) : null;
 
   return (
     <div className="space-y-6">
@@ -110,7 +110,11 @@ export function GzipCompressor() {
           <Textarea
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
-            placeholder={mode === 'compress' ? 'Type or paste text here...' : 'Paste Base64 GZip string here...'}
+            placeholder={
+              mode === 'compress'
+                ? 'Type or paste text here...'
+                : 'Paste Base64 GZip string here...'
+            }
             aria-label={mode === 'compress' ? 'Text to compress' : 'Base64-encoded GZip data'}
             rows={8}
             className="font-mono"
@@ -133,17 +137,26 @@ export function GzipCompressor() {
       </div>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {stats && (
         <div className="bg-muted rounded-md px-4 py-3 text-sm flex flex-wrap gap-4">
-          <span>Input: <strong>{formatBytes(stats.inputSize, SIZE_FORMAT)}</strong></span>
-          <span>Output: <strong>{formatBytes(stats.outputSize, SIZE_FORMAT)}</strong></span>
+          <span>
+            Input: <strong>{formatBytes(stats.inputSize, SIZE_FORMAT)}</strong>
+          </span>
+          <span>
+            Output: <strong>{formatBytes(stats.outputSize, SIZE_FORMAT)}</strong>
+          </span>
           {sizeChange !== null && (
-            <span>Ratio: <strong>{sizeChange}</strong></span>
+            <span>
+              Ratio: <strong>{sizeChange}</strong>
+            </span>
           )}
         </div>
       )}
@@ -165,18 +178,13 @@ export function GzipCompressor() {
               rows={8}
               className="font-mono"
             />
-            <Button
-              onClick={() => copyToClipboard(output)}
+            <CopyButton
+              text={output}
+              label="Copy"
+              copiedLabel="Copied!"
               disabled={!output}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? (
-                <><Check className="h-4 w-4 mr-2" />Copied!</>
-              ) : (
-                <><Copy className="h-4 w-4 mr-2" />Copy</>
-              )}
-            </Button>
+            />
           </div>
         </CardContent>
       </Card>

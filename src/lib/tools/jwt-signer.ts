@@ -5,6 +5,8 @@
 // fail on user input returns a result value instead of throwing, and anything
 // that depends on the time takes an injectable clock.
 
+import { bytesToHex } from './bytes';
+
 export const JWT_ALGORITHMS = ['HS256', 'HS384', 'HS512'] as const;
 export type JwtAlgorithm = (typeof JWT_ALGORITHMS)[number];
 
@@ -42,9 +44,7 @@ export function isJwtAlgorithm(value: string): value is JwtAlgorithm {
   return (JWT_ALGORITHMS as readonly string[]).includes(value);
 }
 
-// ---------------------------------------------------------------------------
 // Base64 and Base64URL
-// ---------------------------------------------------------------------------
 
 const STANDARD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -146,9 +146,7 @@ export function base64Decode(text: string): Bytes | null {
   return decodeBase64(text.replace(/\s+/g, ''), EITHER_TABLE, true);
 }
 
-// ---------------------------------------------------------------------------
 // JSON helpers
-// ---------------------------------------------------------------------------
 
 /** Parses `text` and requires the result to be a JSON object (not an array or scalar). */
 export function parseJsonObject(text: string): Result<Record<string, unknown>> {
@@ -286,9 +284,7 @@ export function validatePayload(text: string): string | null {
   return parsed.ok ? null : parsed.error;
 }
 
-// ---------------------------------------------------------------------------
 // Time and claim helpers
-// ---------------------------------------------------------------------------
 
 /** Preset lifetimes for the exp helper, shortest first. */
 export const EXPIRY_PRESETS: ReadonlyArray<{ label: string; seconds: number }> = [
@@ -358,13 +354,11 @@ export function generateJti(randomBytes: RandomBytes = defaultRandomBytes): stri
   const bytes = Uint8Array.from(randomBytes(16));
   bytes[6] = (bytes[6] & 0x0f) | 0x40;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const hex = bytesToHex(bytes);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-// ---------------------------------------------------------------------------
 // Secrets and HMAC
-// ---------------------------------------------------------------------------
 
 /** The smallest key RFC 7518 section 3.2 allows: the size of the hash output. */
 export function minimumSecretBytes(algorithm: JwtAlgorithm): number {
@@ -396,7 +390,9 @@ async function importHmacKey(
 ): Promise<CryptoKey> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle) throw new Error(NO_WEBCRYPTO);
-  return subtle.importKey('raw', key, { name: 'HMAC', hash: HASH_NAMES[algorithm] }, false, [usage]);
+  return subtle.importKey('raw', key, { name: 'HMAC', hash: HASH_NAMES[algorithm] }, false, [
+    usage,
+  ]);
 }
 
 /** HMAC of `data` with `key`, using the hash behind the JWT algorithm. Rejects if WebCrypto fails. */
@@ -420,9 +416,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : NO_WEBCRYPTO;
 }
 
-// ---------------------------------------------------------------------------
 // Signing
-// ---------------------------------------------------------------------------
 
 export interface SignOptions {
   /** Header JSON text. Its `alg` must equal `algorithm`. */
@@ -499,7 +493,11 @@ export async function signJwt(options: SignOptions): Promise<SignResult> {
 
   let signature: Bytes;
   try {
-    signature = await hmac(algorithm, key.value, new TextEncoder().encode(`${headerPart}.${payloadPart}`));
+    signature = await hmac(
+      algorithm,
+      key.value,
+      new TextEncoder().encode(`${headerPart}.${payloadPart}`)
+    );
   } catch (error) {
     return { ok: false, field: 'crypto', error: errorMessage(error) };
   }
@@ -520,9 +518,7 @@ export async function signJwt(options: SignOptions): Promise<SignResult> {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Verifying
-// ---------------------------------------------------------------------------
 
 export type VerifyStatus =
   | 'valid'
@@ -639,7 +635,10 @@ export async function verifyJwt(options: VerifyOptions): Promise<VerifyResult> {
   }
 
   const { nbf, exp } = payload.value;
-  for (const [claim, value] of [['nbf', nbf], ['exp', exp]] as const) {
+  for (const [claim, value] of [
+    ['nbf', nbf],
+    ['exp', exp],
+  ] as const) {
     if (value !== undefined && !isNumericDate(value)) {
       return verdict(
         'malformed',

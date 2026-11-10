@@ -28,8 +28,8 @@ import {
 
 export { CHAR_CLASSES, CHAR_TABLE, CLASS_INFO, type CharClass, type CharEntry };
 
-export const DEFAULT_MAX_ROWS = 500;
-export const DEFAULT_MAX_MARKS = 2000;
+const DEFAULT_MAX_ROWS = 500;
+const DEFAULT_MAX_MARKS = 2000;
 
 const ZWNJ = 0x200c;
 const ZWJ = 0x200d;
@@ -51,9 +51,7 @@ const EXTENDED_PICTOGRAPHIC = /^\p{Extended_Pictographic}$/u;
 const EMOJI = /^\p{Emoji}$/u;
 const GRAPHEME_EXTEND = /^[\p{Grapheme_Extend}\p{Mc}]$/u;
 
-// ---------------------------------------------------------------------------
 // Code point basics
-// ---------------------------------------------------------------------------
 
 function toCodePoints(text: string): number[] {
   const codePoints: number[] = [];
@@ -68,7 +66,7 @@ function isValidCodePoint(codePoint: number): boolean {
 }
 
 /** "U+0041", "U+1F600": four digits at least, upper case. */
-export function formatCodePoint(codePoint: number): string {
+function formatCodePoint(codePoint: number): string {
   return `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`;
 }
 
@@ -120,9 +118,7 @@ export function htmlEntity(codePoint: number): string {
   return HTML_NAMED_ENTITIES[codePoint] ?? `&#x${codePoint.toString(16).toUpperCase()};`;
 }
 
-// ---------------------------------------------------------------------------
 // Classification
-// ---------------------------------------------------------------------------
 
 function isPrivateUse(codePoint: number): boolean {
   return (
@@ -161,7 +157,12 @@ export function describeCodePoint(codePoint: number): CharEntry | null {
 
   const char = String.fromCodePoint(codePoint);
   if (SPACE_SEPARATOR.test(char)) {
-    return { codePoint, short: formatCodePoint(codePoint), name: 'Space separator', className: 'space' };
+    return {
+      codePoint,
+      short: formatCodePoint(codePoint),
+      name: 'Space separator',
+      className: 'space',
+    };
   }
   if (DEFAULT_IGNORABLE.test(char)) {
     return {
@@ -181,9 +182,7 @@ function categoryLabel(codePoint: number): string {
   return category ? `${category.label} (${category.code})` : 'Unknown';
 }
 
-// ---------------------------------------------------------------------------
 // Emoji sequences
-// ---------------------------------------------------------------------------
 
 function isEmojiModifier(codePoint: number): boolean {
   return codePoint >= 0x1f3fb && codePoint <= 0x1f3ff;
@@ -195,7 +194,9 @@ function isTagSpec(codePoint: number | undefined): boolean {
 
 function isExtendedPictographic(codePoint: number | undefined): boolean {
   return (
-    codePoint !== undefined && codePoint >= 0xa9 && EXTENDED_PICTOGRAPHIC.test(String.fromCodePoint(codePoint))
+    codePoint !== undefined &&
+    codePoint >= 0xa9 &&
+    EXTENDED_PICTOGRAPHIC.test(String.fromCodePoint(codePoint))
   );
 }
 
@@ -212,7 +213,9 @@ function emojiBaseBefore(codePoints: readonly number[], index: number): boolean 
   let position = index - 1;
   while (
     position >= 0 &&
-    (codePoints[position] === VS16 || codePoints[position] === VS15 || isEmojiModifier(codePoints[position]))
+    (codePoints[position] === VS16 ||
+      codePoints[position] === VS15 ||
+      isEmojiModifier(codePoints[position]))
   ) {
     position--;
   }
@@ -226,7 +229,7 @@ function emojiBaseBefore(codePoints: readonly number[], index: number): boolean 
  * - VS15 or VS16 right after an emoji character, and VS16 in a keycap sequence,
  * - the tag characters of a flag tag sequence, up to and including the cancel tag.
  */
-function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
+export function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
   const members = new Set<number>();
 
   for (let index = 0; index < codePoints.length; index++) {
@@ -259,7 +262,7 @@ function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
  * A ZWNJ or ZWJ between two letters or marks that are not both Latin, as in
  * Persian or Devanagari, where they change how the word is shaped.
  */
-function isScriptJoiner(codePoints: readonly number[], index: number): boolean {
+export function isScriptJoiner(codePoints: readonly number[], index: number): boolean {
   const codePoint = codePoints[index];
   if (codePoint !== ZWNJ && codePoint !== ZWJ) return false;
   const previous = codePoints[index - 1];
@@ -271,9 +274,7 @@ function isScriptJoiner(codePoints: readonly number[], index: number): boolean {
   return !(LATIN.test(before) && LATIN.test(after));
 }
 
-// ---------------------------------------------------------------------------
 // Grapheme clusters
-// ---------------------------------------------------------------------------
 
 export type GraphemeMethod = 'intl-segmenter' | 'approximate';
 
@@ -345,9 +346,7 @@ export function countGraphemes(text: string): { count: number; method: GraphemeM
   return { count, method: 'intl-segmenter' };
 }
 
-// ---------------------------------------------------------------------------
 // Inspection
-// ---------------------------------------------------------------------------
 
 export interface CharRow {
   /** 1-based position among the code points of the text. */
@@ -509,7 +508,12 @@ export function inspectText(text: string, options: InspectOptions = {}): Inspect
       }
     }
 
-    if (info && className && !highlightTruncated && (isFlagged || (markWhitespace && className === 'whitespace'))) {
+    if (
+      info &&
+      className &&
+      !highlightTruncated &&
+      (isFlagged || (markWhitespace && className === 'whitespace'))
+    ) {
       if (marks >= maxMarks) {
         highlightTruncated = true;
         if (offset > runStart) highlight.push({ kind: 'text', text: text.slice(runStart, offset) });
@@ -558,13 +562,9 @@ export function inspectText(text: string, options: InspectOptions = {}): Inspect
   };
 }
 
-// ---------------------------------------------------------------------------
 // Cleaning
-// ---------------------------------------------------------------------------
 
 export type NormalizationForm = 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
-
-export const NORMALIZATION_FORMS: readonly NormalizationForm[] = ['NFC', 'NFD', 'NFKC', 'NFKD'];
 
 export interface RemoveOptions {
   /**
@@ -656,7 +656,12 @@ export interface CleanResult {
  * block reordering).
  */
 export function cleanText(text: string, options: CleanOptions = {}): CleanResult {
-  const { removeInvisible = false, replaceSpaces = false, normalization = 'none', keepScriptJoiners } = options;
+  const {
+    removeInvisible = false,
+    replaceSpaces = false,
+    normalization = 'none',
+    keepScriptJoiners,
+  } = options;
   let current = text;
   let removed = 0;
   let replaced = 0;
@@ -681,9 +686,7 @@ export function cleanText(text: string, options: CleanOptions = {}): CleanResult
   return { text: current, removed, replaced, normalizationChanged, changed: current !== text };
 }
 
-// ---------------------------------------------------------------------------
 // Example
-// ---------------------------------------------------------------------------
 
 /** A short text with one of each common trap, written with escapes so the source shows what is in it. */
 export const EXAMPLE_TEXT = [

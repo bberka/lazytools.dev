@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { homeViewState, useHomeViewState } from '@/lib/home/client';
@@ -93,7 +93,7 @@ function withWindow<T>(fakeWindow: object, run: () => T): T {
   }
 }
 
-test.describe('home view state: stored data', () => {
+describe('home view state: stored data', () => {
   test('keeps the storage key names open tabs already hold', () => {
     expect(HOME_VIEW_STORAGE_KEYS).toEqual(STORED);
   });
@@ -207,7 +207,7 @@ test.describe('home view state: stored data', () => {
   });
 });
 
-test.describe('home view state: unusable stored values', () => {
+describe('home view state: unusable stored values', () => {
   test('ignores a stored tag that is not one of the known tags', () => {
     const unknown = [
       'no-such-tag',
@@ -278,7 +278,7 @@ test.describe('home view state: unusable stored values', () => {
   });
 });
 
-test.describe('home view state: reset', () => {
+describe('home view state: reset', () => {
   test('clears all four values, the selected tag included', () => {
     const storage = createMemoryStorage(BUSY_STORAGE);
     const store = createHomeViewStateStore(storage, KNOWN_TAGS);
@@ -367,7 +367,7 @@ test.describe('home view state: reset', () => {
   });
 });
 
-test.describe('home view state: sending the user to a tag', () => {
+describe('home view state: sending the user to a tag', () => {
   test('replaces the stored view with the tag alone, from the top of the page', () => {
     const storage = createMemoryStorage({
       [STORED.searchQuery]: 'json',
@@ -399,7 +399,7 @@ test.describe('home view state: sending the user to a tag', () => {
   });
 });
 
-test.describe('home view state: browser storage', () => {
+describe('home view state: browser storage', () => {
   test('reads and writes sessionStorage, not localStorage', () => {
     const fakeWindow = createFakeWindow({ [STORED.searchQuery]: 'json' });
 
@@ -462,7 +462,7 @@ test.describe('home view state: browser storage', () => {
   });
 });
 
-test.describe("home view state: the app's store", () => {
+describe("home view state: the app's store", () => {
   test('is safe to load and call during server rendering', () => {
     expect(typeof window).toBe('undefined');
 
@@ -541,7 +541,7 @@ function moveInFlatGrid(current: number, key: ArrowKey, count: number, columns: 
   }
 }
 
-test.describe('grid navigation: one grid', () => {
+describe('grid navigation: one grid', () => {
   test('uses -1 for no selection', () => {
     expect(NO_SELECTION).toBe(-1);
   });
@@ -585,10 +585,9 @@ test.describe('grid navigation: one grid', () => {
       for (let count = 1; count <= 13; count++) {
         for (let current = -1; current < count; current++) {
           for (const key of ARROWS) {
-            expect(
-              move(current, key, [count], columns),
-              `${key} from ${current} of ${count}`
-            ).toBe(moveInFlatGrid(current, key, count, columns));
+            expect(move(current, key, [count], columns), `${key} from ${current} of ${count}`).toBe(
+              moveInFlatGrid(current, key, count, columns)
+            );
           }
         }
       }
@@ -628,7 +627,7 @@ test.describe('grid navigation: one grid', () => {
   });
 });
 
-test.describe('grid navigation: sections', () => {
+describe('grid navigation: sections', () => {
   // The Text Tools tag on a wide screen: Converters, Text Tools, PDF Tools.
   // A tool with several tags is a card in each of its sections.
   //
@@ -761,7 +760,7 @@ test.describe('grid navigation: sections', () => {
   });
 });
 
-test.describe('grid navigation: unusual input', () => {
+describe('grid navigation: unusual input', () => {
   test('selects nothing when there are no cards', () => {
     for (const sections of [[], [0], [0, 0]]) {
       for (const key of ARROWS) {
@@ -805,7 +804,7 @@ test.describe('grid navigation: unusual input', () => {
   });
 });
 
-test.describe('grid navigation: reading the columns off the page', () => {
+describe('grid navigation: reading the columns off the page', () => {
   test('counts the column sizes the browser reports for a rendered grid', () => {
     expect(countGridColumns('1200px')).toBe(1);
     expect(countGridColumns('592px 592px')).toBe(2);
@@ -823,7 +822,9 @@ test.describe('grid navigation: reading the columns off the page', () => {
   });
 
   test('does not count named lines', () => {
-    expect(countGridColumns('[full-start] 100px [content-start content-end] 200px [full-end]')).toBe(2);
+    expect(
+      countGridColumns('[full-start] 100px [content-start content-end] 200px [full-end]')
+    ).toBe(2);
   });
 
   test('falls back to one column when the value names none', () => {

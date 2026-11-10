@@ -27,7 +27,9 @@ interface SelectItemProps {
   children: React.ReactNode;
 }
 
-const isSelectItem = (element: React.ReactElement): element is React.ReactElement<SelectItemProps> => {
+const isSelectItem = (
+  element: React.ReactElement
+): element is React.ReactElement<SelectItemProps> => {
   const type: unknown = element.type;
   if (typeof type !== 'function' && (typeof type !== 'object' || type === null)) return false;
   const { displayName, name } = type as { displayName?: string; name?: string };
@@ -90,7 +92,9 @@ function Select<T extends string = string>({
   searchThreshold?: number;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = React.useState(openProp || false);
+  const [openState, setOpenState] = React.useState(false);
+  // A caller that passes `open` controls the panel; otherwise it keeps its own state.
+  const open = openProp !== undefined ? openProp : openState;
   const [selectedValue, setSelectedValue] = React.useState(defaultValue || '');
   const [search, setSearch] = React.useState('');
   const [highlightedValue, setHighlightedValue] = React.useState('');
@@ -104,18 +108,12 @@ function Select<T extends string = string>({
   const filteredItems = React.useMemo(() => {
     return Array.from(items.entries())
       .map(([value, label]) => ({ value, label }))
-      .filter((item) =>
-        !search || item.label.toLowerCase().includes(search.toLowerCase())
-      );
+      .filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
   }, [items, search]);
-
-  React.useEffect(() => {
-    if (openProp !== undefined) setOpen(openProp);
-  }, [openProp]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (disabled) return;
-    setOpen(nextOpen);
+    setOpenState(nextOpen);
     onOpenChange?.(nextOpen);
     if (!nextOpen) {
       setSearch('');
@@ -125,20 +123,33 @@ function Select<T extends string = string>({
   const handleValueChange = (val: string) => {
     setSelectedValue(val);
     onValueChange?.(val as T);
-    setOpen(false);
+    setOpenState(false);
+    onOpenChange?.(false);
     setSearch('');
   };
 
   const activeValue = value !== undefined ? value : selectedValue;
 
-  React.useEffect(() => {
+  // While the panel is open the highlight starts on the selected option (or the first one)
+  // and starts over whenever the selection or the filtered list changes
+  const [highlightSource, setHighlightSource] = React.useState({
+    open,
+    activeValue,
+    filteredItems,
+  });
+  if (
+    highlightSource.open !== open ||
+    highlightSource.activeValue !== activeValue ||
+    highlightSource.filteredItems !== filteredItems
+  ) {
+    setHighlightSource({ open, activeValue, filteredItems });
     if (open) {
       const exists = filteredItems.some((item) => item.value === activeValue);
       setHighlightedValue(exists ? activeValue : filteredItems[0]?.value || '');
     }
-  }, [open, activeValue, filteredItems]);
+  }
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (filteredItems.length === 0) return;
 
     const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
@@ -166,7 +177,7 @@ function Select<T extends string = string>({
       default:
         break;
     }
-  }, [filteredItems, highlightedValue]);
+  };
 
   return (
     <SelectContext.Provider
@@ -216,6 +227,7 @@ const SelectTrigger = React.forwardRef<
       <Button
         ref={ref}
         variant="outline"
+        // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props, jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> cannot hold the search field or the styling, and PopoverTrigger asChild adds aria-expanded and aria-controls to this button at runtime
         role="combobox"
         className={cn(
           'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
@@ -271,10 +283,12 @@ const SelectContent = React.forwardRef<
             value={context.search}
             onChange={(e) => context.setSearch(e.target.value)}
             className="h-8 text-xs px-2"
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user just opened the list to pick from it, so the search field takes focus
             autoFocus
           />
         </div>
       )}
+      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> or <datalist> cannot hold the search field or the styling */}
       <div role="listbox" className="max-h-60 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
         {children}
       </div>
@@ -315,19 +329,24 @@ const SelectItem = React.forwardRef<
     [ref]
   );
 
+  const isOpen = context?.open ?? false;
+
+  // Radix keeps the panel mounted while it fades out, so reopening it quickly reuses these
+  // options: focus has to follow `isOpen` too, not only the highlight
   React.useEffect(() => {
-    if (isHighlighted && buttonRef.current) {
+    if (isOpen && isHighlighted && buttonRef.current) {
       buttonRef.current.scrollIntoView({
         block: 'nearest',
       });
       // Focus the button if search input is not focused
       const activeEl = document.activeElement;
-      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const isInputFocused =
+        activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
       if (!isInputFocused) {
         buttonRef.current.focus();
       }
     }
-  }, [isHighlighted]);
+  }, [isHighlighted, isOpen]);
 
   if (!context) return null;
   if (!matchesSearch) return null;
@@ -336,6 +355,7 @@ const SelectItem = React.forwardRef<
     <button
       ref={handleRef}
       type="button"
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> or <datalist> cannot hold the search field or the styling
       role="option"
       tabIndex={-1}
       aria-selected={isSelected}
@@ -370,7 +390,10 @@ SelectGroup.displayName = 'SelectGroup';
 
 function SelectLabel({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('px-2 py-1.5 text-xs font-semibold text-muted-foreground', className)} {...props}>
+    <div
+      className={cn('px-2 py-1.5 text-xs font-semibold text-muted-foreground', className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -378,9 +401,7 @@ function SelectLabel({ children, className, ...props }: React.HTMLAttributes<HTM
 SelectLabel.displayName = 'SelectLabel';
 
 function SelectSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />
-  );
+  return <div className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />;
 }
 SelectSeparator.displayName = 'SelectSeparator';
 

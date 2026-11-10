@@ -3,11 +3,11 @@
 import { useState, useMemo, useRef, useId } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Copy, Check, Trash2, Plus, RefreshCw, ExternalLink, Link2, Code, ArrowRight } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, Plus, RefreshCw, ExternalLink, Link2, Code, ArrowRight } from 'lucide-react';
 import { decodeUrlComponent, encodeUrlComponent } from '@/lib/tools/url-encoder';
 import { buildUrl, parseUrl } from '@/lib/tools/url-parser-builder';
 
@@ -32,8 +32,6 @@ export function UrlParserBuilder() {
   const [rawInput, setRawInput] = useState('');
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const nextParamId = useRef(0);
-
-  const copyResult = useCopyToClipboard();
 
   const protocolId = useId();
   const hostId = useId();
@@ -77,7 +75,9 @@ export function UrlParserBuilder() {
   };
 
   const addParamRow = () => {
-    updateForm({ params: [...form.params, { id: newParamId(), key: '', value: '', enabled: true }] });
+    updateForm({
+      params: [...form.params, { id: newParamId(), key: '', value: '', enabled: true }],
+    });
   };
 
   const updateParamRow = (id: string, changes: Partial<Omit<QueryParam, 'id'>>) => {
@@ -135,7 +135,12 @@ export function UrlParserBuilder() {
             className="font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -146,14 +151,12 @@ export function UrlParserBuilder() {
       {/* Path Components breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            URL Base Structure
-          </CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">URL Base Structure</CardTitle>
           <CardDescription className="text-xs">
             Edit the protocol, host, and path details directly.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div>
             <label
               htmlFor={protocolId}
@@ -239,16 +242,21 @@ export function UrlParserBuilder() {
               No query parameters found. Click Add Param to create one.
             </div>
           ) : (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin pr-1">
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
               {form.params.map((param) => (
-                <div key={param.id} className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20 sm:flex-row sm:items-center">
+                <div
+                  key={param.id}
+                  className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20 sm:flex-row sm:items-center"
+                >
                   <div className="flex items-center gap-2 shrink-0">
                     <Checkbox
                       checked={param.enabled}
                       onCheckedChange={(checked) => updateParamRow(param.id, { enabled: checked })}
                       aria-label="Enable parameter"
                     />
-                    <span className="text-xs text-muted-foreground sm:hidden font-medium">Active</span>
+                    <span className="text-xs text-muted-foreground sm:hidden font-medium">
+                      Active
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 flex-1 sm:grid-cols-2">
@@ -344,24 +352,13 @@ export function UrlParserBuilder() {
               {rebuiltUrl}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyResult.copyToClipboard(rebuiltUrl)}
-                variant={copyResult.isCopied ? 'default' : 'outline'}
+              <CopyButton
+                text={rebuiltUrl}
+                label="Copy URL"
+                copiedLabel="Copied URL!"
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-              >
-                {copyResult.isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied URL!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy URL
-                  </>
-                )}
-              </Button>
+              />
               <Button
                 variant="outline"
                 size="sm"

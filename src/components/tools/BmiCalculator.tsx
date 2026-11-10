@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Scale, Trash2 } from 'lucide-react';
+import { Scale, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,12 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
-import {
-  calculateBmi,
-  type BmiCategoryId,
-  type BmiUnitSystem,
-} from '@/lib/tools/bmi-calculator';
+import { calculateBmi, type BmiCategoryId, type BmiUnitSystem } from '@/lib/tools/bmi-calculator';
 import { cn } from '@/lib/utils';
 
 type UnitSystem = BmiUnitSystem;
@@ -46,7 +42,6 @@ export function BmiCalculator() {
   const [weightUs, setWeightUs] = useState('159');
   const [heightFeet, setHeightFeet] = useState('5');
   const [heightInches, setHeightInches] = useState('9');
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(
     () =>
@@ -87,7 +82,10 @@ export function BmiCalculator() {
             <label htmlFor="bmi-units" className="mb-2 block text-sm font-medium">
               Units
             </label>
-            <Select value={unitSystem} onValueChange={(value) => handleUnitChange(value as UnitSystem)}>
+            <Select
+              value={unitSystem}
+              onValueChange={(value) => handleUnitChange(value as UnitSystem)}
+            >
               <SelectTrigger id="bmi-units">
                 <SelectValue placeholder="Select units" />
               </SelectTrigger>
@@ -195,23 +193,7 @@ export function BmiCalculator() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.bmi)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.bmi}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy BMI
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.bmi} label="Copy BMI" disabled={!result.bmi} />
           </div>
         </CardContent>
       </Card>
@@ -229,13 +211,15 @@ export function BmiCalculator() {
           </div>
 
           {result.category && (
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="rounded-md border bg-card p-4">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                   <Scale className="h-3.5 w-3.5" />
                   Category
                 </div>
-                <div className={cn('mt-1 text-lg font-semibold', categoryAccent[result.category.id])}>
+                <div
+                  className={cn('mt-1 text-lg font-semibold', categoryAccent[result.category.id])}
+                >
                   {result.category.label}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
@@ -247,7 +231,8 @@ export function BmiCalculator() {
                   Screening note
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  BMI is a screening measure for adults 20 and older and should be considered with other health factors.
+                  BMI is a screening measure for adults 20 and older and should be considered with
+                  other health factors.
                 </div>
               </div>
             </div>
@@ -257,7 +242,8 @@ export function BmiCalculator() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-4 text-sm text-muted-foreground sm:pt-6">
-          Adult BMI categories in this tool follow CDC thresholds: underweight below 18.5, healthy weight 18.5 to less than 25, overweight 25 to less than 30, and obesity 30 or greater.
+          Adult BMI categories in this tool follow CDC thresholds: underweight below 18.5, healthy
+          weight 18.5 to less than 25, overweight 25 to less than 30, and obesity 30 or greater.
         </CardContent>
       </Card>
     </div>

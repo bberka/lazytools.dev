@@ -9,9 +9,9 @@ export function PWARegister() {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
+      void navigator.serviceWorker.getRegistrations().then((registrations) => {
         for (const registration of registrations) {
-          registration.unregister().then((success) => {
+          void registration.unregister().then((success) => {
             if (success) {
               console.log('[PWA] Unregistered active service worker for development mode');
               window.location.reload();
@@ -22,11 +22,8 @@ export function PWARegister() {
       return;
     }
 
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      window.location.hostname
-    );
-    const canRegister =
-      window.location.protocol === 'https:' || isLocalhost;
+    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+    const canRegister = window.location.protocol === 'https:' || isLocalhost;
 
     if (!canRegister) {
       return;

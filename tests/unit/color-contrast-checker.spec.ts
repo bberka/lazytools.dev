@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   checkContrast,
   contrastRatio,
@@ -9,7 +9,7 @@ import {
 const BLACK = { r: 0, g: 0, b: 0 };
 const WHITE = { r: 255, g: 255, b: 255 };
 
-test.describe('relativeLuminance and contrastRatio', () => {
+describe('relativeLuminance and contrastRatio', () => {
   test('puts black at 0 and white at 1', () => {
     expect(relativeLuminance(BLACK)).toBe(0);
     expect(relativeLuminance(WHITE)).toBeCloseTo(1, 12);
@@ -33,7 +33,7 @@ test.describe('relativeLuminance and contrastRatio', () => {
   });
 });
 
-test.describe('formatRatio', () => {
+describe('formatRatio', () => {
   test('shows two decimals', () => {
     expect(formatRatio(21)).toBe('21.00:1');
     expect(formatRatio(1)).toBe('1.00:1');
@@ -62,7 +62,7 @@ test.describe('formatRatio', () => {
   });
 });
 
-test.describe('checkContrast', () => {
+describe('checkContrast', () => {
   test('passes everything for black on white', () => {
     expect(checkContrast('#000000', '#FFFFFF')).toEqual({
       foreground: '#000000',

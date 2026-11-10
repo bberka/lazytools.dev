@@ -27,7 +27,7 @@ export function ListConverter() {
   const [inputDelimiter, setInputDelimiter] = useState<ListDelimiter>('newline');
   const [customInputDelimiter, setCustomInputDelimiter] = useState('');
   const [outputDelimiter, setOutputDelimiter] = useState('|');
-  
+
   // Processing options
   const [trimItems, setTrimItems] = useState(true);
   const [removeEmpty, setRemoveEmpty] = useState(true);
@@ -35,7 +35,6 @@ export function ListConverter() {
   const [sortOrder, setSortOrder] = useState<ListSortOrder>('none');
   const [caseConversion, setCaseConversion] = useState<ListCaseConversion>('none');
 
-  // Copy status hooks for all outputs
   const copyCsv = useCopyToClipboard();
   const copySingleQuoted = useCopyToClipboard();
   const copyDoubleQuoted = useCopyToClipboard();
@@ -74,7 +73,7 @@ export function ListConverter() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: Input & Config */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -94,7 +93,7 @@ export function ListConverter() {
               rows={8}
               className="font-mono text-sm"
             />
-            
+
             <div className="flex justify-between items-center">
               <span className="text-xs text-muted-foreground font-medium">
                 Items count: {processedItems.length}
@@ -155,14 +154,17 @@ export function ListConverter() {
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Cleanup Options
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="trim-whitespace"
                   checked={trimItems}
                   onCheckedChange={(checked) => setTrimItems(!!checked)}
                 />
-                <label htmlFor="trim-whitespace" className="text-sm font-medium leading-none cursor-pointer">
+                <label
+                  htmlFor="trim-whitespace"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
                   Trim Whitespace
                 </label>
               </div>
@@ -173,7 +175,10 @@ export function ListConverter() {
                   checked={removeEmpty}
                   onCheckedChange={(checked) => setRemoveEmpty(!!checked)}
                 />
-                <label htmlFor="remove-empty" className="text-sm font-medium leading-none cursor-pointer">
+                <label
+                  htmlFor="remove-empty"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
                   Remove Empty Items
                 </label>
               </div>
@@ -184,7 +189,10 @@ export function ListConverter() {
                   checked={deduplicate}
                   onCheckedChange={(checked) => setDeduplicate(!!checked)}
                 />
-                <label htmlFor="deduplicate" className="text-sm font-medium leading-none cursor-pointer">
+                <label
+                  htmlFor="deduplicate"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
                   Remove Duplicates
                 </label>
               </div>
@@ -198,10 +206,16 @@ export function ListConverter() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <label htmlFor="list-sort-order" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="list-sort-order"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Sorting
                   </label>
-                  <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as ListSortOrder)}>
+                  <Select
+                    value={sortOrder}
+                    onValueChange={(val) => setSortOrder(val as ListSortOrder)}
+                  >
                     <SelectTrigger id="list-sort-order" className="h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
@@ -214,7 +228,10 @@ export function ListConverter() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="list-case-conversion" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="list-case-conversion"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Case conversion
                   </label>
                   <Select
@@ -255,15 +272,28 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyCsv.copyToClipboard(outputs.csv)}
                     variant={copyCsv.isCopied ? 'default' : 'outline'}
-                    aria-label={copyCsv.isCopied ? 'Copied Comma-Separated (CSV)' : 'Copy Comma-Separated (CSV)'}
+                    aria-label={
+                      copyCsv.isCopied
+                        ? 'Copied Comma-Separated (CSV)'
+                        : 'Copy Comma-Separated (CSV)'
+                    }
                     size="sm"
                     className="h-8"
                   >
-                    {copyCsv.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copyCsv.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copyCsv.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.csv} aria-label="Comma-separated output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea
+                  readOnly
+                  value={outputs.csv}
+                  aria-label="Comma-separated output"
+                  className="font-mono text-xs bg-muted/30 h-16 resize-none"
+                />
               </CardContent>
             </Card>
 
@@ -275,15 +305,28 @@ export function ListConverter() {
                   <Button
                     onClick={() => copySingleQuoted.copyToClipboard(outputs.singleQuoted)}
                     variant={copySingleQuoted.isCopied ? 'default' : 'outline'}
-                    aria-label={copySingleQuoted.isCopied ? 'Copied Single-Quoted List' : 'Copy Single-Quoted List'}
+                    aria-label={
+                      copySingleQuoted.isCopied
+                        ? 'Copied Single-Quoted List'
+                        : 'Copy Single-Quoted List'
+                    }
                     size="sm"
                     className="h-8"
                   >
-                    {copySingleQuoted.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copySingleQuoted.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copySingleQuoted.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.singleQuoted} aria-label="Single-quoted output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea
+                  readOnly
+                  value={outputs.singleQuoted}
+                  aria-label="Single-quoted output"
+                  className="font-mono text-xs bg-muted/30 h-16 resize-none"
+                />
               </CardContent>
             </Card>
 
@@ -295,15 +338,28 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyDoubleQuoted.copyToClipboard(outputs.doubleQuoted)}
                     variant={copyDoubleQuoted.isCopied ? 'default' : 'outline'}
-                    aria-label={copyDoubleQuoted.isCopied ? 'Copied Double-Quoted List' : 'Copy Double-Quoted List'}
+                    aria-label={
+                      copyDoubleQuoted.isCopied
+                        ? 'Copied Double-Quoted List'
+                        : 'Copy Double-Quoted List'
+                    }
                     size="sm"
                     className="h-8"
                   >
-                    {copyDoubleQuoted.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copyDoubleQuoted.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copyDoubleQuoted.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.doubleQuoted} aria-label="Double-quoted output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea
+                  readOnly
+                  value={outputs.doubleQuoted}
+                  aria-label="Double-quoted output"
+                  className="font-mono text-xs bg-muted/30 h-16 resize-none"
+                />
               </CardContent>
             </Card>
 
@@ -319,11 +375,20 @@ export function ListConverter() {
                     size="sm"
                     className="h-8"
                   >
-                    {copyJson.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copyJson.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copyJson.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.json} aria-label="JSON array output" className="font-mono text-xs bg-muted/30 h-24" />
+                <Textarea
+                  readOnly
+                  value={outputs.json}
+                  aria-label="JSON array output"
+                  className="font-mono text-xs bg-muted/30 h-24"
+                />
               </CardContent>
             </Card>
 
@@ -339,11 +404,20 @@ export function ListConverter() {
                     size="sm"
                     className="h-8"
                   >
-                    {copySql.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copySql.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copySql.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.sql} aria-label="SQL IN clause output" className="font-mono text-xs bg-muted/30 h-16 resize-none" />
+                <Textarea
+                  readOnly
+                  value={outputs.sql}
+                  aria-label="SQL IN clause output"
+                  className="font-mono text-xs bg-muted/30 h-16 resize-none"
+                />
               </CardContent>
             </Card>
 
@@ -365,15 +439,26 @@ export function ListConverter() {
                   <Button
                     onClick={() => copyCustom.copyToClipboard(outputs.custom)}
                     variant={copyCustom.isCopied ? 'default' : 'outline'}
-                    aria-label={copyCustom.isCopied ? 'Copied Custom Delimited' : 'Copy Custom Delimited'}
+                    aria-label={
+                      copyCustom.isCopied ? 'Copied Custom Delimited' : 'Copy Custom Delimited'
+                    }
                     size="sm"
                     className="h-8 shrink-0 self-end sm:self-auto"
                   >
-                    {copyCustom.isCopied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    {copyCustom.isCopied ? (
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                    )}
                     {copyCustom.isCopied ? 'Copied' : 'Copy'}
                   </Button>
                 </div>
-                <Textarea readOnly value={outputs.custom} aria-label="Custom delimited output" className="font-mono text-xs bg-muted/30 h-16" />
+                <Textarea
+                  readOnly
+                  value={outputs.custom}
+                  aria-label="Custom delimited output"
+                  className="font-mono text-xs bg-muted/30 h-16"
+                />
               </CardContent>
             </Card>
           </div>

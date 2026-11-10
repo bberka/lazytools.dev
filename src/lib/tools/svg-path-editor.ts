@@ -99,7 +99,11 @@ export function parsePath(pathData: string): PathParseResult {
     skipWhitespace();
 
     const args: string[] = [];
-    while (arity > 0 && index < pathData.length && ARITY[pathData[index].toUpperCase()] === undefined) {
+    while (
+      arity > 0 &&
+      index < pathData.length &&
+      ARITY[pathData[index].toUpperCase()] === undefined
+    ) {
       const position = args.length % arity;
       const isFlag = arity === 7 && (position === 3 || position === 4);
 
@@ -255,7 +259,13 @@ function escapeAttribute(value: string): string {
  * an ampersand in a field cannot break the markup, and a blank presentation
  * field or an unusable viewBox is left out rather than written empty.
  */
-export function buildPathSvg({ pathData, viewBox, stroke, strokeWidth, fill }: PathSvgOptions): string {
+export function buildPathSvg({
+  pathData,
+  viewBox,
+  stroke,
+  strokeWidth,
+  fill,
+}: PathSvgOptions): string {
   const attribute = (name: string, value: string) =>
     value.trim() ? ` ${name}="${escapeAttribute(value.trim())}"` : '';
 

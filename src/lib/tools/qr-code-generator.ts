@@ -91,7 +91,10 @@ export function prepareQrRequest(form: QrForm): QrRequestResult {
 
   // Colours go to the library as typed; the normal form is only for comparing them.
   const dark = form.foregroundColor.trim();
-  const light = form.backgroundColor.trim().toLowerCase() === 'none' ? TRANSPARENT : form.backgroundColor.trim();
+  const light =
+    form.backgroundColor.trim().toLowerCase() === 'none'
+      ? TRANSPARENT
+      : form.backgroundColor.trim();
   const darkValue = normalizeHexColor(dark);
   const lightValue = normalizeHexColor(light);
 

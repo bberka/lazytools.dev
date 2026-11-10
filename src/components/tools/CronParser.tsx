@@ -200,7 +200,7 @@ export function CronParser() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="cron-schedule-type" className="text-sm font-medium">
                 Schedule type

@@ -134,7 +134,12 @@ const CATEGORY_DEFINITIONS: readonly CategoryDefinition[] = [
     baseLabel: 'meter per second',
     units: [
       { id: 'meter-per-second', label: 'Meter / Second', symbol: 'm/s', toBase: 1 },
-      { id: 'kilometer-per-hour', label: 'Kilometer / Hour', symbol: 'km/h', toBase: 0.2777777777777778 },
+      {
+        id: 'kilometer-per-hour',
+        label: 'Kilometer / Hour',
+        symbol: 'km/h',
+        toBase: 0.2777777777777778,
+      },
       { id: 'mile-per-hour', label: 'Mile / Hour', symbol: 'mph', toBase: 0.44704 },
       { id: 'foot-per-second', label: 'Foot / Second', symbol: 'ft/s', toBase: 0.3048 },
       { id: 'knot', label: 'Knot', symbol: 'kn', toBase: 0.5144444444444445 },

@@ -1,8 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { lookupIp, type IpInfo } from '@/lib/tools/ip-lookup';
 import type { FetchLike } from '@/lib/tools/network-fetch';
 
-const ALL_FAILED = 'All IP geolocation lookup APIs failed. Please check your connection or try again later.';
+const ALL_FAILED =
+  'All IP geolocation lookup APIs failed. Please check your connection or try again later.';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -10,7 +11,9 @@ const json = (body: unknown, status = 200) =>
 /** A request that never answers but gives up when aborted, like the real fetch. */
 const hang = (init?: RequestInit) =>
   new Promise<Response>((_, reject) => {
-    init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    init?.signal?.addEventListener('abort', () =>
+      reject(new DOMException('Aborted', 'AbortError'))
+    );
   });
 
 type Reply = Response | 'down' | 'hang';
@@ -22,7 +25,11 @@ function network(replies: { ipinfo?: Reply; freeipapi?: Reply; ipapi?: Reply }) 
     urls.push(input);
     const host = new URL(input).hostname;
     const reply =
-      host === 'ipinfo.io' ? replies.ipinfo : host === 'freeipapi.com' ? replies.freeipapi : replies.ipapi;
+      host === 'ipinfo.io'
+        ? replies.ipinfo
+        : host === 'freeipapi.com'
+          ? replies.freeipapi
+          : replies.ipapi;
     if (reply === 'hang') return hang(init);
     if (reply === undefined || reply === 'down') throw new TypeError('Failed to fetch');
     return reply;
@@ -50,7 +57,7 @@ const IPINFO_GOOGLE = {
   readme: 'https://ipinfo.io/missingauth',
 };
 
-test.describe('lookupIp', () => {
+describe('lookupIp', () => {
   test('returns the details ipinfo.io gives for an address', async () => {
     const { fetchImpl, urls } = network({ ipinfo: json(IPINFO_GOOGLE) });
 
@@ -72,8 +79,13 @@ test.describe('lookupIp', () => {
 
   test('asks for the caller’s own address when the input is empty or blank', async () => {
     for (const input of ['', '   ']) {
-      const { fetchImpl, urls } = network({ ipinfo: json({ ip: '203.0.113.9', city: 'Springfield' }) });
-      expect(await infoFrom(input, fetchImpl)).toMatchObject({ ip: '203.0.113.9', city: 'Springfield' });
+      const { fetchImpl, urls } = network({
+        ipinfo: json({ ip: '203.0.113.9', city: 'Springfield' }),
+      });
+      expect(await infoFrom(input, fetchImpl)).toMatchObject({
+        ip: '203.0.113.9',
+        city: 'Springfield',
+      });
       expect(urls).toEqual(['https://ipinfo.io/json']);
     }
   });
@@ -85,7 +97,9 @@ test.describe('lookupIp', () => {
   });
 
   test('looks up IPv6 addresses', async () => {
-    const { fetchImpl, urls } = network({ ipinfo: json({ ip: '2001:4860:4860::8888', city: 'Mountain View' }) });
+    const { fetchImpl, urls } = network({
+      ipinfo: json({ ip: '2001:4860:4860::8888', city: 'Mountain View' }),
+    });
     expect((await infoFrom('2001:4860:4860::8888', fetchImpl)).city).toBe('Mountain View');
     expect(urls).toEqual(['https://ipinfo.io/2001:4860:4860::8888/json']);
   });
@@ -100,17 +114,33 @@ test.describe('lookupIp', () => {
 
   // Regression: the old pattern sent strings like ":::" and "1:2:3" to the API.
   test('rejects a malformed address without sending a request', async () => {
-    const malformed = [':::', '1:2:3', '1::2::3', '256.1.1.1', '8.8.8', '8.8.8.8/32', 'example.com', '8.8.8.8 extra', '🙂'];
+    const malformed = [
+      ':::',
+      '1:2:3',
+      '1::2::3',
+      '256.1.1.1',
+      '8.8.8',
+      '8.8.8.8/32',
+      'example.com',
+      '8.8.8.8 extra',
+      '🙂',
+    ];
     for (const input of malformed) {
       const { fetchImpl, urls } = network({ ipinfo: json(IPINFO_GOOGLE) });
-      expect(await lookupIp(input, { fetchImpl }), input).toEqual({ ok: false, error: 'Invalid IP address format' });
+      expect(await lookupIp(input, { fetchImpl }), input).toEqual({
+        ok: false,
+        error: 'Invalid IP address format',
+      });
       expect(urls, input).toEqual([]);
     }
   });
 
   test('passes on a private address as a bogon', async () => {
     const { fetchImpl } = network({ ipinfo: json({ ip: '192.168.1.1', bogon: true }) });
-    expect(await infoFrom('192.168.1.1', fetchImpl)).toMatchObject({ ip: '192.168.1.1', bogon: true });
+    expect(await infoFrom('192.168.1.1', fetchImpl)).toMatchObject({
+      ip: '192.168.1.1',
+      bogon: true,
+    });
   });
 
   test('falls back to freeipapi.com when ipinfo.io is unreachable', async () => {
@@ -140,7 +170,10 @@ test.describe('lookupIp', () => {
       postal: '2000',
       timezone: '+10:00',
     });
-    expect(urls).toEqual(['https://ipinfo.io/1.1.1.1/json', 'https://freeipapi.com/api/json/1.1.1.1']);
+    expect(urls).toEqual([
+      'https://ipinfo.io/1.1.1.1/json',
+      'https://freeipapi.com/api/json/1.1.1.1',
+    ]);
   });
 
   test('falls back when ipinfo.io answers with an error status or a body that is not JSON', async () => {
@@ -192,7 +225,11 @@ test.describe('lookupIp', () => {
   test('uses the own-address URL of each provider', async () => {
     const { fetchImpl, urls } = network({ ipapi: json({ ip: '203.0.113.9' }) });
     await infoFrom('', fetchImpl);
-    expect(urls).toEqual(['https://ipinfo.io/json', 'https://freeipapi.com/api/json', 'https://ipapi.co/json/']);
+    expect(urls).toEqual([
+      'https://ipinfo.io/json',
+      'https://freeipapi.com/api/json',
+      'https://ipapi.co/json/',
+    ]);
   });
 
   test('reports a failure when every provider fails', async () => {
@@ -216,7 +253,10 @@ test.describe('lookupIp', () => {
 
   test('reports a failure when every provider hangs', async () => {
     const { fetchImpl } = network({ ipinfo: 'hang', freeipapi: 'hang', ipapi: 'hang' });
-    expect(await lookupIp('8.8.8.8', { fetchImpl, timeoutMs: 20 })).toEqual({ ok: false, error: ALL_FAILED });
+    expect(await lookupIp('8.8.8.8', { fetchImpl, timeoutMs: 20 })).toEqual({
+      ok: false,
+      error: ALL_FAILED,
+    });
   });
 
   // Regression: ipapi.co reports a rate limit in a 200 response, which was shown as a
@@ -243,7 +283,9 @@ test.describe('lookupIp', () => {
   // Regression: coordinates were tested for truthiness, so a location on the
   // equator or the prime meridian lost its coordinates and its map link.
   test('keeps coordinates that contain a zero', async () => {
-    const meridian = network({ freeipapi: json({ ipAddress: '1.2.3.4', latitude: 51.4779, longitude: 0 }) });
+    const meridian = network({
+      freeipapi: json({ ipAddress: '1.2.3.4', latitude: 51.4779, longitude: 0 }),
+    });
     expect((await infoFrom('1.2.3.4', meridian.fetchImpl)).loc).toBe('51.4779,0');
 
     const equator = network({ ipapi: json({ ip: '1.2.3.4', latitude: 0, longitude: 32.58 }) });
@@ -261,13 +303,20 @@ test.describe('lookupIp', () => {
       [10, 181],
     ];
     for (const [latitude, longitude] of cases) {
-      const { fetchImpl } = network({ freeipapi: json({ ipAddress: '1.2.3.4', latitude, longitude }) });
-      expect((await infoFrom('1.2.3.4', fetchImpl)).loc, `${latitude},${longitude}`).toBeUndefined();
+      const { fetchImpl } = network({
+        freeipapi: json({ ipAddress: '1.2.3.4', latitude, longitude }),
+      });
+      expect(
+        (await infoFrom('1.2.3.4', fetchImpl)).loc,
+        `${String(latitude)},${String(longitude)}`
+      ).toBeUndefined();
     }
   });
 
   test('accepts coordinates sent as text', async () => {
-    const { fetchImpl } = network({ freeipapi: json({ ipAddress: '1.2.3.4', latitude: '48.85', longitude: '2.35' }) });
+    const { fetchImpl } = network({
+      freeipapi: json({ ipAddress: '1.2.3.4', latitude: '48.85', longitude: '2.35' }),
+    });
     expect((await infoFrom('1.2.3.4', fetchImpl)).loc).toBe('48.85,2.35');
   });
 
@@ -310,7 +359,10 @@ test.describe('lookupIp', () => {
 
   test('falls back to the requested address when a provider leaves it out', async () => {
     const { fetchImpl } = network({ ipinfo: json({ city: 'Mountain View' }) });
-    expect(await infoFrom('8.8.8.8', fetchImpl)).toMatchObject({ ip: '8.8.8.8', city: 'Mountain View' });
+    expect(await infoFrom('8.8.8.8', fetchImpl)).toMatchObject({
+      ip: '8.8.8.8',
+      city: 'Mountain View',
+    });
   });
 
   test('does not accept an own-address answer that has no address in it', async () => {
@@ -324,9 +376,16 @@ test.describe('lookupIp', () => {
 
   test('stops asking further providers once the caller cancels', async () => {
     const controller = new AbortController();
-    const { fetchImpl, urls } = network({ ipinfo: 'hang', freeipapi: json({ ipAddress: '8.8.8.8' }) });
+    const { fetchImpl, urls } = network({
+      ipinfo: 'hang',
+      freeipapi: json({ ipAddress: '8.8.8.8' }),
+    });
 
-    const pending = lookupIp('8.8.8.8', { fetchImpl, signal: controller.signal, timeoutMs: 60_000 });
+    const pending = lookupIp('8.8.8.8', {
+      fetchImpl,
+      signal: controller.signal,
+      timeoutMs: 60_000,
+    });
     controller.abort();
 
     expect((await pending).ok).toBe(false);

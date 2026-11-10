@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   DEFAULT_GLASS_PRESET,
   GLASS_PRESETS,
@@ -9,9 +9,10 @@ import {
 
 const FROSTED = GLASS_PRESETS[DEFAULT_GLASS_PRESET].settings;
 
-const build = (overrides: Partial<GlassSettings> = {}) => buildGlassOutput({ ...FROSTED, ...overrides });
+const build = (overrides: Partial<GlassSettings> = {}) =>
+  buildGlassOutput({ ...FROSTED, ...overrides });
 
-test.describe('presets', () => {
+describe('presets', () => {
   test('offers the six presets with Frosted Light as the default', () => {
     expect(Object.values(GLASS_PRESETS).map((preset) => preset.name)).toEqual([
       'Frosted Light',
@@ -42,7 +43,9 @@ test.describe('presets', () => {
   });
 
   test('ignores letter case in colours', () => {
-    expect(findGlassPreset({ ...FROSTED, bgColor: '#FFFFFF', shadowColor: '#000000' })).toBe('frosted');
+    expect(findGlassPreset({ ...FROSTED, bgColor: '#FFFFFF', shadowColor: '#000000' })).toBe(
+      'frosted'
+    );
   });
 
   test('matches nothing once a visible setting changes', () => {
@@ -57,13 +60,15 @@ test.describe('presets', () => {
     const amethyst = GLASS_PRESETS.amethyst.settings;
 
     // The shadow is off in Hyper Clear, and Royal Amethyst splits its corners.
-    expect(findGlassPreset({ ...hyperClear, shadowBlur: 99, shadowColor: '#ff0000' })).toBe('hyperClear');
+    expect(findGlassPreset({ ...hyperClear, shadowBlur: 99, shadowColor: '#ff0000' })).toBe(
+      'hyperClear'
+    );
     expect(findGlassPreset({ ...amethyst, borderRadius: 3 })).toBe('amethyst');
     expect(findGlassPreset({ ...FROSTED, corners: [1, 2, 3, 4] })).toBe('frosted');
   });
 });
 
-test.describe('buildGlassOutput', () => {
+describe('buildGlassOutput', () => {
   test('builds the inline style', () => {
     expect(build().style).toEqual({
       background: 'rgba(255, 255, 255, 0.15)',
@@ -181,7 +186,14 @@ test.describe('buildGlassOutput', () => {
   });
 
   test('handles the extremes of the controls', () => {
-    const output = build({ bgOpacity: 0, blur: 0, borderWidth: 1.5, shadowX: -20, shadowY: -5, shadowSpread: 20 });
+    const output = build({
+      bgOpacity: 0,
+      blur: 0,
+      borderWidth: 1.5,
+      shadowX: -20,
+      shadowY: -5,
+      shadowSpread: 20,
+    });
 
     expect(output.style.background).toBe('rgba(255, 255, 255, 0)');
     expect(output.style.backdropFilter).toBe('blur(0px) saturate(100%)');

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ExactNumber,
   parseJson,
@@ -37,9 +37,14 @@ function randomValue(random: () => number, depth: number): unknown {
     case 3:
       return (random() - 0.5) * 1e6;
     case 4:
-      return ['', 'plain', 'quote " and \\ slash', 'line\nbreak\ttab', `ünï 😀 ${LINE_SEPARATOR}`, '1234567890123456'][
-        Math.floor(random() * 6)
-      ];
+      return [
+        '',
+        'plain',
+        'quote " and \\ slash',
+        'line\nbreak\ttab',
+        `ünï 😀 ${LINE_SEPARATOR}`,
+        '1234567890123456',
+      ][Math.floor(random() * 6)];
     case 5:
       return [1e21, -0, 1.5e-7, 123456789012345][Math.floor(random() * 4)];
     case 6:
@@ -58,7 +63,7 @@ function randomValue(random: () => number, depth: number): unknown {
   }
 }
 
-test.describe('parseJson', () => {
+describe('parseJson', () => {
   test('parses ordinary JSON like JSON.parse', () => {
     const text = '{"name":"Ada","roles":["Admin","Editor"],"age":36,"ok":true,"none":null}';
 
@@ -70,7 +75,9 @@ test.describe('parseJson', () => {
 
     expect(parseJson(`{"id":${UNSAFE}}`)).toEqual({ id: BigInt(UNSAFE) });
     expect(parseJson(`[-${UNSAFE}, 1]`)).toEqual([-BigInt(UNSAFE), 1]);
-    expect(parseJson('123456789012345678901234567890')).toBe(BigInt('123456789012345678901234567890'));
+    expect(parseJson('123456789012345678901234567890')).toBe(
+      BigInt('123456789012345678901234567890')
+    );
   });
 
   test('leaves integers a double holds exactly as numbers', () => {
@@ -121,7 +128,10 @@ test.describe('parseJson', () => {
     const exact = { exactNumbers: true };
 
     expect(
-      parseJson('[1.5, 1e30, 1.0000000000000000, 0.30000000000000004, 5e-324, 1E5, -0.5e+2, 1234567890123456]', exact)
+      parseJson(
+        '[1.5, 1e30, 1.0000000000000000, 0.30000000000000004, 5e-324, 1E5, -0.5e+2, 1234567890123456]',
+        exact
+      )
     ).toEqual([1.5, 1e30, 1, 0.30000000000000004, 5e-324, 100000, -50, 1234567890123456]);
     // Digits that only look like a number, inside a string, stay a string.
     expect(parseJson('{"id":"1234567890123456789012","e":"1.5e3"}', exact)).toEqual({
@@ -131,14 +141,19 @@ test.describe('parseJson', () => {
   });
 
   test('still returns a bigint for a large integer next to an exact number', () => {
-    expect(parseJson(`[${UNSAFE},1e400]`, { exactNumbers: true })).toEqual([BigInt(UNSAFE), new ExactNumber('1e400')]);
+    expect(parseJson(`[${UNSAFE},1e400]`, { exactNumbers: true })).toEqual([
+      BigInt(UNSAFE),
+      new ExactNumber('1e400'),
+    ]);
   });
 
   test('keeps an exact number as the whole document and inside nesting', () => {
     const exact = { exactNumbers: true };
 
     expect(String(parseJson('1e400', exact))).toBe('1e400');
-    const nested = parseJson('{"a":[{"b":[0.1234567890123456789]}]}', exact) as { a: Array<{ b: unknown[] }> };
+    const nested = parseJson('{"a":[{"b":[0.1234567890123456789]}]}', exact) as {
+      a: Array<{ b: unknown[] }>;
+    };
     expect(String(nested.a[0].b[0])).toBe('0.1234567890123456789');
   });
 
@@ -173,11 +188,14 @@ test.describe('parseJson', () => {
   test('reads escapes, surrogate pairs and awkward whitespace on the slow path', () => {
     const text = ` \n\t{ "k\\u00e9y" : "a\\"b\\\\c\\n\\ud83d\\ude00" ,\r\n "n" : [ ${UNSAFE} , -0.5e+2 , [ ] , { } ] } `;
 
-    expect(parseJson(text)).toEqual({ 'kéy': 'a"b\\c\n😀', n: [BigInt(UNSAFE), -50, [], {}] });
+    expect(parseJson(text)).toEqual({ kéy: 'a"b\\c\n😀', n: [BigInt(UNSAFE), -50, [], {}] });
   });
 
   test('stores a "__proto__" key as data instead of changing the prototype', () => {
-    const parsed = parseJson(`{"__proto__":{"polluted":true},"id":${UNSAFE}}`) as Record<string, unknown>;
+    const parsed = parseJson(`{"__proto__":{"polluted":true},"id":${UNSAFE}}`) as Record<
+      string,
+      unknown
+    >;
 
     expect(Object.keys(parsed)).toEqual(['__proto__', 'id']);
     expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
@@ -194,13 +212,13 @@ test.describe('parseJson', () => {
     expect(() => parseJson("{'a':1}")).toThrow(SyntaxError);
   });
 
-  test('survives nesting deeper than the call stack by falling back', () => {
+  test('survives nesting deeper than the call stack by falling back', (context) => {
     const depth = 200000;
     const text = `${'['.repeat(depth)}${UNSAFE}${']'.repeat(depth)}`;
     try {
       JSON.parse(text);
     } catch {
-      test.skip(true, 'this runtime cannot parse the text natively either');
+      context.skip('this runtime cannot parse the text natively either');
     }
 
     // Walk down by hand: a recursive comparison would overflow as well.
@@ -217,7 +235,7 @@ test.describe('parseJson', () => {
   });
 });
 
-test.describe('stringifyJson', () => {
+describe('stringifyJson', () => {
   test('matches JSON.stringify when there is no bigint', () => {
     const random = createRandom(7);
 
@@ -289,14 +307,18 @@ test.describe('stringifyJson', () => {
   });
 });
 
-test.describe('validateJson', () => {
+describe('validateJson', () => {
   test('returns null for empty and whitespace-only text', () => {
     expect(validateJson('')).toBeNull();
     expect(validateJson('  \n\t ')).toBeNull();
   });
 
   test('summarises arrays, objects and primitives', () => {
-    expect(validateJson('[1,2,3]')).toMatchObject({ valid: true, summary: 'Array with 3 items', error: '' });
+    expect(validateJson('[1,2,3]')).toMatchObject({
+      valid: true,
+      summary: 'Array with 3 items',
+      error: '',
+    });
     expect(validateJson('[1]')).toMatchObject({ summary: 'Array with 1 item' });
     expect(validateJson('[]')).toMatchObject({ summary: 'Array with 0 items' });
     expect(validateJson('{"a":1}')).toMatchObject({ summary: 'Object with 1 key' });
@@ -305,7 +327,11 @@ test.describe('validateJson', () => {
     expect(validateJson('0')).toMatchObject({ summary: 'Primitive (number)', value: 0 });
     expect(validateJson('-12.5')).toMatchObject({ summary: 'Primitive (number)', value: -12.5 });
     expect(validateJson('false')).toMatchObject({ summary: 'Primitive (boolean)', value: false });
-    expect(validateJson('null')).toMatchObject({ valid: true, summary: 'Primitive (null)', value: null });
+    expect(validateJson('null')).toMatchObject({
+      valid: true,
+      summary: 'Primitive (null)',
+      value: null,
+    });
   });
 
   test('calls a large integer a number', () => {
@@ -314,8 +340,13 @@ test.describe('validateJson', () => {
 
   test('keeps a number a double cannot hold, and calls it a number', () => {
     expect(validateJson('1e400')).toMatchObject({ valid: true, summary: 'Primitive (number)' });
-    expect(validateJson('{"big":1e400}')).toMatchObject({ valid: true, summary: 'Object with 1 key' });
-    expect((validateJson('[0.1234567890123456789]')?.value as unknown[])[0]).toBeInstanceOf(ExactNumber);
+    expect(validateJson('{"big":1e400}')).toMatchObject({
+      valid: true,
+      summary: 'Object with 1 key',
+    });
+    const validation = validateJson('[0.1234567890123456789]');
+    if (!validation) throw new Error('expected a validation result');
+    expect((validation.value as unknown[])[0]).toBeInstanceOf(ExactNumber);
   });
 
   test('reports the parser message for invalid JSON', () => {
@@ -333,7 +364,7 @@ test.describe('validateJson', () => {
   });
 });
 
-test.describe('queryJson', () => {
+describe('queryJson', () => {
   const data = {
     name: 'Ada',
     roles: ['Admin', 'Editor'],
@@ -448,14 +479,16 @@ test.describe('queryJson', () => {
   });
 });
 
-test.describe('renderJson', () => {
+describe('renderJson', () => {
   const value = { name: 'Ada', roles: ['Admin', 'Editor'] };
 
   test('formats with spaces, tabs or on one line', () => {
     expect(renderJson(value, { indent: 2 }).text).toBe(JSON.stringify(value, null, 2));
     expect(renderJson(value, { indent: 4 }).text).toBe(JSON.stringify(value, null, 4));
     expect(renderJson(value, { indent: '\t' }).text).toBe(JSON.stringify(value, null, '\t'));
-    expect(renderJson(value, { indent: 2, minify: true }).text).toBe('{"name":"Ada","roles":["Admin","Editor"]}');
+    expect(renderJson(value, { indent: 2, minify: true }).text).toBe(
+      '{"name":"Ada","roles":["Admin","Editor"]}'
+    );
   });
 
   test('returns the selected value alongside its text', () => {
@@ -493,7 +526,9 @@ test.describe('renderJson', () => {
     expect(renderJson(parsed?.value, { indent: 2 }).text).toBe(
       `{\n  "id": ${UNSAFE},\n  "ids": [\n    ${UNSAFE}\n  ]\n}`
     );
-    expect(renderJson(parsed?.value, { minify: true }).text).toBe(`{"id":${UNSAFE},"ids":[${UNSAFE}]}`);
+    expect(renderJson(parsed?.value, { minify: true }).text).toBe(
+      `{"id":${UNSAFE},"ids":[${UNSAFE}]}`
+    );
     expect(renderJson(parsed?.value, { path: 'ids[0]' }).text).toBe(UNSAFE);
   });
 
@@ -504,11 +539,15 @@ test.describe('renderJson', () => {
     expect(renderJson(parsed?.value, { indent: 2 }).text).toBe(
       '{\n  "big": 1e400,\n  "list": [\n    0.1234567890123456789,\n    2.5\n  ]\n}'
     );
-    expect(renderJson(parsed?.value, { minify: true }).text).toBe('{"big":1e400,"list":[0.1234567890123456789,2.5]}');
+    expect(renderJson(parsed?.value, { minify: true }).text).toBe(
+      '{"big":1e400,"list":[0.1234567890123456789,2.5]}'
+    );
     expect(renderJson(parsed?.value, { path: 'list[0]' }).text).toBe('0.1234567890123456789');
     expect(renderJson(parsed?.value, { path: 'big' }).text).toBe('1e400');
     // The number is a value, not an object with members to follow.
-    expect(renderJson(parsed?.value, { path: 'big.literal' }).error).toContain('No matching properties');
+    expect(renderJson(parsed?.value, { path: 'big.literal' }).error).toContain(
+      'No matching properties'
+    );
   });
 
   test('writes null for array items a mapped key did not find', () => {

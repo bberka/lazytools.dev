@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeDnsRecords,
   formatTtl,
@@ -26,7 +26,9 @@ function resolver(reply: () => Response | Promise<Response>) {
 /** A request that never answers but gives up when aborted, like the real fetch. */
 const hang: FetchLike = (_input, init) =>
   new Promise((_, reject) => {
-    init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    init?.signal?.addEventListener('abort', () =>
+      reject(new DOMException('Aborted', 'AbortError'))
+    );
   });
 
 const nameOf = (input: string) => {
@@ -34,7 +36,7 @@ const nameOf = (input: string) => {
   return parsed.ok ? parsed.name : `error: ${parsed.error}`;
 };
 
-test.describe('parseDomainName', () => {
+describe('parseDomainName', () => {
   test('accepts ordinary domain names and trims them', () => {
     expect(nameOf('example.com')).toBe('example.com');
     expect(nameOf('  www.Example.co.uk \n')).toBe('www.Example.co.uk');
@@ -114,7 +116,7 @@ test.describe('parseDomainName', () => {
   });
 });
 
-test.describe('sameDnsName', () => {
+describe('sameDnsName', () => {
   test('ignores case and a trailing dot', () => {
     expect(sameDnsName('google.com.', 'google.com')).toBe(true);
     expect(sameDnsName('WWW.Example.COM', 'www.example.com.')).toBe(true);
@@ -127,7 +129,7 @@ test.describe('sameDnsName', () => {
   });
 });
 
-test.describe('formatTtl', () => {
+describe('formatTtl', () => {
   test('shows the largest whole unit', () => {
     expect(formatTtl(0)).toBe('0s');
     expect(formatTtl(59)).toBe('59s');
@@ -141,7 +143,7 @@ test.describe('formatTtl', () => {
   });
 });
 
-test.describe('describeDnsRecords', () => {
+describe('describeDnsRecords', () => {
   const record = (type: string): DnsRecord => ({ name: 'example.com.', type, ttl: 60, data: 'x' });
   const result = (type: DnsLookupResult['type'], types: string[]): DnsLookupResult => ({
     name: 'example.com',
@@ -157,7 +159,9 @@ test.describe('describeDnsRecords', () => {
   // Regression: every record in the answer was counted as the requested type,
   // so an alias with one address read "Found 2 A records".
   test('counts the records of an alias chain separately', () => {
-    expect(describeDnsRecords(result('A', ['CNAME', 'A']))).toBe('Found 1 A record and 1 CNAME record');
+    expect(describeDnsRecords(result('A', ['CNAME', 'A']))).toBe(
+      'Found 1 A record and 1 CNAME record'
+    );
     expect(describeDnsRecords(result('AAAA', ['CNAME', 'CNAME', 'AAAA', 'AAAA']))).toBe(
       'Found 2 AAAA records and 2 CNAME records'
     );
@@ -169,7 +173,7 @@ test.describe('describeDnsRecords', () => {
   });
 });
 
-test.describe('lookupDns', () => {
+describe('lookupDns', () => {
   const GOOGLE_A = {
     Status: 0,
     TC: false,
@@ -221,12 +225,18 @@ test.describe('lookupDns', () => {
   // Regression: this name never reached the resolver because validation rejected it.
   test('looks up a DMARC record', async () => {
     const { fetchImpl, urls } = resolver(() =>
-      json({ Status: 0, Answer: [{ name: '_dmarc.example.com.', type: 16, TTL: 3600, data: 'v=DMARC1; p=none' }] })
+      json({
+        Status: 0,
+        Answer: [{ name: '_dmarc.example.com.', type: 16, TTL: 3600, data: 'v=DMARC1; p=none' }],
+      })
     );
 
     const outcome = await lookupDns('_dmarc.example.com', 'TXT', { fetchImpl });
     expect(urls).toEqual(['https://dns.google/resolve?name=_dmarc.example.com&type=16']);
-    expect(outcome).toMatchObject({ ok: true, result: { records: [{ type: 'TXT', data: 'v=DMARC1; p=none' }] } });
+    expect(outcome).toMatchObject({
+      ok: true,
+      result: { records: [{ type: 'TXT', data: 'v=DMARC1; p=none' }] },
+    });
   });
 
   // Regression: the CNAME record of an alias was presented as one more record of the requested type.
@@ -245,7 +255,12 @@ test.describe('lookupDns', () => {
 
     const outcome = await lookupDns('www.example.com', 'A', { fetchImpl });
     if (!outcome.ok) throw new Error(outcome.error);
-    expect(outcome.result.records.map((record) => record.type)).toEqual(['CNAME', 'A', 'RRSIG', 'TYPE65']);
+    expect(outcome.result.records.map((record) => record.type)).toEqual([
+      'CNAME',
+      'A',
+      'RRSIG',
+      'TYPE65',
+    ]);
     expect(describeDnsRecords(outcome.result)).toBe(
       'Found 1 A record and 1 CNAME record and 1 RRSIG record and 1 TYPE65 record'
     );
@@ -254,7 +269,10 @@ test.describe('lookupDns', () => {
   test('rejects a bad name without sending a query', async () => {
     const { fetchImpl, urls } = resolver(() => json(GOOGLE_A));
 
-    expect(await lookupDns('   ', 'A', { fetchImpl })).toEqual({ ok: false, error: 'Please enter a domain name' });
+    expect(await lookupDns('   ', 'A', { fetchImpl })).toEqual({
+      ok: false,
+      error: 'Please enter a domain name',
+    });
     expect(await lookupDns('not a domain', 'A', { fetchImpl })).toEqual({
       ok: false,
       error: 'Invalid domain name format',
@@ -272,7 +290,10 @@ test.describe('lookupDns', () => {
     ];
     for (const [Status, error] of messages) {
       const { fetchImpl } = resolver(() => json({ Status }));
-      expect(await lookupDns('nope.example', 'A', { fetchImpl }), String(Status)).toEqual({ ok: false, error });
+      expect(await lookupDns('nope.example', 'A', { fetchImpl }), String(Status)).toEqual({
+        ok: false,
+        error,
+      });
     }
   });
 
@@ -319,12 +340,21 @@ test.describe('lookupDns', () => {
     const { fetchImpl } = resolver(() =>
       json({
         Status: 0,
-        Answer: [null, 'text', { name: 'example.com.', type: 1, TTL: 60 }, { type: 1, data: '93.184.216.34' }],
+        Answer: [
+          null,
+          'text',
+          { name: 'example.com.', type: 1, TTL: 60 },
+          { type: 1, data: '93.184.216.34' },
+        ],
       })
     );
     expect(await lookupDns('example.com', 'A', { fetchImpl })).toEqual({
       ok: true,
-      result: { name: 'example.com', type: 'A', records: [{ name: '', type: 'A', ttl: 0, data: '93.184.216.34' }] },
+      result: {
+        name: 'example.com',
+        type: 'A',
+        records: [{ name: '', type: 'A', ttl: 0, data: '93.184.216.34' }],
+      },
     });
   });
 
@@ -348,7 +378,11 @@ test.describe('lookupDns', () => {
 
   test('settles without a result when the caller cancels', async () => {
     const controller = new AbortController();
-    const pending = lookupDns('example.com', 'A', { fetchImpl: hang, signal: controller.signal, timeoutMs: 60_000 });
+    const pending = lookupDns('example.com', 'A', {
+      fetchImpl: hang,
+      signal: controller.signal,
+      timeoutMs: 60_000,
+    });
     controller.abort();
     expect((await pending).ok).toBe(false);
   });

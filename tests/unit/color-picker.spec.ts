@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   colorValues,
   generateTheme,
@@ -14,7 +14,7 @@ const BLUE = { r: 59, g: 130, b: 246 };
 const BLACK = { r: 0, g: 0, b: 0 };
 const WHITE = { r: 255, g: 255, b: 255 };
 
-test.describe('colorValues', () => {
+describe('colorValues', () => {
   test('lists the four copyable forms', () => {
     expect(colorValues(BLUE)).toEqual([
       { label: 'HEX', value: '#3B82F6' },
@@ -30,7 +30,7 @@ test.describe('colorValues', () => {
   });
 });
 
-test.describe('tintsAndShades', () => {
+describe('tintsAndShades', () => {
   test('runs from the darkest shade to the lightest tint around the base', () => {
     expect(tintsAndShades(BLUE)).toEqual([
       { label: 'Shade 40', hex: '#234E94' },
@@ -52,7 +52,7 @@ test.describe('tintsAndShades', () => {
   });
 });
 
-test.describe('readableTextColor', () => {
+describe('readableTextColor', () => {
   test('picks dark text on light colours and white on dark ones', () => {
     expect(readableTextColor(WHITE)).toBe('#111827');
     expect(readableTextColor({ r: 250, g: 204, b: 21 })).toBe('#111827');
@@ -61,7 +61,7 @@ test.describe('readableTextColor', () => {
   });
 });
 
-test.describe('generateTheme', () => {
+describe('generateTheme', () => {
   const theme = generateTheme(BLUE);
 
   test('builds the twelve variables in a fixed order', () => {
@@ -126,7 +126,7 @@ test.describe('generateTheme', () => {
   });
 });
 
-test.describe('pickerPosition', () => {
+describe('pickerPosition', () => {
   test('derives the handle from the colour when nothing is remembered', () => {
     expect(pickerPosition({ r: 0, g: 0, b: 255 }, null)).toEqual({ h: 240, s: 100, v: 100 });
   });

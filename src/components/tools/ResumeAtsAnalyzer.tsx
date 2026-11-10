@@ -30,7 +30,7 @@ import {
   type LanguageSelection,
   type ResumeAnalysis,
   type ResumeLanguage,
-} from '@/lib/utils/resume-ats-analyzer';
+} from '@/lib/tools/resume-ats-analyzer';
 import { PDF_MIME_TYPE, openPdf } from '@/lib/pdf';
 
 async function extractPdfText(file: File) {
@@ -156,10 +156,6 @@ export function ResumeAtsAnalyzer() {
     intake.reset();
   };
 
-  const handleCopyText = async () => {
-    await copyToClipboard(extractedText);
-  };
-
   return (
     <div className="space-y-4">
       <Card>
@@ -199,7 +195,7 @@ export function ResumeAtsAnalyzer() {
             </p>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="resume-language" className="block text-sm font-medium">
                 Resume language
@@ -294,14 +290,17 @@ export function ResumeAtsAnalyzer() {
       </Card>
 
       {error && (
-        <div role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {analysis && (
         <>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -346,7 +345,7 @@ export function ResumeAtsAnalyzer() {
                     </span>
                   </div>
                 )}
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <MetricCard label="Pages" value={analysis.pageCount} />
                   <MetricCard label="Words" value={analysis.wordCount.toLocaleString()} />
                   <MetricCard label="Bullets" value={analysis.bulletCount.toLocaleString()} />
@@ -378,7 +377,7 @@ export function ResumeAtsAnalyzer() {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Section Coverage</CardTitle>
@@ -387,7 +386,7 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <StatusPill label="Email" ok={analysis.contactChecks.email} />
                   <StatusPill label="Phone" ok={analysis.contactChecks.phone} />
                   <StatusPill label="LinkedIn" ok={analysis.contactChecks.linkedin} />
@@ -444,7 +443,7 @@ export function ResumeAtsAnalyzer() {
                   Plain-language scoring based on the extracted text layer, not visual layout.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-2">
+              <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <MetricCard
                   label={analysis.readability.formula}
                   value={analysis.readability.score}
@@ -469,7 +468,7 @@ export function ResumeAtsAnalyzer() {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Keyword Alignment</CardTitle>
@@ -537,7 +536,7 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </div>
               <Button
-                onClick={handleCopyText}
+                onClick={() => copyToClipboard(extractedText)}
                 variant={isCopied ? 'default' : 'outline'}
                 size="sm"
                 className="min-h-11 sm:min-h-9"

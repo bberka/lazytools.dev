@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,16 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   Ban,
-  Check,
   CircleAlert,
   CircleCheck,
   CircleX,
   Clock,
-  Copy,
   Dices,
   FileKey,
   Hourglass,
@@ -200,8 +198,6 @@ export function JwtSigner() {
   const [verifyToken, setVerifyToken] = useState('');
   const [clockTick, setClockTick] = useState(0);
 
-  const copyToken = useCopyToClipboard();
-
   const headerError = useMemo(() => validateHeader(headerText, algorithm), [headerText, algorithm]);
   const payloadError = useMemo(() => validatePayload(payloadText), [payloadText]);
   const secretCheck = useMemo(() => decodeSecret(secret, secretEncoding), [secret, secretEncoding]);
@@ -272,13 +268,13 @@ export function JwtSigner() {
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <p className="text-muted-foreground">
           <span className="font-medium text-foreground">Nothing leaves your browser.</span> Tokens
-          are signed and checked on this page with WebCrypto. Your header, payload, secret and tokens
-          are never uploaded or saved. This tool is for testing authorization flows, so use
+          are signed and checked on this page with WebCrypto. Your header, payload, secret and
+          tokens are never uploaded or saved. This tool is for testing authorization flows, so use
           throwaway secrets rather than production keys.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <div className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
@@ -472,7 +468,7 @@ export function JwtSigner() {
               </div>
 
               {timeClaims.length > 0 && (
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md border bg-muted/40 p-3 text-xs">
+                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-md border bg-muted/40 p-3 text-xs">
                   {timeClaims.map(({ claim, iso }) => (
                     <div key={claim} className="contents">
                       <dt className="font-mono font-semibold">{claim}</dt>
@@ -496,9 +492,9 @@ export function JwtSigner() {
             </CardHeader>
             <CardContent className="space-y-4">
               {signed === null ? (
-                <p className="py-4 text-center text-sm text-muted-foreground sm:py-8" role="status">
+                <output className="block py-4 text-center text-sm text-muted-foreground sm:py-8">
                   Signing...
-                </p>
+                </output>
               ) : signed.ok ? (
                 <>
                   <TokenView parts={signed.parts} />
@@ -506,7 +502,10 @@ export function JwtSigner() {
                     <ul className="space-y-1 text-xs text-muted-foreground" aria-label="Warnings">
                       {signed.warnings.map((warning) => (
                         <li key={warning} className="flex items-start gap-1.5">
-                          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <TriangleAlert
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
                           <span>
                             <span className="font-medium text-foreground">Warning: </span>
                             {warning}
@@ -517,25 +516,20 @@ export function JwtSigner() {
                   )}
                 </>
               ) : (
-                <p
-                  className="rounded-md border border-dashed py-4 text-center text-sm text-muted-foreground sm:py-8"
-                  role="status"
-                >
+                <output className="block rounded-md border border-dashed py-4 text-center text-sm text-muted-foreground sm:py-8">
                   {signFailureMessage(signed, secret === '')}
-                </p>
+                </output>
               )}
 
               <div className="flex flex-wrap gap-2">
-                <Button
+                <CopyButton
+                  text={signedToken}
+                  label="Copy token"
+                  iconClassName="h-4 w-4"
                   type="button"
                   size="sm"
-                  variant={copyToken.isCopied ? 'default' : 'outline'}
                   disabled={!signedToken}
-                  onClick={() => copyToken.copyToClipboard(signedToken)}
-                >
-                  {copyToken.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copyToken.isCopied ? 'Copied' : 'Copy token'}
-                </Button>
+                />
                 <Button type="button" size="sm" variant="outline" onClick={handleReset}>
                   <RotateCcw className="h-4 w-4" />
                   Reset all
@@ -552,7 +546,8 @@ export function JwtSigner() {
               </CardTitle>
               <CardDescription>
                 Checks a pasted token against the secret and encoding set in Algorithm &amp; Secret.
-                The algorithm comes from the token&apos;s header, and exp and nbf use this device&apos;s clock.
+                The algorithm comes from the token&apos;s header, and exp and nbf use this
+                device&apos;s clock.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

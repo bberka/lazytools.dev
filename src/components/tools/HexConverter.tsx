@@ -2,14 +2,21 @@
 
 import { useState, useMemo, useId } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Copy, Check, Trash2, ArrowLeftRight, Binary, FileText, AlertTriangle } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Binary, FileText, AlertTriangle } from 'lucide-react';
 import { convertHex, type HexMode } from '@/lib/tools/hex-converter';
 
 type Mode = HexMode;
@@ -24,8 +31,6 @@ export function HexConverter() {
   const [prefixType, setPrefixType] = useState<PrefixType>('none');
   const [customPrefix, setCustomPrefix] = useState('');
   const [uppercase, setUppercase] = useState(false);
-
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const delimiterId = useId();
   const customDelimiterId = useId();
@@ -67,11 +72,7 @@ export function HexConverter() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Mode Toggle */}
-      <Tabs
-        value={mode}
-        onValueChange={(val) => handleModeChange(val as Mode)}
-        className="w-full"
-      >
+      <Tabs value={mode} onValueChange={(val) => handleModeChange(val as Mode)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2 whitespace-normal">
             <Binary className="h-4 w-4 shrink-0" />
@@ -91,7 +92,7 @@ export function HexConverter() {
           <CardDescription>Configure prefixes, delimiters, and text cases.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <label
                 htmlFor={delimiterId}
@@ -99,7 +100,10 @@ export function HexConverter() {
               >
                 Hex Delimiter
               </label>
-              <Select value={delimiterType} onValueChange={(val) => setDelimiterType(val as DelimiterType)}>
+              <Select
+                value={delimiterType}
+                onValueChange={(val) => setDelimiterType(val as DelimiterType)}
+              >
                 <SelectTrigger id={delimiterId} className="bg-background">
                   <SelectValue placeholder="Delimiter" />
                 </SelectTrigger>
@@ -187,7 +191,7 @@ export function HexConverter() {
       </Card>
 
       {/* Main Panels */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">
@@ -247,25 +251,14 @@ export function HexConverter() {
               rows={10}
               className="flex-1 font-mono text-xs leading-relaxed bg-muted/20 border-muted focus-visible:ring-0 cursor-text"
             />
-            <Button
-              onClick={() => copyToClipboard(output)}
+            <CopyButton
+              text={output}
+              label="Copy Output"
+              copiedLabel="Copied!"
               disabled={!output}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
               className="w-full sm:w-auto font-medium transition-all duration-200"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Output
-                </>
-              )}
-            </Button>
+            />
           </CardContent>
         </Card>
       </div>

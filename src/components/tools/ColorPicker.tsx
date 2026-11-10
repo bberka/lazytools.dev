@@ -5,30 +5,16 @@ import {
   useId,
   useMemo,
   useState,
-  useSyncExternalStore,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import {
-  Check,
-  Copy,
-  Palette,
-  Pipette,
-  Plus,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
+import { Check, Copy, Palette, Pipette, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { useCopyToClipboard } from '@/hooks';
+import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
 import { TooltipSimple } from '@/components/ui/tooltip';
 import {
   colorValues,
@@ -77,20 +63,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-// The EyeDropper API never appears or disappears while the page is open.
-const subscribeToNothing = () => () => {};
 const hasEyeDropper = () => 'EyeDropper' in window;
-const noEyeDropper = () => false;
 
-function ColorValue({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  const copy = useCopyToClipboard();
-
+function ColorValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-3 py-3 transition-colors hover:border-border hover:bg-muted/50">
       <div className="min-w-0 flex-1 space-y-1">
@@ -100,19 +75,13 @@ function ColorValue({
         <p className="truncate font-mono text-sm text-foreground">{value}</p>
       </div>
       <TooltipSimple content={`Copy ${label}`}>
-        <Button
+        <CopyButton
+          text={value}
+          iconClassName="h-4 w-4"
           size="icon"
-          variant={copy.isCopied ? 'default' : 'outline'}
           className="h-9 w-9 rounded-xl"
-          onClick={() => copy.copyToClipboard(value)}
           aria-label={`Copy ${label}`}
-        >
-          {copy.isCopied ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </Button>
+        />
       </TooltipSimple>
     </div>
   );
@@ -142,7 +111,7 @@ export function ColorPicker() {
   const [saveFeedbackVisible, triggerSaveFeedback] = useFeedback();
   const [pickFeedbackVisible, triggerPickFeedback] = useFeedback();
   const [resetFeedbackVisible, triggerResetFeedback] = useFeedback();
-  const eyeDropperSupported = useSyncExternalStore(subscribeToNothing, hasEyeDropper, noEyeDropper);
+  const eyeDropperSupported = useBrowserFeature(hasEyeDropper, false);
 
   const hex = rgbToHex(rgb);
   const picker = useMemo(() => pickerPosition(rgb, dragged), [rgb, dragged]);
@@ -237,7 +206,7 @@ export function ColorPicker() {
             Pick a color, tune channels, and copy production-ready values.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
+        <CardContent className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(290px,380px)_minmax(0,1fr)]">
           <div className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
             <div
               className="flex min-h-48 flex-col justify-end px-6 py-5"
@@ -257,9 +226,10 @@ export function ColorPicker() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Picker
                   </p>
-                  <p className="text-sm font-medium">Drag in the field to choose saturation and brightness.</p>
+                  <p className="text-sm font-medium">
+                    Drag in the field to choose saturation and brightness.
+                  </p>
                 </div>
-
               </div>
 
               <ColorField
@@ -312,15 +282,12 @@ export function ColorPicker() {
             </div>
 
             {error && (
-              <div
-                role="status"
-                className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-              >
+              <output className="block rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
-              </div>
+              </output>
             )}
 
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <TooltipSimple
                 content={
                   eyeDropperSupported
@@ -352,11 +319,7 @@ export function ColorPicker() {
                 variant={saveFeedbackVisible ? 'default' : 'outline'}
                 className="h-12 w-full rounded-xl"
               >
-                {saveFeedbackVisible ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
+                {saveFeedbackVisible ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {saveFeedbackVisible ? 'Saved' : 'Save Swatch'}
               </Button>
               <Button
@@ -375,11 +338,12 @@ export function ColorPicker() {
                 {resetFeedbackVisible ? 'Reset Done' : 'Reset'}
               </Button>
             </div>
-
           </div>
 
           <div className="space-y-3 rounded-[28px] border border-border/70 bg-muted/[0.18] p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">RGB Channels</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              RGB Channels
+            </p>
             <ChannelSlider
               label="Red"
               value={rgb.r}
@@ -402,13 +366,12 @@ export function ColorPicker() {
         </CardContent>
       </Card>
 
-
       <Card>
         <CardHeader>
           <CardTitle>Copy Values</CardTitle>
           <CardDescription>Use the selected color in code or design tools.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
+        <CardContent className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {values.map((item) => (
             <ColorValue key={item.label} label={item.label} value={item.value} />
           ))}
@@ -463,7 +426,7 @@ export function ColorPicker() {
                     onClick={() => setColor(parseHexColor(color) ?? rgb)}
                     aria-label={`Use saved swatch ${color}`}
                   >
-                    <span className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/20 px-2 py-1 text-center font-mono text-[10px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                    <span className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/20 px-2 py-1 text-center font-mono text-[10px] text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 pointer-coarse:opacity-100">
                       {color}
                     </span>
                   </button>
@@ -479,7 +442,9 @@ export function ColorPicker() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>Theme Palette</CardTitle>
-              <CardDescription>CSS variables for a full UI theme based on your primary color.</CardDescription>
+              <CardDescription>
+                CSS variables for a full UI theme based on your primary color.
+              </CardDescription>
             </div>
             <CopyThemeButton theme={theme} />
           </div>
@@ -501,18 +466,14 @@ export function ColorPicker() {
 }
 
 function CopyThemeButton({ theme }: { theme: ThemeEntry[] }) {
-  const copy = useCopyToClipboard();
-
   return (
-    <Button
+    <CopyButton
+      text={themeCss(theme)}
+      label="Copy CSS"
+      iconClassName="h-4 w-4"
       size="sm"
-      variant={copy.isCopied ? 'default' : 'outline'}
       className="shrink-0 rounded-xl"
-      onClick={() => copy.copyToClipboard(themeCss(theme))}
-    >
-      {copy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copy.isCopied ? 'Copied' : 'Copy CSS'}
-    </Button>
+    />
   );
 }
 
@@ -530,7 +491,9 @@ function ThemeSwatchButton({ entry, onClick }: { entry: ThemeEntry; onClick: () 
           onClick={onClick}
           aria-label={`Use ${entry.label}`}
         >
-          <span className="truncate font-mono text-[10px] font-medium opacity-70">{entry.variable}</span>
+          <span className="truncate font-mono text-[10px] font-medium opacity-70">
+            {entry.variable}
+          </span>
         </button>
       </TooltipSimple>
       <div className="flex items-center gap-2 p-3">
@@ -573,7 +536,9 @@ function ChannelSlider({
   return (
     <div className="space-y-3 rounded-[22px] border border-border/60 bg-muted/[0.18] px-4 py-4">
       <div className="flex items-center justify-between gap-4">
-        <label id={labelId} className="text-sm font-medium">{label}</label>
+        <label id={labelId} className="text-sm font-medium">
+          {label}
+        </label>
         <span className="font-mono text-sm text-muted-foreground">
           {value}
           {suffix}
@@ -611,9 +576,7 @@ function SwatchButton({
           <p className="truncate text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="truncate font-mono text-sm text-foreground">
-            {color}
-          </p>
+          <p className="truncate font-mono text-sm text-foreground">{color}</p>
         </div>
         <TooltipSimple content={`Copy ${color}`}>
           <Button
@@ -623,11 +586,7 @@ function SwatchButton({
             onClick={() => copy.copyToClipboard(color)}
             aria-label={`Copy ${color}`}
           >
-            {copy.isCopied ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
+            {copy.isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           </Button>
         </TooltipSimple>
       </div>
@@ -687,6 +646,7 @@ function ColorField({
 
   return (
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom colour slider dragged in two dimensions; <input type="range"> cannot draw or move like it
       role="slider"
       tabIndex={0}
       aria-label="Saturation and brightness"
@@ -722,13 +682,7 @@ function ColorField({
   );
 }
 
-function HueSlider({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-}) {
+function HueSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const labelId = useId();
 
   const updateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -772,10 +726,13 @@ function HueSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
-        <span id={labelId} className="text-sm font-medium">Hue</span>
+        <span id={labelId} className="text-sm font-medium">
+          Hue
+        </span>
         <span className="font-mono text-sm text-muted-foreground">{value}deg</span>
       </div>
       <div
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom colour slider dragged in two dimensions; <input type="range"> cannot draw or move like it
         role="slider"
         tabIndex={0}
         aria-labelledby={labelId}

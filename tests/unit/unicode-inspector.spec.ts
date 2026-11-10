@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   CHAR_CLASSES,
   CHAR_TABLE,
@@ -40,7 +40,7 @@ function tagEncode(ascii: string): string {
   return Array.from(ascii, (char) => String.fromCodePoint(0xe0000 + char.charCodeAt(0))).join('');
 }
 
-test.describe('UTF-8 and UTF-16 encoding', () => {
+describe('UTF-8 and UTF-16 encoding', () => {
   const utf8Vectors: Array<[number, number[]]> = [
     [0x0000, [0x00]],
     [0x0041, [0x41]],
@@ -97,14 +97,22 @@ test.describe('UTF-8 and UTF-16 encoding', () => {
   });
 
   test('total UTF-8 bytes match TextEncoder for mixed text', () => {
-    const samples = ['', 'plain ASCII', 'caf\u00E9 \u20AC \u{1F600}', FAMILY, ENGLAND_FLAG, 'bad \ud800 surrogate', EXAMPLE_TEXT];
+    const samples = [
+      '',
+      'plain ASCII',
+      'caf\u00E9 \u20AC \u{1F600}',
+      FAMILY,
+      ENGLAND_FLAG,
+      'bad \ud800 surrogate',
+      EXAMPLE_TEXT,
+    ];
     for (const text of samples) {
       expect(inspectText(text).stats.utf8Bytes).toBe(new TextEncoder().encode(text).length);
     }
   });
 });
 
-test.describe('escapes and entities', () => {
+describe('escapes and entities', () => {
   test('JavaScript escapes use \\uXXXX in the BMP and \\u{X} above it', () => {
     expect(jsEscape(0x61)).toBe('\\u0061');
     expect(jsEscape(0x200b)).toBe('\\u200B');
@@ -126,10 +134,16 @@ test.describe('escapes and entities', () => {
   });
 });
 
-test.describe('surrogate pairs and emoji sequences', () => {
+describe('surrogate pairs and emoji sequences', () => {
   test('an astral character is one code point and two UTF-16 units', () => {
     const { stats, rows } = inspectText('\u{1F600}');
-    expect(stats).toMatchObject({ utf16Length: 2, codePoints: 1, graphemes: 1, utf8Bytes: 4, flagged: 0 });
+    expect(stats).toMatchObject({
+      utf16Length: 2,
+      codePoints: 1,
+      graphemes: 1,
+      utf8Bytes: 4,
+      flagged: 0,
+    });
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       position: 1,
@@ -157,7 +171,13 @@ test.describe('surrogate pairs and emoji sequences', () => {
     expect(stats.codePoints).toBe(3);
     expect(stats.utf16Length).toBe(3);
     expect(stats.flagged).toBe(1);
-    expect(rows[1]).toMatchObject({ hex: 'U+D83D', className: 'malformed', utf8: 'EF BF BD', utf16: 'D83D', js: '\\uD83D' });
+    expect(rows[1]).toMatchObject({
+      hex: 'U+D83D',
+      className: 'malformed',
+      utf8: 'EF BF BD',
+      utf16: 'D83D',
+      js: '\\uD83D',
+    });
   });
 
   const sequences: Array<{
@@ -168,14 +188,63 @@ test.describe('surrogate pairs and emoji sequences', () => {
     bytes: number;
     emojiParts: number;
   }> = [
-    { name: 'family emoji (4 people, 3 ZWJ)', text: FAMILY, codePoints: 7, utf16: 11, bytes: 25, emojiParts: 3 },
-    { name: 'US flag (regional indicators)', text: US_FLAG, codePoints: 2, utf16: 4, bytes: 8, emojiParts: 0 },
-    { name: 'thumbs up with skin tone', text: THUMBS_UP_MEDIUM, codePoints: 2, utf16: 4, bytes: 8, emojiParts: 0 },
-    { name: 'e with combining acute', text: E_ACUTE_DECOMPOSED, codePoints: 2, utf16: 2, bytes: 3, emojiParts: 0 },
-    { name: 'England flag (tag sequence)', text: ENGLAND_FLAG, codePoints: 7, utf16: 14, bytes: 28, emojiParts: 6 },
-    { name: 'red heart with VS16', text: RED_HEART, codePoints: 2, utf16: 2, bytes: 6, emojiParts: 1 },
+    {
+      name: 'family emoji (4 people, 3 ZWJ)',
+      text: FAMILY,
+      codePoints: 7,
+      utf16: 11,
+      bytes: 25,
+      emojiParts: 3,
+    },
+    {
+      name: 'US flag (regional indicators)',
+      text: US_FLAG,
+      codePoints: 2,
+      utf16: 4,
+      bytes: 8,
+      emojiParts: 0,
+    },
+    {
+      name: 'thumbs up with skin tone',
+      text: THUMBS_UP_MEDIUM,
+      codePoints: 2,
+      utf16: 4,
+      bytes: 8,
+      emojiParts: 0,
+    },
+    {
+      name: 'e with combining acute',
+      text: E_ACUTE_DECOMPOSED,
+      codePoints: 2,
+      utf16: 2,
+      bytes: 3,
+      emojiParts: 0,
+    },
+    {
+      name: 'England flag (tag sequence)',
+      text: ENGLAND_FLAG,
+      codePoints: 7,
+      utf16: 14,
+      bytes: 28,
+      emojiParts: 6,
+    },
+    {
+      name: 'red heart with VS16',
+      text: RED_HEART,
+      codePoints: 2,
+      utf16: 2,
+      bytes: 6,
+      emojiParts: 1,
+    },
     { name: 'keycap 1', text: KEYCAP_ONE, codePoints: 3, utf16: 3, bytes: 7, emojiParts: 1 },
-    { name: 'rainbow flag (VS16 + ZWJ)', text: RAINBOW_FLAG, codePoints: 4, utf16: 6, bytes: 14, emojiParts: 2 },
+    {
+      name: 'rainbow flag (VS16 + ZWJ)',
+      text: RAINBOW_FLAG,
+      codePoints: 4,
+      utf16: 6,
+      bytes: 14,
+      emojiParts: 2,
+    },
     { name: 'CR LF', text: '\r\n', codePoints: 2, utf16: 2, bytes: 2, emojiParts: 0 },
   ];
 
@@ -246,7 +315,7 @@ test.describe('surrogate pairs and emoji sequences', () => {
   });
 });
 
-test.describe('detecting the characters in the table', () => {
+describe('detecting the characters in the table', () => {
   const named: Array<[number, string, CharClass]> = [
     [0x200b, 'Zero-width space', 'zero-width'],
     [0x200c, 'Zero-width non-joiner', 'zero-width'],
@@ -308,20 +377,31 @@ test.describe('detecting the characters in the table', () => {
     test(`U+${hex} is ${name}`, () => {
       expect(describeCodePoint(codePoint)).toMatchObject({ name, className });
       const { rows, stats } = inspectText(String.fromCodePoint(codePoint));
-      expect(rows[0]).toMatchObject({ className, label: name, badge: true, flagged: CLASS_INFO[className].flagged });
+      expect(rows[0]).toMatchObject({
+        className,
+        label: name,
+        badge: true,
+        flagged: CLASS_INFO[className].flagged,
+      });
       expect(stats.flagged).toBe(CLASS_INFO[className].flagged ? 1 : 0);
     });
   }
 
   test('ranges: private use, noncharacters and unlisted default-ignorables', () => {
     for (const codePoint of [0xe000, 0xf8ff, 0xf0000, 0xffffd, 0x100000, 0x10fffd]) {
-      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({ className: 'private-use' });
+      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({
+        className: 'private-use',
+      });
     }
     for (const codePoint of [0xfdd0, 0xfdef, 0xfffe, 0xffff, 0x1fffe, 0x10ffff]) {
-      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({ className: 'malformed' });
+      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({
+        className: 'malformed',
+      });
     }
     for (const codePoint of [0xd800, 0xdbff, 0xdc00, 0xdfff]) {
-      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({ name: 'Unpaired surrogate' });
+      expect(describeCodePoint(codePoint), codePoint.toString(16)).toMatchObject({
+        name: 'Unpaired surrogate',
+      });
     }
     // Musical symbol begin beam and a tag-block code point with no assigned meaning.
     expect(describeCodePoint(0x1d173)).toMatchObject({ className: 'zero-width' });
@@ -329,7 +409,18 @@ test.describe('detecting the characters in the table', () => {
   });
 
   test('ordinary characters are not flagged', () => {
-    for (const char of ['a', 'Z', '0', ' ', '~', '\u00E9', '\u4E2D', '\u20AC', '\u{1F600}', '\u0301']) {
+    for (const char of [
+      'a',
+      'Z',
+      '0',
+      ' ',
+      '~',
+      '\u00E9',
+      '\u4E2D',
+      '\u20AC',
+      '\u{1F600}',
+      '\u0301',
+    ]) {
       const codePoint = char.codePointAt(0) ?? 0;
       expect(describeCodePoint(codePoint), char).toBeNull();
       expect(inspectText(char).stats.flagged, char).toBe(0);
@@ -388,7 +479,14 @@ test.describe('detecting the characters in the table', () => {
 
   test('the rows describe a character completely', () => {
     const [nbsp, euro, upper, mark, space] = inspectText('\u00A0\u20AC' + 'A\u0301 ').rows;
-    expect(nbsp).toMatchObject({ hex: 'U+00A0', glyph: 'NBSP', html: '&nbsp;', js: '\\u00A0', utf8: 'C2 A0', utf16: '00A0' });
+    expect(nbsp).toMatchObject({
+      hex: 'U+00A0',
+      glyph: 'NBSP',
+      html: '&nbsp;',
+      js: '\\u00A0',
+      utf8: 'C2 A0',
+      utf16: '00A0',
+    });
     expect(euro).toMatchObject({
       hex: 'U+20AC',
       label: 'Currency symbol (Sc)',
@@ -404,7 +502,7 @@ test.describe('detecting the characters in the table', () => {
   });
 });
 
-test.describe('table and highlighted view limits', () => {
+describe('table and highlighted view limits', () => {
   test('the table is capped and says how many rows there are', () => {
     const text = 'a'.repeat(1200);
     const inspection = inspectText(text);
@@ -456,14 +554,12 @@ test.describe('table and highlighted view limits', () => {
     expect(inspectText(text).highlight).toEqual([{ kind: 'text', text }]);
 
     const marked = inspectText(text, { markWhitespace: true }).highlight;
-    expect(marked.map((segment) => (segment.kind === 'mark' ? segment.short : segment.text))).toEqual([
-      'a',
-      'TAB',
-      'b',
-      'LF',
-      'c',
-    ]);
-    const rebuilt = marked.map((segment) => (segment.kind === 'mark' ? segment.after : segment.text)).join('');
+    expect(
+      marked.map((segment) => (segment.kind === 'mark' ? segment.short : segment.text))
+    ).toEqual(['a', 'TAB', 'b', 'LF', 'c']);
+    const rebuilt = marked
+      .map((segment) => (segment.kind === 'mark' ? segment.after : segment.text))
+      .join('');
     expect(rebuilt).toBe(text);
   });
 
@@ -481,9 +577,12 @@ test.describe('table and highlighted view limits', () => {
   });
 });
 
-test.describe('removing invisible characters', () => {
+describe('removing invisible characters', () => {
   test('removes zero-width characters, word joiner, BOM and soft hyphen', () => {
-    expect(removeInvisibleCharacters('foo\u200Bbar\u200C\u200D\u2060\uFEFF\u00AD')).toEqual({ text: 'foobar', count: 6 });
+    expect(removeInvisibleCharacters('foo\u200Bbar\u200C\u200D\u2060\uFEFF\u00AD')).toEqual({
+      text: 'foobar',
+      count: 6,
+    });
   });
 
   test('removes bidirectional controls', () => {
@@ -493,7 +592,10 @@ test.describe('removing invisible characters', () => {
 
   test('removes control codes but keeps tab, line feed and carriage return', () => {
     expect(removeInvisibleCharacters('a\tb\r\nc')).toEqual({ text: 'a\tb\r\nc', count: 0 });
-    expect(removeInvisibleCharacters('a\u0000b\u001Bc\u007Fd\u0090e')).toEqual({ text: 'abcde', count: 4 });
+    expect(removeInvisibleCharacters('a\u0000b\u001Bc\u007Fd\u0090e')).toEqual({
+      text: 'abcde',
+      count: 4,
+    });
   });
 
   test('keeps non-standard spaces, odd line breaks and private use (other actions or the user decide)', () => {
@@ -504,11 +606,21 @@ test.describe('removing invisible characters', () => {
   test('removes variation selectors and tag characters outside emoji', () => {
     expect(removeInvisibleCharacters('a\uFE0Fb\u{E0100}c')).toEqual({ text: 'abc', count: 2 });
     expect(removeInvisibleCharacters(`a${tagEncode('hi')}b`)).toEqual({ text: 'ab', count: 2 });
-    expect(removeInvisibleCharacters('\u{1F3F4}' + tagEncode('gb'))).toEqual({ text: '\u{1F3F4}', count: 2 });
+    expect(removeInvisibleCharacters('\u{1F3F4}' + tagEncode('gb'))).toEqual({
+      text: '\u{1F3F4}',
+      count: 2,
+    });
   });
 
   test('keeps joiners, selectors and tags that belong to emoji sequences', () => {
-    for (const text of [FAMILY, RED_HEART, RAINBOW_FLAG, ENGLAND_FLAG, KEYCAP_ONE, `${THUMBS_UP_MEDIUM}\u200D\u{1F9B0}`]) {
+    for (const text of [
+      FAMILY,
+      RED_HEART,
+      RAINBOW_FLAG,
+      ENGLAND_FLAG,
+      KEYCAP_ONE,
+      `${THUMBS_UP_MEDIUM}\u200D\u{1F9B0}`,
+    ]) {
       expect(removeInvisibleCharacters(text), text).toEqual({ text, count: 0 });
     }
   });
@@ -530,11 +642,20 @@ test.describe('removing invisible characters', () => {
 
   test('script joiners are removed by default and kept on request', () => {
     const persian = '\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645';
-    expect(removeInvisibleCharacters(persian)).toEqual({ text: persian.replace('\u200C', ''), count: 1 });
-    expect(removeInvisibleCharacters(persian, { keepScriptJoiners: true })).toEqual({ text: persian, count: 0 });
+    expect(removeInvisibleCharacters(persian)).toEqual({
+      text: persian.replace('\u200C', ''),
+      count: 1,
+    });
+    expect(removeInvisibleCharacters(persian, { keepScriptJoiners: true })).toEqual({
+      text: persian,
+      count: 0,
+    });
 
     const devanagari = '\u0915\u094D\u200D\u0937';
-    expect(removeInvisibleCharacters(devanagari, { keepScriptJoiners: true })).toEqual({ text: devanagari, count: 0 });
+    expect(removeInvisibleCharacters(devanagari, { keepScriptJoiners: true })).toEqual({
+      text: devanagari,
+      count: 0,
+    });
 
     // Between Latin letters, or at the edge of a word, they are still removed.
     expect(removeInvisibleCharacters('foo\u200Cbar', { keepScriptJoiners: true }).count).toBe(1);
@@ -543,12 +664,15 @@ test.describe('removing invisible characters', () => {
   });
 
   test('text without invisible characters is returned unchanged', () => {
-    expect(removeInvisibleCharacters('Hello, world! \u00E9\u4E2D')).toEqual({ text: 'Hello, world! \u00E9\u4E2D', count: 0 });
+    expect(removeInvisibleCharacters('Hello, world! \u00E9\u4E2D')).toEqual({
+      text: 'Hello, world! \u00E9\u4E2D',
+      count: 0,
+    });
     expect(removeInvisibleCharacters('')).toEqual({ text: '', count: 0 });
   });
 });
 
-test.describe('replacing non-standard spaces', () => {
+describe('replacing non-standard spaces', () => {
   test('replaces each space variant with U+0020, one for one', () => {
     const text = 'a\u00A0b\u2003c\u202Fd\u3000e\u2009f\u2800g\u1680h\u205Fi\u200Aj';
     expect(replaceNonStandardSpaces(text)).toEqual({ text: 'a b c d e f g h i j', count: 9 });
@@ -561,7 +685,7 @@ test.describe('replacing non-standard spaces', () => {
   });
 });
 
-test.describe('normalisation', () => {
+describe('normalisation', () => {
   test('UAX #15 example: U+1E9B U+0323 in all four forms', () => {
     const text = '\u1E9B\u0323';
     expect(normalizeText(text, 'NFC')).toBe('\u1E9B\u0323');
@@ -594,7 +718,7 @@ test.describe('normalisation', () => {
   });
 });
 
-test.describe('cleanText', () => {
+describe('cleanText', () => {
   test('does nothing unless asked', () => {
     const text = 'a\u200B\u00A0b';
     expect(cleanText(text)).toEqual({
@@ -637,12 +761,14 @@ test.describe('cleanText', () => {
 
   test('passes keepScriptJoiners through', () => {
     const persian = '\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645';
-    expect(cleanText(persian, { removeInvisible: true, keepScriptJoiners: true }).text).toBe(persian);
+    expect(cleanText(persian, { removeInvisible: true, keepScriptJoiners: true }).text).toBe(
+      persian
+    );
     expect(cleanText(persian, { removeInvisible: true }).text).toBe(persian.replace('\u200C', ''));
   });
 });
 
-test.describe('example text', () => {
+describe('example text', () => {
   test('contains the traps it advertises', () => {
     const { stats, hiddenTagText } = inspectText(EXAMPLE_TEXT);
     expect(stats.byClass['zero-width']).toBe(3); // ZWSP, word joiner, BOM

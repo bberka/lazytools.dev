@@ -47,12 +47,19 @@ export interface BlobSource {
  * WebP. Rejects when the browser produces nothing, which is what happens for
  * an empty canvas or one larger than the browser can allocate.
  */
-export function canvasToBlob(canvas: BlobSource, type: CanvasImageType, quality?: number): Promise<Blob> {
+export function canvasToBlob(
+  canvas: BlobSource,
+  type: CanvasImageType,
+  quality?: number
+): Promise<Blob> {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) resolve(blob);
-        else reject(new Error('The image could not be encoded. It may be too large for this browser.'));
+        else
+          reject(
+            new Error('The image could not be encoded. It may be too large for this browser.')
+          );
       },
       type,
       quality

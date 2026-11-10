@@ -221,7 +221,9 @@ export async function lookupDns(
 
   if (data.Status !== 0) {
     const reason = STATUS_MESSAGES[data.Status];
-    return fail(reason ? `DNS query failed: ${reason}` : `DNS query failed with status: ${data.Status}`);
+    return fail(
+      reason ? `DNS query failed: ${reason}` : `DNS query failed with status: ${data.Status}`
+    );
   }
 
   const records = readRecords(data.Answer);

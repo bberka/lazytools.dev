@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -12,27 +13,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Quote, Trash2, ArrowLeftRight, Check } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Quote, Trash2, ArrowLeftRight } from 'lucide-react';
 import { convertEscape, type EscapeDirection, type EscapeMode } from '@/lib/tools/text-escape';
 
 export function TextEscape() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<EscapeMode>('javascript');
   const [direction, setDirection] = useState<EscapeDirection>('escape');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
-  const { output, error } = useMemo(() => convertEscape(input, mode, direction), [input, mode, direction]);
+  const { output, error } = useMemo(
+    () => convertEscape(input, mode, direction),
+    [input, mode, direction]
+  );
 
   const handleSwap = () => {
     setInput(output);
     setDirection(direction === 'escape' ? 'unescape' : 'escape');
-  };
-
-  const handleCopy = async () => {
-    if (output) {
-      await copyToClipboard(output);
-    }
   };
 
   const handleClear = () => {
@@ -94,7 +90,9 @@ export function TextEscape() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={direction === 'escape' ? 'Enter text here...' : 'Enter escaped text here...'}
+            placeholder={
+              direction === 'escape' ? 'Enter text here...' : 'Enter escaped text here...'
+            }
             aria-label={direction === 'escape' ? 'Text to escape' : 'Escaped text to unescape'}
             rows={8}
             className="font-mono"
@@ -103,7 +101,10 @@ export function TextEscape() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -112,33 +113,24 @@ export function TextEscape() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={handleCopy}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

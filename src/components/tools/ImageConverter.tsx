@@ -149,9 +149,10 @@ export function ImageConverter() {
       cropRect.y,
       cropRect.width,
       cropRect.height,
-      0, 0,
+      0,
+      0,
       cropRect.width,
-      cropRect.height,
+      cropRect.height
     );
 
     // A canvas writes PNG, JPEG or WebP; any other source type comes out as PNG and is named so.
@@ -185,7 +186,6 @@ export function ImageConverter() {
       const ctx = canvas?.getContext('2d');
       if (!canvas || !ctx) throw new Error('Canvas is not available in this browser.');
 
-      // Calculate dimensions
       const plan = planOutput(
         { width: img.width, height: img.height },
         { width, height, maintainAspectRatio, rotation, format: outputFormat }
@@ -196,7 +196,8 @@ export function ImageConverter() {
       canvas.width = plan.canvasWidth;
       canvas.height = plan.canvasHeight;
 
-      const mimeType: CanvasImageType = outputFormat === 'ico' ? 'image/png' : `image/${outputFormat}`;
+      const mimeType: CanvasImageType =
+        outputFormat === 'ico' ? 'image/png' : `image/${outputFormat}`;
 
       // JPEG has no transparency; without a backdrop the see-through areas come out black.
       if (mimeType === 'image/jpeg') {
@@ -204,20 +205,23 @@ export function ImageConverter() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Apply filters
       const filter = canvasFilter({ grayscale, sepia, blur, brightness, contrast, saturation });
       const canFilter = typeof (ctx as { filter?: unknown }).filter === 'string';
       if (filter !== 'none' && canFilter) ctx.filter = filter;
 
-      // Handle transformations
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(flipHorizontal ? -1 : 1, flipVertical ? -1 : 1);
-      ctx.drawImage(img, -plan.drawWidth / 2, -plan.drawHeight / 2, plan.drawWidth, plan.drawHeight);
+      ctx.drawImage(
+        img,
+        -plan.drawWidth / 2,
+        -plan.drawHeight / 2,
+        plan.drawWidth,
+        plan.drawHeight
+      );
       ctx.restore();
 
-      // Convert to desired format
       const qualityValue = mimeType === 'image/png' ? 1 : quality / 100;
       const blob = await canvasToBlob(canvas, mimeType, qualityValue);
       if (run !== runRef.current) return;
@@ -347,7 +351,9 @@ export function ImageConverter() {
             <ImageIcon className="h-5 w-5" />
             Image Converter & Editor
           </CardTitle>
-          <CardDescription>Convert, resize, rotate, flip, and apply filters to images</CardDescription>
+          <CardDescription>
+            Convert, resize, rotate, flip, and apply filters to images
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <FileDropzone
@@ -377,12 +383,54 @@ export function ImageConverter() {
               </CardTitle>
               <CardDescription>Select an area to crop from your image</CardDescription>
               <div className="flex gap-2 flex-wrap pt-2">
-                <Button variant={cropAspect === undefined ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === undefined} onClick={() => selectAspect(undefined)}>Free</Button>
-                <Button variant={cropAspect === 1 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 1} onClick={() => selectAspect(1)}>1:1</Button>
-                <Button variant={cropAspect === 16 / 9 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 16 / 9} onClick={() => selectAspect(16 / 9)}>16:9</Button>
-                <Button variant={cropAspect === 4 / 3 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 4 / 3} onClick={() => selectAspect(4 / 3)}>4:3</Button>
-                <Button variant={cropAspect === 9 / 16 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 9 / 16} onClick={() => selectAspect(9 / 16)}>9:16</Button>
-                <Button variant={cropAspect === 3 / 4 ? 'default' : 'outline'} size="sm" aria-pressed={cropAspect === 3 / 4} onClick={() => selectAspect(3 / 4)}>3:4</Button>
+                <Button
+                  variant={cropAspect === undefined ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === undefined}
+                  onClick={() => selectAspect(undefined)}
+                >
+                  Free
+                </Button>
+                <Button
+                  variant={cropAspect === 1 ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === 1}
+                  onClick={() => selectAspect(1)}
+                >
+                  1:1
+                </Button>
+                <Button
+                  variant={cropAspect === 16 / 9 ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === 16 / 9}
+                  onClick={() => selectAspect(16 / 9)}
+                >
+                  16:9
+                </Button>
+                <Button
+                  variant={cropAspect === 4 / 3 ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === 4 / 3}
+                  onClick={() => selectAspect(4 / 3)}
+                >
+                  4:3
+                </Button>
+                <Button
+                  variant={cropAspect === 9 / 16 ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === 9 / 16}
+                  onClick={() => selectAspect(9 / 16)}
+                >
+                  9:16
+                </Button>
+                <Button
+                  variant={cropAspect === 3 / 4 ? 'default' : 'outline'}
+                  size="sm"
+                  aria-pressed={cropAspect === 3 / 4}
+                  onClick={() => selectAspect(3 / 4)}
+                >
+                  3:4
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -393,7 +441,18 @@ export function ImageConverter() {
                   onComplete={handleCropComplete}
                   aspect={cropAspect}
                 >
-                  <img ref={cropImgRef} alt="Crop" src={originalImage} onLoad={onCropImageLoad} style={{ maxHeight: '500px', minWidth: '200px', width: 'auto', maxWidth: '100%' }} />
+                  <img
+                    ref={cropImgRef}
+                    alt="Crop"
+                    src={originalImage}
+                    onLoad={onCropImageLoad}
+                    style={{
+                      maxHeight: '500px',
+                      minWidth: '200px',
+                      width: 'auto',
+                      maxWidth: '100%',
+                    }}
+                  />
                 </ReactCrop>
               </div>
               {cropRect && (
@@ -402,7 +461,11 @@ export function ImageConverter() {
                 </p>
               )}
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button onClick={handleDownloadCropped} disabled={!cropRect} className="flex-1 min-h-11 sm:min-h-10">
+                <Button
+                  onClick={handleDownloadCropped}
+                  disabled={!cropRect}
+                  className="flex-1 min-h-11 sm:min-h-10"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download Cropped Image
                 </Button>
@@ -413,17 +476,24 @@ export function ImageConverter() {
           <Card>
             <CardHeader>
               <CardTitle>Settings</CardTitle>
-              <CardDescription>Configure output format, dimensions, and transformations</CardDescription>
+              <CardDescription>
+                Configure output format, dimensions, and transformations
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label id={`${id}-format-label`} className="text-sm font-medium">Output Format</label>
+                  <span id={`${id}-format-label`} className="text-sm font-medium">
+                    Output Format
+                  </span>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
                   >
-                    <SelectTrigger id={`${id}-format`} aria-labelledby={`${id}-format-label ${id}-format`}>
+                    <SelectTrigger
+                      id={`${id}-format`}
+                      aria-labelledby={`${id}-format-label ${id}-format`}
+                    >
                       <SelectValue placeholder="Select output format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -438,23 +508,28 @@ export function ImageConverter() {
                 </div>
 
                 {outputFormat !== 'png' && outputFormat !== 'ico' && (
-                  <div className="space-y-2" role="group" aria-labelledby={`${id}-quality`}>
-                    <label id={`${id}-quality`} className="text-sm font-medium">Quality: {quality}%</label>
-                    <Slider aria-labelledby={`${id}-quality`}
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-quality`}>
+                    <label id={`${id}-quality`} className="text-sm font-medium">
+                      Quality: {quality}%
+                    </label>
+                    <Slider
+                      aria-labelledby={`${id}-quality`}
                       min={1}
                       max={100}
                       value={quality}
                       onChange={setQuality}
                     />
-                  </div>
+                  </fieldset>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Resize</label>
+                <span className="text-sm font-medium">Resize</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor={`${id}-width`} className="text-xs text-muted-foreground">Width (px)</label>
+                    <label htmlFor={`${id}-width`} className="text-xs text-muted-foreground">
+                      Width (px)
+                    </label>
                     <Input
                       id={`${id}-width`}
                       type="number"
@@ -465,7 +540,9 @@ export function ImageConverter() {
                     />
                   </div>
                   <div>
-                    <label htmlFor={`${id}-height`} className="text-xs text-muted-foreground">Height (px)</label>
+                    <label htmlFor={`${id}-height`} className="text-xs text-muted-foreground">
+                      Height (px)
+                    </label>
                     <Input
                       id={`${id}-height`}
                       type="number"
@@ -484,18 +561,21 @@ export function ImageConverter() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Transform</label>
+                <span className="text-sm font-medium">Transform</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2" role="group" aria-labelledby={`${id}-rotate`}>
-                    <label id={`${id}-rotate`} className="text-xs text-muted-foreground">Rotate: {rotation}°</label>
-                    <Slider aria-labelledby={`${id}-rotate`}
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-rotate`}>
+                    <label id={`${id}-rotate`} className="text-xs text-muted-foreground">
+                      Rotate: {rotation}°
+                    </label>
+                    <Slider
+                      aria-labelledby={`${id}-rotate`}
                       min={0}
                       max={270}
                       step={90}
                       value={rotation}
                       onChange={setRotation}
                     />
-                  </div>
+                  </fieldset>
                   <div className="flex gap-4 sm:gap-6 items-center h-full pt-4">
                     <Checkbox
                       checked={flipHorizontal}
@@ -512,63 +592,71 @@ export function ImageConverter() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Filters</label>
+                <span className="text-sm font-medium">Filters</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Checkbox
-                    checked={grayscale}
-                    onCheckedChange={setGrayscale}
-                    label="Grayscale"
-                  />
-                  <Checkbox
-                    checked={sepia}
-                    onCheckedChange={setSepia}
-                    label="Sepia"
-                  />
+                  <Checkbox checked={grayscale} onCheckedChange={setGrayscale} label="Grayscale" />
+                  <Checkbox checked={sepia} onCheckedChange={setSepia} label="Sepia" />
                 </div>
               </div>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-blur`}>
-                <label id={`${id}-blur`} className="text-sm font-medium">Blur: {blur}px</label>
-                <Slider aria-labelledby={`${id}-blur`}
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-blur`}>
+                <label id={`${id}-blur`} className="text-sm font-medium">
+                  Blur: {blur}px
+                </label>
+                <Slider
+                  aria-labelledby={`${id}-blur`}
                   min={0}
                   max={20}
                   value={blur}
                   onChange={setBlur}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-brightness`}>
-                <label id={`${id}-brightness`} className="text-sm font-medium">Brightness: {brightness}%</label>
-                <Slider aria-labelledby={`${id}-brightness`}
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-brightness`}>
+                <label id={`${id}-brightness`} className="text-sm font-medium">
+                  Brightness: {brightness}%
+                </label>
+                <Slider
+                  aria-labelledby={`${id}-brightness`}
                   min={0}
                   max={200}
                   value={brightness}
                   onChange={setBrightness}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-contrast`}>
-                <label id={`${id}-contrast`} className="text-sm font-medium">Contrast: {contrast}%</label>
-                <Slider aria-labelledby={`${id}-contrast`}
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-contrast`}>
+                <label id={`${id}-contrast`} className="text-sm font-medium">
+                  Contrast: {contrast}%
+                </label>
+                <Slider
+                  aria-labelledby={`${id}-contrast`}
                   min={0}
                   max={200}
                   value={contrast}
                   onChange={setContrast}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-saturation`}>
-                <label id={`${id}-saturation`} className="text-sm font-medium">Saturation: {saturation}%</label>
-                <Slider aria-labelledby={`${id}-saturation`}
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-saturation`}>
+                <label id={`${id}-saturation`} className="text-sm font-medium">
+                  Saturation: {saturation}%
+                </label>
+                <Slider
+                  aria-labelledby={`${id}-saturation`}
                   min={0}
                   max={200}
                   value={saturation}
                   onChange={setSaturation}
                 />
-              </div>
+              </fieldset>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button onClick={handleConvert} disabled={processing} className="min-h-11 sm:min-h-10">
+                <Button
+                  onClick={handleConvert}
+                  disabled={processing}
+                  className="min-h-11 sm:min-h-10"
+                >
                   {processing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -603,7 +691,11 @@ export function ImageConverter() {
                 {processedImage && (
                   <div>
                     <p className="text-sm font-medium mb-2">Converted</p>
-                    <img src={processedImage} alt="Converted" className="w-full border rounded-md" />
+                    <img
+                      src={processedImage}
+                      alt="Converted"
+                      className="w-full border rounded-md"
+                    />
                   </div>
                 )}
               </div>
@@ -617,12 +709,16 @@ export function ImageConverter() {
                 </div>
               )}
               {filtersSkipped && !processing && (
-                <p role="status" className="mt-4 text-sm text-muted-foreground">
-                  This browser cannot apply filters when exporting, so the converted image does not include them.
-                </p>
+                <output className="block mt-4 text-sm text-muted-foreground">
+                  This browser cannot apply filters when exporting, so the converted image does not
+                  include them.
+                </output>
               )}
               {processed && !processing && (
-                <Button onClick={handleDownload} className="mt-4 min-h-11 w-full sm:min-h-10 sm:w-auto">
+                <Button
+                  onClick={handleDownload}
+                  className="mt-4 min-h-11 w-full sm:min-h-10 sm:w-auto"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download Converted Image
                 </Button>

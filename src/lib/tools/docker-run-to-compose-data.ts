@@ -82,7 +82,7 @@ const toggle = (name: string, map: FlagMapping, extra: Partial<FlagDef> = {}): F
   ...extra,
 });
 
-export const FLAG_DEFS: FlagDef[] = [
+const FLAG_DEFS: FlagDef[] = [
   // Identity and process
   value('--name', { kind: 'custom', id: 'name' }),
   value('--hostname', { kind: 'string', key: 'hostname' }, { short: '-h' }),
@@ -220,10 +220,22 @@ export const FLAG_DEFS: FlagDef[] = [
     kind: 'warn',
     reason: 'Compose keeps block I/O limits under blkio_config. Add it by hand.',
   }),
-  value('--io-maxbandwidth', { kind: 'warn', reason: 'This Windows-only limit has no Compose equivalent.' }),
-  value('--io-maxiops', { kind: 'warn', reason: 'This Windows-only limit has no Compose equivalent.' }),
-  value('--cpu-count', { kind: 'warn', reason: 'This Windows-only limit has no Compose equivalent.' }),
-  value('--cpu-percent', { kind: 'warn', reason: 'This Windows-only limit has no Compose equivalent.' }),
+  value('--io-maxbandwidth', {
+    kind: 'warn',
+    reason: 'This Windows-only limit has no Compose equivalent.',
+  }),
+  value('--io-maxiops', {
+    kind: 'warn',
+    reason: 'This Windows-only limit has no Compose equivalent.',
+  }),
+  value('--cpu-count', {
+    kind: 'warn',
+    reason: 'This Windows-only limit has no Compose equivalent.',
+  }),
+  value('--cpu-percent', {
+    kind: 'warn',
+    reason: 'This Windows-only limit has no Compose equivalent.',
+  }),
 
   // Logging
   value('--log-driver', { kind: 'custom', id: 'log-driver' }),
@@ -265,7 +277,8 @@ export const FLAG_DEFS: FlagDef[] = [
     '--quiet',
     {
       kind: 'note',
-      message: '-q / --quiet only silences image pulls on the command line and has no Compose setting.',
+      message:
+        '-q / --quiet only silences image pulls on the command line and has no Compose setting.',
     },
     { short: '-q' }
   ),
@@ -289,7 +302,8 @@ export const FLAG_DEFS: FlagDef[] = [
   ),
   value('--cidfile', {
     kind: 'note',
-    message: '--cidfile has no Compose equivalent. Use "docker compose ps -q <service>" to get the container ID.',
+    message:
+      '--cidfile has no Compose equivalent. Use "docker compose ps -q <service>" to get the container ID.',
   }),
   toggle('--use-api-socket', {
     kind: 'warn',

@@ -1,6 +1,6 @@
 try {
   importScripts('/sw-precache.js');
-} catch (e) {
+} catch {
   console.warn('[sw.js] Could not load /sw-precache.js, falling back to static list.');
 }
 
@@ -37,9 +37,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) =>
-        Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
-      )
+      .then((cache) => Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -97,7 +95,7 @@ async function networkFirst(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      void cache.put(request, response.clone());
     }
     return response;
   } catch (error) {
@@ -123,7 +121,7 @@ async function staleWhileRevalidate(request) {
     fetch(request)
       .then((response) => {
         if (response.ok) {
-          cache.put(request, response.clone());
+          void cache.put(request, response.clone());
         }
       })
       .catch(() => undefined);
@@ -134,7 +132,7 @@ async function staleWhileRevalidate(request) {
   const response = await fetch(request);
 
   if (response.ok) {
-    cache.put(request, response.clone());
+    void cache.put(request, response.clone());
   }
 
   return response;
@@ -143,8 +141,19 @@ async function staleWhileRevalidate(request) {
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/_next/static/') ||
-    ['.css', '.js', '.json', '.webmanifest', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff2', '.ttf'].some(
-      (extension) => url.pathname.endsWith(extension)
-    )
+    [
+      '.css',
+      '.js',
+      '.json',
+      '.webmanifest',
+      '.svg',
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.webp',
+      '.ico',
+      '.woff2',
+      '.ttf',
+    ].some((extension) => url.pathname.endsWith(extension))
   );
 }

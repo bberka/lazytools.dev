@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Eraser, Replace, Search } from 'lucide-react';
+import { Eraser, Replace, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { findAndReplace } from '@/lib/tools/find-and-replace';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 import { countCharacters } from '@/lib/tools/word-counter';
@@ -21,7 +21,6 @@ export function FindAndReplace() {
   const [wholeWord, setWholeWord] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const [replaceAll, setReplaceAll] = useState(true);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const result = useMemo(
     () =>
@@ -43,10 +42,6 @@ export function FindAndReplace() {
 
   // Visible characters, so an emoji in the output counts once.
   const outputCharacters = useMemo(() => countCharacters(result.output), [result.output]);
-
-  const handleCopy = async () => {
-    await copyToClipboard(result.output);
-  };
 
   const handleApply = () => {
     setInput(result.output);
@@ -75,7 +70,7 @@ export function FindAndReplace() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="find-text" className="text-sm font-medium">
                 Find
@@ -102,7 +97,7 @@ export function FindAndReplace() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Checkbox
               checked={caseSensitive}
               onCheckedChange={setCaseSensitive}
@@ -114,15 +109,9 @@ export function FindAndReplace() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">
-              Matches: {result.matches.length.toLocaleString()}
-            </Badge>
-            <Badge variant="outline">
-              Replacements: {result.replacements.toLocaleString()}
-            </Badge>
-            <Badge variant="outline">
-              Output chars: {outputCharacters.toLocaleString()}
-            </Badge>
+            <Badge variant="outline">Matches: {result.matches.length.toLocaleString()}</Badge>
+            <Badge variant="outline">Replacements: {result.replacements.toLocaleString()}</Badge>
+            <Badge variant="outline">Output chars: {outputCharacters.toLocaleString()}</Badge>
           </div>
         </CardContent>
       </Card>
@@ -184,7 +173,9 @@ export function FindAndReplace() {
             <Replace className="h-5 w-5" />
             Result
           </CardTitle>
-          <CardDescription>Preview the replaced text before copying or applying it.</CardDescription>
+          <CardDescription>
+            Preview the replaced text before copying or applying it.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -196,25 +187,13 @@ export function FindAndReplace() {
           />
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              onClick={handleCopy}
+            <CopyButton
+              text={result.output}
+              label="Copy Result"
               disabled={!result.output}
-              variant={isCopied ? 'default' : 'outline'}
               size="sm"
               className="min-h-11 sm:min-h-9"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy Result
-                </>
-              )}
-            </Button>
+            />
             <Button
               onClick={handleApply}
               disabled={!!result.error || !findText || input === result.output}

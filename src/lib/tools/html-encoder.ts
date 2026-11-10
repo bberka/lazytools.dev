@@ -70,7 +70,9 @@ const LEGACY = new Map<string, string>([
   ['COPY', '©'],
   ['REG', '®'],
 ]);
-LATIN1_NAMES.split(' ').forEach((name, index) => LEGACY.set(name, String.fromCodePoint(0xa0 + index)));
+LATIN1_NAMES.split(' ').forEach((name, index) =>
+  LEGACY.set(name, String.fromCodePoint(0xa0 + index))
+);
 
 const NAMED = new Map<string, string>(LEGACY);
 for (const entry of OTHER_NAMES.split(' ')) {
@@ -80,10 +82,33 @@ for (const entry of OTHER_NAMES.split(' ')) {
 
 // What browsers show for numeric references into the C1 control range.
 const WINDOWS_1252: Record<number, number> = {
-  0x80: 0x20ac, 0x82: 0x201a, 0x83: 0x0192, 0x84: 0x201e, 0x85: 0x2026, 0x86: 0x2020, 0x87: 0x2021,
-  0x88: 0x02c6, 0x89: 0x2030, 0x8a: 0x0160, 0x8b: 0x2039, 0x8c: 0x0152, 0x8e: 0x017d, 0x91: 0x2018,
-  0x92: 0x2019, 0x93: 0x201c, 0x94: 0x201d, 0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014, 0x98: 0x02dc,
-  0x99: 0x2122, 0x9a: 0x0161, 0x9b: 0x203a, 0x9c: 0x0153, 0x9e: 0x017e, 0x9f: 0x0178,
+  0x80: 0x20ac,
+  0x82: 0x201a,
+  0x83: 0x0192,
+  0x84: 0x201e,
+  0x85: 0x2026,
+  0x86: 0x2020,
+  0x87: 0x2021,
+  0x88: 0x02c6,
+  0x89: 0x2030,
+  0x8a: 0x0160,
+  0x8b: 0x2039,
+  0x8c: 0x0152,
+  0x8e: 0x017d,
+  0x91: 0x2018,
+  0x92: 0x2019,
+  0x93: 0x201c,
+  0x94: 0x201d,
+  0x95: 0x2022,
+  0x96: 0x2013,
+  0x97: 0x2014,
+  0x98: 0x02dc,
+  0x99: 0x2122,
+  0x9a: 0x0161,
+  0x9b: 0x203a,
+  0x9c: 0x0153,
+  0x9e: 0x017e,
+  0x9f: 0x0178,
 };
 
 function fromCodePoint(codePoint: number): string {
@@ -135,9 +160,12 @@ export function decodeHtmlEntities(text: string): string {
   if (!text.includes('&')) return text;
 
   const lookInDom = createDomLookup();
-  return text.replace(REFERENCE, (reference: string, hex?: string, decimal?: string, name?: string) => {
-    if (hex !== undefined) return fromCodePoint(parseInt(hex, 16));
-    if (decimal !== undefined) return fromCodePoint(parseInt(decimal, 10));
-    return decodeNamed(reference, name ?? '', lookInDom);
-  });
+  return text.replace(
+    REFERENCE,
+    (reference: string, hex?: string, decimal?: string, name?: string) => {
+      if (hex !== undefined) return fromCodePoint(parseInt(hex, 16));
+      if (decimal !== undefined) return fromCodePoint(parseInt(decimal, 10));
+      return decodeNamed(reference, name ?? '', lookInDom);
+    }
+  );
 }

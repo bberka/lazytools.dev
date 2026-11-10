@@ -13,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { downloadText } from '@/lib/files';
-import { cn } from '@/lib/utils/cn';
+import { CopyValueButton } from './CopyValueButton';
 import {
   MAX_COUNT,
   decodeUlid,
@@ -29,10 +28,8 @@ import {
 import {
   ArrowLeftRight,
   CalendarClock,
-  Check,
   CircleAlert,
   CircleCheck,
-  Copy,
   Dices,
   Download,
   Info,
@@ -46,33 +43,6 @@ const EXAMPLE_ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
 type LetterCase = 'upper' | 'lower';
 type ConvertSource = 'ulid' | 'uuid';
-
-interface CopyButtonProps {
-  text: string;
-  /** Accessible name; also the visible text when `showLabel` is set. */
-  label: string;
-  showLabel?: boolean;
-  className?: string;
-}
-
-function CopyButton({ text, label, showLabel = false, className }: CopyButtonProps) {
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
-
-  return (
-    <Button
-      type="button"
-      variant={showLabel ? 'outline' : 'ghost'}
-      size={showLabel ? 'sm' : 'icon'}
-      className={showLabel ? className : cn('h-8 w-8 shrink-0', className)}
-      onClick={() => copyToClipboard(text)}
-      aria-label={showLabel ? undefined : label}
-      disabled={!text}
-    >
-      {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
-      {showLabel && (isCopied ? 'Copied' : label)}
-    </Button>
-  );
-}
 
 function ErrorNote({ id, children }: { id?: string; children: ReactNode }) {
   return (
@@ -101,10 +71,12 @@ function DetailRow({
   return (
     <div className="flex items-start justify-between gap-2 py-2.5">
       <div className="min-w-0 space-y-0.5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
         <div className={`break-all text-sm ${mono ? 'font-mono' : ''}`}>{value}</div>
       </div>
-      {copyLabel && <CopyButton text={value} label={copyLabel} />}
+      {copyLabel && <CopyValueButton text={value} label={copyLabel} />}
     </div>
   );
 }
@@ -205,7 +177,7 @@ export function UlidGenerator() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
         {/* Options */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -218,7 +190,7 @@ export function UlidGenerator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="ulid-count" className="text-sm font-medium">
                   How many (1 to {MAX_COUNT})
@@ -233,7 +205,9 @@ export function UlidGenerator() {
                   onChange={(e) => setCountText(e.target.value)}
                   aria-invalid={!countResult.ok}
                   aria-describedby={countResult.ok ? undefined : 'ulid-count-error'}
-                  className={countResult.ok ? '' : 'border-destructive focus-visible:ring-destructive'}
+                  className={
+                    countResult.ok ? '' : 'border-destructive focus-visible:ring-destructive'
+                  }
                 />
               </div>
 
@@ -241,7 +215,10 @@ export function UlidGenerator() {
                 <label htmlFor="ulid-case" className="text-sm font-medium">
                   Letter case
                 </label>
-                <Select value={letterCase} onValueChange={(value) => handleCaseChange(value as LetterCase)}>
+                <Select
+                  value={letterCase}
+                  onValueChange={(value) => handleCaseChange(value as LetterCase)}
+                >
                   <SelectTrigger id="ulid-case">
                     <SelectValue />
                   </SelectTrigger>
@@ -260,8 +237,8 @@ export function UlidGenerator() {
                   Monotonic mode
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  In the same millisecond the random part counts up by one, so a batch always sorts in
-                  creation order.
+                  In the same millisecond the random part counts up by one, so a batch always sorts
+                  in creation order.
                 </p>
               </div>
               <Switch id="ulid-monotonic" checked={monotonic} onCheckedChange={setMonotonic} />
@@ -349,7 +326,7 @@ export function UlidGenerator() {
             ) : (
               <>
                 <div className="flex flex-wrap gap-2">
-                  <CopyButton text={ulids.join('\n')} label="Copy all" showLabel />
+                  <CopyValueButton text={ulids.join('\n')} label="Copy all" showLabel />
                   <Button type="button" variant="outline" size="sm" onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                     Download .txt
@@ -365,12 +342,15 @@ export function UlidGenerator() {
                   className="max-h-96 divide-y overflow-y-auto rounded-md border bg-muted/30"
                 >
                   {ulids.map((ulid, index) => (
-                    <li key={index} className="flex items-center justify-between gap-2 py-1 pl-3 pr-1">
+                    <li
+                      key={index}
+                      className="flex items-center justify-between gap-2 py-1 pl-3 pr-1"
+                    >
                       <span className="min-w-0 break-all font-mono text-sm">
                         <span className="text-primary">{ulid.slice(0, 10)}</span>
                         {ulid.slice(10)}
                       </span>
-                      <CopyButton text={ulid} label={`Copy ${ulid}`} />
+                      <CopyValueButton text={ulid} label={`Copy ${ulid}`} />
                     </li>
                   ))}
                 </ul>
@@ -380,7 +360,7 @@ export function UlidGenerator() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         {/* Decoder */}
         <Card>
           <CardHeader>
@@ -406,7 +386,9 @@ export function UlidGenerator() {
                 autoComplete="off"
                 aria-invalid={decoded !== null && !decoded.ok}
                 className={`font-mono text-sm ${
-                  decoded !== null && !decoded.ok ? 'border-destructive focus-visible:ring-destructive' : ''
+                  decoded !== null && !decoded.ok
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : ''
                 }`}
               />
               <div className="flex flex-wrap gap-2">
@@ -488,7 +470,9 @@ export function UlidGenerator() {
               <ArrowLeftRight className="h-5 w-5 text-primary" />
               ULID and UUID
             </CardTitle>
-            <CardDescription>Both hold 128 bits. Type in either box to convert to the other.</CardDescription>
+            <CardDescription>
+              Both hold 128 bits. Type in either box to convert to the other.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -511,7 +495,7 @@ export function UlidGenerator() {
                   }`}
                 />
                 {ulidBoxValue && (
-                  <CopyButton
+                  <CopyValueButton
                     text={ulidBoxValue}
                     label="Copy ULID"
                     className="absolute right-1 top-1/2 -translate-y-1/2"
@@ -541,7 +525,7 @@ export function UlidGenerator() {
                   }`}
                 />
                 {uuidBoxValue && (
-                  <CopyButton
+                  <CopyValueButton
                     text={uuidBoxValue}
                     label="Copy UUID"
                     className="absolute right-1 top-1/2 -translate-y-1/2"
@@ -555,8 +539,8 @@ export function UlidGenerator() {
               <p className="flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
-                  The same bytes in UUID layout, with the timestamp in the first six. No UUID version or
-                  variant bits are set, so it is not a v4 or v7 UUID.
+                  The same bytes in UUID layout, with the timestamp in the first six. No UUID
+                  version or variant bits are set, so it is not a v4 or v7 UUID.
                 </span>
               </p>
               <Button

@@ -1,7 +1,11 @@
-import { test, expect } from '@playwright/test';
-import { convertUrlComponent, decodeUrlComponent, encodeUrlComponent } from '@/lib/tools/url-encoder';
+import { describe, expect, test } from 'vite-plus/test';
+import {
+  convertUrlComponent,
+  decodeUrlComponent,
+  encodeUrlComponent,
+} from '@/lib/tools/url-encoder';
 
-test.describe('encodeUrlComponent', () => {
+describe('encodeUrlComponent', () => {
   test('percent-encodes reserved characters and spaces', () => {
     expect(encodeUrlComponent('https://example.com/search?q=hello world')).toBe(
       'https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dhello%20world'
@@ -24,7 +28,7 @@ test.describe('encodeUrlComponent', () => {
   });
 });
 
-test.describe('decodeUrlComponent', () => {
+describe('decodeUrlComponent', () => {
   test('reverses encodeUrlComponent', () => {
     for (const text of ['hello world', 'a&b=c+d#e', 'é 日本 😀', '100%', 'line1\nline2', '']) {
       expect(decodeUrlComponent(encodeUrlComponent(text))).toBe(text);
@@ -36,18 +40,26 @@ test.describe('decodeUrlComponent', () => {
   });
 
   test('points at a "%" that is not followed by two hex digits', () => {
-    expect(() => decodeUrlComponent('100% sure')).toThrow(/Invalid percent-encoding "% s" at position 4\./);
-    expect(() => decodeUrlComponent('ok%2')).toThrow(/Invalid percent-encoding "%2" at position 3\./);
-    expect(() => decodeUrlComponent('%zz')).toThrow(/Invalid percent-encoding "%zz" at position 1\./);
+    expect(() => decodeUrlComponent('100% sure')).toThrow(
+      /Invalid percent-encoding "% s" at position 4\./
+    );
+    expect(() => decodeUrlComponent('ok%2')).toThrow(
+      /Invalid percent-encoding "%2" at position 3\./
+    );
+    expect(() => decodeUrlComponent('%zz')).toThrow(
+      /Invalid percent-encoding "%zz" at position 1\./
+    );
   });
 
   test('points at escapes that are not valid UTF-8', () => {
     expect(() => decodeUrlComponent('caf%E9')).toThrow('"%E9" at position 4 is not valid UTF-8.');
-    expect(() => decodeUrlComponent('%C3%A9 then %E6%97')).toThrow('"%E6%97" at position 13 is not valid UTF-8.');
+    expect(() => decodeUrlComponent('%C3%A9 then %E6%97')).toThrow(
+      '"%E6%97" at position 13 is not valid UTF-8.'
+    );
   });
 });
 
-test.describe('convertUrlComponent', () => {
+describe('convertUrlComponent', () => {
   test('returns nothing for empty input', () => {
     expect(convertUrlComponent('', 'encode')).toEqual({ output: '', error: '' });
     expect(convertUrlComponent('', 'decode')).toEqual({ output: '', error: '' });

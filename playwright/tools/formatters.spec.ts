@@ -22,7 +22,11 @@ async function openTool(page: Page, slug: string, inputLabel: string) {
   const input = page.getByLabel(inputLabel, { exact: true });
   await expect(input).toBeVisible();
   await expect
-    .poll(() => input.evaluate((element) => Object.keys(element).some((key) => key.startsWith('__reactProps$'))))
+    .poll(() =>
+      input.evaluate((element) =>
+        Object.keys(element).some((key) => key.startsWith('__reactProps$'))
+      )
+    )
     .toBe(true);
   return input;
 }
@@ -133,23 +137,30 @@ test.describe('Formatter tools', () => {
 
       // A typo matches nothing and says so instead of printing nulls.
       await filter.fill('users.nmae');
-      await expect(page.getByText('No matching properties found for path: "users.nmae"', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('No matching properties found for path: "users.nmae"', { exact: true })
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy Output' })).toBeDisabled();
       await expect(page.getByRole('group', { name: 'Output view' })).toHaveCount(0);
 
       // Inherited members of Object are not properties of the document.
       await filter.fill('constructor');
-      await expect(page.getByText('No matching properties found for path: "constructor"', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('No matching properties found for path: "constructor"', { exact: true })
+      ).toBeVisible();
 
       await filter.fill('');
       await expect(output).toHaveValue(/^\{\n  "users": \[/);
       await expect(page.getByRole('button', { name: 'Copy Output' })).toBeEnabled();
     });
 
-    test('keeps integers above 2^53 digit for digit and accepts a byte order mark', async ({ page }) => {
+    test('keeps integers above 2^53 digit for digit and accepts a byte order mark', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'json-formatter', 'JSON input');
       const output = page.getByLabel('Formatted JSON output');
-      const big = '{"id":9007199254740993,"ids":[12345678901234567890,-9007199254740993],"safe":42}';
+      const big =
+        '{"id":9007199254740993,"ids":[12345678901234567890,-9007199254740993],"safe":42}';
 
       await input.fill(big);
       await expect(page.getByText('Valid JSON: Object with 3 keys', { exact: true })).toBeVisible();
@@ -181,12 +192,20 @@ test.describe('Formatter tools', () => {
 
     test('tree view shows the structure and expands and collapses', async ({ page }) => {
       const input = await openTool(page, 'json-formatter', 'JSON input');
-      await input.fill('{"user":{"name":"Ada","tags":["red","blue"]},"count":36,"none":null,"ok":false}');
+      await input.fill(
+        '{"user":{"name":"Ada","tags":["red","blue"]},"count":36,"none":null,"ok":false}'
+      );
 
       const views = page.getByRole('group', { name: 'Output view' });
-      await expect(views.getByRole('button', { name: 'Text', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(views.getByRole('button', { name: 'Text', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await views.getByRole('button', { name: 'Tree View' }).click();
-      await expect(views.getByRole('button', { name: 'Tree View' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(views.getByRole('button', { name: 'Tree View' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(page.getByLabel('Formatted JSON output')).toHaveCount(0);
 
       // The root and its direct children start open; deeper levels start closed.
@@ -320,7 +339,8 @@ test.describe('Formatter tools', () => {
   // YAML Formatter & Validator
   // -------------------------------------------------------------------------
   test.describe('YAML Validator', () => {
-    const SAMPLE = 'name:   Ada\nroles: [admin, editor]\naddress: {city: London, zip: "N1"}\nage: 36\n';
+    const SAMPLE =
+      'name:   Ada\nroles: [admin, editor]\naddress: {city: London, zip: "N1"}\nage: 36\n';
     const sampleLines: Array<[number, string]> = [
       [0, 'name: Ada'],
       [0, 'roles:'],
@@ -332,12 +352,16 @@ test.describe('Formatter tools', () => {
       [0, 'age: 36'],
     ];
 
-    test('rewrites flow style as block YAML, re-indents, and minifies to JSON', async ({ page }) => {
+    test('rewrites flow style as block YAML, re-indents, and minifies to JSON', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'yaml-validator', 'YAML input');
       const output = page.getByLabel('Formatted YAML output');
 
       await input.fill(SAMPLE);
-      await expect(page.getByText('Valid YAML: Top-level mapping with 4 keys', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid YAML: Top-level mapping with 4 keys', { exact: true })
+      ).toBeVisible();
       await expect(output).toHaveValue(indented('  ', sampleLines) + '\n');
       // The final newline ends the last line; it is not a ninth one.
       await expect(page.getByText('8 lines', { exact: true })).toBeVisible();
@@ -397,9 +421,14 @@ test.describe('Formatter tools', () => {
 
       // A single document has no "Document n" wrapper.
       await input.fill('roles:\n  - admin\n  - editor\n');
-      await expect(page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })
+      ).toBeVisible();
       await expect(page.getByRole('button', { name: /^Mapping \{1 key\}$/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /^roles:\s*Sequence\[2\]$/ })).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.getByRole('button', { name: /^roles:\s*Sequence\[2\]$/ })).toHaveAttribute(
+        'aria-expanded',
+        'true'
+      );
       await expect(page.getByText('"editor"', { exact: true })).toBeVisible();
     });
 
@@ -414,7 +443,9 @@ test.describe('Formatter tools', () => {
       // The second "a" starts at line 2, column 1.
       await input.fill('a: 1\na: 2\n');
       await expect(
-        page.getByText('Invalid YAML Syntax: duplicated mapping key (line 2, column 1)', { exact: true })
+        page.getByText('Invalid YAML Syntax: duplicated mapping key (line 2, column 1)', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.getByLabel('Formatted YAML output')).toHaveValue('');
       await expect(page.getByText('Output will appear here', { exact: true })).toBeVisible();
@@ -425,13 +456,18 @@ test.describe('Formatter tools', () => {
       // A flow sequence that never closes runs to the end of the text.
       await input.fill('a: [1\n');
       await expect(
-        page.getByText('Invalid YAML Syntax: unexpected end of the stream within a flow collection (line 2, column 1)', {
-          exact: true,
-        })
+        page.getByText(
+          'Invalid YAML Syntax: unexpected end of the stream within a flow collection (line 2, column 1)',
+          {
+            exact: true,
+          }
+        )
       ).toBeVisible();
 
       await input.fill('a: [1]\n');
-      await expect(page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })
+      ).toBeVisible();
       await expect(page.getByText(/Invalid YAML Syntax/)).toHaveCount(0);
       await expect(page.getByLabel('Formatted YAML output')).toHaveValue('a:\n  - 1\n');
       await expect(minify).toBeEnabled();
@@ -468,15 +504,21 @@ test.describe('Formatter tools', () => {
 
       await page.unroute(CHUNKS);
       await input.fill('name: Ada\nrole: admin\n');
-      await expect(page.getByText('Valid YAML: Top-level mapping with 2 keys', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid YAML: Top-level mapping with 2 keys', { exact: true })
+      ).toBeVisible();
       await expect(page.getByText(/Parser unavailable/)).toHaveCount(0);
-      await expect(page.getByLabel('Formatted YAML output')).toHaveValue('name: Ada\nrole: admin\n');
+      await expect(page.getByLabel('Formatted YAML output')).toHaveValue(
+        'name: Ada\nrole: admin\n'
+      );
     });
 
     test('leaves a date-only value as it was written', async ({ page }) => {
       const input = await openTool(page, 'yaml-validator', 'YAML input');
       await input.fill('released: 2024-01-01\n');
-      await expect(page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid YAML: Top-level mapping with 1 key', { exact: true })
+      ).toBeVisible();
       await expect(page.getByLabel('Formatted YAML output')).toHaveValue('released: 2024-01-01\n');
     });
   });
@@ -509,7 +551,9 @@ test.describe('Formatter tools', () => {
 
       await input.fill(SAMPLE);
       // catalog, 2 x book, 2 x title, price, tags, empty.
-      await expect(page.getByText('Valid XML: XML Document with 8 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 8 elements', { exact: true })
+      ).toBeVisible();
       await expect(output).toHaveValue(indented('  ', sampleLines));
       await expect(page.getByText('12 lines', { exact: true })).toBeVisible();
 
@@ -545,7 +589,9 @@ test.describe('Formatter tools', () => {
           '<p>Hello <i>big</i> world</p></doc>'
       );
       // doc, a, b, p, i: the commented-out <old> is not an element.
-      await expect(page.getByText('Valid XML: XML Document with 5 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 5 elements', { exact: true })
+      ).toBeVisible();
       await expect(output).toHaveValue(
         indented('  ', [
           [0, '<doc>'],
@@ -558,7 +604,9 @@ test.describe('Formatter tools', () => {
       );
 
       // Text laid out on lines of its own moves with the indentation.
-      await input.fill('<root>\n        <note>\n                first line\n                second line\n        </note>\n</root>');
+      await input.fill(
+        '<root>\n        <note>\n                first line\n                second line\n        </note>\n</root>'
+      );
       await expect(output).toHaveValue(
         indented('  ', [
           [0, '<root>'],
@@ -571,15 +619,22 @@ test.describe('Formatter tools', () => {
       );
     });
 
-    test('tree view shows elements, attributes and repeated children, and follows edits', async ({ page }) => {
+    test('tree view shows elements, attributes and repeated children, and follows edits', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'xml-formatter', 'XML input');
       await input.fill('<user id="7"><name>Ada</name><role>admin</role><role>editor</role></user>');
-      await expect(page.getByText('Valid XML: XML Document with 4 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 4 elements', { exact: true })
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'Tree View' }).click();
       const user = page.getByRole('button', { name: /^user:\s*Element \{3 nodes\}$/ });
       await expect(user).toHaveAttribute('aria-expanded', 'true');
-      await expect(page.getByRole('button', { name: /^Element \{1 node\}$/ })).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.getByRole('button', { name: /^Element \{1 node\}$/ })).toHaveAttribute(
+        'aria-expanded',
+        'true'
+      );
 
       const attributes = page.getByRole('button', { name: /^_attributes:\s*Element \{1 node\}$/ });
       const name = page.getByRole('button', { name: /^name:\s*Element \{1 node\}$/ });
@@ -598,12 +653,16 @@ test.describe('Formatter tools', () => {
 
       // Editing while the tree is showing replaces it; nothing of the old document stays.
       await input.fill('<order><total>12.50</total></order>');
-      await expect(page.getByRole('button', { name: /^order:\s*Element \{1 node\}$/ })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: /^order:\s*Element \{1 node\}$/ })
+      ).toBeVisible();
       await expect(user).toHaveCount(0);
       await expect(page.getByText('"Ada"', { exact: true })).toHaveCount(0);
 
       await page.getByRole('button', { name: 'Text', exact: true }).click();
-      await expect(page.getByLabel('Formatted XML output')).toHaveValue('<order>\n  <total>12.50</total>\n</order>');
+      await expect(page.getByLabel('Formatted XML output')).toHaveValue(
+        '<order>\n  <total>12.50</total>\n</order>'
+      );
     });
 
     test('reports XML that is not well-formed in one clean sentence', async ({ page }) => {
@@ -617,7 +676,10 @@ test.describe('Formatter tools', () => {
       await input.fill('<a><b>text</a>');
       const banner = page.getByText(/^Invalid XML Syntax: /);
       await expect(banner).toBeVisible();
-      await expect(banner).toContainText('Opening and ending tag mismatch: b line 1 and a');
+      // The wording is the browser's own: Chromium 148 says "Opening and ending tag mismatch", later builds "Unexpected closing tag".
+      await expect(banner).toContainText(
+        /Opening and ending tag mismatch: b line 1 and a|Unexpected closing tag: a != b/
+      );
       // The browser wraps the reason in boilerplate about "this page"; none of it belongs here.
       await expect(banner).not.toContainText('This page contains');
       await expect(banner).not.toContainText('Below is a rendering');
@@ -629,33 +691,45 @@ test.describe('Formatter tools', () => {
 
       // Two root elements are not one document.
       await input.fill('<a>1</a><b>2</b>');
-      await expect(banner).toContainText('Extra content at the end of the document');
+      await expect(banner).toContainText(
+        /Extra content at the end of the document|Unexpected token: </
+      );
 
       await input.fill('<a><b>text</b></a>');
-      await expect(page.getByText('Valid XML: XML Document with 2 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 2 elements', { exact: true })
+      ).toBeVisible();
       await expect(banner).toHaveCount(0);
       await expect(page.getByLabel('Formatted XML output')).toHaveValue('<a>\n  <b>text</b>\n</a>');
       await expect(minify).toBeEnabled();
       await expect(copy).toBeEnabled();
     });
 
-    test('accepts a well-formed document that has an element named parsererror', async ({ page }) => {
+    test('accepts a well-formed document that has an element named parsererror', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'xml-formatter', 'XML input');
       await input.fill('<log><parsererror>disk full</parsererror></log>');
-      await expect(page.getByText('Valid XML: XML Document with 2 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 2 elements', { exact: true })
+      ).toBeVisible();
       await expect(page.getByLabel('Formatted XML output')).toHaveValue(
         '<log>\n  <parsererror>disk full</parsererror>\n</log>'
       );
     });
 
-    test('shows the tree once the connection is back after its chunk failed to download', async ({ page }) => {
+    test('shows the tree once the connection is back after its chunk failed to download', async ({
+      page,
+    }) => {
       test.fixme(
         true,
         'XML Formatter tree view never recovers from a failed chunk download and gives no message: "Tree View" stays pressed over the text view until the page is reloaded. The cause is outside the tool: the Turbopack chunk loader (loadChunkCached) keeps a failed load rejected, so a repeated import() never reaches the network.'
       );
       const input = await openTool(page, 'xml-formatter', 'XML input');
       await input.fill('<a><b>t</b></a>');
-      await expect(page.getByText('Valid XML: XML Document with 2 elements', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('Valid XML: XML Document with 2 elements', { exact: true })
+      ).toBeVisible();
 
       await page.route(CHUNKS, (route) => route.abort());
       const failed = page.waitForEvent('requestfailed');
@@ -675,13 +749,17 @@ test.describe('Formatter tools', () => {
   test.describe('SQL Formatter', () => {
     const QUERY = 'Select id, name From users where age > 18 and active = 1 order by name';
 
-    test('formats a query and applies keyword case, AND/OR wrapping and indentation', async ({ page }) => {
+    test('formats a query and applies keyword case, AND/OR wrapping and indentation', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
       const output = page.getByLabel('Formatted SQL output');
 
       await input.fill(QUERY);
       await expect(
-        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', { exact: true })
+        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(output).toHaveValue(
         indented('  ', [
@@ -761,7 +839,9 @@ test.describe('Formatter tools', () => {
       await expect(page.getByText('Output will appear here', { exact: true })).toBeVisible();
     });
 
-    test('formats dialect-specific syntax once the dialect is picked from the searchable list', async ({ page }) => {
+    test('formats dialect-specific syntax once the dialect is picked from the searchable list', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
       const output = page.getByLabel('Formatted SQL output');
 
@@ -769,7 +849,9 @@ test.describe('Formatter tools', () => {
       // stops at the bracket, 13 characters in.
       await input.fill('select top 5 [first name] from dbo.users');
       await expect(
-        page.getByText(/^Formatting Exception: Parse error: Unexpected "\[first nam" at line 1 column 14\./)
+        page.getByText(
+          /^Formatting Exception: Parse error: Unexpected "\[first nam" at line 1 column 14\./
+        )
       ).toBeVisible();
       await expect(output).toHaveValue('');
 
@@ -779,10 +861,14 @@ test.describe('Formatter tools', () => {
       await expect(page.getByRole('option')).toHaveText(['SQL Server (T-SQL)']);
       await page.keyboard.press('Enter');
       await expect(page.getByRole('option')).toHaveCount(0);
-      await expect(page.getByRole('combobox', { name: 'SQL dialect' })).toHaveText('SQL Server (T-SQL)');
+      await expect(page.getByRole('combobox', { name: 'SQL dialect' })).toHaveText(
+        'SQL Server (T-SQL)'
+      );
 
       await expect(
-        page.getByText('Valid SQL: Formatted successfully under SQL Server (T-SQL) dialect.', { exact: true })
+        page.getByText('Valid SQL: Formatted successfully under SQL Server (T-SQL) dialect.', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(output).toHaveValue('SELECT\n  TOP 5 [first name]\nFROM\n  dbo.users');
 
@@ -790,19 +876,27 @@ test.describe('Formatter tools', () => {
       await choose(page, 'SQL dialect', 'PostgreSQL');
       await input.fill("select a::int, data->>'k' from t where x = $1");
       await expect(
-        page.getByText('Valid SQL: Formatted successfully under PostgreSQL dialect.', { exact: true })
+        page.getByText('Valid SQL: Formatted successfully under PostgreSQL dialect.', {
+          exact: true,
+        })
       ).toBeVisible();
-      await expect(output).toHaveValue("SELECT\n  a::int,\n  data ->> 'k'\nFROM\n  t\nWHERE\n  x = $1");
+      await expect(output).toHaveValue(
+        "SELECT\n  a::int,\n  data ->> 'k'\nFROM\n  t\nWHERE\n  x = $1"
+      );
     });
 
-    test('minifies without touching strings and keeps line comments from swallowing code', async ({ page }) => {
+    test('minifies without touching strings and keeps line comments from swallowing code', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
       const output = page.getByLabel('Formatted SQL output');
 
       await input.fill("select 1 -- note\nfrom t\nwhere a = 'two  spaces'  and  b in ( 1, 2 ) ;");
       await expect(page.getByText(/^Valid SQL: /)).toBeVisible();
       await page.getByRole('button', { name: 'Minify' }).click();
-      await expect(output).toHaveValue("select 1 /* note */ from t where a = 'two  spaces' and b in (1, 2);");
+      await expect(output).toHaveValue(
+        "select 1 /* note */ from t where a = 'two  spaces' and b in (1, 2);"
+      );
       await expect(page.getByText('1 line', { exact: true })).toBeVisible();
 
       // Editing the SQL returns to formatted output.
@@ -811,7 +905,9 @@ test.describe('Formatter tools', () => {
       await expect(page.getByText('4 lines', { exact: true })).toBeVisible();
     });
 
-    test('reports SQL it cannot parse in one line and keeps the error after Minify', async ({ page }) => {
+    test('reports SQL it cannot parse in one line and keeps the error after Minify', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
       const output = page.getByLabel('Formatted SQL output');
       const copy = page.getByRole('button', { name: 'Copy to Clipboard' });
@@ -821,7 +917,9 @@ test.describe('Formatter tools', () => {
       // An unclosed bracket: the parser runs out of input after the 16 characters.
       await input.fill('select (1 from t');
       await expect(
-        page.getByText('Formatting Exception: Parse error at token: «EOF» at line 1 column 17', { exact: true })
+        page.getByText('Formatting Exception: Parse error at token: «EOF» at line 1 column 17', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.getByText(/Valid SQL/)).toHaveCount(0);
       await expect(output).toHaveValue('');
@@ -836,7 +934,9 @@ test.describe('Formatter tools', () => {
 
       await input.fill('select (1) from t');
       await expect(
-        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', { exact: true })
+        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.getByText(/Formatting Exception/)).toHaveCount(0);
       await expect(output).toHaveValue('SELECT\n  (1)\nFROM\n  t');
@@ -848,13 +948,17 @@ test.describe('Formatter tools', () => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
 
       await input.fill('select id from users');
-      await expect(page.getByLabel('Formatted SQL output')).toHaveValue('SELECT\n  id\nFROM\n  users');
+      await expect(page.getByLabel('Formatted SQL output')).toHaveValue(
+        'SELECT\n  id\nFROM\n  users'
+      );
       await page.getByRole('button', { name: 'Copy to Clipboard' }).click();
       await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
       expect(await clipboardText(page)).toBe('SELECT\n  id\nFROM\n  users');
     });
 
-    test('says the formatter could not be loaded when its chunk cannot be downloaded', async ({ page }) => {
+    test('says the formatter could not be loaded when its chunk cannot be downloaded', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'sql-formatter', 'SQL input');
       await page.route(CHUNKS, (route) => route.abort());
 
@@ -883,7 +987,9 @@ test.describe('Formatter tools', () => {
       await page.unroute(CHUNKS);
       await input.fill('select 2');
       await expect(
-        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', { exact: true })
+        page.getByText('Valid SQL: Formatted successfully under Standard SQL dialect.', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(page.getByLabel('Formatted SQL output')).toHaveValue('SELECT\n  2');
     });
@@ -901,7 +1007,9 @@ test.describe('Formatter tools', () => {
       await expect(page.getByRole('combobox', { name: 'To:' })).toHaveText('YAML');
       await expect(page.getByText('Output will appear here', { exact: true })).toBeVisible();
 
-      await input.fill('{"name":"Ada","tags":["dev","ops"],"nested":{"level":1},"port":443,"ok":true}');
+      await input.fill(
+        '{"name":"Ada","tags":["dev","ops"],"nested":{"level":1},"port":443,"ok":true}'
+      );
       await expect(page.getByLabel('YAML output')).toHaveValue(
         'name: Ada\ntags:\n  - dev\n  - ops\nnested:\n  level: 1\nport: 443\nok: true\n'
       );
@@ -955,7 +1063,10 @@ test.describe('Formatter tools', () => {
         // A list has no name of its own.
         ['[1,"two",null]', '<root>\n  <item>1</item>\n  <item>two</item>\n  <item/>\n</root>'],
         // Keys that are not XML names are made into names.
-        ['{"first name":"Ada","1st":"gold"}', '<root>\n  <first_name>Ada</first_name>\n  <_1st>gold</_1st>\n</root>'],
+        [
+          '{"first name":"Ada","1st":"gold"}',
+          '<root>\n  <first_name>Ada</first_name>\n  <_1st>gold</_1st>\n</root>',
+        ],
         // Markup characters in text are escaped.
         ['{"t":"x & y < z"}', '<t>x &amp; y &lt; z</t>'],
         ['"just text"', '<root>just text</root>'],
@@ -968,7 +1079,10 @@ test.describe('Formatter tools', () => {
       for (const [json, xml] of cases) {
         await input.fill(json);
         await expect(output).toHaveValue(xml);
-        expect(await xmlParserVerdict(page, await output.inputValue()), `XML written for ${json}`).toBe('OK');
+        expect(
+          await xmlParserVerdict(page, await output.inputValue()),
+          `XML written for ${json}`
+        ).toBe('OK');
       }
     });
 
@@ -1041,7 +1155,9 @@ test.describe('Formatter tools', () => {
       await input.fill(
         '[{"name":"Ada, Countess","age":36,"note":"said \\"hi\\""},{"name":"Linus","age":54,"note":null}]'
       );
-      await expect(output).toHaveValue('name,age,note\n"Ada, Countess",36,"said ""hi"""\nLinus,54,');
+      await expect(output).toHaveValue(
+        'name,age,note\n"Ada, Countess",36,"said ""hi"""\nLinus,54,'
+      );
       await expect(page.getByText('3 lines', { exact: true })).toBeVisible();
 
       // With semicolons the comma no longer needs quoting.
@@ -1049,7 +1165,9 @@ test.describe('Formatter tools', () => {
       await expect(output).toHaveValue('name;age;note\nAda, Countess;36;"said ""hi"""\nLinus;54;');
 
       await choose(page, 'CSV Delimiter', 'Tab');
-      await expect(output).toHaveValue('name\tage\tnote\nAda, Countess\t36\t"said ""hi"""\nLinus\t54\t');
+      await expect(output).toHaveValue(
+        'name\tage\tnote\nAda, Countess\t36\t"said ""hi"""\nLinus\t54\t'
+      );
 
       await choose(page, 'CSV Delimiter', 'Pipe (|)');
       await expect(output).toHaveValue('name|age|note\nAda, Countess|36|"said ""hi"""\nLinus|54|');
@@ -1061,9 +1179,12 @@ test.describe('Formatter tools', () => {
       // Data with no rows-and-columns shape is a write error, not a JSON parse error.
       await input.fill('[1,2,3]');
       await expect(
-        page.getByText('Cannot convert to CSV: CSV conversion requires items to all be objects or all be arrays.', {
-          exact: true,
-        })
+        page.getByText(
+          'Cannot convert to CSV: CSV conversion requires items to all be objects or all be arrays.',
+          {
+            exact: true,
+          }
+        )
       ).toBeVisible();
       await expect(page.getByText(/Error parsing JSON/)).toHaveCount(0);
       await expect(output).toHaveValue('');
@@ -1078,7 +1199,9 @@ test.describe('Formatter tools', () => {
       await choose(page, 'From:', 'TOML');
       await page
         .getByLabel('TOML input')
-        .fill('title = "Example"\nbig = 9007199254740993\n\n[owner]\nname = "Tom"\nports = [8001, 8002]\nenabled = true\n');
+        .fill(
+          'title = "Example"\nbig = 9007199254740993\n\n[owner]\nname = "Tom"\nports = [8001, 8002]\nenabled = true\n'
+        );
       await expect(output).toHaveValue(
         indented('  ', [
           [0, '{'],
@@ -1117,7 +1240,9 @@ test.describe('Formatter tools', () => {
       );
 
       await choose(page, 'From:', 'XML');
-      await page.getByLabel('XML input').fill('<user id="7"><name>Ada</name><role>admin</role><role>editor</role></user>');
+      await page
+        .getByLabel('XML input')
+        .fill('<user id="7"><name>Ada</name><role>admin</role><role>editor</role></user>');
       await expect(output).toHaveValue(
         JSON.stringify(
           {
@@ -1164,20 +1289,27 @@ test.describe('Formatter tools', () => {
       await page.getByLabel('XML input').fill('<a><b></a>');
       // One line, with the line counted from 1.
       await expect(
-        page.getByText('Error parsing XML: Unexpected close tag (line 1, column 10)', { exact: true })
+        page.getByText('Error parsing XML: Unexpected close tag (line 1, column 10)', {
+          exact: true,
+        })
       ).toBeVisible();
 
       await choose(page, 'From:', 'YAML');
       await page.getByLabel('YAML input').fill('a: [1\n');
       await expect(
-        page.getByText('Error parsing YAML: unexpected end of the stream within a flow collection (line 2, column 1)', {
-          exact: true,
-        })
+        page.getByText(
+          'Error parsing YAML: unexpected end of the stream within a flow collection (line 2, column 1)',
+          {
+            exact: true,
+          }
+        )
       ).toBeVisible();
 
       await choose(page, 'From:', 'TOML');
       await page.getByLabel('TOML input').fill('title = \n');
-      await expect(page.getByText(/^Error parsing TOML: Unexpected character.* at row 1, col 10, pos 9$/)).toBeVisible();
+      await expect(
+        page.getByText(/^Error parsing TOML: Unexpected character.* at row 1, col 10, pos 9$/)
+      ).toBeVisible();
       await expect(page.getByLabel('JSON output')).toHaveValue('');
 
       await page.getByLabel('TOML input').fill('title = "ok"\n');
@@ -1193,14 +1325,18 @@ test.describe('Formatter tools', () => {
       const swap = page.getByRole('button', { name: 'Swap input and output formats' });
 
       await input.fill('{"name":"Ada","langs":["en","fr"]}');
-      await expect(page.getByLabel('YAML output')).toHaveValue('name: Ada\nlangs:\n  - en\n  - fr\n');
+      await expect(page.getByLabel('YAML output')).toHaveValue(
+        'name: Ada\nlangs:\n  - en\n  - fr\n'
+      );
 
       await swap.click();
       await expect(page.getByRole('combobox', { name: 'From:' })).toHaveText('YAML');
       await expect(page.getByRole('combobox', { name: 'To:' })).toHaveText('JSON');
       await expect(page.getByText('Input YAML', { exact: true })).toBeVisible();
       await expect(page.getByText('Output JSON', { exact: true })).toBeVisible();
-      await expect(page.getByLabel('YAML input')).toHaveValue('name: Ada\nlangs:\n  - en\n  - fr\n');
+      await expect(page.getByLabel('YAML input')).toHaveValue(
+        'name: Ada\nlangs:\n  - en\n  - fr\n'
+      );
       await expect(page.getByLabel('JSON output')).toHaveValue(
         '{\n  "name": "Ada",\n  "langs": [\n    "en",\n    "fr"\n  ]\n}'
       );
@@ -1222,20 +1358,28 @@ test.describe('Formatter tools', () => {
       await expect(page.getByLabel('JSON input')).toHaveValue(
         '[\n  {\n    "name": "John",\n    "age": 30,\n    "city": "New York"\n  }\n]'
       );
-      await expect(page.getByLabel('YAML output')).toHaveValue('- name: John\n  age: 30\n  city: New York\n');
+      await expect(page.getByLabel('YAML output')).toHaveValue(
+        '- name: John\n  age: 30\n  city: New York\n'
+      );
     });
 
-    test('re-indents JSON to JSON, reports bad JSON there, and copies the result', async ({ page, context }) => {
+    test('re-indents JSON to JSON, reports bad JSON there, and copies the result', async ({
+      page,
+      context,
+    }) => {
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       const input = await openTool(page, 'json-yaml-xml', 'JSON input');
       await choose(page, 'To:', 'JSON');
       const output = page.getByLabel('JSON output');
 
       await input.fill('{"a":[1,2],"id":9007199254740993}');
-      await expect(output).toHaveValue('{\n  "a": [\n    1,\n    2\n  ],\n  "id": 9007199254740993\n}');
+      await expect(output).toHaveValue(
+        '{\n  "a": [\n    1,\n    2\n  ],\n  "id": 9007199254740993\n}'
+      );
 
       await choose(page, 'JSON Indentation', '4 spaces');
-      const fourSpaces = '{\n    "a": [\n        1,\n        2\n    ],\n    "id": 9007199254740993\n}';
+      const fourSpaces =
+        '{\n    "a": [\n        1,\n        2\n    ],\n    "id": 9007199254740993\n}';
       await expect(output).toHaveValue(fourSpaces);
 
       await page.getByRole('button', { name: 'Copy to Clipboard' }).click();
@@ -1265,7 +1409,9 @@ test.describe('Formatter tools', () => {
       await expect(page.getByLabel('CSV output')).toHaveValue('a\n1');
 
       const arrived = Promise.all(
-        held.map((route) => page.waitForResponse(route.request().url()).then((response) => response.finished()))
+        held.map((route) =>
+          page.waitForResponse(route.request().url()).then((response) => response.finished())
+        )
       );
       await Promise.all(held.map((route) => route.continue()));
       await arrived;
@@ -1280,15 +1426,20 @@ test.describe('Formatter tools', () => {
       await expect(page.getByLabel('TOML output')).toHaveValue('[[items]]\na = 1\n');
     });
 
-    test('says a converter is unavailable when a parser chunk cannot be downloaded', async ({ page }) => {
+    test('says a converter is unavailable when a parser chunk cannot be downloaded', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'json-yaml-xml', 'JSON input');
       await page.route(CHUNKS, (route) => route.abort());
 
       await input.fill('{"a":1}');
       await expect(
-        page.getByText('Converter unavailable: A converter could not be loaded. Check your connection and try again.', {
-          exact: true,
-        })
+        page.getByText(
+          'Converter unavailable: A converter could not be loaded. Check your connection and try again.',
+          {
+            exact: true,
+          }
+        )
       ).toBeVisible();
       await expect(page.getByText(/Error parsing JSON/)).toHaveCount(0);
       await expect(page.getByLabel('YAML output')).toHaveValue('');
@@ -1315,7 +1466,9 @@ test.describe('Formatter tools', () => {
       await expect(page.getByText(/Converter unavailable/)).toHaveCount(0);
     });
 
-    test('does not show the previous format under the new heading while a parser loads', async ({ page }) => {
+    test('does not show the previous format under the new heading while a parser loads', async ({
+      page,
+    }) => {
       const input = await openTool(page, 'json-yaml-xml', 'JSON input');
       await input.fill('[{"a":1}]');
       await expect(page.getByLabel('YAML output')).toHaveValue('- a: 1\n');

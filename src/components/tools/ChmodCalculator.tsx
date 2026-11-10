@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useCopyToClipboard } from '@/hooks';
-import { AlertCircle, Binary, Check, Copy, FolderLock, Info, Terminal, Trash2 } from 'lucide-react';
+import { AlertCircle, Binary, FolderLock, Info, Terminal, Trash2 } from 'lucide-react';
 import {
   PRESETS,
   chmodCommands,
@@ -68,9 +68,6 @@ export function ChmodCalculator() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [target, setTarget] = useState('');
 
-  const copyNumeric = useCopyToClipboard();
-  const copySymbolic = useCopyToClipboard();
-
   const commands = chmodCommands(mode, target);
   const explanation = explainMode(mode);
   const matchedPreset = findPreset(mode);
@@ -109,7 +106,7 @@ export function ChmodCalculator() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left: permissions and the editable values */}
       <div className="space-y-4 lg:col-span-3">
         <Card>
@@ -123,7 +120,10 @@ export function ChmodCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div role="group" aria-label="Permission checkboxes" className="grid grid-cols-4 gap-y-3">
+            <fieldset
+              aria-label="Permission checkboxes"
+              className="min-w-0 grid grid-cols-4 gap-y-3"
+            >
               <div />
               {BIT_COLUMNS.map(({ bit, label }) => (
                 <div
@@ -145,7 +145,9 @@ export function ChmodCalculator() {
                     <div key={bit} className="flex items-center justify-center">
                       <Checkbox
                         checked={hasPermission(mode, who, bit)}
-                        onCheckedChange={(checked) => applyMode(withPermission(mode, who, bit, checked))}
+                        onCheckedChange={(checked) =>
+                          applyMode(withPermission(mode, who, bit, checked))
+                        }
                         aria-label={`${label} ${bitLabel.toLowerCase()}`}
                         className="h-5 w-5"
                       />
@@ -153,13 +155,13 @@ export function ChmodCalculator() {
                   ))}
                 </div>
               ))}
-            </div>
+            </fieldset>
 
             <div className="space-y-3 border-t pt-4">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Special bits
               </h3>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {SPECIAL_ROWS.map(({ bit, label, octal, hint }) => (
                   <div key={bit} className="space-y-0.5">
                     <Checkbox
@@ -215,7 +217,7 @@ export function ChmodCalculator() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="chmod-octal" className="text-sm font-medium">
                   Octal (3 or 4 digits)
@@ -263,8 +265,8 @@ export function ChmodCalculator() {
 
             <p className="text-xs text-muted-foreground">
               A fourth leading digit sets the special bits: 4 setuid, 2 setgid, 1 sticky. In the
-              symbolic form, s and t mean the bit and execute are both set; capital S and T mean
-              the bit is set without execute. You can also paste the 10 characters from ls -l.
+              symbolic form, s and t mean the bit and execute are both set; capital S and T mean the
+              bit is set without execute. You can also paste the 10 characters from ls -l.
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -309,21 +311,15 @@ export function ChmodCalculator() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold">Numeric</span>
-                <Button
+                <CopyButton
+                  text={commands.numeric}
+                  label="Copy"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   type="button"
-                  onClick={() => copyNumeric.copyToClipboard(commands.numeric)}
-                  variant={copyNumeric.isCopied ? 'default' : 'outline'}
                   size="sm"
                   className="h-8"
                   aria-label="Copy numeric command"
-                >
-                  {copyNumeric.isCopied ? (
-                    <Check className="mr-1 h-3.5 w-3.5" />
-                  ) : (
-                    <Copy className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {copyNumeric.isCopied ? 'Copied' : 'Copy'}
-                </Button>
+                />
               </div>
               <div className="break-all rounded-md border bg-muted/30 p-3 font-mono text-sm">
                 {commands.numeric}
@@ -333,21 +329,15 @@ export function ChmodCalculator() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold">Symbolic</span>
-                <Button
+                <CopyButton
+                  text={commands.symbolic}
+                  label="Copy"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   type="button"
-                  onClick={() => copySymbolic.copyToClipboard(commands.symbolic)}
-                  variant={copySymbolic.isCopied ? 'default' : 'outline'}
                   size="sm"
                   className="h-8"
                   aria-label="Copy symbolic command"
-                >
-                  {copySymbolic.isCopied ? (
-                    <Check className="mr-1 h-3.5 w-3.5" />
-                  ) : (
-                    <Copy className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {copySymbolic.isCopied ? 'Copied' : 'Copy'}
-                </Button>
+                />
               </div>
               <div className="break-all rounded-md border bg-muted/30 p-3 font-mono text-sm">
                 {commands.symbolic}

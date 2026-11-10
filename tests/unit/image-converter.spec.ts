@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   ICO_MAX_SIDE,
   canvasFilter,
@@ -26,7 +26,7 @@ const untouched: Adjustments = {
   saturation: 100,
 };
 
-test.describe('planOutput', () => {
+describe('planOutput', () => {
   test('keeps the source size when nothing is asked for', () => {
     expect(planOutput(photo, request())).toEqual({
       drawWidth: 800,
@@ -37,8 +37,14 @@ test.describe('planOutput', () => {
   });
 
   test('follows the proportions when one side is given', () => {
-    expect(planOutput(photo, request({ width: 400 }))).toMatchObject({ drawWidth: 400, drawHeight: 300 });
-    expect(planOutput(photo, request({ height: 150 }))).toMatchObject({ drawWidth: 200, drawHeight: 150 });
+    expect(planOutput(photo, request({ width: 400 }))).toMatchObject({
+      drawWidth: 400,
+      drawHeight: 300,
+    });
+    expect(planOutput(photo, request({ height: 150 }))).toMatchObject({
+      drawWidth: 200,
+      drawHeight: 150,
+    });
   });
 
   test('leaves the other side alone when proportions are not kept', () => {
@@ -70,7 +76,15 @@ test.describe('planOutput', () => {
   test('treats empty, zero, negative and unreadable sides as "work it out"', () => {
     // A negative width used to reach the canvas, which drew the image
     // mirrored onto a canvas of the default size.
-    for (const side of ['', 0, -200, Number.NaN, Number.POSITIVE_INFINITY, null, undefined] as const) {
+    for (const side of [
+      '',
+      0,
+      -200,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      null,
+      undefined,
+    ] as const) {
       expect(planOutput(photo, request({ width: side, height: side }))).toMatchObject({
         drawWidth: 800,
         drawHeight: 600,
@@ -120,9 +134,18 @@ test.describe('planOutput', () => {
       canvasWidth: 600,
       canvasHeight: 800,
     });
-    expect(planOutput(photo, request({ rotation: 270 }))).toMatchObject({ canvasWidth: 600, canvasHeight: 800 });
-    expect(planOutput(photo, request({ rotation: 180 }))).toMatchObject({ canvasWidth: 800, canvasHeight: 600 });
-    expect(planOutput(photo, request({ rotation: 0 }))).toMatchObject({ canvasWidth: 800, canvasHeight: 600 });
+    expect(planOutput(photo, request({ rotation: 270 }))).toMatchObject({
+      canvasWidth: 600,
+      canvasHeight: 800,
+    });
+    expect(planOutput(photo, request({ rotation: 180 }))).toMatchObject({
+      canvasWidth: 800,
+      canvasHeight: 600,
+    });
+    expect(planOutput(photo, request({ rotation: 0 }))).toMatchObject({
+      canvasWidth: 800,
+      canvasHeight: 600,
+    });
   });
 
   test('returns null for a source without a pixel size', () => {
@@ -132,7 +155,7 @@ test.describe('planOutput', () => {
   });
 });
 
-test.describe('cropToImagePixels', () => {
+describe('cropToImagePixels', () => {
   const displayed = { width: 400, height: 300 };
 
   test('maps the selection onto the image at its own scale', () => {
@@ -153,18 +176,25 @@ test.describe('cropToImagePixels', () => {
 
   test('rounds to whole pixels', () => {
     expect(
-      cropToImagePixels({ x: 10.4, y: 10.6, width: 33.3, height: 33.3 }, displayed, { width: 1000, height: 750 })
+      cropToImagePixels({ x: 10.4, y: 10.6, width: 33.3, height: 33.3 }, displayed, {
+        width: 1000,
+        height: 750,
+      })
     ).toEqual({ x: 26, y: 27, width: 83, height: 83 });
   });
 
   test('keeps the rectangle inside the image', () => {
-    expect(cropToImagePixels({ x: 350, y: 250, width: 100, height: 100 }, displayed, photo)).toEqual({
+    expect(
+      cropToImagePixels({ x: 350, y: 250, width: 100, height: 100 }, displayed, photo)
+    ).toEqual({
       x: 700,
       y: 500,
       width: 100,
       height: 100,
     });
-    expect(cropToImagePixels({ x: -20, y: -20, width: 50, height: 50 }, displayed, photo)).toMatchObject({
+    expect(
+      cropToImagePixels({ x: -20, y: -20, width: 50, height: 50 }, displayed, photo)
+    ).toMatchObject({
       x: 0,
       y: 0,
     });
@@ -174,8 +204,12 @@ test.describe('cropToImagePixels', () => {
     // A click without a drag completes a 0x0 selection. It used to enable the
     // download button, which then saved an empty file.
     expect(cropToImagePixels({ x: 50, y: 50, width: 0, height: 0 }, displayed, photo)).toBeNull();
-    expect(cropToImagePixels({ x: 50, y: 50, width: 0.1, height: 40 }, displayed, photo)).toBeNull();
-    expect(cropToImagePixels({ x: 400, y: 300, width: 20, height: 20 }, displayed, photo)).toBeNull();
+    expect(
+      cropToImagePixels({ x: 50, y: 50, width: 0.1, height: 40 }, displayed, photo)
+    ).toBeNull();
+    expect(
+      cropToImagePixels({ x: 400, y: 300, width: 20, height: 20 }, displayed, photo)
+    ).toBeNull();
   });
 
   test('returns null while the image has no size on screen', () => {
@@ -185,7 +219,7 @@ test.describe('cropToImagePixels', () => {
   });
 });
 
-test.describe('canvasFilter', () => {
+describe('canvasFilter', () => {
   test('is none when nothing is adjusted', () => {
     expect(canvasFilter(untouched)).toBe('none');
   });
@@ -198,12 +232,19 @@ test.describe('canvasFilter', () => {
 
   test('keeps the order the editor has always applied them in', () => {
     expect(
-      canvasFilter({ grayscale: true, sepia: true, blur: 2, brightness: 120, contrast: 80, saturation: 150 })
+      canvasFilter({
+        grayscale: true,
+        sepia: true,
+        blur: 2,
+        brightness: 120,
+        contrast: 80,
+        saturation: 150,
+      })
     ).toBe('grayscale(100%) sepia(100%) blur(2px) brightness(120%) contrast(80%) saturate(150%)');
   });
 });
 
-test.describe('encodeIco', () => {
+describe('encodeIco', () => {
   const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
 
   test('writes a one-image icon directory in front of the PNG', () => {

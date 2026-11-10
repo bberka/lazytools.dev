@@ -135,7 +135,10 @@ export function PdfSplit() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -182,11 +185,7 @@ export function PdfSplit() {
                 Clear
               </Button>
             </div>
-            {status && (
-              <p role="status" className="text-sm text-muted-foreground">
-                {status}
-              </p>
-            )}
+            {status && <output className="block text-sm text-muted-foreground">{status}</output>}
           </CardContent>
         </Card>
       )}

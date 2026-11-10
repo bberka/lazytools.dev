@@ -2,18 +2,22 @@
 
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertCircle,
-  Check,
   CheckCircle2,
-  Copy,
   Info,
   KeyRound,
   ShieldCheck,
@@ -50,8 +54,6 @@ interface Outcome {
 }
 
 function OutputRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
-
   return (
     <div className="space-y-2 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -59,18 +61,18 @@ function OutputRow({ label, value, hint }: { label: string; value: string; hint?
           <span className="text-sm font-semibold">{label}</span>
           {hint && <span className="ml-2 text-xs text-muted-foreground">{hint}</span>}
         </div>
-        <Button
-          onClick={() => copyToClipboard(value)}
-          variant={isCopied ? 'default' : 'outline'}
+        <CopyButton
+          text={value}
+          label="Copy"
+          iconClassName="mr-1 h-3.5 w-3.5"
           size="sm"
           className="h-8 shrink-0"
           aria-label={`Copy ${label} HMAC`}
-        >
-          {isCopied ? <Check className="mr-1 h-3.5 w-3.5" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
-          {isCopied ? 'Copied' : 'Copy'}
-        </Button>
+        />
       </div>
-      <div className="select-all break-all rounded-md bg-muted p-3 font-mono text-xs sm:text-sm">{value}</div>
+      <div className="select-all break-all rounded-md bg-muted p-3 font-mono text-xs sm:text-sm">
+        {value}
+      </div>
     </div>
   );
 }
@@ -114,7 +116,10 @@ export function HmacGenerator() {
   const digest = result?.ok ? result.digest : null;
   const keyError = result && !result.ok ? result.error : null;
 
-  const verification = useMemo(() => (digest ? verifySignature(digest, expected) : null), [digest, expected]);
+  const verification = useMemo(
+    () => (digest ? verifySignature(digest, expected) : null),
+    [digest, expected]
+  );
 
   const handleClear = () => {
     setMessage('');
@@ -124,7 +129,7 @@ export function HmacGenerator() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-5">
       {/* Left panel: message, key, algorithm */}
       <div className="space-y-4 lg:col-span-2">
         <Card>
@@ -133,7 +138,9 @@ export function HmacGenerator() {
               <KeyRound className="h-5 w-5 text-primary" />
               Message and Key
             </CardTitle>
-            <CardDescription>The HMAC updates as you type. Nothing leaves your browser.</CardDescription>
+            <CardDescription>
+              The HMAC updates as you type. Nothing leaves your browser.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -155,7 +162,10 @@ export function HmacGenerator() {
               <label htmlFor={keyId} className="text-sm font-medium">
                 Secret key
               </label>
-              <Tabs value={keyEncoding} onValueChange={(value) => setKeyEncoding(value as KeyEncoding)}>
+              <Tabs
+                value={keyEncoding}
+                onValueChange={(value) => setKeyEncoding(value as KeyEncoding)}
+              >
                 <TabsList aria-label="Key format" className="grid h-auto w-full grid-cols-3">
                   <TabsTrigger value="utf8" className="py-1.5">
                     UTF-8 text
@@ -183,7 +193,11 @@ export function HmacGenerator() {
                 className={`font-mono text-sm ${keyError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
               {keyError ? (
-                <div id={keyErrorId} role="alert" className="flex items-start gap-1.5 text-xs text-destructive">
+                <div
+                  id={keyErrorId}
+                  role="alert"
+                  className="flex items-start gap-1.5 text-xs text-destructive"
+                >
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>{keyError}</span>
                 </div>
@@ -200,7 +214,10 @@ export function HmacGenerator() {
               <label htmlFor={algorithmId} className="text-sm font-medium">
                 Hash algorithm
               </label>
-              <Select value={algorithm} onValueChange={(value) => setAlgorithm(value as HmacAlgorithm)}>
+              <Select
+                value={algorithm}
+                onValueChange={(value) => setAlgorithm(value as HmacAlgorithm)}
+              >
                 <SelectTrigger id={algorithmId}>
                   <SelectValue />
                 </SelectTrigger>
@@ -215,7 +232,12 @@ export function HmacGenerator() {
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleClear} variant="outline" size="sm" disabled={!hasInput && !expected}>
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                disabled={!hasInput && !expected}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear
               </Button>
@@ -244,7 +266,11 @@ export function HmacGenerator() {
                 value={encodeDigest(digest, 'hex', uppercaseHex)}
               />
               <OutputRow label="Base64" value={encodeDigest(digest, 'base64')} />
-              <OutputRow label="Base64URL" hint="no padding" value={encodeDigest(digest, 'base64url')} />
+              <OutputRow
+                label="Base64URL"
+                hint="no padding"
+                value={encodeDigest(digest, 'base64url')}
+              />
             </CardContent>
           </Card>
         ) : (
@@ -299,7 +325,10 @@ export function HmacGenerator() {
               ) : verification.status === 'match' ? (
                 <p className="flex items-start gap-1.5 font-medium text-green-600 dark:text-green-400">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Match. The signature equals the HMAC (read as {ENCODING_LABELS[verification.encoding]}).</span>
+                  <span>
+                    Match. The signature equals the HMAC (read as{' '}
+                    {ENCODING_LABELS[verification.encoding]}).
+                  </span>
                 </p>
               ) : verification.status === 'mismatch' ? (
                 <div className="space-y-1">
@@ -307,7 +336,9 @@ export function HmacGenerator() {
                     <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>Mismatch. The signature does not equal the HMAC.</span>
                   </p>
-                  {verification.detail && <p className="pl-6 text-xs text-muted-foreground">{verification.detail}</p>}
+                  {verification.detail && (
+                    <p className="pl-6 text-xs text-muted-foreground">{verification.detail}</p>
+                  )}
                 </div>
               ) : (
                 <p className="flex items-start gap-1.5 font-medium text-destructive">

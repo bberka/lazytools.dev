@@ -132,7 +132,7 @@ export function ColorPicker({
   const [rgbInputValue, setRgbInputValue] = React.useState('');
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // oxlint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(value);
 
     const rgb = parseHexColor(value);
@@ -177,7 +177,17 @@ export function ColorPicker({
       const r = parseInt(parts[0], 10);
       const g = parseInt(parts[1], 10);
       const b = parseInt(parts[2], 10);
-      if (!isNaN(r) && !isNaN(g) && !isNaN(b) && r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+      if (
+        !isNaN(r) &&
+        !isNaN(g) &&
+        !isNaN(b) &&
+        r >= 0 &&
+        r <= 255 &&
+        g >= 0 &&
+        g <= 255 &&
+        b >= 0 &&
+        b <= 255
+      ) {
         onChange(rgbToHex({ r, g, b }));
       }
     } else if (val.toLowerCase() === 'none') {
@@ -237,7 +247,9 @@ export function ColorPicker({
         <div className="border-t border-border/60 my-2" />
 
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preset Swatches</label>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Preset Swatches
+          </span>
           <div className="grid grid-cols-8 gap-1.5">
             {PRESET_COLORS.map((color) => (
               <button
@@ -249,6 +261,7 @@ export function ColorPicker({
                 style={{ backgroundColor: color }}
                 onClick={() => handlePresetClick(color)}
                 title={color}
+                aria-label={color}
               />
             ))}
           </div>
@@ -258,7 +271,9 @@ export function ColorPicker({
 
         <div className="grid grid-cols-[2fr_3fr] gap-2">
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">HEX</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+              HEX
+            </span>
             <Input
               type="text"
               value={inputValue}
@@ -268,7 +283,9 @@ export function ColorPicker({
             />
           </div>
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">RGB</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+              RGB
+            </span>
             <Input
               type="text"
               value={rgbInputValue}

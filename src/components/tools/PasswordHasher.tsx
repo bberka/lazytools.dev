@@ -9,16 +9,14 @@ import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Slider } from '../ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Copy, Check, Shield, Loader2, CheckCircle, XCircle, Info, RefreshCw } from 'lucide-react';
 import { useCopyToClipboard, useActionButton } from '@/hooks';
-import { hashPassword, verifyPassword, type PasswordHashAlgorithm } from '@/lib/tools/password-hasher';
+import {
+  hashPassword,
+  verifyPassword,
+  type PasswordHashAlgorithm,
+} from '@/lib/tools/password-hasher';
 
 type Algorithm = PasswordHashAlgorithm;
 type Mode = 'hash' | 'verify';
@@ -28,7 +26,7 @@ export function PasswordHasher() {
   const [algorithm, setAlgorithm] = useState<Algorithm>('argon2id');
   const [input, setInput] = useState('');
   const [hash, setHash] = useState('');
-  
+
   // Bcrypt settings
   const [rounds, setRounds] = useState(10);
 
@@ -63,7 +61,6 @@ export function PasswordHasher() {
     }
   }, [pathname, router]);
 
-  // Clean state when changing modes or algorithms
   const handleModeChange = (newMode: Mode) => {
     latestRun.current += 1;
     setMode(newMode);
@@ -162,10 +159,6 @@ export function PasswordHasher() {
     await executeVerify(verifyHash);
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(hash);
-  };
-
   const handleClear = () => {
     latestRun.current += 1;
     setInput('');
@@ -204,9 +197,9 @@ export function PasswordHasher() {
             <CardDescription>Adjust the strength and performance factors</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Hashing Algorithm</label>
+                <span className="text-sm font-medium">Hashing Algorithm</span>
                 <Select
                   value={algorithm}
                   onValueChange={(val) => {
@@ -233,7 +226,8 @@ export function PasswordHasher() {
                     <span className="text-xs text-muted-foreground">2^{rounds} iterations</span>
                   </div>
                   <div className="pt-2">
-                    <Slider aria-label="Cost Factor (Rounds)"
+                    <Slider
+                      aria-label="Cost Factor (Rounds)"
                       value={rounds}
                       onChange={(value) => {
                         setRounds(value);
@@ -248,11 +242,14 @@ export function PasswordHasher() {
               ) : (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="text-sm font-medium">Iterations (Time Cost): {iterations}</label>
+                    <label className="text-sm font-medium">
+                      Iterations (Time Cost): {iterations}
+                    </label>
                     <span className="text-xs text-muted-foreground">Recommended: 3+</span>
                   </div>
                   <div className="pt-2">
-                    <Slider aria-label="Iterations (Time Cost)"
+                    <Slider
+                      aria-label="Iterations (Time Cost)"
                       value={iterations}
                       onChange={(value) => {
                         setIterations(value);
@@ -268,9 +265,9 @@ export function PasswordHasher() {
             </div>
 
             {algorithm !== 'bcrypt' && (
-              <div className="grid gap-4 sm:grid-cols-3 pt-2 border-t border-border">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2 border-t border-border">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Memory Size</label>
+                  <span className="text-sm font-medium">Memory Size</span>
                   <Select
                     value={memorySize.toString()}
                     onValueChange={(val) => {
@@ -294,7 +291,7 @@ export function PasswordHasher() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Parallelism (Threads)</label>
+                  <span className="text-sm font-medium">Parallelism (Threads)</span>
                   <Select
                     value={parallelism.toString()}
                     onValueChange={(val) => {
@@ -318,7 +315,7 @@ export function PasswordHasher() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Hash Output Length</label>
+                  <span className="text-sm font-medium">Hash Output Length</span>
                   <Select
                     value={hashLength.toString()}
                     onValueChange={(val) => {
@@ -408,7 +405,11 @@ export function PasswordHasher() {
             )}
           </Button>
         ) : (
-          <Button onClick={handleVerify} disabled={isLoading || !input || !hash} className="shadow-sm">
+          <Button
+            onClick={handleVerify}
+            disabled={isLoading || !input || !hash}
+            className="shadow-sm"
+          >
             {isVerifying ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -429,7 +430,10 @@ export function PasswordHasher() {
 
       {/* Error Output */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-sm font-medium flex items-center gap-2">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 rounded-md text-sm font-medium flex items-center gap-2"
+        >
           <XCircle className="h-5 w-5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -447,7 +451,7 @@ export function PasswordHasher() {
               <Button
                 variant={isCopied ? 'default' : 'ghost'}
                 size="icon"
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(hash)}
                 aria-label="Copy hash output"
                 className="h-9 w-9 transition-all duration-200"
               >
@@ -456,7 +460,7 @@ export function PasswordHasher() {
             </TooltipSimple>
           </CardHeader>
           <CardContent>
-            <pre className="w-full min-h-[60px] p-4 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input leading-relaxed selection:bg-primary/20">
+            <pre className="w-full min-h-[60px] p-4 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input leading-relaxed selection:bg-primary/20">
               {hash}
             </pre>
           </CardContent>
@@ -499,7 +503,8 @@ export function PasswordHasher() {
                 {detectedAlgorithm && (
                   <p className="text-xs text-muted-foreground mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border border-border">
                     <Info className="h-3 w-3" />
-                    Detected: <span className="font-semibold text-foreground">{detectedAlgorithm}</span>
+                    Detected:{' '}
+                    <span className="font-semibold text-foreground">{detectedAlgorithm}</span>
                   </p>
                 )}
               </div>
@@ -509,7 +514,7 @@ export function PasswordHasher() {
       )}
 
       {/* Information Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="border border-blue-500/20 bg-blue-500/5 dark:bg-blue-950/10 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -519,12 +524,22 @@ export function PasswordHasher() {
               <div className="text-sm space-y-2">
                 <p className="font-bold text-blue-900 dark:text-blue-400">About Argon2</p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Argon2 is the winner of the Password Hashing Competition (PHC) and is the current industry-standard recommendation.
+                  Argon2 is the winner of the Password Hashing Competition (PHC) and is the current
+                  industry-standard recommendation.
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed">
-                  <li><strong className="text-foreground">Argon2id:</strong> Hybrid mode. Safe against both side-channel attacks and GPU cracking.</li>
-                  <li><strong className="text-foreground">Argon2i:</strong> Designed to prevent side-channel timing attacks (ideal for keys).</li>
-                  <li><strong className="text-foreground">Argon2d:</strong> Maximizes GPU cracking resistance (good for cryptocurrency).</li>
+                  <li>
+                    <strong className="text-foreground">Argon2id:</strong> Hybrid mode. Safe against
+                    both side-channel attacks and GPU cracking.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Argon2i:</strong> Designed to prevent
+                    side-channel timing attacks (ideal for keys).
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Argon2d:</strong> Maximizes GPU cracking
+                    resistance (good for cryptocurrency).
+                  </li>
                 </ul>
               </div>
             </div>
@@ -540,7 +555,8 @@ export function PasswordHasher() {
               <div className="text-sm space-y-2">
                 <p className="font-bold text-orange-900 dark:text-orange-400">About Bcrypt</p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Bcrypt is a highly robust password hashing function based on the Blowfish cipher. It has been battle-tested since 1999.
+                  Bcrypt is a highly robust password hashing function based on the Blowfish cipher.
+                  It has been battle-tested since 1999.
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs leading-relaxed">
                   <li>Automatically handles salting internally.</li>

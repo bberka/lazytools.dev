@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, SearchCode, Trash2, Wand2 } from 'lucide-react';
+import { AlertCircle, SearchCode, Trash2, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TooltipSimple } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 import { explainRegex, testRegex, toFlagString, type RegexFlags } from '@/lib/tools/regex-tester';
 
@@ -113,7 +113,6 @@ export function RegexTester() {
     dotAll: false,
     unicode: false,
   });
-  const copy = useCopyToClipboard();
 
   const flagString = toFlagString(flags);
   const { isValid, error, matches } = useMemo(
@@ -156,7 +155,9 @@ export function RegexTester() {
             <SearchCode className="h-5 w-5" />
             Regular Expression
           </CardTitle>
-          <CardDescription>Enter a regex pattern or assemble one with guided snippets.</CardDescription>
+          <CardDescription>
+            Enter a regex pattern or assemble one with guided snippets.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -204,24 +205,12 @@ export function RegexTester() {
               </Select>
             </div>
 
-            <Button
-              onClick={() => copy.copyToClipboard(pattern)}
-              variant={copy.isCopied ? 'default' : 'outline'}
+            <CopyButton
+              text={pattern}
+              label="Copy pattern"
               disabled={!pattern}
               className="min-h-11 sm:min-h-10"
-            >
-              {copy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy pattern
-                </>
-              )}
-            </Button>
+            />
 
             <Button onClick={handleClear} variant="outline" className="min-h-11 sm:min-h-10">
               <Trash2 className="mr-2 h-4 w-4" />
@@ -312,9 +301,12 @@ export function RegexTester() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto scrollbar-thin bg-background">
+            <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto bg-background">
               {explanations.map((exp, idx) => (
-                <div key={idx} className="grid grid-cols-[100px_1fr] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors">
+                <div
+                  key={idx}
+                  className="grid grid-cols-[100px_minmax(0,1fr)] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors"
+                >
                   <div className="font-mono bg-muted px-1.5 py-0.5 rounded text-center break-all select-all font-semibold shrink-0 text-primary">
                     {exp.token}
                   </div>
@@ -416,21 +408,24 @@ export function RegexTester() {
                     <div className="break-all rounded bg-muted p-2 font-mono text-sm">
                       {match.text}
                     </div>
-                    {match.groups.length > 0 && match.groups.some((group) => group !== undefined) && (
-                      <div className="space-y-1">
-                        <div className="text-xs font-medium text-muted-foreground">
-                          Capture Groups
+                    {match.groups.length > 0 &&
+                      match.groups.some((group) => group !== undefined) && (
+                        <div className="space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Capture Groups
+                          </div>
+                          {match.groups.map((group, groupIndex) =>
+                            group !== undefined ? (
+                              <div key={groupIndex} className="pl-4 text-xs">
+                                <span className="text-muted-foreground">
+                                  Group {groupIndex + 1}:
+                                </span>{' '}
+                                <code className="rounded bg-muted px-1 py-0.5">{group}</code>
+                              </div>
+                            ) : null
+                          )}
                         </div>
-                        {match.groups.map((group, groupIndex) =>
-                          group !== undefined ? (
-                            <div key={groupIndex} className="pl-4 text-xs">
-                              <span className="text-muted-foreground">Group {groupIndex + 1}:</span>{' '}
-                              <code className="rounded bg-muted px-1 py-0.5">{group}</code>
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))}
               </div>

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
+import { openFileChooser } from '../support/file-chooser';
 
 /**
  * Browser flows for the encoder and decoder tools: Base64, Hex, HTML entities,
@@ -95,7 +96,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── Base64 ──────────────────────────────────────────────────────────────────
 
   test.describe('Base64 Encoder/Decoder', () => {
-    test('encodes UTF-8 text, copies the result and swaps back to the original', async ({ page }) => {
+    test('encodes UTF-8 text, copies the result and swaps back to the original', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'base64-converter', 'Base64 Encoder/Decoder');
       const input = page.getByRole('textbox', { name: 'Text to encode' });
@@ -125,8 +128,13 @@ test.describe('Encoder and decoder tools', () => {
       expect(await clipboardText(page)).toBe('SGVsbG8sIFdvcmxkIQ==');
 
       await swap.click();
-      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'Base64 to decode' })).toHaveValue('SGVsbG8sIFdvcmxkIQ==');
+      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(page.getByRole('textbox', { name: 'Base64 to decode' })).toHaveValue(
+        'SGVsbG8sIFdvcmxkIQ=='
+      );
       await expect(output).toHaveValue('Hello, World!');
 
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
@@ -135,7 +143,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(copy).toBeDisabled();
     });
 
-    test('decodes standard, URL-safe and wrapped Base64 and names what is wrong with bad input', async ({ page }) => {
+    test('decodes standard, URL-safe and wrapped Base64 and names what is wrong with bad input', async ({
+      page,
+    }) => {
       await openTool(page, 'base64-converter', 'Base64 Encoder/Decoder');
       await page.getByRole('tab', { name: 'Decode' }).click();
       const input = page.getByRole('textbox', { name: 'Base64 to decode' });
@@ -154,7 +164,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(toolAlert(page)).toHaveCount(0);
 
       await input.fill('SGVsbG8*');
-      await expect(toolAlert(page)).toHaveText('Error: Invalid Base64 character "*" at position 8.');
+      await expect(toolAlert(page)).toHaveText(
+        'Error: Invalid Base64 character "*" at position 8.'
+      );
       await expect(output).toHaveValue('');
       await expect(page.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
 
@@ -169,17 +181,21 @@ test.describe('Encoder and decoder tools', () => {
       await expect(output).toHaveValue('Hello');
     });
 
-    test('encodes a picked file, lets it be downloaded again and shows a preview for images', async ({ page }) => {
+    test('encodes a picked file, lets it be downloaded again and shows a preview for images', async ({
+      page,
+    }) => {
       await openTool(page, 'base64-converter', 'Base64 Encoder/Decoder');
       await page.getByRole('tab', { name: 'File / Image' }).click();
       const dropzone = page.getByRole('button', { name: 'Drop file here or click to browse' });
       const output = page.getByRole('textbox', { name: 'Base64 output' });
 
       // Clicking the drop area opens the file picker.
-      const chooserOpened = page.waitForEvent('filechooser');
-      await dropzone.click();
-      const chooser = await chooserOpened;
-      await chooser.setFiles({ name: 'hello.txt', mimeType: 'text/plain', buffer: Buffer.from('Hello, World!') });
+      const chooser = await openFileChooser(page, () => dropzone.click());
+      await chooser.setFiles({
+        name: 'hello.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('Hello, World!'),
+      });
 
       await expect(page.getByText('hello.txt', { exact: true })).toBeVisible();
       await expect(page.getByText('text/plain · 13 B')).toBeVisible();
@@ -210,7 +226,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(preview).toHaveJSProperty('naturalWidth', 1);
     });
 
-    test('takes a dropped file, opens the picker from the keyboard and refuses an empty file', async ({ page }) => {
+    test('takes a dropped file, opens the picker from the keyboard and refuses an empty file', async ({
+      page,
+    }) => {
       await openTool(page, 'base64-converter', 'Base64 Encoder/Decoder');
       await page.getByRole('tab', { name: 'File / Image' }).click();
       const dropzone = page.getByRole('button', { name: 'Drop file here or click to browse' });
@@ -218,7 +236,11 @@ test.describe('Encoder and decoder tools', () => {
 
       const dataTransfer = await page.evaluateHandle(() => {
         const transfer = new DataTransfer();
-        transfer.items.add(new File([new Uint8Array([0, 255, 16])], 'dropped.bin', { type: 'application/octet-stream' }));
+        transfer.items.add(
+          new File([new Uint8Array([0, 255, 16])], 'dropped.bin', {
+            type: 'application/octet-stream',
+          })
+        );
         return transfer;
       });
       await dropzone.dispatchEvent('dragover', { dataTransfer });
@@ -232,13 +254,17 @@ test.describe('Encoder and decoder tools', () => {
 
       // Enter on the focused drop area opens the picker too.
       await dropzone.focus();
-      const chooserOpened = page.waitForEvent('filechooser');
-      await page.keyboard.press('Enter');
-      const chooser = await chooserOpened;
-      await chooser.setFiles({ name: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.alloc(0) });
+      const chooser = await openFileChooser(page, () => page.keyboard.press('Enter'));
+      await chooser.setFiles({
+        name: 'empty.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.alloc(0),
+      });
 
       await expect(page.getByText('text/plain · 0 B')).toBeVisible();
-      await expect(toolAlert(page)).toHaveText('Error: This file is empty, so there is nothing to encode.');
+      await expect(toolAlert(page)).toHaveText(
+        'Error: This file is empty, so there is nothing to encode.'
+      );
       await expect(output).toHaveCount(0);
 
       // Removing the file takes the error with it.
@@ -261,7 +287,9 @@ test.describe('Encoder and decoder tools', () => {
         mimeType: 'text/plain',
         buffer: Buffer.from('Hello, World!'),
       });
-      await expect(page.getByRole('textbox', { name: 'Base64 output' })).toHaveValue('SGVsbG8sIFdvcmxkIQ==');
+      await expect(page.getByRole('textbox', { name: 'Base64 output' })).toHaveValue(
+        'SGVsbG8sIFdvcmxkIQ=='
+      );
 
       const failureLogged = page.waitForEvent('console', (message) =>
         message.text().includes('Failed to copy to clipboard')
@@ -276,7 +304,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── Hex ─────────────────────────────────────────────────────────────────────
 
   test.describe('Hex ↔ String Converter', () => {
-    test('encodes text as UTF-8 byte pairs with the chosen delimiter, prefix and case', async ({ page }) => {
+    test('encodes text as UTF-8 byte pairs with the chosen delimiter, prefix and case', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'hex-converter', 'Hex ↔ String Converter');
       const input = page.getByRole('textbox', { name: 'Plain text input' });
@@ -325,7 +355,9 @@ test.describe('Encoder and decoder tools', () => {
       expect(await clipboardText(page)).toBe('\\x4A\\x6F\\x7E');
     });
 
-    test('decodes hex in the usual notations and swaps direction with the result', async ({ page }) => {
+    test('decodes hex in the usual notations and swaps direction with the result', async ({
+      page,
+    }) => {
       await openTool(page, 'hex-converter', 'Hex ↔ String Converter');
       await page.getByRole('tab', { name: 'Hex to String (Decode)' }).click();
       const input = page.getByRole('textbox', { name: 'Hexadecimal input' });
@@ -356,7 +388,10 @@ test.describe('Encoder and decoder tools', () => {
       await input.fill('48 69');
       await expect(output).toHaveValue('Hi');
       await page.getByRole('button', { name: 'Swap Directions' }).click();
-      await expect(page.getByRole('tab', { name: 'String to Hex (Encode)' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: 'String to Hex (Encode)' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
       await expect(page.getByRole('textbox', { name: 'Plain text input' })).toHaveValue('Hi');
       await expect(page.getByRole('textbox', { name: 'Hexadecimal output' })).toHaveValue('48 69');
 
@@ -365,7 +400,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(page.getByRole('textbox', { name: 'Hexadecimal output' })).toHaveValue('');
     });
 
-    test('reports hex that cannot be decoded and keeps the input when the mode is switched', async ({ page }) => {
+    test('reports hex that cannot be decoded and keeps the input when the mode is switched', async ({
+      page,
+    }) => {
       await openTool(page, 'hex-converter', 'Hex ↔ String Converter');
       await page.getByRole('tab', { name: 'Hex to String (Decode)' }).click();
       const input = page.getByRole('textbox', { name: 'Hexadecimal input' });
@@ -373,7 +410,9 @@ test.describe('Encoder and decoder tools', () => {
 
       // A typo must not be dropped silently.
       await input.fill('48 6g');
-      await expect(toolAlert(page)).toHaveText('Invalid Hexadecimal Syntax: "g" is not a hexadecimal digit.');
+      await expect(toolAlert(page)).toHaveText(
+        'Invalid Hexadecimal Syntax: "g" is not a hexadecimal digit.'
+      );
       await expect(output).toHaveValue('');
       await expect(page.getByRole('button', { name: 'Copy Output' })).toBeDisabled();
 
@@ -383,7 +422,9 @@ test.describe('Encoder and decoder tools', () => {
       );
 
       await input.fill('--');
-      await expect(toolAlert(page)).toHaveText('Invalid Hexadecimal Syntax: No valid hexadecimal characters found.');
+      await expect(toolAlert(page)).toHaveText(
+        'Invalid Hexadecimal Syntax: No valid hexadecimal characters found.'
+      );
 
       // Only whitespace is no input, not an error.
       await input.fill('   ');
@@ -403,7 +444,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── HTML entities ───────────────────────────────────────────────────────────
 
   test.describe('HTML Encoder/Decoder', () => {
-    test('escapes the five special characters, copies the result and swaps to decode', async ({ page }) => {
+    test('escapes the five special characters, copies the result and swaps to decode', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'html-encoder', 'HTML Encoder/Decoder');
       const input = page.getByRole('textbox', { name: 'HTML to encode' });
@@ -431,8 +474,13 @@ test.describe('Encoder and decoder tools', () => {
       expect(await clipboardText(page)).toBe(encoded);
 
       await swap.click();
-      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'HTML entities to decode' })).toHaveValue(encoded);
+      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(page.getByRole('textbox', { name: 'HTML entities to decode' })).toHaveValue(
+        encoded
+      );
       await expectResult(page, markup);
 
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
@@ -440,7 +488,9 @@ test.describe('Encoder and decoder tools', () => {
       await expectResult(page, 'Output will appear here...');
     });
 
-    test('decodes named, numeric and legacy references and shows decoded markup as text', async ({ page }) => {
+    test('decodes named, numeric and legacy references and shows decoded markup as text', async ({
+      page,
+    }) => {
       await openTool(page, 'html-encoder', 'HTML Encoder/Decoder');
       await page.getByRole('tab', { name: 'Decode' }).click();
       const input = page.getByRole('textbox', { name: 'HTML entities to decode' });
@@ -484,13 +534,17 @@ test.describe('Encoder and decoder tools', () => {
       Regex: 'Tom\'s "big" <tag> & a,b\nC:\\\\tmp\\.\\*',
     };
 
-    test('escapes text for every target and unescapes it back to the original', async ({ page }) => {
+    test('escapes text for every target and unescapes it back to the original', async ({
+      page,
+    }) => {
       await openTool(page, 'text-escape', 'Text Escape/Unescape');
       const escape = page.getByRole('button', { name: 'Escape', exact: true });
       const unescape = page.getByRole('button', { name: 'Unescape', exact: true });
 
       await expect(escape).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.getByRole('combobox', { name: 'Escape Mode' })).toHaveText('JavaScript/TypeScript');
+      await expect(page.getByRole('combobox', { name: 'Escape Mode' })).toHaveText(
+        'JavaScript/TypeScript'
+      );
 
       // Plain words need no escaping in a JavaScript string.
       await page.getByRole('textbox', { name: 'Text to escape' }).fill('hello world');
@@ -514,7 +568,9 @@ test.describe('Encoder and decoder tools', () => {
       }
     });
 
-    test('unescapes JavaScript sequences in one pass and Swap reverses the direction', async ({ page }) => {
+    test('unescapes JavaScript sequences in one pass and Swap reverses the direction', async ({
+      page,
+    }) => {
       await openTool(page, 'text-escape', 'Text Escape/Unescape');
       const input = page.getByRole('textbox', { name: 'Text to escape' });
 
@@ -522,7 +578,10 @@ test.describe('Encoder and decoder tools', () => {
       await expectResult(page, String.raw`a \"q\"\nb\tc`);
 
       await page.getByRole('button', { name: 'Swap', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Unescape', exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Unescape', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       const escapedInput = page.getByRole('textbox', { name: 'Escaped text to unescape' });
       await expect(escapedInput).toHaveValue(String.raw`a \"q\"\nb\tc`);
       await expectResult(page, 'a "q"\nb\tc');
@@ -542,7 +601,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(page.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
     });
 
-    test('picks the mode from the keyboard and reports an invalid JSON escape', async ({ page }) => {
+    test('picks the mode from the keyboard and reports an invalid JSON escape', async ({
+      page,
+    }) => {
       await openTool(page, 'text-escape', 'Text Escape/Unescape');
       const mode = page.getByRole('combobox', { name: 'Escape Mode' });
 
@@ -559,7 +620,9 @@ test.describe('Encoder and decoder tools', () => {
       const input = page.getByRole('textbox', { name: 'Escaped text to unescape' });
 
       await input.fill(String.raw`bad \q escape`);
-      await expect(toolAlert(page)).toHaveText(String.raw`Error: Invalid JSON escape sequence "\q" at position 5.`);
+      await expect(toolAlert(page)).toHaveText(
+        String.raw`Error: Invalid JSON escape sequence "\q" at position 5.`
+      );
       await expectResult(page, 'Output will appear here...');
       await expect(page.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
       await expect(page.getByRole('button', { name: 'Swap', exact: true })).toBeDisabled();
@@ -574,7 +637,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── Punycode ────────────────────────────────────────────────────────────────
 
   test.describe('Punycode Converter', () => {
-    test('encodes Unicode domains line by line, and only the host of an address', async ({ page }) => {
+    test('encodes Unicode domains line by line, and only the host of an address', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'punycode-converter', 'Punycode Converter');
       const input = page.getByRole('textbox', { name: 'Unicode domains or URLs' });
@@ -607,7 +672,9 @@ test.describe('Encoder and decoder tools', () => {
       expect(await clipboardText(page)).toBe('xn--mnchen-3ya.de');
     });
 
-    test('decodes Punycode, full URLs included, and Swap Directions converts the result back', async ({ page }) => {
+    test('decodes Punycode, full URLs included, and Swap Directions converts the result back', async ({
+      page,
+    }) => {
       await openTool(page, 'punycode-converter', 'Punycode Converter');
       await page.getByRole('tab', { name: 'Punycode to Unicode (Decode)' }).click();
       const input = page.getByRole('textbox', { name: 'Punycode domains or URLs' });
@@ -630,11 +697,17 @@ test.describe('Encoder and decoder tools', () => {
         'aria-selected',
         'true'
       );
-      await expect(page.getByRole('textbox', { name: 'Unicode domains or URLs' })).toHaveValue('bücher.de');
-      await expect(page.getByRole('textbox', { name: 'Punycode output' })).toHaveValue('xn--bcher-kva.de');
+      await expect(page.getByRole('textbox', { name: 'Unicode domains or URLs' })).toHaveValue(
+        'bücher.de'
+      );
+      await expect(page.getByRole('textbox', { name: 'Punycode output' })).toHaveValue(
+        'xn--bcher-kva.de'
+      );
     });
 
-    test('leaves ASCII names and invalid labels as they are and empties on Clear', async ({ page }) => {
+    test('leaves ASCII names and invalid labels as they are and empties on Clear', async ({
+      page,
+    }) => {
       await openTool(page, 'punycode-converter', 'Punycode Converter');
       const input = page.getByRole('textbox', { name: 'Unicode domains or URLs' });
       const output = page.getByRole('textbox', { name: 'Punycode output' });
@@ -673,7 +746,8 @@ test.describe('Encoder and decoder tools', () => {
 
       // Ç is C3 87, ğ is C4 9F, ı is C4 B1.
       const address = 'https://example.com/search?q=hello world&name=Çağrı';
-      const encoded = 'https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dhello%20world%26name%3D%C3%87a%C4%9Fr%C4%B1';
+      const encoded =
+        'https%3A%2F%2Fexample.com%2Fsearch%3Fq%3Dhello%20world%26name%3D%C3%87a%C4%9Fr%C4%B1';
       await input.fill(address);
       await expectResult(page, encoded);
       await expect(page.getByText(`${encoded.length} characters`)).toBeVisible();
@@ -690,8 +764,13 @@ test.describe('Encoder and decoder tools', () => {
       expect(await clipboardText(page)).toBe(encoded);
 
       await page.getByRole('button', { name: 'Swap', exact: true }).click();
-      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'Encoded URL to decode' })).toHaveValue(encoded);
+      await expect(page.getByRole('tab', { name: 'Decode' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(page.getByRole('textbox', { name: 'Encoded URL to decode' })).toHaveValue(
+        encoded
+      );
       await expectResult(page, address);
     });
 
@@ -728,7 +807,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── URL Parser & Builder ────────────────────────────────────────────────────
 
   test.describe('URL Parser & Builder', () => {
-    test('splits a pasted URL into its parts and decoded parameters and rebuilds it', async ({ page }) => {
+    test('splits a pasted URL into its parts and decoded parameters and rebuilds it', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'url-parser-builder', 'URL Parser & Builder');
       const main = page.getByRole('main');
@@ -736,14 +817,18 @@ test.describe('Encoder and decoder tools', () => {
       // Nothing entered: no rebuilt URL, no parameters.
       await expect(page.getByText('Rebuilt Output URL')).toHaveCount(0);
       await expect(page.getByText('Query Parameters (0)')).toBeVisible();
-      await expect(page.getByText('No query parameters found. Click Add Param to create one.')).toBeVisible();
+      await expect(
+        page.getByText('No query parameters found. Click Add Param to create one.')
+      ).toBeVisible();
 
       await page
         .getByRole('textbox', { name: 'Source URL' })
         .fill('https://user:pw@example.com:8080/api/search?q=hello%20world&limit=10&q=2#results');
 
       await expect(page.getByRole('textbox', { name: 'Protocol' })).toHaveValue('https:');
-      await expect(page.getByRole('textbox', { name: 'Host / Domain' })).toHaveValue('user:pw@example.com:8080');
+      await expect(page.getByRole('textbox', { name: 'Host / Domain' })).toHaveValue(
+        'user:pw@example.com:8080'
+      );
       await expect(page.getByRole('textbox', { name: 'Path' })).toHaveValue('/api/search');
       await expect(page.getByRole('textbox', { name: 'Hash / Anchor' })).toHaveValue('#results');
 
@@ -751,7 +836,8 @@ test.describe('Encoder and decoder tools', () => {
       await expect.poll(() => values(page, 'Parameter key')).toEqual(['q', 'limit', 'q']);
       await expect.poll(() => values(page, 'Parameter value')).toEqual(['hello world', '10', '2']);
 
-      const rebuilt = 'https://user:pw@example.com:8080/api/search?q=hello+world&limit=10&q=2#results';
+      const rebuilt =
+        'https://user:pw@example.com:8080/api/search?q=hello+world&limit=10&q=2#results';
       await expect(page.getByText('Rebuilt Output URL')).toBeVisible();
       await expect(main.getByText(rebuilt, { exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Open Link' })).toBeEnabled();
@@ -774,7 +860,10 @@ test.describe('Encoder and decoder tools', () => {
       await expect(main.getByText('s3://bucket/key', { exact: true })).toBeVisible();
     });
 
-    test('rewrites the URL as parts and parameters are edited, added, disabled and deleted', async ({ page, context }) => {
+    test('rewrites the URL as parts and parameters are edited, added, disabled and deleted', async ({
+      page,
+      context,
+    }) => {
       await openTool(page, 'url-parser-builder', 'URL Parser & Builder');
       const main = page.getByRole('main');
       const source = page.getByRole('textbox', { name: 'Source URL' });
@@ -831,7 +920,9 @@ test.describe('Encoder and decoder tools', () => {
       expect(await popup.evaluate(() => window.opener)).toBeNull();
     });
 
-    test('encodes and decodes a parameter in place and reports bad percent-encoding', async ({ page }) => {
+    test('encodes and decodes a parameter in place and reports bad percent-encoding', async ({
+      page,
+    }) => {
       await openTool(page, 'url-parser-builder', 'URL Parser & Builder');
       const source = page.getByRole('textbox', { name: 'Source URL' });
       const key = page.getByRole('textbox', { name: 'Parameter key' });
@@ -865,7 +956,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(key).toHaveValue('a%20b');
     });
 
-    test('handles relative references and addresses the browser rejects, and Clear resets everything', async ({ page }) => {
+    test('handles relative references and addresses the browser rejects, and Clear resets everything', async ({
+      page,
+    }) => {
       await openTool(page, 'url-parser-builder', 'URL Parser & Builder');
       const main = page.getByRole('main');
       const source = page.getByRole('textbox', { name: 'Source URL' });
@@ -888,10 +981,14 @@ test.describe('Encoder and decoder tools', () => {
       // The browser's own URL parser rejects this one (the port is out of range), and the
       // query holds a stray "%": it is split by hand instead of throwing.
       await source.fill('https://example.com:99999/p?x=%');
-      await expect(page.getByRole('textbox', { name: 'Host / Domain' })).toHaveValue('example.com:99999');
+      await expect(page.getByRole('textbox', { name: 'Host / Domain' })).toHaveValue(
+        'example.com:99999'
+      );
       await expect(page.getByRole('textbox', { name: 'Path' })).toHaveValue('/p');
       await expect.poll(() => values(page, 'Parameter value')).toEqual(['%']);
-      await expect(main.getByText('https://example.com:99999/p?x=%25', { exact: true })).toBeVisible();
+      await expect(
+        main.getByText('https://example.com:99999/p?x=%25', { exact: true })
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(source).toHaveValue('');
@@ -906,11 +1003,15 @@ test.describe('Encoder and decoder tools', () => {
       await openTool(page, 'url-parser-builder', 'URL Parser & Builder');
       const main = page.getByRole('main');
 
-      await page.getByRole('textbox', { name: 'Source URL' }).fill('mailto:someone@example.com?subject=Hello');
+      await page
+        .getByRole('textbox', { name: 'Source URL' })
+        .fill('mailto:someone@example.com?subject=Hello');
 
       await expect(page.getByRole('textbox', { name: 'Protocol' })).toHaveValue('mailto:');
       await expect.poll(() => values(page, 'Parameter key')).toEqual(['subject']);
-      await expect(main.getByText('mailto:someone@example.com?subject=Hello', { exact: true })).toBeVisible();
+      await expect(
+        main.getByText('mailto:someone@example.com?subject=Hello', { exact: true })
+      ).toBeVisible();
       await expect(main.getByText(/https:\/\/mailto:/)).toHaveCount(0);
     });
   });
@@ -936,9 +1037,13 @@ test.describe('Encoder and decoder tools', () => {
       await input.fill(JWT_EXAMPLE);
 
       // getByText collapses whitespace; the exact layout is checked through the clipboard below.
-      await expect(main.getByText('{ "alg": "HS256", "typ": "JWT" }', { exact: true })).toBeVisible();
       await expect(
-        main.getByText('{ "sub": "1234567890", "name": "John Doe", "iat": 1516239022 }', { exact: true })
+        main.getByText('{ "alg": "HS256", "typ": "JWT" }', { exact: true })
+      ).toBeVisible();
+      await expect(
+        main.getByText('{ "sub": "1234567890", "name": "John Doe", "iat": 1516239022 }', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(main.getByText(JWT_SIGNATURE, { exact: true })).toBeVisible();
 
@@ -960,26 +1065,38 @@ test.describe('Encoder and decoder tools', () => {
       await expect(main.getByText(JWT_SIGNATURE, { exact: true })).toHaveCount(0);
     });
 
-    test('shows exp, nbf and iat (zero included), flags an expired token and accepts a pasted header value', async ({ page }) => {
+    test('shows exp, nbf and iat (zero included), flags an expired token and accepts a pasted header value', async ({
+      page,
+    }) => {
       await openTool(page, 'jwt-decoder', 'JWT Decoder');
       const main = page.getByRole('main');
       const input = page.getByRole('textbox', { name: 'JWT token' });
 
       // iat 1970-01-01T00:00:00Z, nbf 2000-01-01T00:00:00Z, exp 2001-09-09T01:46:40Z.
-      await input.fill(`${JWT_HEADER}.${jwtSegment({ sub: 'u1', iat: 0, nbf: 946684800, exp: 1000000000 })}.sig`);
+      await input.fill(
+        `${JWT_HEADER}.${jwtSegment({ sub: 'u1', iat: 0, nbf: 946684800, exp: 1000000000 })}.sig`
+      );
       await expect(main.getByText(/^Issued At \(iat\):\s*1\/1\/1970, 12:00:00\sAM$/)).toBeVisible();
-      await expect(main.getByText(/^Not Before \(nbf\):\s*1\/1\/2000, 12:00:00\sAM$/)).toBeVisible();
-      await expect(main.getByText(/^Expires At \(exp\):\s*9\/9\/2001, 1:46:40\sAM\s*\(Expired\)$/)).toBeVisible();
+      await expect(
+        main.getByText(/^Not Before \(nbf\):\s*1\/1\/2000, 12:00:00\sAM$/)
+      ).toBeVisible();
+      await expect(
+        main.getByText(/^Expires At \(exp\):\s*9\/9\/2001, 1:46:40\sAM\s*\(Expired\)$/)
+      ).toBeVisible();
 
       // exp 2100-01-01T00:00:00Z is still ahead.
       await input.fill(`${JWT_HEADER}.${jwtSegment({ sub: 'u1', exp: 4102444800 })}.sig`);
-      await expect(main.getByText(/^Expires At \(exp\):\s*1\/1\/2100, 12:00:00\sAM$/)).toBeVisible();
+      await expect(
+        main.getByText(/^Expires At \(exp\):\s*1\/1\/2100, 12:00:00\sAM$/)
+      ).toBeVisible();
       await expect(main.getByText('(Expired)')).toHaveCount(0);
       await expect(main.getByText('Issued At (iat):')).toHaveCount(0);
 
       // A time claim that is not a number is shown in the payload only.
       await input.fill(`${JWT_HEADER}.${jwtSegment({ name: 'Çağrı ✓', exp: 'soon' })}.sig`);
-      await expect(main.getByText('{ "name": "Çağrı ✓", "exp": "soon" }', { exact: true })).toBeVisible();
+      await expect(
+        main.getByText('{ "name": "Çağrı ✓", "exp": "soon" }', { exact: true })
+      ).toBeVisible();
       await expect(main.getByText('Timestamps:')).toHaveCount(0);
 
       // As copied from an Authorization header and wrapped by a terminal.
@@ -987,7 +1104,9 @@ test.describe('Encoder and decoder tools', () => {
       await input.fill(wrapped);
       await expect(toolAlert(page)).toHaveCount(0);
       await expect(
-        main.getByText('{ "sub": "1234567890", "name": "John Doe", "iat": 1516239022 }', { exact: true })
+        main.getByText('{ "sub": "1234567890", "name": "John Doe", "iat": 1516239022 }', {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(main.getByText(JWT_SIGNATURE, { exact: true })).toBeVisible();
     });
@@ -1030,7 +1149,9 @@ test.describe('Encoder and decoder tools', () => {
   // ── Morse and binary ────────────────────────────────────────────────────────
 
   test.describe('Morse Code & Binary Converter', () => {
-    test('writes text as Morse, names what has no code and decodes Morse back', async ({ page }) => {
+    test('writes text as Morse, names what has no code and decodes Morse back', async ({
+      page,
+    }) => {
       await allowClipboard(page);
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
       const input = page.getByRole('textbox', { name: 'Plain text input' });
@@ -1085,11 +1206,15 @@ test.describe('Encoder and decoder tools', () => {
       // After an error there is no result to carry over: the input stays.
       await page.getByRole('tab', { name: 'Encode Text (Plain to Code)' }).click();
       await expect(page.getByRole('textbox', { name: 'Plain text input' })).toHaveValue('abc');
-      await expect(page.getByRole('textbox', { name: 'Morse code output' })).toHaveValue('.- -... -.-.');
+      await expect(page.getByRole('textbox', { name: 'Morse code output' })).toHaveValue(
+        '.- -... -.-.'
+      );
       await expect(toolAlert(page)).toHaveCount(0);
     });
 
-    test('plays the Morse code to its end, stops on request and takes speed and pitch from the keyboard', async ({ page }) => {
+    test('plays the Morse code to its end, stops on request and takes speed and pitch from the keyboard', async ({
+      page,
+    }) => {
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
       const input = page.getByRole('textbox', { name: 'Plain text input' });
       const play = page.getByRole('button', { name: 'Play Morse Code' });
@@ -1140,7 +1265,9 @@ test.describe('Encoder and decoder tools', () => {
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
 
       await page.getByRole('textbox', { name: 'Plain text input' }).fill('SOS');
-      await expect(page.getByRole('textbox', { name: 'Morse code output' })).toHaveValue('... --- ...');
+      await expect(page.getByRole('textbox', { name: 'Morse code output' })).toHaveValue(
+        '... --- ...'
+      );
       await page.getByRole('button', { name: 'Play Morse Code' }).click();
 
       await expect(page.getByText('Web Audio API is not supported in this browser.')).toBeVisible();
@@ -1148,7 +1275,9 @@ test.describe('Encoder and decoder tools', () => {
       await expect(page.getByRole('button', { name: 'Play Morse Code' })).toBeVisible();
     });
 
-    test('writes text as 8-bit binary with each separator, decodes it and reports bad input', async ({ page }) => {
+    test('writes text as 8-bit binary with each separator, decodes it and reports bad input', async ({
+      page,
+    }) => {
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
 
       // Switching to binary starts from an empty input and has no audio controls.
@@ -1204,8 +1333,14 @@ test.describe('Encoder and decoder tools', () => {
     test('the pitch and speed sliders have accessible names', async ({ page }) => {
       await openTool(page, 'morse-binary-converter', 'Morse Code & Binary Converter');
 
-      await expect(page.getByRole('slider', { name: /Frequency|Pitch/ })).toHaveAttribute('aria-valuenow', '600');
-      await expect(page.getByRole('slider', { name: /Speed|Words per Minute/ })).toHaveAttribute('aria-valuenow', '20');
+      await expect(page.getByRole('slider', { name: /Frequency|Pitch/ })).toHaveAttribute(
+        'aria-valuenow',
+        '600'
+      );
+      await expect(page.getByRole('slider', { name: /Speed|Words per Minute/ })).toHaveAttribute(
+        'aria-valuenow',
+        '20'
+      );
     });
   });
 
@@ -1214,10 +1349,30 @@ test.describe('Encoder and decoder tools', () => {
   test.describe('Layout and accessibility', () => {
     const long = 'A'.repeat(400);
     const tools: Array<{ slug: string; heading: string; input: string; value: string }> = [
-      { slug: 'base64-converter', heading: 'Base64 Encoder/Decoder', input: 'Text to encode', value: long },
-      { slug: 'hex-converter', heading: 'Hex ↔ String Converter', input: 'Plain text input', value: long },
-      { slug: 'html-encoder', heading: 'HTML Encoder/Decoder', input: 'HTML to encode', value: `<${long}>` },
-      { slug: 'text-escape', heading: 'Text Escape/Unescape', input: 'Text to escape', value: long },
+      {
+        slug: 'base64-converter',
+        heading: 'Base64 Encoder/Decoder',
+        input: 'Text to encode',
+        value: long,
+      },
+      {
+        slug: 'hex-converter',
+        heading: 'Hex ↔ String Converter',
+        input: 'Plain text input',
+        value: long,
+      },
+      {
+        slug: 'html-encoder',
+        heading: 'HTML Encoder/Decoder',
+        input: 'HTML to encode',
+        value: `<${long}>`,
+      },
+      {
+        slug: 'text-escape',
+        heading: 'Text Escape/Unescape',
+        input: 'Text to escape',
+        value: long,
+      },
       {
         slug: 'punycode-converter',
         heading: 'Punycode Converter',
@@ -1245,7 +1400,9 @@ test.describe('Encoder and decoder tools', () => {
       },
     ];
 
-    test('no tool scrolls sideways on a phone-sized screen, even with long unbroken content', async ({ page }) => {
+    test('no tool scrolls sideways on a phone-sized screen, even with long unbroken content', async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: 360, height: 740 });
 
       for (const tool of tools) {

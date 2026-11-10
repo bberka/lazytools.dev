@@ -5,27 +5,20 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { Copy, Check, Trash2, ArrowLeftRight, Code, Braces } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Code, Braces } from 'lucide-react';
 import { decodeHtmlEntities, encodeHtmlEntities } from '@/lib/tools/html-encoder';
+import { CopyButton } from '@/components/CopyButton';
 
 type Mode = 'encode' | 'decode';
 
 export function HtmlEncoder() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<Mode>('encode');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const output = useMemo(
     () => (mode === 'encode' ? encodeHtmlEntities(input) : decodeHtmlEntities(input)),
     [input, mode]
   );
-
-  const handleCopy = async () => {
-    if (output) {
-      await copyToClipboard(output);
-    }
-  };
 
   const handleSwap = () => {
     setInput(output);
@@ -62,7 +55,11 @@ export function HtmlEncoder() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={mode === 'encode' ? '<div>Hello & "World"</div>' : '&lt;div&gt;Hello &amp; &quot;World&quot;&lt;/div&gt;'}
+            placeholder={
+              mode === 'encode'
+                ? '<div>Hello & "World"</div>'
+                : '&lt;div&gt;Hello &amp; &quot;World&quot;&lt;/div&gt;'
+            }
             aria-label={mode === 'encode' ? 'HTML to encode' : 'HTML entities to decode'}
             rows={8}
             className="font-mono"
@@ -74,33 +71,24 @@ export function HtmlEncoder() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto scrollbar-thin whitespace-pre-wrap break-all border border-input">
+            <pre className="w-full min-h-[200px] p-3 rounded-md bg-muted font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all border border-input">
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={handleCopy}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

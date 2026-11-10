@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { PDFDocument } from 'pdf-lib';
 import { buildEditedPdf } from '@/lib/tools/pdf-editor';
 import { PdfToolError } from '@/lib/tools/pdf-page-ops';
@@ -23,7 +23,7 @@ async function rotations(bytes: Uint8Array): Promise<number[]> {
   return doc.getPages().map((page) => page.getRotation().angle);
 }
 
-test.describe('buildEditedPdf', () => {
+describe('buildEditedPdf', () => {
   test('writes the kept pages in their new order', async () => {
     const edited = await buildEditedPdf(await createPdf(sizes), [
       { sourceIndex: 2, rotation: 0 },
@@ -102,7 +102,7 @@ test.describe('buildEditedPdf', () => {
   });
 });
 
-test.describe('buildEditedPdf annotations', () => {
+describe('buildEditedPdf annotations', () => {
   const overlay = createPng(4, 4);
 
   test('asks for one layer per page, in output order, in the shape the page is shown in', async () => {

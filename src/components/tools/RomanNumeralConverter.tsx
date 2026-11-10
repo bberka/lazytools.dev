@@ -77,7 +77,7 @@ export function RomanNumeralConverter() {
   };
 
   return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
       <div className="space-y-4 md:col-span-2">
         <Card>
           <CardHeader>
@@ -90,7 +90,7 @@ export function RomanNumeralConverter() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Decimal Input */}
               <div className="space-y-2">
                 <label htmlFor="roman-decimal" className="text-sm font-medium">
@@ -121,12 +121,19 @@ export function RomanNumeralConverter() {
                       aria-label={isDecimalCopied ? 'Decimal number copied' : 'Copy decimal number'}
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7"
                     >
-                      {isDecimalCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {isDecimalCopied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>
                 {decimalError && (
-                  <div role="alert" className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                  <div
+                    role="alert"
+                    className="flex items-center gap-1.5 text-xs text-destructive mt-1"
+                  >
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>{decimalError}</span>
                   </div>
@@ -164,7 +171,10 @@ export function RomanNumeralConverter() {
                   )}
                 </div>
                 {romanError && (
-                  <div role="alert" className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                  <div
+                    role="alert"
+                    className="flex items-center gap-1.5 text-xs text-destructive mt-1"
+                  >
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>{romanError}</span>
                   </div>

@@ -20,10 +20,10 @@ async function openTool(page: Page, slug: string, name: string) {
   const response = await page.goto(`/tools/${slug}/`);
   expect(response?.status()).toBe(200);
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
-  await page.waitForFunction(
-    ([key, id]) => (window.localStorage.getItem(key) ?? '').includes(id),
-    [RECENT_TOOLS_KEY, slug] as const
-  );
+  await page.waitForFunction(([key, id]) => (window.localStorage.getItem(key) ?? '').includes(id), [
+    RECENT_TOOLS_KEY,
+    slug,
+  ] as const);
 }
 
 /** Picks an option of one of the app's dropdowns, found by its label. */
@@ -206,7 +206,16 @@ test.describe('Calculator and number tools', () => {
       await y.fill('');
 
       // 20% of one million, typed the way the tool itself writes it.
-      for (const typedSoFar of ['1', '1,', '1,0', '1,00', '1,000', '1,000,', '1,000,0', '1,000,00']) {
+      for (const typedSoFar of [
+        '1',
+        '1,',
+        '1,0',
+        '1,00',
+        '1,000',
+        '1,000,',
+        '1,000,0',
+        '1,000,00',
+      ]) {
         await test.step(`after typing "${typedSoFar}"`, async () => {
           await y.pressSequentially(typedSoFar.slice(-1));
           await expect(y).toHaveValue(typedSoFar);
@@ -244,7 +253,9 @@ test.describe('Calculator and number tools', () => {
 
       // 5 mi = 5 * 1.609344 km.
       await page.getByRole('button', { name: 'Swap units' }).click();
-      await expect(page.getByRole('combobox', { name: 'From', exact: true })).toHaveText('Mile (mi)');
+      await expect(page.getByRole('combobox', { name: 'From', exact: true })).toHaveText(
+        'Mile (mi)'
+      );
       await expect(page.getByRole('combobox', { name: 'To', exact: true })).toHaveText(
         'Kilometer (km)'
       );
@@ -275,21 +286,75 @@ test.describe('Calculator and number tools', () => {
         result: string;
       }> = [
         // 150 * 0.45359237
-        { category: 'Weight', value: '150', from: 'Pound (lb)', to: 'Kilogram (kg)', result: '68.0388555 kg' },
-        { category: 'Temperature', value: '100', from: 'Celsius (°C)', to: 'Fahrenheit (°F)', result: '212 °F' },
-        { category: 'Temperature', value: '98.6', from: 'Fahrenheit (°F)', to: 'Celsius (°C)', result: '37 °C' },
-        { category: 'Temperature', value: '0', from: 'Celsius (°C)', to: 'Kelvin (K)', result: '273.15 K' },
+        {
+          category: 'Weight',
+          value: '150',
+          from: 'Pound (lb)',
+          to: 'Kilogram (kg)',
+          result: '68.0388555 kg',
+        },
+        {
+          category: 'Temperature',
+          value: '100',
+          from: 'Celsius (°C)',
+          to: 'Fahrenheit (°F)',
+          result: '212 °F',
+        },
+        {
+          category: 'Temperature',
+          value: '98.6',
+          from: 'Fahrenheit (°F)',
+          to: 'Celsius (°C)',
+          result: '37 °C',
+        },
+        {
+          category: 'Temperature',
+          value: '0',
+          from: 'Celsius (°C)',
+          to: 'Kelvin (K)',
+          result: '273.15 K',
+        },
         // 10,000 / 4,046.8564224
-        { category: 'Area', value: '1', from: 'Hectare (ha)', to: 'Acre (ac)', result: '2.47105381 ac' },
+        {
+          category: 'Area',
+          value: '1',
+          from: 'Hectare (ha)',
+          to: 'Acre (ac)',
+          result: '2.47105381 ac',
+        },
         // A US gallon is 3.785411784 L; eight decimals are shown.
-        { category: 'Volume', value: '1', from: 'Gallon (gal)', to: 'Liter (L)', result: '3.78541178 L' },
+        {
+          category: 'Volume',
+          value: '1',
+          from: 'Gallon (gal)',
+          to: 'Liter (L)',
+          result: '3.78541178 L',
+        },
         // 60 * 1.609344
-        { category: 'Speed', value: '60', from: 'Mile / Hour (mph)', to: 'Kilometer / Hour (km/h)', result: '96.56064 km/h' },
+        {
+          category: 'Speed',
+          value: '60',
+          from: 'Mile / Hour (mph)',
+          to: 'Kilometer / Hour (km/h)',
+          result: '96.56064 km/h',
+        },
         { category: 'Time', value: '1', from: 'Week (wk)', to: 'Hour (h)', result: '168 h' },
         // 2^30 bytes in units of 10^6
-        { category: 'Data', value: '1', from: 'Gibibyte (GiB)', to: 'Megabyte (MB)', result: '1,073.741824 MB' },
+        {
+          category: 'Data',
+          value: '1',
+          from: 'Gibibyte (GiB)',
+          to: 'Megabyte (MB)',
+          result: '1,073.741824 MB',
+        },
         // A very small result is written out instead of rounding to 0.
-        { category: 'Data', value: '1', from: 'Byte (B)', to: 'Terabyte (TB)', result: '0.000000000001 TB' },
+        {
+          category: 'Data',
+          value: '1',
+          from: 'Byte (B)',
+          to: 'Terabyte (TB)',
+          result: '0.000000000001 TB',
+        },
       ];
 
       for (const conversion of conversions) {
@@ -397,7 +462,12 @@ test.describe('Calculator and number tools', () => {
       // At 2 m the BMI is a quarter of the weight, so the thresholds are exact.
       await height.fill('200');
 
-      const thresholds: ReadonlyArray<{ kg: string; bmi: string; category: string; range: string }> = [
+      const thresholds: ReadonlyArray<{
+        kg: string;
+        bmi: string;
+        category: string;
+        range: string;
+      }> = [
         { kg: '72', bmi: '18.0', category: 'Underweight', range: 'Below 18.5' },
         { kg: '74', bmi: '18.5', category: 'Healthy Weight', range: '18.5 to less than 25' },
         { kg: '100', bmi: '25.0', category: 'Overweight', range: '25 to less than 30' },
@@ -513,10 +583,7 @@ test.describe('Calculator and number tools', () => {
      * list the calls are recorded in. Nothing reaches the real service. Every
      * test installs its stub before it opens the page.
      */
-    async function stubRateService(
-      page: Page,
-      reply: (route: Route, call: RateCall) => Promise<unknown> | unknown
-    ) {
+    async function stubRateService(page: Page, reply: (route: Route, call: RateCall) => unknown) {
       const calls: RateCall[] = [];
 
       await page.unroute(RATE_SERVICE);
@@ -530,7 +597,8 @@ test.describe('Calculator and number tools', () => {
       return calls;
     }
 
-    const convertButton = (page: Page) => page.getByRole('button', { name: 'Convert', exact: true });
+    const convertButton = (page: Page) =>
+      page.getByRole('button', { name: 'Convert', exact: true });
     // The text field of the date picker is named after its group ("Reference date"),
     // but the placeholder is the shortest way to it.
     const dateField = (page: Page) => page.getByPlaceholder('YYYY-MM-DD');
@@ -581,7 +649,9 @@ test.describe('Calculator and number tools', () => {
           '/v2/rate/IDR/USD': { date: '2026-06-12', base: 'IDR', quote: 'USD', rate: 0.000056 },
         };
         const calls = await stubRateService(page, (route, call) =>
-          call.path in rates ? route.fulfill({ json: rates[call.path] }) : route.fulfill({ status: 404 })
+          call.path in rates
+            ? route.fulfill({ json: rates[call.path] })
+            : route.fulfill({ status: 404 })
         );
         await openConverter(page);
         const amount = page.getByRole('textbox', { name: 'Amount' });
@@ -635,7 +705,9 @@ test.describe('Calculator and number tools', () => {
         ]);
       });
 
-      test('sends a reference date that was typed or picked from the calendar', async ({ page }) => {
+      test('sends a reference date that was typed or picked from the calendar', async ({
+        page,
+      }) => {
         const calls = await stubRateService(page, (route, call) =>
           route.fulfill({ json: { date: call.date, base: 'USD', quote: 'EUR', rate: 0.9123 } })
         );
@@ -657,7 +729,9 @@ test.describe('Calculator and number tools', () => {
         const calendar = page.getByRole('dialog');
         await expect(calendar.getByRole('grid', { name: 'June 2026' })).toBeVisible();
         // Days after today cannot be picked.
-        await expect(calendar.getByRole('button', { name: 'Tuesday, June 16th, 2026' })).toBeDisabled();
+        await expect(
+          calendar.getByRole('button', { name: 'Tuesday, June 16th, 2026' })
+        ).toBeDisabled();
         await calendar.getByRole('button', { name: 'Wednesday, June 10th, 2026' }).click();
         await expect(calendar).toBeHidden();
         await expect(dateField(page)).toHaveValue('2026-06-10');
@@ -683,7 +757,11 @@ test.describe('Calculator and number tools', () => {
           { amount: '-5', date: '', error: 'Amount cannot be negative.' },
           // The day after the pinned today.
           { amount: '100', date: '2026-06-16', error: 'Reference date cannot be in the future.' },
-          { amount: '100', date: '2026-02-31', error: 'Enter a valid reference date as YYYY-MM-DD.' },
+          {
+            amount: '100',
+            date: '2026-02-31',
+            error: 'Enter a valid reference date as YYYY-MM-DD.',
+          },
           { amount: '100', date: '2026-02', error: 'Enter a valid reference date as YYYY-MM-DD.' },
         ];
 
@@ -884,7 +962,8 @@ test.describe('Calculator and number tools', () => {
   test.describe('Roman Numeral Converter', () => {
     const decimalField = (page: Page) =>
       page.getByRole('spinbutton', { name: 'Decimal Number (1 - 3999)' });
-    const romanField = (page: Page) => page.getByRole('textbox', { name: 'Roman Numeral', exact: true });
+    const romanField = (page: Page) =>
+      page.getByRole('textbox', { name: 'Roman Numeral', exact: true });
 
     test.beforeEach(async ({ page }) => {
       await openTool(page, 'roman-numeral-converter', 'Roman Numeral Converter');
@@ -1024,7 +1103,9 @@ test.describe('Calculator and number tools', () => {
       await expectBases(page, { binary: '11111111', octal: '377', decimal: '255', hex: 'FF' });
     });
 
-    test('converts from binary, octal and hexadecimal, exactly and with signs', async ({ page }) => {
+    test('converts from binary, octal and hexadecimal, exactly and with signs', async ({
+      page,
+    }) => {
       const value = page.getByRole('textbox', { name: 'Value' });
 
       await choose(page, 'Base', 'Hexadecimal (16)');

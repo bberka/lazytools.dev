@@ -81,7 +81,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-blue-500/20 dark:border-blue-400/20',
       bg: 'bg-blue-500/5',
-      hover: 'hover:border-blue-500/50 hover:bg-blue-500/10 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10',
+      hover:
+        'hover:border-blue-500/50 hover:bg-blue-500/10 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10',
       text: 'text-blue-600 dark:text-blue-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(59,130,246,0.2)]',
     },
@@ -109,7 +110,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-purple-500/20 dark:border-purple-400/20',
       bg: 'bg-purple-500/5',
-      hover: 'hover:border-purple-500/50 hover:bg-purple-500/10 dark:hover:border-purple-400/50 dark:hover:bg-purple-500/10',
+      hover:
+        'hover:border-purple-500/50 hover:bg-purple-500/10 dark:hover:border-purple-400/50 dark:hover:bg-purple-500/10',
       text: 'text-purple-600 dark:text-purple-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]',
     },
@@ -137,7 +139,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-green-500/20 dark:border-green-400/20',
       bg: 'bg-green-500/5',
-      hover: 'hover:border-green-500/50 hover:bg-green-500/10 dark:hover:border-green-400/50 dark:hover:bg-green-500/10',
+      hover:
+        'hover:border-green-500/50 hover:bg-green-500/10 dark:hover:border-green-400/50 dark:hover:bg-green-500/10',
       text: 'text-green-600 dark:text-green-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]',
     },
@@ -165,7 +168,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-orange-500/20 dark:border-orange-400/20',
       bg: 'bg-orange-500/5',
-      hover: 'hover:border-orange-500/50 hover:bg-orange-500/10 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10',
+      hover:
+        'hover:border-orange-500/50 hover:bg-orange-500/10 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10',
       text: 'text-orange-600 dark:text-orange-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]',
     },
@@ -193,7 +197,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-pink-500/20 dark:border-pink-400/20',
       bg: 'bg-pink-500/5',
-      hover: 'hover:border-pink-500/50 hover:bg-pink-500/10 dark:hover:border-pink-400/50 dark:hover:bg-pink-500/10',
+      hover:
+        'hover:border-pink-500/50 hover:bg-pink-500/10 dark:hover:border-pink-400/50 dark:hover:bg-pink-500/10',
       text: 'text-pink-600 dark:text-pink-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(236,72,153,0.2)]',
     },
@@ -221,7 +226,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-cyan-500/20 dark:border-cyan-400/20',
       bg: 'bg-cyan-500/5',
-      hover: 'hover:border-cyan-500/50 hover:bg-cyan-500/10 dark:hover:border-cyan-400/50 dark:hover:bg-cyan-500/10',
+      hover:
+        'hover:border-cyan-500/50 hover:bg-cyan-500/10 dark:hover:border-cyan-400/50 dark:hover:bg-cyan-500/10',
       text: 'text-cyan-600 dark:text-cyan-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]',
     },
@@ -249,7 +255,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-red-500/20 dark:border-red-400/20',
       bg: 'bg-red-500/5',
-      hover: 'hover:border-red-500/50 hover:bg-red-500/10 dark:hover:border-red-400/50 dark:hover:bg-red-500/10',
+      hover:
+        'hover:border-red-500/50 hover:bg-red-500/10 dark:hover:border-red-400/50 dark:hover:bg-red-500/10',
       text: 'text-red-600 dark:text-red-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]',
     },
@@ -277,7 +284,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-indigo-500/20 dark:border-indigo-400/20',
       bg: 'bg-indigo-500/5',
-      hover: 'hover:border-indigo-500/50 hover:bg-indigo-500/10 dark:hover:border-indigo-400/50 dark:hover:bg-indigo-500/10',
+      hover:
+        'hover:border-indigo-500/50 hover:bg-indigo-500/10 dark:hover:border-indigo-400/50 dark:hover:bg-indigo-500/10',
       text: 'text-indigo-600 dark:text-indigo-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(99,102,241,0.2)]',
     },
@@ -305,7 +313,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-violet-500/20 dark:border-violet-400/20',
       bg: 'bg-violet-500/5',
-      hover: 'hover:border-violet-500/50 hover:bg-violet-500/10 dark:hover:border-violet-400/50 dark:hover:bg-violet-500/10',
+      hover:
+        'hover:border-violet-500/50 hover:bg-violet-500/10 dark:hover:border-violet-400/50 dark:hover:bg-violet-500/10',
       text: 'text-violet-600 dark:text-violet-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]',
     },
@@ -333,7 +342,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-emerald-500/20 dark:border-emerald-400/20',
       bg: 'bg-emerald-500/5',
-      hover: 'hover:border-emerald-500/50 hover:bg-emerald-500/10 dark:hover:border-emerald-400/50 dark:hover:bg-emerald-500/10',
+      hover:
+        'hover:border-emerald-500/50 hover:bg-emerald-500/10 dark:hover:border-emerald-400/50 dark:hover:bg-emerald-500/10',
       text: 'text-emerald-600 dark:text-emerald-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]',
     },
@@ -361,7 +371,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-red-600/20 dark:border-red-500/20',
       bg: 'bg-red-600/5',
-      hover: 'hover:border-red-600/50 hover:bg-red-600/10 dark:hover:border-red-500/50 dark:hover:bg-red-600/10',
+      hover:
+        'hover:border-red-600/50 hover:bg-red-600/10 dark:hover:border-red-500/50 dark:hover:bg-red-600/10',
       text: 'text-red-700 dark:text-red-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]',
     },
@@ -389,7 +400,8 @@ export const TAGS: Record<ToolTag, Tag> = {
     tile: {
       border: 'border-orange-600/20 dark:border-orange-500/20',
       bg: 'bg-orange-600/5',
-      hover: 'hover:border-orange-600/50 hover:bg-orange-600/10 dark:hover:border-orange-500/50 dark:hover:bg-orange-600/10',
+      hover:
+        'hover:border-orange-600/50 hover:bg-orange-600/10 dark:hover:border-orange-500/50 dark:hover:bg-orange-600/10',
       text: 'text-orange-700 dark:text-orange-400',
       glow: 'group-hover:shadow-[0_0_15px_rgba(234,88,12,0.2)]',
     },

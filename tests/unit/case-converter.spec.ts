@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { CASE_CONVERSIONS } from '@/lib/tools/case-converter';
 
 function convert(text: string, label: string): string {
@@ -18,7 +18,7 @@ const NAMING_CASES = [
   'CONSTANT_CASE',
 ];
 
-test.describe('the conversions on offer', () => {
+describe('the conversions on offer', () => {
   test('lists the ten cases in display order', () => {
     expect(CASE_CONVERSIONS.map((conversion) => conversion.label)).toEqual([
       'camelCase',
@@ -41,7 +41,7 @@ test.describe('the conversions on offer', () => {
   });
 });
 
-test.describe('naming cases', () => {
+describe('naming cases', () => {
   test('give the same result whatever case the input is in', () => {
     const spellings = [
       'Hello World Example',
@@ -55,9 +55,7 @@ test.describe('naming cases', () => {
       'HELLO_WORLD_EXAMPLE',
     ];
 
-    for (const conversion of CASE_CONVERSIONS.filter((item) =>
-      NAMING_CASES.includes(item.label)
-    )) {
+    for (const conversion of CASE_CONVERSIONS.filter((item) => NAMING_CASES.includes(item.label))) {
       for (const spelling of spellings) {
         expect(conversion.convert(spelling), `${conversion.label} of ${spelling}`).toBe(
           conversion.example
@@ -124,7 +122,7 @@ test.describe('naming cases', () => {
   });
 });
 
-test.describe('prose cases', () => {
+describe('prose cases', () => {
   test('UPPERCASE and lowercase keep spacing, line breaks and punctuation', () => {
     expect(convert('Hello, World!\n  Second line', 'UPPERCASE')).toBe(
       'HELLO, WORLD!\n  SECOND LINE'
@@ -136,7 +134,7 @@ test.describe('prose cases', () => {
 
   test('Title Case capitalises each word and lowers the rest', () => {
     expect(convert('the QUICK brown fox', 'Title Case')).toBe('The Quick Brown Fox');
-    expect(convert('hello-world and o\'neil', 'Title Case')).toBe("Hello-world And O'neil");
+    expect(convert("hello-world and o'neil", 'Title Case')).toBe("Hello-world And O'neil");
     expect(convert('line one\nline two', 'Title Case')).toBe('Line One\nLine Two');
   });
 

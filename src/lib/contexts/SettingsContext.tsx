@@ -29,11 +29,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [compactMode, setCompactMode, fullWidth, setFullWidth]
   );
 
-  return (
-    <SettingsContext.Provider value={value}>
-      {children}
-    </SettingsContext.Provider>
-  );
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }
 
 export function useSettings() {

@@ -1,11 +1,12 @@
 'use client';
 
-import { useId, useMemo, useState, useSyncExternalStore } from 'react';
-import { CalendarRange, Check, Copy, Trash2 } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+import { CalendarRange, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
-import { useCopyToClipboard } from '@/hooks';
+import { useHydrated } from '@/hooks';
 import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   calendarDifference,
@@ -18,13 +19,10 @@ function getTodayValue(): string {
   return toDateInputValue(new Date());
 }
 
-const noSubscription = () => () => {};
-
 function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
   const id = useId();
   const [startDate, setStartDate] = useState('2024-01-01');
   const [endDate, setEndDate] = useState(initialEndDate);
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => {
     if (!startDate || !endDate) {
@@ -87,12 +85,13 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
         <CardHeader>
           <CardTitle>Date Difference Calculator</CardTitle>
           <CardDescription>
-            Compare two dates and see the exact calendar difference plus total days, weeks, and months.
+            Compare two dates and see the exact calendar difference plus total days, weeks, and
+            months.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div role="group" aria-labelledby={`${id}-start`}>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-start`}>
               <span id={`${id}-start`} className="mb-2 block text-sm font-medium">
                 Start date
               </span>
@@ -107,8 +106,8 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 }}
                 error={!parseDateInput(startDate) && !!startDate}
               />
-            </div>
-            <div role="group" aria-labelledby={`${id}-end`}>
+            </fieldset>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-end`}>
               <span id={`${id}-end`} className="mb-2 block text-sm font-medium">
                 End date
               </span>
@@ -123,7 +122,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 }}
                 error={!parseDateInput(endDate) && !!endDate}
               />
-            </div>
+            </fieldset>
           </div>
 
           {result.error && (
@@ -137,23 +136,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>
@@ -171,7 +154,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
           </div>
 
           {result.breakdown && (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-md border bg-card p-4">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Total months
@@ -202,7 +185,8 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                   Notes
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Calendar difference uses exact year/month/day boundaries rather than just dividing by 30 or 365.
+                  Calendar difference uses exact year/month/day boundaries rather than just dividing
+                  by 30 or 365.
                 </div>
               </div>
             </div>
@@ -218,11 +202,7 @@ export function DateDifferenceCalculator() {
   // it would be the build date: stale for every visitor and a hydration
   // mismatch. The HTML and the first client render leave the date empty, and
   // the form is mounted again with the visitor's date once hydrated.
-  const hydrated = useSyncExternalStore(
-    noSubscription,
-    () => true,
-    () => false
-  );
+  const hydrated = useHydrated();
   const [today] = useState(getTodayValue);
 
   return hydrated ? (

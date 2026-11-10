@@ -93,16 +93,23 @@ export function parseUrl(input: string): UrlParts {
   const opaque = OPAQUE_URL.exec(working);
   if (opaque) {
     // What follows the scheme is a path, not a host: `someone@example.com` is no address to resolve.
-    parts = { ...splitByHand(working.slice(opaque[0].length), true), protocol: opaque[0].toLowerCase() };
+    parts = {
+      ...splitByHand(working.slice(opaque[0].length), true),
+      protocol: opaque[0].toLowerCase(),
+    };
   } else if (RELATIVE.test(working)) {
     parts = splitByHand(working, true);
   } else {
     const hasScheme = SCHEME.test(working);
     // The URL class needs a scheme; a borrowed one is not reported back.
-    const candidate = hasScheme ? working : `https:${working.startsWith('//') ? '' : '//'}${working}`;
+    const candidate = hasScheme
+      ? working
+      : `https:${working.startsWith('//') ? '' : '//'}${working}`;
     try {
       const url = new URL(candidate);
-      const credentials = url.username ? `${url.username}${url.password ? `:${url.password}` : ''}@` : '';
+      const credentials = url.username
+        ? `${url.username}${url.password ? `:${url.password}` : ''}@`
+        : '';
       parts = {
         protocol: hasScheme ? url.protocol : '',
         host: credentials + url.host,
@@ -133,7 +140,11 @@ export function buildUrl(parts: UrlParts): string {
   if (!host && path && OPAQUE_PROTOCOL.test(protocol)) {
     result += `${protocol.replace(/:?(?:\/\/)?$/, '')}:`;
   } else if (protocol && (host || (path && !NEEDS_HOST.test(protocol)))) {
-    result += protocol.endsWith('//') ? protocol : protocol.endsWith(':') ? `${protocol}//` : `${protocol}://`;
+    result += protocol.endsWith('//')
+      ? protocol
+      : protocol.endsWith(':')
+        ? `${protocol}//`
+        : `${protocol}://`;
   } else if (host) {
     result += 'https://';
   }

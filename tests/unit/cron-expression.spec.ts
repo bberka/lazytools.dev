@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildCronExpression,
   formatTimeUntil,
@@ -21,7 +21,7 @@ function errorOf(expression: string): string {
   return result.error;
 }
 
-const describe = (expression: string) => schedule(expression).description;
+const describeCron = (expression: string) => schedule(expression).description;
 
 /** Upcoming runs in UTC as ISO minutes, e.g. "2026-03-02T09:00". */
 function utcRuns(expression: string, after: string, count = 5): string[] {
@@ -32,7 +32,7 @@ function utcRuns(expression: string, after: string, count = 5): string[] {
   }).map((run) => run.toISOString().slice(0, 16));
 }
 
-test.describe('parseCron', () => {
+describe('parseCron', () => {
   test('keeps the five fields as written', () => {
     expect(schedule('  */15   0-6 1,15 * 1-5 ').parts).toEqual({
       minute: '*/15',
@@ -103,76 +103,82 @@ test.describe('parseCron', () => {
   });
 });
 
-test.describe('description', () => {
+describe('description', () => {
   test('describes the presets', () => {
-    expect(describe('* * * * *')).toBe('every minute');
-    expect(describe('*/15 * * * *')).toBe('every 15 minutes');
-    expect(describe('0 * * * *')).toBe('at minute 0 of every hour');
-    expect(describe('0 0 * * *')).toBe('at 00:00');
-    expect(describe('0 9 * * 1-5')).toBe('at 09:00, on weekdays');
-    expect(describe('0 0 * * 0')).toBe('at 00:00, on Sunday');
-    expect(describe('0 0 1 * *')).toBe('at 00:00, on day 1 of the month');
+    expect(describeCron('* * * * *')).toBe('every minute');
+    expect(describeCron('*/15 * * * *')).toBe('every 15 minutes');
+    expect(describeCron('0 * * * *')).toBe('at minute 0 of every hour');
+    expect(describeCron('0 0 * * *')).toBe('at 00:00');
+    expect(describeCron('0 9 * * 1-5')).toBe('at 09:00, on weekdays');
+    expect(describeCron('0 0 * * 0')).toBe('at 00:00, on Sunday');
+    expect(describeCron('0 0 1 * *')).toBe('at 00:00, on day 1 of the month');
   });
 
   test('describes single values in every field', () => {
-    expect(describe('30 14 15 6 *')).toBe('at 14:30, on day 15 of the month, in June');
-    expect(describe('* 9 * * *')).toBe('every minute during hour 9');
+    expect(describeCron('30 14 15 6 *')).toBe('at 14:30, on day 15 of the month, in June');
+    expect(describeCron('* 9 * * *')).toBe('every minute during hour 9');
   });
 
   // These used to come out as raw syntax: "at */2:00", "at 09:0,30", "at 9-17:00".
   test('describes steps, lists and ranges in the time fields', () => {
-    expect(describe('0 */2 * * *')).toBe('at minute 0 of every 2nd hour');
-    expect(describe('0,30 9 * * *')).toBe('at 09:00 and 09:30');
-    expect(describe('0 9-17 * * *')).toBe('at minute 0 of hours 9 through 17');
-    expect(describe('*/5 9-17 * * *')).toBe('every 5 minutes during hours 9 through 17');
-    expect(describe('0 0,6,12,18 * * *')).toBe('at 00:00, 06:00, 12:00 and 18:00');
-    expect(describe('0,15,30,45 9,17 * * *')).toBe('at minutes 0, 15, 30 and 45 of hours 9 and 17');
-    expect(describe('10-40/10 * * * *')).toBe('every 10 minutes from minute 10 through 40');
-    expect(describe('*/10 */3 * * *')).toBe('every 10 minutes during every 3rd hour');
+    expect(describeCron('0 */2 * * *')).toBe('at minute 0 of every 2nd hour');
+    expect(describeCron('0,30 9 * * *')).toBe('at 09:00 and 09:30');
+    expect(describeCron('0 9-17 * * *')).toBe('at minute 0 of hours 9 through 17');
+    expect(describeCron('*/5 9-17 * * *')).toBe('every 5 minutes during hours 9 through 17');
+    expect(describeCron('0 0,6,12,18 * * *')).toBe('at 00:00, 06:00, 12:00 and 18:00');
+    expect(describeCron('0,15,30,45 9,17 * * *')).toBe(
+      'at minutes 0, 15, 30 and 45 of hours 9 and 17'
+    );
+    expect(describeCron('10-40/10 * * * *')).toBe('every 10 minutes from minute 10 through 40');
+    expect(describeCron('*/10 */3 * * *')).toBe('every 10 minutes during every 3rd hour');
   });
 
   test('describes steps, lists and ranges in the date fields', () => {
-    expect(describe('0 0 1,15 * *')).toBe('at 00:00, on days 1 and 15 of the month');
-    expect(describe('0 0 */2 * *')).toBe('at 00:00, on every 2nd day of the month');
-    expect(describe('0 0 1-7 * *')).toBe('at 00:00, on days 1 through 7 of the month');
-    expect(describe('0 0 1 1,4,7,10 *')).toBe(
+    expect(describeCron('0 0 1,15 * *')).toBe('at 00:00, on days 1 and 15 of the month');
+    expect(describeCron('0 0 */2 * *')).toBe('at 00:00, on every 2nd day of the month');
+    expect(describeCron('0 0 1-7 * *')).toBe('at 00:00, on days 1 through 7 of the month');
+    expect(describeCron('0 0 1 1,4,7,10 *')).toBe(
       'at 00:00, on day 1 of the month, in January, April, July and October'
     );
-    expect(describe('0 0 1 1-6 *')).toBe('at 00:00, on day 1 of the month, in January through June');
-    expect(describe('0 0 1 */3 *')).toBe('at 00:00, on day 1 of the month, in every 3rd month');
-    expect(describe('0 0 * * 1-3')).toBe('at 00:00, from Monday through Wednesday');
-    expect(describe('0 0 * * 0,6')).toBe('at 00:00, on Sunday and Saturday');
-    expect(describe('0 0 * * 1,3-5')).toBe('at 00:00, on Monday and Wednesday through Friday');
-    expect(describe('0 0 * * */2')).toBe('at 00:00, on every 2nd day of the week');
-    expect(describe('0 0 * * 1-5/2')).toBe(
+    expect(describeCron('0 0 1 1-6 *')).toBe(
+      'at 00:00, on day 1 of the month, in January through June'
+    );
+    expect(describeCron('0 0 1 */3 *')).toBe('at 00:00, on day 1 of the month, in every 3rd month');
+    expect(describeCron('0 0 * * 1-3')).toBe('at 00:00, from Monday through Wednesday');
+    expect(describeCron('0 0 * * 0,6')).toBe('at 00:00, on Sunday and Saturday');
+    expect(describeCron('0 0 * * 1,3-5')).toBe('at 00:00, on Monday and Wednesday through Friday');
+    expect(describeCron('0 0 * * */2')).toBe('at 00:00, on every 2nd day of the week');
+    expect(describeCron('0 0 * * 1-5/2')).toBe(
       'at 00:00, on every 2nd day of the week from Monday through Friday'
     );
   });
 
   test('describes a step that only ever hits one value as that value', () => {
-    expect(describe('*/90 * * * *')).toBe('at minute 0 of every hour');
+    expect(describeCron('*/90 * * * *')).toBe('at minute 0 of every hour');
   });
 
   test('says "or" when both day fields are restricted', () => {
-    expect(describe('0 0 13 * 5')).toBe('at 00:00, on day 13 of the month or on Friday');
-    expect(describe('0 0 13 6 5')).toBe('at 00:00, on day 13 of the month or on Friday, in June');
+    expect(describeCron('0 0 13 * 5')).toBe('at 00:00, on day 13 of the month or on Friday');
+    expect(describeCron('0 0 13 6 5')).toBe(
+      'at 00:00, on day 13 of the month or on Friday, in June'
+    );
   });
 
   test('describes what runs when one day field allows every day without a star', () => {
     // Either field is enough and 1-31 matches every day, so Monday adds nothing.
-    expect(describe('0 0 1-31 * 1')).toBe('at 00:00');
+    expect(describeCron('0 0 1-31 * 1')).toBe('at 00:00');
     expect(utcRuns('0 0 1-31 * 1', '2026-03-01T00:00:00Z', 3)).toEqual([
       '2026-03-02T00:00',
       '2026-03-03T00:00',
       '2026-03-04T00:00',
     ]);
     // With a star both must match, and the description says so.
-    expect(describe('0 0 * * 1')).toBe('at 00:00, on Monday');
-    expect(describe('0 0 */2 * 1')).toBe('at 00:00, on every 2nd day of the month, on Monday');
+    expect(describeCron('0 0 * * 1')).toBe('at 00:00, on Monday');
+    expect(describeCron('0 0 */2 * 1')).toBe('at 00:00, on every 2nd day of the month, on Monday');
   });
 });
 
-test.describe('nextCronRuns', () => {
+describe('nextCronRuns', () => {
   test('returns the next runs strictly after the given moment', () => {
     expect(utcRuns('*/15 * * * *', '2026-03-02T09:15:00Z', 3)).toEqual([
       '2026-03-02T09:30',
@@ -332,7 +338,7 @@ test.describe('nextCronRuns', () => {
 
   // At 02:00 EDT on 1 November 2026 New York's clocks return to 01:00 EST, so
   // local times 01:00-01:59 happen twice, an hour apart.
-  test.describe('when clocks go back', () => {
+  describe('when clocks go back', () => {
     const after = new Date('2026-11-01T05:10:00Z'); // 01:10 EDT
     const localRuns = (expression: string, count = 5) =>
       nextCronRuns(schedule(expression), { after, count, timezone: 'local' }).map((run) =>
@@ -379,7 +385,7 @@ test.describe('nextCronRuns', () => {
   });
 });
 
-test.describe('formatTimeUntil', () => {
+describe('formatTimeUntil', () => {
   const now = new Date('2026-03-02T09:00:00Z');
   const inMs = (ms: number) => formatTimeUntil(new Date(now.getTime() + ms), now);
   const MINUTE = 60_000;
@@ -400,7 +406,7 @@ test.describe('formatTimeUntil', () => {
   });
 });
 
-test.describe('buildCronExpression', () => {
+describe('buildCronExpression', () => {
   const values: CronBuilderValues = {
     everyMinutesInterval: '15',
     hourlyMinute: '30',
@@ -445,8 +451,8 @@ test.describe('buildCronExpression', () => {
     const expression = buildCronExpression('daily', { ...values, scheduleHour: '25' });
     expect(expression).toBe('5 25 * * *');
     expect(errorOf(expression)).toBe('Hour must stay between 0 and 23.');
-    expect(errorOf(buildCronExpression('every-minutes', { ...values, everyMinutesInterval: '-5' }))).toBe(
-      'Minute step must be a positive integer.'
-    );
+    expect(
+      errorOf(buildCronExpression('every-minutes', { ...values, everyMinutesInterval: '-5' }))
+    ).toBe('Minute step must be a positive integer.');
   });
 });

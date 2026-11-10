@@ -82,7 +82,10 @@ function describeAccept(accept: string | undefined): string {
 }
 
 /** Checks one file against the rules. Returns null when it passes. */
-export function validateFile<T extends FileLike>(file: T, rules: FileRules = {}): FileRejection<T> | null {
+export function validateFile<T extends FileLike>(
+  file: T,
+  rules: FileRules = {}
+): FileRejection<T> | null {
   if (!matchesAccept(file, rules.accept)) {
     return {
       file,
@@ -191,7 +194,9 @@ export function loadImage(source: Blob | string): Promise<HTMLImageElement> {
 }
 
 /** The pixel size of an image file, without keeping the decoded image. */
-export async function readImageDimensions(source: Blob | string): Promise<{ width: number; height: number }> {
+export async function readImageDimensions(
+  source: Blob | string
+): Promise<{ width: number; height: number }> {
   const image = await loadImage(source);
   return { width: image.naturalWidth, height: image.naturalHeight };
 }

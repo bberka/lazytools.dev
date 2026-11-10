@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -12,8 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, FileCode, Trash2, CheckCircle2, AlertTriangle, ChevronRight, ChevronDown } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import {
+  FileCode,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -87,7 +94,6 @@ export function XmlFormatter() {
   const [isMinified, setIsMinified] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
   const [xmlJs, setXmlJs] = useState<XmlJs | null>(null);
-  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
   // Reactive DOMParser validation
   const validation = useMemo(() => validateXml(input, parseXmlDocument), [input]);
@@ -167,7 +173,7 @@ export function XmlFormatter() {
           <Textarea
             value={input}
             onChange={(e) => setInput((e.target as HTMLTextAreaElement).value)}
-            placeholder='<root><item>value</item></root>'
+            placeholder="<root><item>value</item></root>"
             aria-label="XML input"
             rows={10}
             className="font-mono text-sm bg-background"
@@ -177,7 +183,9 @@ export function XmlFormatter() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Indentation configuration */}
               <div className="flex items-center gap-2">
-                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
+                <label htmlFor="indentation" className="text-sm font-medium">
+                  Indentation:
+                </label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -193,12 +201,23 @@ export function XmlFormatter() {
                 </Select>
               </div>
 
-              <Button onClick={handleMinify} variant="outline" size="sm" className="min-h-11 sm:min-h-9" disabled={!validation?.valid}>
+              <Button
+                onClick={handleMinify}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9"
+                disabled={!validation?.valid}
+              >
                 Minify XML
               </Button>
             </div>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -243,7 +262,10 @@ export function XmlFormatter() {
             </CardDescription>
           </div>
           {validation?.valid && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
+            <fieldset
+              className="min-w-0 flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
+              aria-label="Output view"
+            >
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -262,12 +284,12 @@ export function XmlFormatter() {
               >
                 Tree View
               </Button>
-            </div>
+            </fieldset>
           )}
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {viewMode === 'tree' && validation?.valid && treeData !== null ? (
-            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text scrollbar-thin">
+            <div className="rounded-md border bg-muted/40 p-4 max-h-[500px] overflow-auto select-text">
               <TreeNode value={treeData} depth={0} />
             </div>
           ) : (
@@ -281,25 +303,15 @@ export function XmlFormatter() {
             />
           )}
 
-          <Button
-            onClick={() => copyToClipboard(outputText)}
+          <CopyButton
+            text={outputText}
+            label="Copy Output"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!hasOutput || !validation?.valid}
             size="sm"
-            variant={isCopied ? "default" : "outline"}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {isCopied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                {copyFailed ? 'Copy failed' : 'Copy Output'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

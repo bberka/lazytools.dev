@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   describeLineCount,
   describeTreeNode,
@@ -9,7 +9,7 @@ import { ExactNumber } from '@/lib/tools/json-formatter';
 const JSON_WORDS: TreeVocabulary = { list: 'Array', map: 'Object', member: 'key', empty: 'null' };
 const XML_WORDS: TreeVocabulary = { list: 'List', map: 'Element', member: 'node', empty: 'empty' };
 
-test.describe('describeLineCount', () => {
+describe('describeLineCount', () => {
   test('counts lines and uses the singular for one', () => {
     expect(describeLineCount('a\nb\nc')).toBe('3 lines');
     expect(describeLineCount('{"a":1}')).toBe('1 line');
@@ -30,12 +30,24 @@ test.describe('describeLineCount', () => {
   });
 });
 
-test.describe('describeTreeNode leaves', () => {
+describe('describeTreeNode leaves', () => {
   test('describes scalars', () => {
-    expect(describeTreeNode(true, JSON_WORDS)).toEqual({ kind: 'leaf', type: 'boolean', text: 'true' });
-    expect(describeTreeNode(false, JSON_WORDS)).toEqual({ kind: 'leaf', type: 'boolean', text: 'false' });
+    expect(describeTreeNode(true, JSON_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'boolean',
+      text: 'true',
+    });
+    expect(describeTreeNode(false, JSON_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'boolean',
+      text: 'false',
+    });
     expect(describeTreeNode(0, JSON_WORDS)).toEqual({ kind: 'leaf', type: 'number', text: '0' });
-    expect(describeTreeNode(-1.5, JSON_WORDS)).toEqual({ kind: 'leaf', type: 'number', text: '-1.5' });
+    expect(describeTreeNode(-1.5, JSON_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'number',
+      text: '-1.5',
+    });
     expect(describeTreeNode('', JSON_WORDS)).toEqual({ kind: 'leaf', type: 'string', text: '""' });
     expect(describeTreeNode('héllo 😀', JSON_WORDS)).toEqual({
       kind: 'leaf',
@@ -45,8 +57,16 @@ test.describe('describeTreeNode leaves', () => {
   });
 
   test('uses the vocabulary for null and missing values', () => {
-    expect(describeTreeNode(null, JSON_WORDS)).toEqual({ kind: 'leaf', type: 'empty', text: 'null' });
-    expect(describeTreeNode(undefined, XML_WORDS)).toEqual({ kind: 'leaf', type: 'empty', text: 'empty' });
+    expect(describeTreeNode(null, JSON_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'empty',
+      text: 'null',
+    });
+    expect(describeTreeNode(undefined, XML_WORDS)).toEqual({
+      kind: 'leaf',
+      type: 'empty',
+      text: 'empty',
+    });
   });
 
   test('prints a big integer in full', () => {
@@ -78,7 +98,7 @@ test.describe('describeTreeNode leaves', () => {
   });
 });
 
-test.describe('describeTreeNode branches', () => {
+describe('describeTreeNode branches', () => {
   test('lists array items by index', () => {
     expect(describeTreeNode(['a', null], JSON_WORDS)).toEqual({
       kind: 'branch',
@@ -88,7 +108,11 @@ test.describe('describeTreeNode branches', () => {
         { name: '1', value: null },
       ],
     });
-    expect(describeTreeNode([], XML_WORDS)).toEqual({ kind: 'branch', label: 'List[0]', children: [] });
+    expect(describeTreeNode([], XML_WORDS)).toEqual({
+      kind: 'branch',
+      label: 'List[0]',
+      children: [],
+    });
   });
 
   test('lists object members in order and pluralises the caption', () => {
@@ -101,7 +125,10 @@ test.describe('describeTreeNode branches', () => {
       ],
     });
     expect(describeTreeNode({ only: 1 }, JSON_WORDS)).toMatchObject({ label: 'Object {1 key}' });
-    expect(describeTreeNode({}, XML_WORDS)).toMatchObject({ label: 'Element {0 nodes}', children: [] });
+    expect(describeTreeNode({}, XML_WORDS)).toMatchObject({
+      label: 'Element {0 nodes}',
+      children: [],
+    });
     expect(describeTreeNode({ item: 'x' }, XML_WORDS)).toMatchObject({ label: 'Element {1 node}' });
   });
 

@@ -37,7 +37,12 @@ export function SettingsDialog() {
     <Dialog>
       <TooltipSimple content="Settings">
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary transition-all duration-300" aria-label="Open settings">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-primary/10 hover:text-primary transition-all duration-300"
+            aria-label="Open settings"
+          >
             <Settings className="h-5 w-5" />
           </Button>
         </DialogTrigger>
@@ -50,10 +55,10 @@ export function SettingsDialog() {
         className="w-[calc(100%-1rem)] sm:w-full rounded-xl sm:rounded-xl max-h-[90vh] overflow-y-auto"
       >
         <DialogHeader>
-          <DialogTitle ref={titleRef} tabIndex={-1} className="focus:outline-none">Settings</DialogTitle>
-          <DialogDescription>
-            Adjust the interface and clear local browsing data.
-          </DialogDescription>
+          <DialogTitle ref={titleRef} tabIndex={-1} className="focus:outline-none">
+            Settings
+          </DialogTitle>
+          <DialogDescription>Adjust the interface and clear local browsing data.</DialogDescription>
         </DialogHeader>
 
         {/* The three appearance controls show their own change, so they run
@@ -75,11 +80,7 @@ export function SettingsDialog() {
                   onClick={() => run(toggleTheme)}
                   aria-label="Toggle theme"
                 >
-                  {theme === 'dark' ? (
-                    <Sun className="h-5 w-5" />
-                  ) : (
-                    <Moon className="h-5 w-5" />
-                  )}
+                  {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
               </TooltipSimple>
             </div>
@@ -121,7 +122,7 @@ export function SettingsDialog() {
 
           <section className="space-y-3">
             <h3 className="text-sm font-medium">Local Data</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
                 onClick={() => toast.success(run(clearFavorites))}

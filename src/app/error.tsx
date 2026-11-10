@@ -4,7 +4,16 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { AlertCircle, RefreshCw, Home, Terminal, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
+import {
+  AlertCircle,
+  RefreshCw,
+  Home,
+  Terminal,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ErrorProps {
@@ -38,23 +47,26 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
       setCopied(true);
       toast.success('Error details copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy error details');
     }
   };
 
   const handleReportIssue = () => {
-    copyToClipboard();
+    void copyToClipboard();
     // Redirect to GitHub issues page if URL is configured, otherwise just let the copy toast handle it
     const title = encodeURIComponent(`Crash Report: ${error.message.substring(0, 50)}`);
     const body = encodeURIComponent(
       `### Describe the bug\nA crash occurred in the application.\n\n### Error Details\n` +
-      `* **Message**: ${error.message}\n` +
-      `* **Digest**: ${error.digest || 'N/A'}\n` +
-      `* **URL**: ${typeof window !== 'undefined' ? window.location.href : 'unknown'}\n\n` +
-      `*(Stack trace has been copied to your clipboard, please paste it here)*`
+        `* **Message**: ${error.message}\n` +
+        `* **Digest**: ${error.digest || 'N/A'}\n` +
+        `* **URL**: ${typeof window !== 'undefined' ? window.location.href : 'unknown'}\n\n` +
+        `*(Stack trace has been copied to your clipboard, please paste it here)*`
     );
-    window.open(`https://github.com/bberka/lazytools.dev/issues/new?title=${title}&body=${body}`, '_blank');
+    window.open(
+      `https://github.com/bberka/lazytools.dev/issues/new?title=${title}&body=${body}`,
+      '_blank'
+    );
   };
 
   return (
@@ -72,7 +84,9 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
             <AlertCircle className="h-6 w-6" />
           </div>
           <div>
-            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">Something Went Wrong</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">
+              Something Went Wrong
+            </CardTitle>
             <CardDescription className="text-sm mt-1">
               An unexpected error occurred while rendering this page or tool.
             </CardDescription>
@@ -82,7 +96,8 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
         <CardContent className="space-y-6">
           {/* Error Message Box */}
           <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive/90 text-sm font-medium">
-            <span className="font-bold">Error:</span> {error.message || 'An unknown runtime error crashed the component.'}
+            <span className="font-bold">Error:</span>{' '}
+            {error.message || 'An unknown runtime error crashed the component.'}
           </div>
 
           {/* Core Navigation Actions */}
@@ -122,7 +137,11 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
                 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 aria-expanded={showStack}
               >
-                {showStack ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                {showStack ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
                 <Terminal className="h-3.5 w-3.5" />
                 <span>{showStack ? 'Hide technical details' : 'Show technical details'}</span>
               </button>
@@ -135,10 +154,16 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
                     aria-label="Copy Stack Trace"
                     title="Copy Stack Trace"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
-                  <div className="overflow-x-auto max-h-60 scrollbar-thin pr-10 whitespace-pre">
-                    <div className="text-foreground font-semibold mb-1">{error.name}: {error.message}</div>
+                  <div className="overflow-x-auto max-h-60 pr-10 whitespace-pre">
+                    <div className="text-foreground font-semibold mb-1">
+                      {error.name}: {error.message}
+                    </div>
                     {error.stack}
                   </div>
                 </div>

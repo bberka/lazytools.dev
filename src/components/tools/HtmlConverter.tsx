@@ -1,13 +1,8 @@
 'use client';
 
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -268,7 +263,10 @@ function splitHtmlDocument(html: string): { readonly head: string; readonly body
 function buildPreviewDocument(options: PreviewDocumentOptions): string {
   const documentParts = splitHtmlDocument(options.html);
   const pageStyles = Object.entries(options.pageStyle)
-    .map(([property, value]) => `${property.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}: ${value};`)
+    .map(
+      ([property, value]) =>
+        `${property.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}: ${value};`
+    )
     .join('\n');
 
   return `<!DOCTYPE html>
@@ -332,8 +330,6 @@ export function HtmlConverter() {
   const [exportProgress, setExportProgress] = useState('');
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   // One per copy button, so "Copied" shows only on the button that was pressed.
-  const inputCopy = useCopyToClipboard();
-  const exportCopy = useCopyToClipboard();
   const outputCopy = useCopyToClipboard();
 
   const { markdownOutput, plainTextOutput } = useMemo(() => {
@@ -517,24 +513,18 @@ export function HtmlConverter() {
                 accept=".html,.htm,text/html"
                 aria-label="Import HTML file"
               />
-              <Button
-                onClick={intake.open}
-                variant="outline"
-                size="sm"
-                disabled={exporting}
-              >
+              <Button onClick={intake.open} variant="outline" size="sm" disabled={exporting}>
                 <FileUp className="h-4 w-4" />
                 Import HTML
               </Button>
-              <Button
-                onClick={() => inputCopy.copyToClipboard(input)}
-                variant={inputCopy.isCopied ? 'default' : 'outline'}
+              <CopyButton
+                text={input}
+                label="Copy HTML"
+                errorLabel="Copy failed"
+                iconClassName="h-4 w-4"
                 size="sm"
                 disabled={!input}
-              >
-                {inputCopy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {inputCopy.isCopied ? 'Copied' : inputCopy.isError ? 'Copy failed' : 'Copy HTML'}
-              </Button>
+              />
               <Button onClick={clearInput} variant="outline" size="sm">
                 <Trash2 className="h-4 w-4" />
                 Clear
@@ -554,9 +544,9 @@ export function HtmlConverter() {
           <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label id="html-export-format" className="text-sm font-medium">
+                <span id="html-export-format" className="text-sm font-medium">
                   Format
-                </label>
+                </span>
                 <Select
                   value={exportFormat}
                   onValueChange={(value) => setExportFormat(value as ExportFormat)}
@@ -593,9 +583,9 @@ export function HtmlConverter() {
               <div className="space-y-4 rounded-md border p-3 sm:p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label id="html-export-page-size" className="text-sm font-medium">
+                    <span id="html-export-page-size" className="text-sm font-medium">
                       Page size
-                    </label>
+                    </span>
                     <Select
                       value={pageSize}
                       onValueChange={(value) => setPageSize(value as PageSize)}
@@ -615,9 +605,9 @@ export function HtmlConverter() {
                   </div>
 
                   <div className="space-y-2">
-                    <label id="html-export-orientation" className="text-sm font-medium">
+                    <span id="html-export-orientation" className="text-sm font-medium">
                       Orientation
-                    </label>
+                    </span>
                     <Select
                       value={orientation}
                       onValueChange={(value) => setOrientation(value as Orientation)}
@@ -636,11 +626,12 @@ export function HtmlConverter() {
                   </div>
                 </div>
 
-                <div className="space-y-2" role="group" aria-labelledby="html-export-margins">
+                <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-margins">
                   <label id="html-export-margins" className="text-sm font-medium">
                     Margins: {margin} mm
                   </label>
-                  <Slider aria-labelledby="html-export-margins"
+                  <Slider
+                    aria-labelledby="html-export-margins"
                     value={margin}
                     onChange={setMargin}
                     min={0}
@@ -648,13 +639,14 @@ export function HtmlConverter() {
                     step={1}
                     disabled={exporting}
                   />
-                </div>
+                </fieldset>
 
-                <div className="space-y-2" role="group" aria-labelledby="html-export-scale">
+                <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-scale">
                   <label id="html-export-scale" className="text-sm font-medium">
                     Render scale: {scale}x
                   </label>
-                  <Slider aria-labelledby="html-export-scale"
+                  <Slider
+                    aria-labelledby="html-export-scale"
                     value={scale}
                     onChange={setScale}
                     min={1}
@@ -662,13 +654,13 @@ export function HtmlConverter() {
                     step={1}
                     disabled={exporting}
                   />
-                </div>
+                </fieldset>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label id="html-export-theme" className="text-sm font-medium">
+                    <span id="html-export-theme" className="text-sm font-medium">
                       PDF theme
-                    </label>
+                    </span>
                     <Select
                       value={pdfTheme}
                       onValueChange={(value) => {
@@ -690,21 +682,17 @@ export function HtmlConverter() {
                     </Select>
                   </div>
 
-                  <div
-                    className="space-y-2"
-                    role="group"
-                    aria-labelledby="html-export-background"
-                  >
-                    <label id="html-export-background" className="text-sm font-medium">
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-background">
+                    <span id="html-export-background" className="text-sm font-medium">
                       PDF background
-                    </label>
+                    </span>
                     <ColorPicker
                       label="PDF background"
                       value={backgroundColor}
                       onChange={setBackgroundColor}
                       disabled={exporting}
                     />
-                  </div>
+                  </fieldset>
                 </div>
 
                 <div className="space-y-3">
@@ -764,14 +752,13 @@ export function HtmlConverter() {
                 </Button>
               ) : null}
               {exportFormat !== 'pdf' ? (
-                <Button
-                  onClick={() => exportCopy.copyToClipboard(currentOutput)}
-                  variant={exportCopy.isCopied ? 'default' : 'outline'}
+                <CopyButton
+                  text={currentOutput}
+                  label="Copy output"
+                  errorLabel="Copy failed"
+                  iconClassName="h-4 w-4"
                   disabled={!currentOutput.trim()}
-                >
-                  {exportCopy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {exportCopy.isCopied ? 'Copied' : exportCopy.isError ? 'Copy failed' : 'Copy output'}
-                </Button>
+                />
               ) : null}
             </div>
           </CardContent>

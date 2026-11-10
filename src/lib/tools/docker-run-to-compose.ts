@@ -93,7 +93,11 @@ const NAME_START = /[A-Za-z_]/;
 const NAME_CHAR = /[A-Za-z0-9_]/;
 
 /** Reads the expansion that starts with `$` at `start`: `$(..)`, `${..}`, `$NAME`, or a lone `$`. */
-function readDollar(input: string, start: number, escapeDollars: boolean): { text: string; end: number } {
+function readDollar(
+  input: string,
+  start: number,
+  escapeDollars: boolean
+): { text: string; end: number } {
   const next = input[start + 1];
   if (next === '(' || next === '{') {
     const close = next === '(' ? ')' : '}';
@@ -450,7 +454,10 @@ function convertNetwork(ctx: Context, display: string, value: string): void {
     name = '';
     for (const field of splitCsv(value)) {
       const eq = field.indexOf('=');
-      const key = field.slice(0, eq === -1 ? undefined : eq).trim().toLowerCase();
+      const key = field
+        .slice(0, eq === -1 ? undefined : eq)
+        .trim()
+        .toLowerCase();
       const val = eq === -1 ? '' : field.slice(eq + 1).trim();
       if (key === 'name') name = val;
       else if (key === 'alias') ctx.aliases.push(val);
@@ -461,7 +468,12 @@ function convertNetwork(ctx: Context, display: string, value: string): void {
   }
   if (!name) {
     warn(ctx, `\`${display}\` names no network and was skipped.`);
-  } else if (name === 'host' || name === 'none' || name === 'bridge' || name.startsWith('container:')) {
+  } else if (
+    name === 'host' ||
+    name === 'none' ||
+    name === 'bridge' ||
+    name.startsWith('container:')
+  ) {
     ctx.networkMode = name;
   } else if (!ctx.networks.includes(name)) {
     ctx.networks.push(name);
@@ -476,12 +488,18 @@ function convertGpus(ctx: Context, display: string, value: string): void {
   else if (/^\d+$/.test(spec)) reservation.count = Number(spec);
   else if (deviceIds) reservation.device_ids = deviceIds[1].split(',').map((id) => id.trim());
   else {
-    warn(ctx, `\`${display}\` was not converted: only "all", a count, or "device=<ids>" are understood.`);
+    warn(
+      ctx,
+      `\`${display}\` was not converted: only "all", a count, or "device=<ids>" are understood.`
+    );
     return;
   }
   reservation.capabilities = ['gpu'];
   ctx.service.deploy = { resources: { reservations: { devices: [reservation] } } };
-  note(ctx, '--gpus is written as a GPU device reservation. It needs the NVIDIA Container Toolkit on the host.');
+  note(
+    ctx,
+    '--gpus is written as a GPU device reservation. It needs the NVIDIA Container Toolkit on the host.'
+  );
 }
 
 function applyCustom(ctx: Context, id: CustomFlagId, display: string, value: string): void {
@@ -493,7 +511,10 @@ function applyCustom(ctx: Context, id: CustomFlagId, display: string, value: str
 
     case 'restart':
       if (!RESTART_POLICY.test(value)) {
-        warn(ctx, `\`${display}\` is not a restart policy Docker knows (no, always, unless-stopped, on-failure[:N]). It was copied as is.`);
+        warn(
+          ctx,
+          `\`${display}\` is not a restart policy Docker knows (no, always, unless-stopped, on-failure[:N]). It was copied as is.`
+        );
       }
       ctx.service.restart = value;
       return;
@@ -551,11 +572,15 @@ function applyCustom(ctx: Context, id: CustomFlagId, display: string, value: str
     case 'ulimit': {
       const match = /^([a-z]+)=(-?\d+)(?::(-?\d+))?$/.exec(value);
       if (!match) {
-        warn(ctx, `\`${display}\` was not converted: expected name=soft or name=soft:hard, for example nofile=1024:2048.`);
+        warn(
+          ctx,
+          `\`${display}\` was not converted: expected name=soft or name=soft:hard, for example nofile=1024:2048.`
+        );
         return;
       }
       const [, limit, soft, hard] = match;
-      ctx.ulimits[limit] = hard === undefined ? Number(soft) : { soft: Number(soft), hard: Number(hard) };
+      ctx.ulimits[limit] =
+        hard === undefined ? Number(soft) : { soft: Number(soft), hard: Number(hard) };
       return;
     }
 
@@ -588,7 +613,13 @@ function applyCustom(ctx: Context, id: CustomFlagId, display: string, value: str
   }
 }
 
-function applyHealth(ctx: Context, field: HealthField, display: string, value: string, enabled: boolean): void {
+function applyHealth(
+  ctx: Context,
+  field: HealthField,
+  display: string,
+  value: string,
+  enabled: boolean
+): void {
   switch (field) {
     case 'disable':
       if (enabled) ctx.health.disable = true;
@@ -609,7 +640,13 @@ function applyHealth(ctx: Context, field: HealthField, display: string, value: s
   }
 }
 
-function applyFlag(ctx: Context, def: FlagDef, display: string, value: string, enabled: boolean): void {
+function applyFlag(
+  ctx: Context,
+  def: FlagDef,
+  display: string,
+  value: string,
+  enabled: boolean
+): void {
   const { map } = def;
   switch (map.kind) {
     case 'note':
@@ -754,7 +791,10 @@ function applyNetworks(ctx: Context): void {
       );
     }
     if (hasEndpointOptions) {
-      warn(ctx, `--network-alias and --ip need a user-defined network and were skipped because the network mode is "${ctx.networkMode}".`);
+      warn(
+        ctx,
+        `--network-alias and --ip need a user-defined network and were skipped because the network mode is "${ctx.networkMode}".`
+      );
     }
     return;
   }
@@ -829,7 +869,10 @@ export function convertDockerRun(input: string): ConversionResult {
     if (token === 'sudo') {
       start++;
     } else if (ENV_ASSIGNMENT.test(token)) {
-      warn(ctx, `The environment prefix \`${token}\` before the command was ignored. Put it under environment if the container needs it.`);
+      warn(
+        ctx,
+        `The environment prefix \`${token}\` before the command was ignored. Put it under environment if the container needs it.`
+      );
       start++;
     } else {
       break;
@@ -837,7 +880,8 @@ export function convertDockerRun(input: string): ConversionResult {
   }
 
   const dockerIndex = start;
-  if (tokens[dockerIndex] !== 'docker') return { ok: false, error: notRunMessage(tokens, dockerIndex) };
+  if (tokens[dockerIndex] !== 'docker')
+    return { ok: false, error: notRunMessage(tokens, dockerIndex) };
   start++;
   if (tokens[start] === 'container') start++;
   if (tokens[start] !== 'run') return { ok: false, error: notRunMessage(tokens, dockerIndex) };
@@ -919,7 +963,9 @@ export function convertDockerRun(input: string): ConversionResult {
     );
   }
   if (ctx.networks.length > 0 && !ctx.networkMode) {
-    compose.networks = Object.fromEntries(ctx.networks.map((name) => [name, { external: true as const }]));
+    compose.networks = Object.fromEntries(
+      ctx.networks.map((name) => [name, { external: true as const }])
+    );
     note(
       ctx,
       'Networks are declared external because docker run only joins networks that already exist. Remove "external: true" to let Compose create the network instead.'
@@ -929,10 +975,16 @@ export function convertDockerRun(input: string): ConversionResult {
   const serialized = JSON.stringify(service);
   const withoutEscapedDollars = serialized.replace(/\$\$/g, '');
   if (withoutEscapedDollars.includes('$(')) {
-    warn(ctx, 'A value contains command substitution ($(...)). Compose does not run commands. Replace it with a fixed value or a ${VARIABLE}.');
+    warn(
+      ctx,
+      'A value contains command substitution ($(...)). Compose does not run commands. Replace it with a fixed value or a ${VARIABLE}.'
+    );
   }
   if (withoutEscapedDollars.length !== serialized.length) {
-    note(ctx, 'A literal dollar sign is written as $$ because Compose reads a single $ as the start of a variable.');
+    note(
+      ctx,
+      'A literal dollar sign is written as $$ because Compose reads a single $ as the start of a variable.'
+    );
   }
   if (/\$[A-Za-z_{]/.test(withoutEscapedDollars)) {
     note(

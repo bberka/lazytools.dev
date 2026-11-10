@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { describe, expect, test } from 'vite-plus/test';
 import { prepareQrRequest, qrFileBaseName, type QrForm } from '@/lib/tools/qr-code-generator';
 
 const form = (overrides: Partial<QrForm> = {}): QrForm => ({
@@ -23,7 +23,7 @@ function errorOf(overrides: Partial<QrForm>): string {
   return result.error;
 }
 
-test.describe('prepareQrRequest', () => {
+describe('prepareQrRequest', () => {
   test('builds the request for the default form', () => {
     expect(requestOf()).toEqual({
       text: 'https://lazytools.dev',
@@ -101,12 +101,14 @@ test.describe('prepareQrRequest', () => {
   });
 
   test('reports the first problem only', () => {
-    expect(errorOf({ content: '', size: '1', margin: '99' })).toBe('Enter text or a URL to generate a QR code.');
+    expect(errorOf({ content: '', size: '1', margin: '99' })).toBe(
+      'Enter text or a URL to generate a QR code.'
+    );
     expect(errorOf({ size: '1', margin: '99' })).toBe('Size must be between 128 and 2048 pixels.');
   });
 });
 
-test.describe('qrFileBaseName', () => {
+describe('qrFileBaseName', () => {
   test('makes a hyphenated lower-case name', () => {
     expect(qrFileBaseName('https://lazytools.dev')).toBe('https-lazytools-dev');
     expect(qrFileBaseName('  Hello, World!  ')).toBe('hello-world');
