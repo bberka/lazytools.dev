@@ -138,7 +138,6 @@ export function ExifViewerRemover() {
     setBatchZip(null);
     setBatchError('');
 
-    // Reset status of all items to 'waiting'
     const resetItems: BatchItem[] = batchItems.map(item => ({
       ...item,
       status: 'waiting' as BatchFileStatus,

@@ -71,9 +71,7 @@ export interface StripResult {
   message: string;
 }
 
-// ---------------------------------------------------------------------------
 // Signals
-// ---------------------------------------------------------------------------
 
 const SIGNAL_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/compositeWithTrainedAlgorithmicMedia/i, 'DigitalSourceType: compositeWithTrainedAlgorithmicMedia'],
@@ -131,9 +129,7 @@ function preview(text: string): string {
   return flat.length > 160 ? `${flat.slice(0, 160)}…` : flat;
 }
 
-// ---------------------------------------------------------------------------
 // Parsing
-// ---------------------------------------------------------------------------
 
 interface Removal {
   start: number;
@@ -164,7 +160,7 @@ const ascii = (bytes: Uint8Array, start: number, length: number): string => {
 
 const startsWithText = (bytes: Uint8Array, text: string): boolean => ascii(bytes, 0, text.length) === text;
 
-export function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
+function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
   if (
     bytes.length >= 8 &&
@@ -223,7 +219,7 @@ function addKept(parsed: Parsed, label: string): void {
   if (!parsed.kept.includes(label)) parsed.kept.push(label);
 }
 
-// ---- JPEG ------------------------------------------------------------------
+// JPEG
 
 const XMP_JPEG_PREFIXES = ['http://ns.adobe.com/xap/1.0/\0', 'http://ns.adobe.com/xmp/extension/\0'];
 
@@ -310,7 +306,7 @@ function parseJpeg(bytes: Uint8Array): Parsed {
   }
 }
 
-// ---- PNG -------------------------------------------------------------------
+// PNG
 
 const PNG_REMOVABLE = new Set(['tEXt', 'zTXt', 'iTXt', 'eXIf', 'caBX']);
 
@@ -383,7 +379,7 @@ function parsePng(bytes: Uint8Array): Parsed {
   throw truncated();
 }
 
-// ---- WebP ------------------------------------------------------------------
+// WebP
 
 const WEBP_FLAG_EXIF = 0x08;
 const WEBP_FLAG_XMP = 0x04;
@@ -459,9 +455,7 @@ function parseSafely(bytes: Uint8Array): Parsed | ImageParseError {
 
 const distinct = (items: readonly string[]): string[] => [...new Set(items)];
 
-// ---------------------------------------------------------------------------
 // Public API
-// ---------------------------------------------------------------------------
 
 /** Lists the metadata that would be removed. Never throws. */
 export function scanImageMetadata(bytes: Uint8Array): ImageScan {

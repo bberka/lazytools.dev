@@ -349,7 +349,6 @@ export function QrCodeGenerator() {
           {generated ? (
             <>
               <div className="flex justify-center rounded-xl border bg-muted/20 p-4 sm:p-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={generated.pngDataUrl}
                   alt="Generated QR code"

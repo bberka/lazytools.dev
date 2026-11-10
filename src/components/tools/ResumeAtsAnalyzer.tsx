@@ -30,7 +30,7 @@ import {
   type LanguageSelection,
   type ResumeAnalysis,
   type ResumeLanguage,
-} from '@/lib/utils/resume-ats-analyzer';
+} from '@/lib/tools/resume-ats-analyzer';
 import { PDF_MIME_TYPE, openPdf } from '@/lib/pdf';
 
 async function extractPdfText(file: File) {
@@ -154,10 +154,6 @@ export function ResumeAtsAnalyzer() {
     setExtractedText('');
     setError('');
     intake.reset();
-  };
-
-  const handleCopyText = async () => {
-    await copyToClipboard(extractedText);
   };
 
   return (
@@ -537,7 +533,7 @@ export function ResumeAtsAnalyzer() {
                 </CardDescription>
               </div>
               <Button
-                onClick={handleCopyText}
+                onClick={() => copyToClipboard(extractedText)}
                 variant={isCopied ? 'default' : 'outline'}
                 size="sm"
                 className="min-h-11 sm:min-h-9"

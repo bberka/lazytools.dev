@@ -134,7 +134,7 @@ export interface LoanFields {
 /** `empty` means nothing has been typed yet, which is not an error. */
 export type LoanEvaluation = { status: 'empty' } | LoanOutcome;
 
-export const LOAN_LIMITS = {
+const LOAN_LIMITS = {
   maxAmount: 10_000_000_000,
   maxRatePercent: 100,
   maxTermMonths: 1200,

@@ -50,7 +50,7 @@ export interface TypeScriptOptions {
   semicolon: boolean;
 }
 
-export const DEFAULT_TYPESCRIPT_OPTIONS: TypeScriptOptions = {
+const DEFAULT_TYPESCRIPT_OPTIONS: TypeScriptOptions = {
   useType: false,
   exportKeyword: true,
   optional: false,

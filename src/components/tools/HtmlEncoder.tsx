@@ -21,12 +21,6 @@ export function HtmlEncoder() {
     [input, mode]
   );
 
-  const handleCopy = async () => {
-    if (output) {
-      await copyToClipboard(output);
-    }
-  };
-
   const handleSwap = () => {
     setInput(output);
     setMode(mode === 'encode' ? 'decode' : 'encode');
@@ -84,7 +78,7 @@ export function HtmlEncoder() {
             </pre>
             <div className="flex flex-wrap gap-2">
               <Button
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(output)}
                 disabled={!output}
                 size="sm"
                 variant={isCopied ? "default" : "outline"}

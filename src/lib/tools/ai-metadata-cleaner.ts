@@ -118,9 +118,7 @@ function categoryOf(codePoints: readonly number[], index: number, members: Reado
   return info ? (CLASS_CATEGORY[info.className] ?? null) : null;
 }
 
-// ---------------------------------------------------------------------------
 // URLs
-// ---------------------------------------------------------------------------
 
 const URL_PATTERN = /https?:\/\/[^\s<>"'`]+/gi;
 // Characters that end a sentence or a Markdown link rather than the address. They are put back unchanged.
@@ -174,9 +172,7 @@ export function stripTrackingParamsInText(text: string): { text: string; removed
   return { text: result, removed };
 }
 
-// ---------------------------------------------------------------------------
 // Cleaning
-// ---------------------------------------------------------------------------
 
 /**
  * Counts every category in the text and applies the ones that are switched on.

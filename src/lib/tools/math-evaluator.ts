@@ -48,7 +48,7 @@ export interface EvaluateOptions {
 export const MAX_SOURCE_LENGTH = 1000;
 const MAX_DEPTH = 100;
 /** Significant digits shown in a result. */
-export const RESULT_PRECISION = 12;
+const RESULT_PRECISION = 12;
 
 // ── Errors ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ function fail(message: string, index: number, length = 1): never {
 
 // ── Constants and functions ───────────────────────────────────────────────────
 
-export const CONSTANTS: Readonly<Record<string, number>> = {
+const CONSTANTS: Readonly<Record<string, number>> = {
   pi: Math.PI,
   e: Math.E,
 };

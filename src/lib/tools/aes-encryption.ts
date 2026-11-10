@@ -7,6 +7,9 @@
 // PBKDF2-SHA-256. Text encrypted by earlier versions of the tool uses this
 // same layout, so none of these numbers may change.
 
+import { bytesToBase64 } from './base64-converter';
+import { bytesToHex } from './bytes';
+
 const SALT_BYTES = 16;
 const IV_BYTES = 12;
 const GCM_TAG_BYTES = 16;
@@ -15,12 +18,6 @@ const PBKDF2_ITERATIONS = 100000;
 const DECRYPT_ERROR = 'Decryption failed. Please check your password and encrypted text.';
 
 type Bytes = Uint8Array<ArrayBuffer>;
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
 
 function base64ToBytes(base64: string): Bytes {
   const binary = atob(base64);
@@ -92,8 +89,5 @@ export async function decryptText(encryptedBase64: string, password: string): Pr
 
 /** A random password of 32 hexadecimal characters (128 bits). */
 export function generatePassword(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  let hex = '';
-  for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
-  return hex;
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
 }

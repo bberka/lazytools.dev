@@ -38,9 +38,7 @@ const cleanedBlob = (result: StripResult, file: File): Blob =>
 
 const cleanedName = (file: File) => outputFileName(file.name, { suffix: '-clean' });
 
-// ---------------------------------------------------------------------------
 // Images
-// ---------------------------------------------------------------------------
 
 function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void }) {
   const { file, result } = item;
@@ -261,9 +259,7 @@ function ImageCleaner() {
   );
 }
 
-// ---------------------------------------------------------------------------
 // Text
-// ---------------------------------------------------------------------------
 
 function TextCleaner() {
   const id = useId();

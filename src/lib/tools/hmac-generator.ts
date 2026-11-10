@@ -1,6 +1,8 @@
 // HMAC generator logic. Plain functions only: no React, no DOM, so it runs in
 // the browser and in Node. WebCrypto comes from `globalThis.crypto`.
 
+import { bytesToHex } from './bytes';
+
 export const HMAC_ALGORITHMS = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
 export type HmacAlgorithm = (typeof HMAC_ALGORITHMS)[number];
 
@@ -49,9 +51,7 @@ export function digestLength(algorithm: HmacAlgorithm): number {
   return DIGEST_BYTES[algorithm];
 }
 
-// ---------------------------------------------------------------------------
 // Decoding
-// ---------------------------------------------------------------------------
 
 const BASE64_STANDARD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const BASE64_URL_SAFE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -143,9 +143,7 @@ export function decodeKey(text: string, encoding: KeyEncoding): Decoded {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Encoding
-// ---------------------------------------------------------------------------
 
 function toBase64(bytes: Uint8Array, urlSafe: boolean): string {
   const alphabet = urlSafe ? BASE64_URL_SAFE : BASE64_STANDARD;
@@ -166,15 +164,13 @@ function toBase64(bytes: Uint8Array, urlSafe: boolean): string {
  */
 export function encodeDigest(digest: Uint8Array, encoding: SignatureEncoding, uppercase = false): string {
   if (encoding === 'hex') {
-    const hex = Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    const hex = bytesToHex(digest);
     return uppercase ? hex.toUpperCase() : hex;
   }
   return toBase64(digest, encoding === 'base64url');
 }
 
-// ---------------------------------------------------------------------------
 // HMAC
-// ---------------------------------------------------------------------------
 
 /**
  * HMAC of raw bytes. Throws if WebCrypto is unavailable (for example on an
@@ -207,9 +203,7 @@ export async function computeHmac(request: HmacRequest): Promise<HmacResult> {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Verification
-// ---------------------------------------------------------------------------
 
 /**
  * Compares two byte strings without stopping at the first difference. The loop

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Copy, Check, RefreshCw, Shield, KeyRound } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { useCopyToClipboard, useHydrated } from '@/hooks';
 import {
   clampInteger,
   countCharacterTypes,
@@ -60,7 +60,7 @@ interface Output {
 }
 
 export function PasswordGenerator() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const [mode, setMode] = useState<GenerationMode>('random');
   const [length, setLength] = useState(16);
   const [uppercase, setUppercase] = useState(true);
@@ -88,10 +88,6 @@ export function PasswordGenerator() {
   const [manualOutput, setManualOutput] = useState<Output | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const { copyToClipboard, isCopied } = useCopyToClipboard();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const settings = useMemo<GeneratorSettings>(() => {
     if (mode === 'pin') {
@@ -168,10 +164,6 @@ export function PasswordGenerator() {
     }
 
     setManualOutput({ settings, result: generatePassword(settings), refresh: refreshNonce });
-  };
-
-  const handleCopy = async () => {
-    await copyToClipboard(password);
   };
 
   const counts = useMemo(() => countCharacterTypes(password), [password]);
@@ -506,7 +498,7 @@ export function PasswordGenerator() {
                 <Button
                   variant={isCopied ? 'default' : 'ghost'}
                   size="icon"
-                  onClick={handleCopy}
+                  onClick={() => copyToClipboard(password)}
                   disabled={hasError}
                   aria-label="Copy password"
                 >

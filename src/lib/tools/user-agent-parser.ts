@@ -80,9 +80,7 @@ export const CLIENT_KIND_LABELS: Readonly<Record<ClientKind, string>> = {
   unknown: 'unknown',
 };
 
-// ---------------------------------------------------------------------------
 // Parsing
-// ---------------------------------------------------------------------------
 
 /** A version with underscores turned into dots, or null when it holds no digit. */
 function cleanVersion(raw: string | undefined): string | null {
@@ -338,9 +336,7 @@ export function resultToJson(result: ParsedUserAgent): string {
   return JSON.stringify(result, null, 2);
 }
 
-// ---------------------------------------------------------------------------
 // Client hints (navigator.userAgentData)
-// ---------------------------------------------------------------------------
 
 export interface ClientHintBrand {
   brand: string;

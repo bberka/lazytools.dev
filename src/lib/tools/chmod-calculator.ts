@@ -42,9 +42,7 @@ function normalize(mode: number): number {
   return Number.isFinite(mode) ? Math.trunc(mode) & MODE_MASK : 0;
 }
 
-// ---------------------------------------------------------------------------
 // Grid
-// ---------------------------------------------------------------------------
 
 export function hasPermission(mode: number, who: PermissionClass, bit: PermissionBit): boolean {
   return (normalize(mode) & PERMISSION_MASKS[who][bit]) !== 0;
@@ -69,9 +67,7 @@ export function withSpecial(mode: number, bit: SpecialBit, on: boolean): number 
   return on ? normalize(mode) | mask : normalize(mode) & ~mask;
 }
 
-// ---------------------------------------------------------------------------
 // Octal
-// ---------------------------------------------------------------------------
 
 /** Three digits, or four when any of setuid, setgid or sticky is set. */
 export function formatOctal(mode: number): string {
@@ -96,9 +92,7 @@ export function parseOctal(input: string): ParseResult {
   return { ok: true, mode: parseInt(text, 8) };
 }
 
-// ---------------------------------------------------------------------------
 // Symbolic
-// ---------------------------------------------------------------------------
 
 interface SymbolicTriple {
   who: PermissionClass;
@@ -186,9 +180,7 @@ export function parseSymbolic(input: string): ParseResult {
   return { ok: true, mode };
 }
 
-// ---------------------------------------------------------------------------
 // Commands
-// ---------------------------------------------------------------------------
 
 /** Characters a shell leaves alone in a word, plus the glob and expansion ones people type. */
 const SHELL_SAFE = /^[\w@%+=:,./~*?$[\]{}-]+$/;
@@ -231,9 +223,7 @@ export function chmodCommands(mode: number, target = 'file'): ChmodCommands {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Explanation
-// ---------------------------------------------------------------------------
 
 export interface ClassExplanation {
   who: PermissionClass;
@@ -331,9 +321,7 @@ export function explainMode(mode: number): ModeExplanation {
   return { classes, special, warnings };
 }
 
-// ---------------------------------------------------------------------------
 // Presets
-// ---------------------------------------------------------------------------
 
 export interface ModePreset {
   octal: string;

@@ -1,11 +1,11 @@
 'use client';
 
-import { useId, useMemo, useState, useSyncExternalStore } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { CalendarDays, Check, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
-import { useCopyToClipboard } from '@/hooks';
+import { useCopyToClipboard, useHydrated } from '@/hooks';
 import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   calculateAge,
@@ -17,8 +17,6 @@ import {
 function getTodayValue(): string {
   return toDateInputValue(new Date());
 }
-
-const noSubscription = () => () => {};
 
 function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
   const id = useId();
@@ -218,11 +216,7 @@ export function AgeCalculator() {
   // it would be the build date: stale for every visitor and a hydration
   // mismatch. The HTML and the first client render leave the date empty, and
   // the form is mounted again with the visitor's date once hydrated.
-  const hydrated = useSyncExternalStore(
-    noSubscription,
-    () => true,
-    () => false
-  );
+  const hydrated = useHydrated();
   const [today] = useState(getTodayValue);
 
   return hydrated ? (

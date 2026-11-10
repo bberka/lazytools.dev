@@ -1,6 +1,8 @@
 // RSA Key Pair Generator logic. No React and no DOM, so it runs in the browser
 // and in Node. WebCrypto comes from `globalThis.crypto`.
 
+import { bytesToBase64 } from './base64-converter';
+
 export const RSA_KEY_SIZES = [2048, 3072, 4096] as const;
 export type RsaKeySize = (typeof RSA_KEY_SIZES)[number];
 
@@ -19,13 +21,6 @@ export interface RsaKeyPair {
   /** The format and size this pair was made with, whatever the settings say now. */
   format: RsaKeyFormat;
   bits: RsaKeySize;
-}
-
-function bytesToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
 }
 
 function toPem(base64: string, label: 'PUBLIC KEY' | 'PRIVATE KEY'): string {
@@ -67,8 +62,8 @@ export async function generateRsaKeyPair(bits: RsaKeySize, format: RsaKeyFormat)
     crypto.subtle.exportKey('spki', keys.publicKey),
     crypto.subtle.exportKey('pkcs8', keys.privateKey),
   ]);
-  const publicBase64 = bytesToBase64(spki);
-  const privateBase64 = bytesToBase64(pkcs8);
+  const publicBase64 = bytesToBase64(new Uint8Array(spki));
+  const privateBase64 = bytesToBase64(new Uint8Array(pkcs8));
 
   return format === 'PEM'
     ? { publicKey: toPem(publicBase64, 'PUBLIC KEY'), privateKey: toPem(privateBase64, 'PRIVATE KEY'), format, bits }

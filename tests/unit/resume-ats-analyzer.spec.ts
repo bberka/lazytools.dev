@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { analyzeResumeText } from '@/lib/utils/resume-ats-analyzer';
+import { analyzeResumeText } from '@/lib/tools/resume-ats-analyzer';
 
 const englishResume = `
 John Doe

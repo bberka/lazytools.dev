@@ -102,7 +102,7 @@ export type DecodeResult =
   | { ok: false; error: string };
 
 /** Size above which pasted text is refused instead of decoded. */
-export const MAX_INPUT_CHARS = 40_000_000;
+const MAX_INPUT_CHARS = 40_000_000;
 
 function binaryToBytes(binary: string): Uint8Array {
   const bytes = new Uint8Array(binary.length);

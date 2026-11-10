@@ -168,7 +168,6 @@ export function ClampCalculator() {
     };
   }, [graphData]);
 
-  // Get SVG Path points
   const chartPath = useMemo(() => {
     if (!graphData || !svgCoords) return '';
     const { xMin, xMax, from, to } = graphData;

@@ -2,7 +2,9 @@
 // password against an existing hash string. No React and no DOM, so it runs in
 // the browser and in Node. The hashing libraries are loaded on first use.
 
-export const ARGON2_VARIANTS = ['argon2id', 'argon2i', 'argon2d'] as const;
+import { bytesToHex } from './bytes';
+
+const ARGON2_VARIANTS = ['argon2id', 'argon2i', 'argon2d'] as const;
 export type Argon2Variant = (typeof ARGON2_VARIANTS)[number];
 
 export type PasswordHashAlgorithm = 'bcrypt' | Argon2Variant;
@@ -40,12 +42,6 @@ const ARGON2_VERSION = 19;
 // A Bcrypt hash is exactly "$2a$", a two-digit cost, "$", then 22 characters of
 // salt and 31 of hash in Bcrypt's own Base64 alphabet: 60 characters in all.
 const BCRYPT_HASH = /^\$2[aby]\$(\d{2})\$[./A-Za-z0-9]{53}$/;
-
-function toHex(bytes: Uint8Array): string {
-  let hex = '';
-  for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
-  return hex;
-}
 
 /** Decodes Base64 with or without padding, in the standard or the URL-safe alphabet. */
 function base64ToBytes(text: string): Uint8Array {
@@ -177,7 +173,7 @@ export async function verifyPassword(password: string, hash: string): Promise<Pa
       hashLength: parsed.hash.length,
       outputType: 'hex',
     });
-    return { matches: recomputed === toHex(parsed.hash), algorithm: `Argon2 (${parsed.variant})` };
+    return { matches: recomputed === bytesToHex(parsed.hash), algorithm: `Argon2 (${parsed.variant})` };
   }
 
   if (/^\$2[aby]\$/.test(encoded)) {

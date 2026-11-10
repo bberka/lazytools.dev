@@ -231,7 +231,6 @@ export function Base64Converter() {
             <Card>
               <CardHeader><CardTitle>Image Preview</CardTitle></CardHeader>
               <CardContent>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="Preview" className="max-h-64 rounded-md object-contain mx-auto" />
               </CardContent>
             </Card>

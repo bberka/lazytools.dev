@@ -257,7 +257,6 @@ export function SnowflakeGenerator() {
     setDecodedAt(Date.now());
   };
 
-  // Handle custom epoch date change
   const handleEpochDateChange = (val: string) => {
     setEpochDateStr(val);
     const parsed = Date.parse(val);
@@ -394,13 +393,11 @@ export function SnowflakeGenerator() {
     void copyToClipboard(generated.ids.map((item) => item.id).join('\n'));
   };
 
-  // Export as JSON
   const handleExportJson = () => {
     if (!generated) return;
     downloadText(JSON.stringify(generated.ids, null, 2), `snowflake-ids-${Date.now()}.json`, 'application/json');
   };
 
-  // Export as CSV
   const handleExportCsv = () => {
     if (!generated) return;
     downloadText(snowflakeIdsToCsv(generated.ids), `snowflake-ids-${Date.now()}.csv`, 'text/csv');

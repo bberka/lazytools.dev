@@ -28,8 +28,8 @@ import {
 
 export { CHAR_CLASSES, CHAR_TABLE, CLASS_INFO, type CharClass, type CharEntry };
 
-export const DEFAULT_MAX_ROWS = 500;
-export const DEFAULT_MAX_MARKS = 2000;
+const DEFAULT_MAX_ROWS = 500;
+const DEFAULT_MAX_MARKS = 2000;
 
 const ZWNJ = 0x200c;
 const ZWJ = 0x200d;
@@ -51,9 +51,7 @@ const EXTENDED_PICTOGRAPHIC = /^\p{Extended_Pictographic}$/u;
 const EMOJI = /^\p{Emoji}$/u;
 const GRAPHEME_EXTEND = /^[\p{Grapheme_Extend}\p{Mc}]$/u;
 
-// ---------------------------------------------------------------------------
 // Code point basics
-// ---------------------------------------------------------------------------
 
 function toCodePoints(text: string): number[] {
   const codePoints: number[] = [];
@@ -68,7 +66,7 @@ function isValidCodePoint(codePoint: number): boolean {
 }
 
 /** "U+0041", "U+1F600": four digits at least, upper case. */
-export function formatCodePoint(codePoint: number): string {
+function formatCodePoint(codePoint: number): string {
   return `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`;
 }
 
@@ -120,9 +118,7 @@ export function htmlEntity(codePoint: number): string {
   return HTML_NAMED_ENTITIES[codePoint] ?? `&#x${codePoint.toString(16).toUpperCase()};`;
 }
 
-// ---------------------------------------------------------------------------
 // Classification
-// ---------------------------------------------------------------------------
 
 function isPrivateUse(codePoint: number): boolean {
   return (
@@ -181,9 +177,7 @@ function categoryLabel(codePoint: number): string {
   return category ? `${category.label} (${category.code})` : 'Unknown';
 }
 
-// ---------------------------------------------------------------------------
 // Emoji sequences
-// ---------------------------------------------------------------------------
 
 function isEmojiModifier(codePoint: number): boolean {
   return codePoint >= 0x1f3fb && codePoint <= 0x1f3ff;
@@ -271,9 +265,7 @@ export function isScriptJoiner(codePoints: readonly number[], index: number): bo
   return !(LATIN.test(before) && LATIN.test(after));
 }
 
-// ---------------------------------------------------------------------------
 // Grapheme clusters
-// ---------------------------------------------------------------------------
 
 export type GraphemeMethod = 'intl-segmenter' | 'approximate';
 
@@ -345,9 +337,7 @@ export function countGraphemes(text: string): { count: number; method: GraphemeM
   return { count, method: 'intl-segmenter' };
 }
 
-// ---------------------------------------------------------------------------
 // Inspection
-// ---------------------------------------------------------------------------
 
 export interface CharRow {
   /** 1-based position among the code points of the text. */
@@ -558,13 +548,9 @@ export function inspectText(text: string, options: InspectOptions = {}): Inspect
   };
 }
 
-// ---------------------------------------------------------------------------
 // Cleaning
-// ---------------------------------------------------------------------------
 
 export type NormalizationForm = 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
-
-export const NORMALIZATION_FORMS: readonly NormalizationForm[] = ['NFC', 'NFD', 'NFKC', 'NFKD'];
 
 export interface RemoveOptions {
   /**
@@ -681,9 +667,7 @@ export function cleanText(text: string, options: CleanOptions = {}): CleanResult
   return { text: current, removed, replaced, normalizationChanged, changed: current !== text };
 }
 
-// ---------------------------------------------------------------------------
 // Example
-// ---------------------------------------------------------------------------
 
 /** A short text with one of each common trap, written with escapes so the source shows what is in it. */
 export const EXAMPLE_TEXT = [

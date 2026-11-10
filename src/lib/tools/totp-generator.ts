@@ -27,9 +27,8 @@ export interface Failure {
   error: string;
 }
 
-export const TOTP_ALGORITHMS: readonly TotpAlgorithm[] = ['SHA-1', 'SHA-256', 'SHA-512'];
-export const TOTP_DIGITS: readonly TotpDigits[] = [6, 8];
-export const TOTP_PERIODS: readonly number[] = [30, 60];
+const TOTP_ALGORITHMS: readonly TotpAlgorithm[] = ['SHA-1', 'SHA-256', 'SHA-512'];
+const TOTP_DIGITS: readonly TotpDigits[] = [6, 8];
 
 export const DEFAULT_TOTP_OPTIONS: TotpOptions = { algorithm: 'SHA-1', digits: 6, period: 30 };
 

@@ -494,7 +494,6 @@ export function TotpGenerator() {
               <div className="flex items-center justify-center md:justify-end">
                 {qr ? (
                   qr.dataUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={qr.dataUrl}
                       alt="QR code for the otpauth link"

@@ -214,7 +214,6 @@ function DecodePanel() {
                     </p>
                   ) : previewUrl ? (
                     // The image is rendered through <img> only, so an SVG cannot run scripts.
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       key={previewUrl}
                       src={previewUrl}
@@ -350,7 +349,6 @@ function EncodePanel() {
           <div className="space-y-4">
             {previewUrl && (
               <div className="flex min-h-24 items-center justify-center overflow-auto rounded-md border bg-muted/40 p-3 sm:p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="Selected image preview" className="h-auto max-h-48 max-w-full" />
               </div>
             )}

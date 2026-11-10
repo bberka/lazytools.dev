@@ -63,7 +63,6 @@ export function PasswordHasher() {
     }
   }, [pathname, router]);
 
-  // Clean state when changing modes or algorithms
   const handleModeChange = (newMode: Mode) => {
     latestRun.current += 1;
     setMode(newMode);
@@ -160,10 +159,6 @@ export function PasswordHasher() {
 
   const handleVerify = async () => {
     await executeVerify(verifyHash);
-  };
-
-  const handleCopy = async () => {
-    await copyToClipboard(hash);
   };
 
   const handleClear = () => {
@@ -447,7 +442,7 @@ export function PasswordHasher() {
               <Button
                 variant={isCopied ? 'default' : 'ghost'}
                 size="icon"
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(hash)}
                 aria-label="Copy hash output"
                 className="h-9 w-9 transition-all duration-200"
               >

@@ -36,9 +36,7 @@ export const ALIGNMENTS: ReadonlyArray<{ value: Alignment; label: string }> = [
   { value: 'right', label: 'Right' },
 ];
 
-// ---------------------------------------------------------------------------
 // Editing the grid. Every function returns a new table.
-// ---------------------------------------------------------------------------
 
 export function createTable(rows: number, columns: number): TableData {
   return {
@@ -110,9 +108,7 @@ export function isBlank(table: TableData): boolean {
   return table.cells.every((row) => row.every((cell) => cell.trim() === ''));
 }
 
-// ---------------------------------------------------------------------------
 // Writing Markdown
-// ---------------------------------------------------------------------------
 
 /** Escapes `|` that is not already escaped, and turns line breaks into `<br>`. */
 export function escapeCell(value: string, escapePipes: boolean): string {
@@ -206,9 +202,7 @@ export function markdownTable(table: TableData, options: TableOptions): string {
   return [body(rows[0]), delimiter, ...rows.slice(1).map(body)].join('\n');
 }
 
-// ---------------------------------------------------------------------------
 // Reading CSV and TSV
-// ---------------------------------------------------------------------------
 
 export type Delimiter = 'auto' | 'comma' | 'tab' | 'semicolon';
 

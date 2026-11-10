@@ -30,7 +30,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import {
   describeSpeechError,
   locateSpokenWord,
@@ -109,7 +109,6 @@ export function TextToSpeech() {
     selectedVoiceNameRef.current = selectedVoiceName;
   }, [selectedVoiceName]);
 
-  // Load system voices
   const loadVoices = useCallback(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     const sysVoices = window.speechSynthesis.getVoices() || [];
@@ -332,7 +331,6 @@ export function TextToSpeech() {
     return acc;
   }, {});
 
-  // Clean up speech on component unmount
   useEffect(() => {
     return () => {
       currentUtteranceRef.current = null;

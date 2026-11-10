@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { AlertCircle, Check, Copy, Download, ImageIcon, RotateCcw } from 'lucide-react';
+import { FieldError } from './FieldError';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,16 +48,6 @@ const OUTPUT_TABS: ReadonlyArray<{ kind: OutputKind; label: string }> = [
   { kind: 'css', label: 'CSS' },
   { kind: 'html', label: 'HTML' },
 ];
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <div id={id} role="alert" className="flex items-start gap-1.5 text-xs text-destructive">
-      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
 
 export function SvgPlaceholderGenerator() {
   const [fields, setFields] = useState<PlaceholderFields>(INITIAL_FIELDS);
@@ -292,7 +283,6 @@ export function SvgPlaceholderGenerator() {
           <CardContent>
             <div className="flex min-h-32 items-center justify-center overflow-auto rounded-md border bg-muted/40 p-3 sm:p-4">
               {ready ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={ready.outputs.dataUri}
                   alt={`Placeholder preview, ${ready.config.width} by ${ready.config.height} pixels`}

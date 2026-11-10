@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { ArrowRightLeft, Check, Clock3, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCopyToClipboard } from '@/hooks';
+import { useCopyToClipboard, useHydrated } from '@/hooks';
 import { toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   COMMON_TIME_ZONES,
@@ -29,7 +29,7 @@ import {
   toZonedInputValue,
   type TimeZoneOption,
 } from '@/lib/tools/timezone-converter';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
@@ -56,8 +56,6 @@ function getLocalDefaults(): Defaults {
     minute: String(now.getMinutes()).padStart(2, '0'),
   };
 }
-
-const noSubscription = () => () => {};
 
 function TimeZonePicker({
   label,
@@ -447,11 +445,7 @@ export function TimezoneConverter() {
   // machine's clock and zone into it gives every visitor stale values and a
   // hydration mismatch, so the HTML and the first client render use fixed
   // defaults and the form is mounted again with local ones once hydrated.
-  const hydrated = useSyncExternalStore(
-    noSubscription,
-    () => true,
-    () => false
-  );
+  const hydrated = useHydrated();
   const [localDefaults] = useState(getLocalDefaults);
 
   return hydrated ? (

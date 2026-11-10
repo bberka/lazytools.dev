@@ -185,7 +185,6 @@ export function ImageConverter() {
       const ctx = canvas?.getContext('2d');
       if (!canvas || !ctx) throw new Error('Canvas is not available in this browser.');
 
-      // Calculate dimensions
       const plan = planOutput(
         { width: img.width, height: img.height },
         { width, height, maintainAspectRatio, rotation, format: outputFormat }
@@ -204,12 +203,10 @@ export function ImageConverter() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Apply filters
       const filter = canvasFilter({ grayscale, sepia, blur, brightness, contrast, saturation });
       const canFilter = typeof (ctx as { filter?: unknown }).filter === 'string';
       if (filter !== 'none' && canFilter) ctx.filter = filter;
 
-      // Handle transformations
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate((rotation * Math.PI) / 180);
@@ -217,7 +214,6 @@ export function ImageConverter() {
       ctx.drawImage(img, -plan.drawWidth / 2, -plan.drawHeight / 2, plan.drawWidth, plan.drawHeight);
       ctx.restore();
 
-      // Convert to desired format
       const qualityValue = mimeType === 'image/png' ? 1 : quality / 100;
       const blob = await canvasToBlob(canvas, mimeType, qualityValue);
       if (run !== runRef.current) return;

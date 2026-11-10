@@ -34,7 +34,7 @@ export const DEFAULT_OPTIONS: SlugOptions = {
   perLine: false,
 };
 
-export const STOPWORDS: ReadonlySet<string> = new Set([
+const STOPWORDS: ReadonlySet<string> = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'for', 'from', 'in',
   'into', 'is', 'it', 'of', 'on', 'or', 'the', 'to', 'with',
 ]);
@@ -69,7 +69,7 @@ function transliterate(text: string, mode: Transliteration): string {
 }
 
 /** The words of a text: runs of letters, marks and digits. Apostrophes vanish, so "don't" is one word. */
-export function slugWords(text: string, options: Pick<SlugOptions, 'transliteration' | 'lowercase'>): string[] {
+function slugWords(text: string, options: Pick<SlugOptions, 'transliteration' | 'lowercase'>): string[] {
   let value = transliterate(text, options.transliteration).replace(/['‘’ʼ`]/g, '');
   if (options.lowercase) {
     // Lower-casing İ gives i plus a combining dot; Turkish writes plain i.

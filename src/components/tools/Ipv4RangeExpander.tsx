@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
-import { CircleAlert, Download, Layers, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Download, Layers, Trash2 } from 'lucide-react';
+import { ErrorNote } from './ErrorNote';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,18 +19,6 @@ type Mode = 'expand' | 'collapse';
 
 /** How many addresses are drawn in the page; the copy and download hold them all. */
 const PREVIEW_LIMIT = 1000;
-
-function ErrorNote({ children }: { children: ReactNode }) {
-  return (
-    <div
-      role="alert"
-      className="flex items-start gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-    >
-      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-      <span className="min-w-0 break-words">{children}</span>
-    </div>
-  );
-}
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (

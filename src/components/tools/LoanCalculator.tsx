@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { AlertCircle, Check, Copy, Download, Info, Landmark, PiggyBank, Trash2 } from 'lucide-react';
+import { Stat } from './Stat';
+import { FieldError } from './FieldError';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,26 +39,6 @@ const termUnitOptions = [
 ] as const;
 
 const INVALID_INPUT = 'border-destructive focus-visible:ring-destructive';
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <div id={id} role="alert" className="flex items-start gap-1.5 text-xs text-destructive">
-      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <div className="min-w-0 rounded-md border bg-card p-3">
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="mt-1 break-words font-mono text-base font-semibold sm:text-lg">{value}</dd>
-      {detail && <dd className="mt-0.5 text-xs text-muted-foreground">{detail}</dd>}
-    </div>
-  );
-}
 
 export function LoanCalculator() {
   const [amount, setAmount] = useState('200000');

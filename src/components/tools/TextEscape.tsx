@@ -29,12 +29,6 @@ export function TextEscape() {
     setDirection(direction === 'escape' ? 'unescape' : 'escape');
   };
 
-  const handleCopy = async () => {
-    if (output) {
-      await copyToClipboard(output);
-    }
-  };
-
   const handleClear = () => {
     setInput('');
   };
@@ -122,7 +116,7 @@ export function TextEscape() {
             </pre>
             <div className="flex flex-wrap gap-2">
               <Button
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(output)}
                 disabled={!output}
                 size="sm"
                 variant={isCopied ? "default" : "outline"}

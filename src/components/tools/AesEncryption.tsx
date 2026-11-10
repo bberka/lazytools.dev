@@ -90,10 +90,6 @@ export function AesEncryption() {
     setError('');
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(output);
-  };
-
   const handleClear = () => {
     latestRun.current += 1;
     setInput('');
@@ -273,7 +269,7 @@ export function AesEncryption() {
               <Button
                 variant={isCopied ? 'default' : 'ghost'}
                 size="icon"
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(output)}
                 aria-label={isCopied ? 'Copied!' : 'Copy to clipboard'}
               >
                 {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

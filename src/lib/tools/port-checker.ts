@@ -44,8 +44,8 @@ export const COMMON_PORTS: readonly PortTarget[] = [
   { port: 27017, service: 'MongoDB', protocol: 'TCP' },
 ];
 
-export const MAX_CUSTOM_PORTS = 50;
-export const PROBE_TIMEOUT_MS = 3000;
+const MAX_CUSTOM_PORTS = 50;
+const PROBE_TIMEOUT_MS = 3000;
 
 export type ScanMode = 'common' | 'custom';
 export type ProbeResult = 'open' | 'filtered';

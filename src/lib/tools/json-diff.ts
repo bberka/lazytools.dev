@@ -30,9 +30,7 @@ export function jsonTypeOf(value: JsonValue): JsonType {
 
 const hasOwn = (target: object, key: string): boolean => Object.prototype.hasOwnProperty.call(target, key);
 
-// ---------------------------------------------------------------------------
 // Parsing
-// ---------------------------------------------------------------------------
 
 export interface ParseError {
   message: string;
@@ -327,9 +325,7 @@ export function describeJson(value: JsonValue): string {
   return jsonTypeOf(value);
 }
 
-// ---------------------------------------------------------------------------
 // JSON Pointer (RFC 6901)
-// ---------------------------------------------------------------------------
 
 /** "~" becomes "~0" first, then "/" becomes "~1", so a literal "~1" survives. */
 export function escapePointerToken(token: string): string {
@@ -341,9 +337,7 @@ export function displayPath(path: string): string {
   return path === '' ? '(root)' : path;
 }
 
-// ---------------------------------------------------------------------------
 // Comparison
-// ---------------------------------------------------------------------------
 
 export type DiffKind = 'added' | 'removed' | 'changed' | 'type-changed' | 'unchanged';
 
@@ -618,9 +612,7 @@ export function diffJson(left: JsonValue, right: JsonValue, options: DiffOptions
   return { entries: ctx.entries, summary, patch: ctx.patch, ignoreArrayOrder: ctx.ignoreOrder };
 }
 
-// ---------------------------------------------------------------------------
 // From text
-// ---------------------------------------------------------------------------
 
 export type SideState =
   | { status: 'empty' }
@@ -654,9 +646,7 @@ export function compareJsonText(leftText: string, rightText: string, options: Di
   return { left, right, result };
 }
 
-// ---------------------------------------------------------------------------
 // Output
-// ---------------------------------------------------------------------------
 
 /** One character per kind, so the report reads without colour. */
 export const KIND_MARKERS: Record<DiffKind, string> = {
@@ -667,7 +657,7 @@ export const KIND_MARKERS: Record<DiffKind, string> = {
   unchanged: '=',
 };
 
-export const KIND_LABELS: Record<DiffKind, string> = {
+const KIND_LABELS: Record<DiffKind, string> = {
   added: 'added',
   removed: 'removed',
   changed: 'changed',
@@ -686,7 +676,7 @@ function typed(value: JsonValue): string {
 }
 
 /** The detail after the path: `1 -> 2`, `"x"`, `true (boolean) -> "yes" (string)`. */
-export function describeEntry(entry: DiffEntry): string {
+function describeEntry(entry: DiffEntry): string {
   switch (entry.kind) {
     case 'added':
       return formatValue(entry.newValue);
@@ -726,9 +716,7 @@ export function formatPatch(patch: JsonPatchOperation[]): string {
   return JSON.stringify(patch, null, 2);
 }
 
-// ---------------------------------------------------------------------------
 // Sample data
-// ---------------------------------------------------------------------------
 
 /** Shows every kind of difference; the other differences are only in how it is written. */
 export const SAMPLE_LEFT = `{

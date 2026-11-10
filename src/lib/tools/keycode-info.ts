@@ -17,7 +17,7 @@ export interface KeyEventLike {
   repeat: boolean;
 }
 
-export const KEY_LOCATIONS: Record<number, string> = {
+const KEY_LOCATIONS: Record<number, string> = {
   0: 'Standard',
   1: 'Left',
   2: 'Right',

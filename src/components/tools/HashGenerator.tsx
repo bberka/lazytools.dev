@@ -105,7 +105,6 @@ export function HashGenerator() {
     else { setInput(''); }
   };
 
-  // Check if comparison hash matches any calculated algorithm
   const matchingAlgorithm = useMemo(
     () => findMatchingAlgorithm(hashes, compareHash),
     [compareHash, hashes]

@@ -5,9 +5,7 @@ import type { ToolComponentLoader, ToolRegistryEntry } from '../types';
 // the description length limit) and answers every question about them, so
 // nothing else should read this object directly.
 
-// ---------------------------------------------------------------------------
 // Shared loaders for PDF tools (kept as 2 standalone pages)
-// ---------------------------------------------------------------------------
 const loadPdfSuite: ToolComponentLoader = () =>
   import('@/components/tools/PdfSuite').then((m) => m.PdfSuite);
 

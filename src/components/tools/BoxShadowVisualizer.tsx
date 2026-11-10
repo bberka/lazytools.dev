@@ -315,7 +315,6 @@ export function BoxShadowVisualizer() {
     setShadows(nextShadows);
   };
 
-  // Load Preset
   const applyPreset = (preset: Preset) => {
     setBoxBgColor(preset.boxBgColor);
     setCanvasBgType(preset.canvasBgType);

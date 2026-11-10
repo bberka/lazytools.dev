@@ -44,10 +44,6 @@ export function FindAndReplace() {
   // Visible characters, so an emoji in the output counts once.
   const outputCharacters = useMemo(() => countCharacters(result.output), [result.output]);
 
-  const handleCopy = async () => {
-    await copyToClipboard(result.output);
-  };
-
   const handleApply = () => {
     setInput(result.output);
   };
@@ -197,7 +193,7 @@ export function FindAndReplace() {
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
-              onClick={handleCopy}
+              onClick={() => copyToClipboard(result.output)}
               disabled={!result.output}
               variant={isCopied ? 'default' : 'outline'}
               size="sm"

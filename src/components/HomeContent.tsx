@@ -1,7 +1,7 @@
 'use client';
 
 import type { KeyboardEvent, ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +22,7 @@ import {
 import { TAGS } from '@/lib/tags';
 import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useSettings } from '@/lib/contexts/SettingsContext';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import type { Tool } from '@/lib/types';
 
 export function HomeContent() {
@@ -41,10 +41,14 @@ export function HomeContent() {
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(NO_SELECTION);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Reset selection when search query or filters change
-  useEffect(() => {
+  // The keyboard selection belongs to the list it was made in, so it is dropped
+  // as soon as the query or a filter changes.
+  const filterKey = JSON.stringify([searchQuery, selectedTag, showFavoritesOnly]);
+  const [selectionFilterKey, setSelectionFilterKey] = useState(filterKey);
+  if (selectionFilterKey !== filterKey) {
+    setSelectionFilterKey(filterKey);
     setSelectedSearchIndex(NO_SELECTION);
-  }, [searchQuery, selectedTag, showFavoritesOnly]);
+  }
 
   const filteredTools = useMemo(
     () =>

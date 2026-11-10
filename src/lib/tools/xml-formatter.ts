@@ -13,9 +13,7 @@
  * so `validateXml` takes one as an argument: `DOMParser` in the browser.
  */
 
-// ---------------------------------------------------------------------------
 // Tokens
-// ---------------------------------------------------------------------------
 
 type XmlTokenType = 'open' | 'close' | 'empty' | 'text' | 'cdata' | 'other';
 
@@ -148,9 +146,7 @@ function mapElements(tokens: XmlToken[]): ElementMap {
   return { closeOf, holdsData };
 }
 
-// ---------------------------------------------------------------------------
 // Formatting
-// ---------------------------------------------------------------------------
 
 /**
  * The lines of text that is laid out on lines of its own between its tags,
@@ -280,9 +276,7 @@ export function minifyXml(xml: string): string {
   return output.trim();
 }
 
-// ---------------------------------------------------------------------------
 // Validation
-// ---------------------------------------------------------------------------
 
 /** The part of a parsed XML document that validation reads. */
 export interface XmlDocumentLike {

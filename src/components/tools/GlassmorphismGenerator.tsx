@@ -141,7 +141,6 @@ export function GlassmorphismGenerator() {
     });
   };
 
-  // Handle Preset Selection
   const applyPreset = (key: string) => {
     const preset = GLASS_PRESETS[key];
     if (preset) setSettings(preset.settings);
@@ -153,7 +152,6 @@ export function GlassmorphismGenerator() {
   // Card style and the CSS, Tailwind and React snippets
   const output = useMemo(() => buildGlassOutput(settings), [settings]);
 
-  // Copy helper
   const handleCopyCode = () => {
     copy.copyToClipboard(
       exportTab === 'css' ? output.css : exportTab === 'tailwind' ? output.tailwind : output.react

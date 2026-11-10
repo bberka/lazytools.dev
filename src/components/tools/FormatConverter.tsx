@@ -52,7 +52,6 @@ export function FormatConverter() {
   const [inputFormat, setInputFormat] = useState<Format>('json');
   const [outputFormat, setOutputFormat] = useState<Format>('yaml');
 
-  // Format-specific settings
   const [delimiter, setDelimiter] = useState<Delimiter>(',');
   const [useHeaders, setUseHeaders] = useState(true);
   const [jsonIndentation, setJsonIndentation] = useState('2');

@@ -331,15 +331,6 @@ async function canvasInk(canvas: Locator): Promise<Ink> {
   });
 }
 
-/** Alpha (0 to 255) of one pixel of a canvas. */
-async function canvasAlpha(canvas: Locator, x: number, y: number): Promise<number> {
-  return canvas.evaluate(
-    (node, at) =>
-      (node as HTMLCanvasElement).getContext('2d')!.getImageData(at.x, at.y, 1, 1).data[3],
-    { x, y }
-  );
-}
-
 // ── Reading a PDF back ────────────────────────────────────────────────────────
 
 async function openPdfBytes(bytes: Buffer): Promise<PDFDocument> {

@@ -96,7 +96,7 @@ export interface ConversionOptions {
   timeoutMs?: number;
 }
 
-export const RATE_TIMEOUT_MS = 15_000;
+const RATE_TIMEOUT_MS = 15_000;
 
 const RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rate';
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

@@ -8,7 +8,7 @@ import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
 import { homeViewState } from '@/lib/home/client';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import {
   Home,
   ArrowLeft,

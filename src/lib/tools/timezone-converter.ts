@@ -68,9 +68,7 @@ export const COMMON_TIME_ZONES: readonly string[] = [
 
 const MAX_SEARCH_RESULTS = 50;
 
-// ---------------------------------------------------------------------------
 // Zone list
-// ---------------------------------------------------------------------------
 
 function runtimeTimeZones(): string[] {
   const supportedValuesOf = Intl.supportedValuesOf as
@@ -159,9 +157,7 @@ export function searchTimeZones(
   return [...startingAWord, ...insideAWord].slice(0, limit);
 }
 
-// ---------------------------------------------------------------------------
 // Conversion
-// ---------------------------------------------------------------------------
 
 function parseDateTimeInput(value: string): DateParts | null {
   const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/.exec(value);

@@ -37,9 +37,7 @@ export interface ConvertResult {
   error: ConvertError | null;
 }
 
-// ---------------------------------------------------------------------------
 // CSV
-// ---------------------------------------------------------------------------
 
 /**
  * Splits CSV text into rows of cells. A quote opens a quoted field only at
@@ -240,9 +238,7 @@ function dataToCsv(data: unknown, delimiter: CsvDelimiter, useHeaders: boolean):
   return lines.join('\n');
 }
 
-// ---------------------------------------------------------------------------
 // XML
-// ---------------------------------------------------------------------------
 
 /** Keys xml-js gives a meaning to in its compact form; they are not elements. */
 const XML_PROLOG_KEYS = new Set(['_declaration', '_instruction', '_doctype', '_comment']);
@@ -362,9 +358,7 @@ function toXmlDocument(data: unknown): Record<string, unknown> {
   return Object.fromEntries([...prolog, ['root', Object.fromEntries(body)]]);
 }
 
-// ---------------------------------------------------------------------------
 // Readers and writers
-// ---------------------------------------------------------------------------
 
 class LoadError extends Error {}
 

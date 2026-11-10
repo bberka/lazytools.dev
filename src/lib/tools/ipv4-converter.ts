@@ -166,7 +166,7 @@ function hex(value: number, width: number): string {
 }
 
 /** Every spelling of the address that has this 32-bit value. */
-export function formatIPv4(value: number): IPv4Form[] {
+function formatIPv4(value: number): IPv4Form[] {
   const octets = [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff];
   const dotted = numberToIPv4(value);
   const bits = value.toString(2).padStart(32, '0');

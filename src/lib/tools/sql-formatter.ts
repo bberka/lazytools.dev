@@ -47,9 +47,7 @@ export interface SqlFormatResult {
   error: string;
 }
 
-// ---------------------------------------------------------------------------
 // Formatting
-// ---------------------------------------------------------------------------
 
 type SqlFormatterModule = typeof import('sql-formatter');
 
@@ -106,9 +104,7 @@ export async function formatSql(sql: string, settings: SqlFormatSettings): Promi
   }
 }
 
-// ---------------------------------------------------------------------------
 // Minifying
-// ---------------------------------------------------------------------------
 
 /** Dialects where a backslash escapes the next character inside '...'. */
 const BACKSLASH_IN_SINGLE_QUOTES: ReadonlySet<SqlDialect> = new Set<SqlDialect>([

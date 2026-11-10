@@ -53,7 +53,7 @@ function splitLines(text: string): string[] {
 }
 
 /** Shortens every word of the text in place. Numbers and punctuation are left alone. */
-export function numeronymWords(text: string, options: NumeronymOptions): string {
+function numeronymWords(text: string, options: NumeronymOptions): string {
   return text.replace(WORD, (word) =>
     // A run of digits alone is a number, not a word.
     /\p{L}/u.test(word) ? numeronym(word, options.minLength, options.lowercase) : word
@@ -61,7 +61,7 @@ export function numeronymWords(text: string, options: NumeronymOptions): string 
 }
 
 /** Shortens each line as a single word made of its letters and digits. */
-export function numeronymPhrases(text: string, options: NumeronymOptions): string {
+function numeronymPhrases(text: string, options: NumeronymOptions): string {
   if (text === '') return '';
   const eol = text.includes('\r\n') ? '\r\n' : '\n';
   return splitLines(text)

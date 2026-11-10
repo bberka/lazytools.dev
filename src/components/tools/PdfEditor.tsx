@@ -280,7 +280,6 @@ export function PdfEditor() {
     onFiles: ([file]) => loadPdfFile(file),
   });
 
-  // Clean up states when file clears
   const handleClearAll = () => {
     loadIdRef.current += 1;
     releaseDocument();
@@ -560,7 +559,6 @@ export function PdfEditor() {
     );
   };
 
-  // Export PDF
   const exportEditedPdf = async () => {
     if (pages.length === 0 || !pdfFile) return;
     const loadId = loadIdRef.current;

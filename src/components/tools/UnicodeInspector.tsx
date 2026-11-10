@@ -20,7 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import {
   CHAR_CLASSES,
   CLASS_INFO,

@@ -283,7 +283,6 @@ export function PdfWatermark() {
     },
   });
 
-  // Clean up references
   const handleClearAll = () => {
     loadIdRef.current += 1;
     releaseDocument();
@@ -322,7 +321,6 @@ export function PdfWatermark() {
     };
   }, [watermarkImageFile]);
 
-  // Render first page to preview canvas
   useEffect(() => {
     const doc = pdfDocRef.current;
     if (!doc || !previewLoaded || !previewCanvasRef.current) return;

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { AlertCircle, Check, Copy, Download, Info, Trash2, TrendingUp } from 'lucide-react';
+import { Stat } from './Stat';
+import { FieldError } from './FieldError';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,25 +38,6 @@ const TIMING_OPTIONS: ReadonlyArray<{ value: ContributionTiming; label: string }
   { value: 'end', label: 'End of each month' },
   { value: 'start', label: 'Start of each month' },
 ];
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <div id={id} role="alert" className="flex items-start gap-1.5 text-xs text-destructive">
-      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-md border bg-card p-3">
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="mt-1 break-words font-mono text-base font-semibold sm:text-lg">{value}</dd>
-    </div>
-  );
-}
 
 const CHART_BOX = { width: 640, height: 280, left: 64, right: 16, top: 12, bottom: 32 };
 

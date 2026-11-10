@@ -13,9 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { downloadText } from '@/lib/files';
-import { cn } from '@/lib/utils/cn';
+import { CopyValueButton } from './CopyValueButton';
 import {
   MAX_COUNT,
   decodeUlid,
@@ -29,10 +28,8 @@ import {
 import {
   ArrowLeftRight,
   CalendarClock,
-  Check,
   CircleAlert,
   CircleCheck,
-  Copy,
   Dices,
   Download,
   Info,
@@ -46,33 +43,6 @@ const EXAMPLE_ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
 type LetterCase = 'upper' | 'lower';
 type ConvertSource = 'ulid' | 'uuid';
-
-interface CopyButtonProps {
-  text: string;
-  /** Accessible name; also the visible text when `showLabel` is set. */
-  label: string;
-  showLabel?: boolean;
-  className?: string;
-}
-
-function CopyButton({ text, label, showLabel = false, className }: CopyButtonProps) {
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
-
-  return (
-    <Button
-      type="button"
-      variant={showLabel ? 'outline' : 'ghost'}
-      size={showLabel ? 'sm' : 'icon'}
-      className={showLabel ? className : cn('h-8 w-8 shrink-0', className)}
-      onClick={() => copyToClipboard(text)}
-      aria-label={showLabel ? undefined : label}
-      disabled={!text}
-    >
-      {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
-      {showLabel && (isCopied ? 'Copied' : label)}
-    </Button>
-  );
-}
 
 function ErrorNote({ id, children }: { id?: string; children: ReactNode }) {
   return (
@@ -104,7 +74,7 @@ function DetailRow({
         <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
         <div className={`break-all text-sm ${mono ? 'font-mono' : ''}`}>{value}</div>
       </div>
-      {copyLabel && <CopyButton text={value} label={copyLabel} />}
+      {copyLabel && <CopyValueButton text={value} label={copyLabel} />}
     </div>
   );
 }
@@ -349,7 +319,7 @@ export function UlidGenerator() {
             ) : (
               <>
                 <div className="flex flex-wrap gap-2">
-                  <CopyButton text={ulids.join('\n')} label="Copy all" showLabel />
+                  <CopyValueButton text={ulids.join('\n')} label="Copy all" showLabel />
                   <Button type="button" variant="outline" size="sm" onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                     Download .txt
@@ -370,7 +340,7 @@ export function UlidGenerator() {
                         <span className="text-primary">{ulid.slice(0, 10)}</span>
                         {ulid.slice(10)}
                       </span>
-                      <CopyButton text={ulid} label={`Copy ${ulid}`} />
+                      <CopyValueButton text={ulid} label={`Copy ${ulid}`} />
                     </li>
                   ))}
                 </ul>
@@ -511,7 +481,7 @@ export function UlidGenerator() {
                   }`}
                 />
                 {ulidBoxValue && (
-                  <CopyButton
+                  <CopyValueButton
                     text={ulidBoxValue}
                     label="Copy ULID"
                     className="absolute right-1 top-1/2 -translate-y-1/2"
@@ -541,7 +511,7 @@ export function UlidGenerator() {
                   }`}
                 />
                 {uuidBoxValue && (
-                  <CopyButton
+                  <CopyValueButton
                     text={uuidBoxValue}
                     label="Copy UUID"
                     className="absolute right-1 top-1/2 -translate-y-1/2"

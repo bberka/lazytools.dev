@@ -40,10 +40,6 @@ export function WordCounter() {
     setText('');
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(text);
-  };
-
   return (
     <div className="space-y-4">
       <Card>
@@ -75,7 +71,7 @@ export function WordCounter() {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
-                onClick={handleCopy}
+                onClick={() => copyToClipboard(text)}
                 disabled={!text}
                 variant={isCopied ? 'default' : 'outline'}
                 size="sm"

@@ -1,6 +1,6 @@
 try {
   importScripts('/sw-precache.js');
-} catch (e) {
+} catch {
   console.warn('[sw.js] Could not load /sw-precache.js, falling back to static list.');
 }
 

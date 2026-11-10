@@ -17,8 +17,9 @@ import {
   FileDown,
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
+import { getAudioContextClass } from '@/lib/web-audio';
 import {
   appendTranscript,
   describeRecognitionError,
@@ -103,8 +104,11 @@ interface ListeningSession {
 
 function getSpeechRecognitionClass(): SpeechRecognitionConstructor | null {
   if (typeof window === 'undefined') return null;
-  const win = window as unknown as Record<string, unknown>;
-  return ((win.SpeechRecognition || win.webkitSpeechRecognition) as SpeechRecognitionConstructor) || null;
+  const win = window as Window & {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return win.SpeechRecognition ?? win.webkitSpeechRecognition ?? null;
 }
 
 // Whether the browser can recognize speech never changes while the page is open, so there is nothing to subscribe to.
@@ -161,7 +165,6 @@ export function SpeechToText() {
     }
     analyserRef.current = null;
     
-    // Draw horizontal rest line on canvas
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -193,7 +196,6 @@ export function SpeechToText() {
 
       analyser.getByteTimeDomainData(dataArray);
 
-      // Clear Canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.lineWidth = 3;
@@ -243,8 +245,7 @@ export function SpeechToText() {
       }
       streamRef.current = stream;
 
-      const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
-      const AudioContextClass = window.AudioContext || win.webkitAudioContext;
+      const AudioContextClass = getAudioContextClass();
       if (!AudioContextClass) throw new Error('AudioContext is not supported by your browser');
 
       const audioCtx = new AudioContextClass();
@@ -370,7 +371,6 @@ export function SpeechToText() {
     }
   };
 
-  // Toggle Transcription Playback
   const handleToggleListening = async () => {
     if (isListening) {
       stopListening();
@@ -388,20 +388,17 @@ export function SpeechToText() {
     setError('');
   };
 
-  // Export File Options
   const handleDownloadFile = (format: TranscriptFormat) => {
     if (!transcript) return;
     downloadText(transcript, transcriptFileName(format, new Date()));
   };
 
-  // Handle auto-scrolling transcript when text changes
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [transcript, interim]);
 
-  // Clean up audio streams and SpeechRecognition on unmount
   useEffect(() => {
     return () => {
       const session = sessionRef.current;
@@ -414,7 +411,6 @@ export function SpeechToText() {
     };
   }, []);
 
-  // Draw flat line on initial canvas render
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {

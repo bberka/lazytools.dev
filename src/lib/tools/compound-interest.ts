@@ -115,7 +115,7 @@ export interface CompoundFields {
 /** `empty` means nothing has been typed yet, which is not an error. */
 export type CompoundEvaluation = { status: 'empty' } | CompoundOutcome;
 
-export const COMPOUND_LIMITS = {
+const COMPOUND_LIMITS = {
   maxAmount: 10_000_000_000,
   maxRatePercent: 100,
   maxYears: 100,
@@ -271,7 +271,7 @@ type NumberRead = { value: number } | { error: string };
  * silently becoming 65. A blank field is `blankError`, or 0 when `blankError`
  * is null (an optional field).
  */
-export function readNumber(text: string, blankError: string | null): NumberRead {
+function readNumber(text: string, blankError: string | null): NumberRead {
   const trimmed = text.replace(/\s+/g, '');
   if (trimmed === '') return blankError === null ? { value: 0 } : { error: blankError };
   const plain = GROUPED_PATTERN.test(trimmed) ? trimmed.replace(/,/g, '') : trimmed;

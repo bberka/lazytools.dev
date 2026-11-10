@@ -35,7 +35,6 @@ export function ListConverter() {
   const [sortOrder, setSortOrder] = useState<ListSortOrder>('none');
   const [caseConversion, setCaseConversion] = useState<ListCaseConversion>('none');
 
-  // Copy status hooks for all outputs
   const copyCsv = useCopyToClipboard();
   const copySingleQuoted = useCopyToClipboard();
   const copyDoubleQuoted = useCopyToClipboard();

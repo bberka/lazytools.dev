@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { CommandPaletteButton } from './CommandPaletteButton';
 import { SettingsDialog } from './SettingsDialog';
@@ -9,16 +9,13 @@ import { InstallDialog } from './InstallDialog';
 import { Download } from 'lucide-react';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { homeViewState } from '@/lib/home/client';
+import { useHydrated } from '@/hooks';
 import { cn } from '@/lib/utils';
 
 export function Header() {
   const { fullWidth } = useSettings();
   const [isInstallOpen, setIsInstallOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useHydrated();
 
   const isTauri =
     typeof window !== 'undefined' && !!(window as Window & { __TAURI__?: unknown }).__TAURI__;

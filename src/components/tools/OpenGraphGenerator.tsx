@@ -263,7 +263,6 @@ export function OpenGraphGenerator() {
                 )}
               >
                 {showImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={image}
                     alt={fields.imageAlt}

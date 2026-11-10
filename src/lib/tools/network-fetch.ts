@@ -36,7 +36,7 @@ export class RequestTimeoutError extends Error {
   }
 }
 
-export const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 export const defaultFetch: FetchLike = (input, init) => fetch(input, init);
 

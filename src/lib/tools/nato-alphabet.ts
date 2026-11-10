@@ -75,7 +75,7 @@ export interface DecodeOptions {
   lowercase: boolean;
 }
 
-export const WORD_BREAK = '/';
+const WORD_BREAK = '/';
 
 export const DEFAULT_ENCODE_OPTIONS: EncodeOptions = { digitStyle: 'icao', wordCase: 'title', keepUnknown: true };
 export const DEFAULT_DECODE_OPTIONS: DecodeOptions = { keepUnknown: true, lowercase: false };

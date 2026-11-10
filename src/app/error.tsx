@@ -38,7 +38,7 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
       setCopied(true);
       toast.success('Error details copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy error details');
     }
   };

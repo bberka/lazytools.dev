@@ -15,7 +15,6 @@ export async function generateStaticParams() {
   }));
 }
 
-// Generate metadata for each tool page
 export async function generateMetadata({
   params,
 }: ToolPageProps): Promise<Metadata> {

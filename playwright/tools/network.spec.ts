@@ -1191,7 +1191,7 @@ test.describe('Network tools', () => {
           // A URL parser would read 010.0.0.1 as octal, which is 8.0.0.1.
           ['010.0.0.1', '10.0.0.1'],
         ];
-        for (const [index, [typed, probed]] of addresses.entries()) {
+        for (const [index, [typed]] of addresses.entries()) {
           await host.fill(typed);
           await page.getByRole('button', { name: 'Scan Ports' }).click();
           await expect

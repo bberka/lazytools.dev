@@ -31,7 +31,7 @@ import { useFavorites } from '@/lib/contexts/FavoritesContext';
 import { useRecentTools } from '@/lib/contexts/RecentToolsContext';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import { TooltipSimple } from './ui/tooltip';
 
 // One row of the list: a tool to open or a command to run
@@ -163,13 +163,11 @@ export function CommandPalette() {
     };
   }, [open, search, recentTools.length, favorites.length]);
 
-  // Get tool data for recent tools
   const recentToolsData = useMemo(
     () => toolCatalog.byIds(recentTools),
     [recentTools]
   );
 
-  // Get tool data for favorites
   const favoriteToolsData = useMemo(
     () => toolCatalog.byIds(favorites),
     [favorites]
@@ -177,7 +175,6 @@ export function CommandPalette() {
 
   // Group remaining tools by tag
   const groupedTools = useMemo(() => {
-    // Get all tool IDs that are already in recent or favorites
     const displayedIds = new Set([...recentTools, ...favorites]);
 
     return toolCatalog.groupByTag(
@@ -185,7 +182,6 @@ export function CommandPalette() {
     );
   }, [recentTools, favorites]);
 
-  // Get search results sorted by score
   const searchedTools = useMemo(() => {
     if (!search) return [];
     return toolCatalog.search(search);

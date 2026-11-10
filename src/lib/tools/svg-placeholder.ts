@@ -26,7 +26,7 @@ export interface PlaceholderConfig {
   radius: number;
 }
 
-export const PLACEHOLDER_LIMITS = {
+const PLACEHOLDER_LIMITS = {
   minSize: 1,
   maxSize: 5000,
   maxFontSize: 1000,

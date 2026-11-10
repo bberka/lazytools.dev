@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useCopyToClipboard } from '@/hooks';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,

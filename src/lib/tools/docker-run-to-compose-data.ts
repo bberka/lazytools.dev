@@ -82,7 +82,7 @@ const toggle = (name: string, map: FlagMapping, extra: Partial<FlagDef> = {}): F
   ...extra,
 });
 
-export const FLAG_DEFS: FlagDef[] = [
+const FLAG_DEFS: FlagDef[] = [
   // Identity and process
   value('--name', { kind: 'custom', id: 'name' }),
   value('--hostname', { kind: 'string', key: 'hostname' }, { short: '-h' }),

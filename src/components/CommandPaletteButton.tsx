@@ -1,21 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
+import { useHydrated } from '@/hooks';
 import { Button } from './ui/button';
 import { useCommandPalette } from '@/lib/contexts/CommandPaletteContext';
 import { PALETTE_SHORTCUTS, detectPlatform, shortcutKeys } from '@/lib/commands';
 
 export function CommandPaletteButton() {
   const { toggle } = useCommandPalette();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const handle = requestAnimationFrame(() => {
-      setMounted(true);
-    });
-    return () => cancelAnimationFrame(handle);
-  }, []);
+  const mounted = useHydrated();
 
   // The server cannot tell the platform, so the first render shows the keys of
   // 'other' and the real ones follow once mounted.

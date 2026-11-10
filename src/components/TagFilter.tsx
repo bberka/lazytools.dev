@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { toolCatalog } from '@/lib/catalog';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
-import { cn } from '@/lib/utils/cn';
+import { cn } from '@/lib/utils';
 
 interface TagFilterProps {
   selectedTag: ToolTag | null;

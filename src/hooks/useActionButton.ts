@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
-export type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
+type ActionStatus = 'idle' | 'loading' | 'success' | 'error';
 
-export interface UseActionButtonReturn {
+interface UseActionButtonReturn {
   executeAction: (action: () => Promise<void> | void) => Promise<void>;
   status: ActionStatus;
   isLoading: boolean;
@@ -11,10 +11,7 @@ export interface UseActionButtonReturn {
   reset: () => void;
 }
 
-/**
- * Hook for managing button action states with loading and feedback
- * @param resetDelay - Time in ms before resetting to idle state (default: 2000)
- */
+/** Runs an action while tracking loading, success and error, going back to idle after `resetDelay` ms. */
 export function useActionButton(resetDelay = 2000): UseActionButtonReturn {
   const [status, setStatus] = useState<ActionStatus>('idle');
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -35,7 +32,6 @@ export function useActionButton(resetDelay = 2000): UseActionButtonReturn {
         setStatus('error');
       }
 
-      // Reset status after delay
       clearTimeout(resetTimer.current);
       resetTimer.current = setTimeout(() => {
         setStatus('idle');

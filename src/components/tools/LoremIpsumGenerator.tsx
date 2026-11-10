@@ -46,10 +46,6 @@ export function LoremIpsumGenerator() {
     setOutput(generateLoremIpsum({ type, count: numCount, startWithLorem, htmlTags }));
   };
 
-  const handleCopy = async () => {
-    await copyToClipboard(output);
-  };
-
   const handleClear = () => {
     setOutput('');
   };
@@ -127,7 +123,7 @@ export function LoremIpsumGenerator() {
                 <Button
                   variant={isCopied ? "default" : "ghost"}
                   size="icon"
-                  onClick={handleCopy}
+                  onClick={() => copyToClipboard(output)}
                   aria-label={isCopied ? "Copied!" : "Copy output"}
                 >
                   {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

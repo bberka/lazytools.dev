@@ -39,9 +39,7 @@ export const MAX_STOPS = 10;
 const FALLBACK_COLOR = '#000000';
 const HEX_COLOR = /^#?([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-// ---------------------------------------------------------------------------
 // Numbers
-// ---------------------------------------------------------------------------
 
 function roundTo(value: number, digits = 2): number {
   const factor = 10 ** digits;
@@ -69,9 +67,7 @@ export function formatNumber(value: number): string {
   return String(roundTo(value));
 }
 
-// ---------------------------------------------------------------------------
 // Colours
-// ---------------------------------------------------------------------------
 
 /**
  * Returns a lower-case #rrggbb (or #rrggbbaa) colour. Short forms are
@@ -119,9 +115,7 @@ function hslToColor(hue: number, saturation: number, lightness: number): string 
   return toColor([channel(0), channel(8), channel(4), 255]);
 }
 
-// ---------------------------------------------------------------------------
 // Stops
-// ---------------------------------------------------------------------------
 
 function sanitiseStop(stop: ColorStop): ColorStop {
   return { id: stop.id, color: normaliseColor(stop.color), position: clampPercent(stop.position) };
@@ -222,9 +216,7 @@ export function repeatsVisibly(model: GradientModel): boolean {
   return stops[0].position > 0 || stops[stops.length - 1].position < 100;
 }
 
-// ---------------------------------------------------------------------------
 // Output
-// ---------------------------------------------------------------------------
 
 /** The gradient function on its own, e.g. `linear-gradient(90deg, #f00 0%, #00f 100%)`. */
 export function buildGradientValue(model: GradientModel): string {
@@ -271,9 +263,7 @@ export function buildTailwindClass(model: GradientModel): string {
   return `bg-[${escapeTailwindValue(buildGradientValue(model))}]`;
 }
 
-// ---------------------------------------------------------------------------
 // Starting points
-// ---------------------------------------------------------------------------
 
 function stopsFrom(pairs: Array<[string, number]>): ColorStop[] {
   return pairs.map(([color, position], index) => ({

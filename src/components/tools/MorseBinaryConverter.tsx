@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Slider } from '@/components/ui/slider';
 import { Copy, Check, Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, Info } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks';
+import { getAudioContextClass } from '@/lib/web-audio';
 import {
   convertCode,
   morseTimeline,
@@ -128,8 +129,7 @@ export function MorseBinaryConverter() {
     const { tones, duration } = morseTimeline(morseCode, wpm);
     if (tones.length === 0) return;
 
-    const win = window as unknown as { webkitAudioContext?: typeof AudioContext };
-    const AudioContextClass = window.AudioContext || win.webkitAudioContext;
+    const AudioContextClass = getAudioContextClass();
     if (!AudioContextClass) {
       // The error box below is labelled for conversion mistakes, so this goes to a toast.
       toast.error('Web Audio API is not supported in this browser.');

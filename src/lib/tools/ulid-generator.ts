@@ -48,7 +48,7 @@ export interface DecodedUlid {
   randomHex: string;
 }
 
-export const ULID_LENGTH = 26;
+const ULID_LENGTH = 26;
 export const MAX_COUNT = 1000;
 /** Largest value the 48-bit timestamp field can hold, in milliseconds. */
 export const MAX_TIMESTAMP = 2 ** 48 - 1;

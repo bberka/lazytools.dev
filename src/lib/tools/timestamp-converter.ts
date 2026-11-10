@@ -23,9 +23,7 @@ function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-// ---------------------------------------------------------------------------
 // Timestamp text
-// ---------------------------------------------------------------------------
 
 export type ParsedTimestamp =
   /** Nothing to convert yet: blank, or only a sign or decimal point so far. */
@@ -68,9 +66,7 @@ export function formatTimestamp(ms: number, unit: TimestampUnit): string {
   return String(unit === 'seconds' ? Math.floor(ms / 1000) : ms);
 }
 
-// ---------------------------------------------------------------------------
 // Local date and time
-// ---------------------------------------------------------------------------
 
 export interface LocalDateTime {
   /** `YYYY-MM-DD`, or what has been typed of it so far. */
@@ -126,9 +122,7 @@ export function fromLocalDateTime({ date, hour, minute }: LocalDateTime): number
   return Number.isNaN(ms) ? null : ms;
 }
 
-// ---------------------------------------------------------------------------
 // Converter state
-// ---------------------------------------------------------------------------
 
 export interface ConverterState extends LocalDateTime {
   unit: TimestampUnit;
@@ -244,9 +238,7 @@ export function changeUnit(state: ConverterState, unit: TimestampUnit): Converte
   return editTimestamp(next, state.timestamp);
 }
 
-// ---------------------------------------------------------------------------
 // Results
-// ---------------------------------------------------------------------------
 
 function count(value: number, unit: string): string {
   return `${value} ${unit}${value === 1 ? '' : 's'}`;
