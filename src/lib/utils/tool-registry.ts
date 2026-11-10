@@ -197,6 +197,18 @@ export const TOOL_REGISTRY = {
     component: () =>
       import('@/components/tools/ExifViewerRemover').then((m) => m.ExifViewerRemover),
   },
+  'ai-metadata-cleaner': {
+    name: 'AI Metadata Cleaner',
+    description: 'Strip AI metadata from images and invisible chars from text',
+    tags: ['security', 'image-tools'],
+    icon: 'ShieldCheck',
+    keywords: [
+      'ai', 'metadata', 'c2pa', 'content credentials', 'watermark', 'zero-width', 'chatgpt',
+      'stable diffusion', 'midjourney', 'comfyui', 'exif', 'xmp', 'utm', 'invisible characters', 'privacy',
+    ],
+    component: () =>
+      import('@/components/tools/AiMetadataCleaner').then((m) => m.AiMetadataCleaner),
+  },
 
   // =========================================================================
   // COLOR — standalone tools
@@ -1283,6 +1295,355 @@ export const TOOL_REGISTRY = {
     component: () =>
       import('@/components/tools/LoanCalculator').then(
         (module) => module.LoanCalculator
+      ),
+  },
+  'ipv4-converter': {
+    name: 'IPv4 Address Converter',
+    description: 'Convert IPv4 between dotted, integer, hex, octal and binary',
+    tags: ['networking'],
+    icon: 'Binary',
+    keywords: [
+      'ipv4', 'ip address', 'converter', 'integer', 'decimal', 'hex', 'octal',
+      'binary', 'dotted', 'mapped', 'ipv6', 'ffff', 'long',
+    ],
+    component: () =>
+      import('@/components/tools/Ipv4Converter').then(
+        (module) => module.Ipv4Converter
+      ),
+  },
+  'ipv4-range-expander': {
+    name: 'IPv4 Range Expander',
+    description: 'Expand CIDR or ranges to address lists, or collapse to CIDR',
+    tags: ['networking'],
+    icon: 'Layers',
+    keywords: [
+      'ipv4', 'cidr', 'range', 'expand', 'list', 'addresses', 'collapse',
+      'aggregate', 'summarize', 'supernet', 'ip range',
+    ],
+    component: () =>
+      import('@/components/tools/Ipv4RangeExpander').then(
+        (module) => module.Ipv4RangeExpander
+      ),
+  },
+  'mac-address-generator': {
+    name: 'MAC Address Generator',
+    description: 'Generate random MAC addresses and check MAC address flags',
+    tags: ['generators', 'networking'],
+    icon: 'Network',
+    keywords: [
+      'mac', 'mac address', 'random', 'generator', 'ethernet', 'hardware address',
+      'unicast', 'multicast', 'locally administered', 'validator', 'cisco',
+    ],
+    component: () =>
+      import('@/components/tools/MacAddressGenerator').then(
+        (module) => module.MacAddressGenerator
+      ),
+  },
+  'basic-auth-generator': {
+    name: 'Basic Auth Header Generator',
+    description: 'Build and decode HTTP Basic Authorization headers locally',
+    tags: ['generators', 'security'],
+    icon: 'KeyRound',
+    keywords: [
+      'basic auth', 'authorization', 'header', 'base64', 'http', 'credentials',
+      'username', 'password', 'curl', 'fetch', 'httpie', 'rfc 7617',
+    ],
+    component: () =>
+      import('@/components/tools/BasicAuthGenerator').then(
+        (module) => module.BasicAuthGenerator
+      ),
+  },
+  'open-graph-generator': {
+    name: 'Open Graph Meta Generator',
+    description: 'Generate Open Graph and Twitter Card meta tags with preview',
+    tags: ['utilities', 'design'],
+    icon: 'Share2',
+    keywords: [
+      'open graph', 'og', 'meta tags', 'twitter card', 'social', 'preview',
+      'seo', 'share', 'facebook', 'linkedin', 'og:image',
+    ],
+    component: () =>
+      import('@/components/tools/OpenGraphGenerator').then(
+        (module) => module.OpenGraphGenerator
+      ),
+  },
+  'keycode-info': {
+    name: 'Keycode Info',
+    description: 'Press any key to see its key, code and keyCode values',
+    tags: ['utilities'],
+    icon: 'Keyboard',
+    keywords: [
+      'keycode', 'key code', 'keyboard', 'event.key', 'event.code', 'which',
+      'keydown', 'javascript', 'key press', 'scancode',
+    ],
+    component: () =>
+      import('@/components/tools/KeycodeInfo').then(
+        (module) => module.KeycodeInfo
+      ),
+  },
+  'text-sorter-deduplicator': {
+    name: 'Text Sorter & Deduplicator',
+    description: 'Sort lines and remove duplicates, empty lines, and extra spaces',
+    tags: ['text-tools'],
+    icon: 'ArrowDownAZ',
+    keywords: [
+      'sort lines',
+      'sort text',
+      'alphabetical',
+      'remove duplicates',
+      'deduplicate',
+      'unique lines',
+      'natural sort',
+      'numeric sort',
+      'shuffle lines',
+      'reverse lines',
+      'remove empty lines',
+      'uniq',
+    ],
+    component: () =>
+      import('@/components/tools/TextSorterDeduplicator').then(
+        (module) => module.TextSorterDeduplicator
+      ),
+  },
+  'slugify': {
+    name: 'Slug Generator',
+    description: 'Turn any title into a clean URL slug, with accents transliterated',
+    tags: ['text-tools'],
+    icon: 'Link',
+    keywords: [
+      'slug',
+      'slugify',
+      'url slug',
+      'permalink',
+      'seo url',
+      'transliterate',
+      'turkish',
+      'german',
+      'accents',
+      'kebab case',
+      'stopwords',
+    ],
+    component: () =>
+      import('@/components/tools/SlugGenerator').then(
+        (module) => module.SlugGenerator
+      ),
+  },
+  'nato-alphabet': {
+    name: 'NATO Phonetic Alphabet',
+    description: 'Spell text with the NATO phonetic alphabet, or decode it back',
+    tags: ['text-tools'],
+    icon: 'Radio',
+    keywords: [
+      'nato',
+      'phonetic alphabet',
+      'icao',
+      'alfa bravo charlie',
+      'spelling alphabet',
+      'radio alphabet',
+      'callsign',
+      'spell out',
+      'niner',
+      'decode',
+    ],
+    component: () =>
+      import('@/components/tools/NatoAlphabet').then(
+        (module) => module.NatoAlphabet
+      ),
+  },
+  'numeronym-generator': {
+    name: 'Numeronym Generator',
+    description: 'Shorten words to numeronyms like i18n, a11y, k8s, and l10n',
+    tags: ['text-tools'],
+    icon: 'Hash',
+    keywords: [
+      'numeronym',
+      'i18n',
+      'l10n',
+      'a11y',
+      'k8s',
+      'abbreviation',
+      'internationalization',
+      'accessibility',
+      'kubernetes',
+      'shorten words',
+    ],
+    component: () =>
+      import('@/components/tools/NumeronymGenerator').then(
+        (module) => module.NumeronymGenerator
+      ),
+  },
+  'email-normalizer': {
+    name: 'Email Normalizer',
+    description: 'Normalize email addresses, strip Gmail dots, and find duplicates',
+    tags: ['text-tools'],
+    icon: 'Mail',
+    keywords: [
+      'email',
+      'normalize email',
+      'gmail dots',
+      'plus addressing',
+      'email tag',
+      'deduplicate emails',
+      'punycode',
+      'idn',
+      'validate email',
+      'mailing list',
+      'canonical email',
+    ],
+    component: () =>
+      import('@/components/tools/EmailNormalizer').then(
+        (module) => module.EmailNormalizer
+      ),
+  },
+  'markdown-table-generator': {
+    name: 'Markdown Table Generator',
+    description: 'Build Markdown tables in a grid editor or import CSV and TSV',
+    tags: ['text-tools'],
+    icon: 'Table',
+    keywords: [
+      'markdown table',
+      'table generator',
+      'csv to markdown',
+      'tsv to markdown',
+      'gfm table',
+      'readme table',
+      'align columns',
+      'pipe table',
+    ],
+    component: () =>
+      import('@/components/tools/MarkdownTableGenerator').then(
+        (module) => module.MarkdownTableGenerator
+      ),
+  },
+  'compound-interest-calculator': {
+    name: 'Compound Interest Calculator',
+    description: 'Project savings growth with compounding and monthly deposits.',
+    tags: ['calculators'],
+    icon: 'TrendingUp',
+    keywords: [
+      'compound interest',
+      'interest calculator',
+      'savings',
+      'investment',
+      'growth',
+      'future value',
+      'monthly contribution',
+      'compounding',
+      'apy',
+      'finance',
+    ],
+    component: () =>
+      import('@/components/tools/CompoundInterestCalculator').then(
+        (module) => module.CompoundInterestCalculator
+      ),
+  },
+  'math-evaluator': {
+    name: 'Math Expression Evaluator',
+    description: 'Evaluate math expressions safely with functions and variables.',
+    tags: ['calculators', 'utilities'],
+    icon: 'Calculator',
+    keywords: [
+      'math',
+      'expression',
+      'evaluator',
+      'calculator',
+      'scientific calculator',
+      'sqrt',
+      'sin',
+      'cos',
+      'log',
+      'degrees',
+      'radians',
+      'variables',
+    ],
+    component: () =>
+      import('@/components/tools/MathEvaluator').then(
+        (module) => module.MathEvaluator
+      ),
+  },
+  'svg-placeholder-generator': {
+    name: 'SVG Placeholder Generator',
+    description: 'Generate SVG placeholder images with a data URI and CSS.',
+    tags: ['design', 'generators'],
+    icon: 'ImageIcon',
+    keywords: [
+      'svg',
+      'placeholder',
+      'placeholder image',
+      'dummy image',
+      'data uri',
+      'lorem picsum',
+      'mock image',
+      'wireframe',
+      'css background',
+    ],
+    component: () =>
+      import('@/components/tools/SvgPlaceholderGenerator').then(
+        (module) => module.SvgPlaceholderGenerator
+      ),
+  },
+  'css-minifier-formatter': {
+    name: 'CSS Minifier & Formatter',
+    description: 'Minify or beautify CSS, keeping strings and calc() intact.',
+    tags: ['formatters-validators'],
+    icon: 'FileCode',
+    keywords: [
+      'css',
+      'minify css',
+      'beautify css',
+      'format css',
+      'compress css',
+      'pretty print',
+      'stylesheet',
+      'nesting',
+      'minifier',
+    ],
+    component: () =>
+      import('@/components/tools/CssMinifierFormatter').then(
+        (module) => module.CssMinifierFormatter
+      ),
+  },
+  'mime-types-reference': {
+    name: 'MIME Types Reference',
+    description: 'Look up MIME types for file extensions, and the reverse.',
+    tags: ['utilities'],
+    icon: 'FileType',
+    keywords: [
+      'mime',
+      'mime type',
+      'content-type',
+      'media type',
+      'file extension',
+      'extension',
+      'http header',
+      'reference',
+      'application/json',
+    ],
+    component: () =>
+      import('@/components/tools/MimeTypesReference').then(
+        (module) => module.MimeTypesReference
+      ),
+  },
+  'base64-image-decoder': {
+    name: 'Base64 Image Decoder',
+    description: 'Decode Base64 images, detect the real type, or encode files.',
+    tags: ['image-tools', 'converters'],
+    icon: 'ImageIcon',
+    keywords: [
+      'base64 image',
+      'data url',
+      'data uri',
+      'decode base64',
+      'image to base64',
+      'base64 to image',
+      'magic bytes',
+      'preview image',
+      'png',
+      'jpeg',
+    ],
+    component: () =>
+      import('@/components/tools/Base64ImageDecoder').then(
+        (module) => module.Base64ImageDecoder
       ),
   },
 } as const satisfies Record<string, ToolRegistryEntry>;

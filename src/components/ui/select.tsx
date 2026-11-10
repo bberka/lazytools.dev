@@ -315,8 +315,12 @@ const SelectItem = React.forwardRef<
     [ref]
   );
 
+  const isOpen = context?.open ?? false;
+
+  // Radix keeps the panel mounted while it fades out, so reopening it quickly reuses these
+  // options: focus has to follow `isOpen` too, not only the highlight
   React.useEffect(() => {
-    if (isHighlighted && buttonRef.current) {
+    if (isOpen && isHighlighted && buttonRef.current) {
       buttonRef.current.scrollIntoView({
         block: 'nearest',
       });
@@ -327,7 +331,7 @@ const SelectItem = React.forwardRef<
         buttonRef.current.focus();
       }
     }
-  }, [isHighlighted]);
+  }, [isHighlighted, isOpen]);
 
   if (!context) return null;
   if (!matchesSearch) return null;

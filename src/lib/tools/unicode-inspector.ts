@@ -226,7 +226,7 @@ function emojiBaseBefore(codePoints: readonly number[], index: number): boolean 
  * - VS15 or VS16 right after an emoji character, and VS16 in a keycap sequence,
  * - the tag characters of a flag tag sequence, up to and including the cancel tag.
  */
-function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
+export function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
   const members = new Set<number>();
 
   for (let index = 0; index < codePoints.length; index++) {
@@ -259,7 +259,7 @@ function findEmojiSequenceMembers(codePoints: readonly number[]): Set<number> {
  * A ZWNJ or ZWJ between two letters or marks that are not both Latin, as in
  * Persian or Devanagari, where they change how the word is shaped.
  */
-function isScriptJoiner(codePoints: readonly number[], index: number): boolean {
+export function isScriptJoiner(codePoints: readonly number[], index: number): boolean {
   const codePoint = codePoints[index];
   if (codePoint !== ZWNJ && codePoint !== ZWJ) return false;
   const previous = codePoints[index - 1];

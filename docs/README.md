@@ -22,20 +22,20 @@ A privacy-first static web app and native desktop application for everyday brows
 
 ## Tool Categories
 
-- Converters: 11 tools
+- Converters: 12 tools
 - Encoders & Decoders: 10 tools
-- Generators: 9 tools
-- Formatters & Validators: 5 tools
-- Text Tools: 11 tools
-- Utilities: 9 tools
-- Security: 8 tools
-- Networking: 6 tools
-- Design: 6 tools
+- Generators: 12 tools
+- Formatters & Validators: 6 tools
+- Text Tools: 17 tools
+- Utilities: 13 tools
+- Security: 10 tools
+- Networking: 9 tools
+- Design: 8 tools
 - PDF Tools: 4 tools
-- Image Tools: 5 tools
-- Calculators: 11 tools
+- Image Tools: 7 tools
+- Calculators: 13 tools
 
-Counts are the tools listed on the home page under each tag (80 in total); a tool can carry more than one tag. The two PDF pages bundle nine PDF tools as tabs, and the image converter includes resize, crop, compress and icon export.
+Counts are the tools listed on the home page under each tag (99 in total); a tool can carry more than one tag. The two PDF pages bundle nine PDF tools as tabs, and the image converter includes resize, crop, compress and icon export.
 
 
 See [ROADMAP.md](./ROADMAP.md) for planned work and expansion backlog.
