@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Eraser, Replace, Search } from 'lucide-react';
+import { Eraser, Replace, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { findAndReplace } from '@/lib/tools/find-and-replace';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 import { countCharacters } from '@/lib/tools/word-counter';
@@ -21,7 +21,6 @@ export function FindAndReplace() {
   const [wholeWord, setWholeWord] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const [replaceAll, setReplaceAll] = useState(true);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const result = useMemo(
     () =>
@@ -192,25 +191,13 @@ export function FindAndReplace() {
           />
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              onClick={() => copyToClipboard(result.output)}
+            <CopyButton
+              text={result.output}
+              label="Copy Result"
               disabled={!result.output}
-              variant={isCopied ? 'default' : 'outline'}
               size="sm"
               className="min-h-11 sm:min-h-9"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy Result
-                </>
-              )}
-            </Button>
+            />
             <Button
               onClick={handleApply}
               disabled={!!result.error || !findText || input === result.output}

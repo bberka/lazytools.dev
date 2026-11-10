@@ -6,7 +6,6 @@ import {
   processLines,
   shuffleLines,
   sortLines,
-  splitLines,
   type LineOptions,
 } from '@/lib/tools/text-sorter-deduplicator';
 
@@ -23,20 +22,6 @@ const plain: LineOptions = {
 function run(text: string, changes: Partial<LineOptions>) {
   return processLines(text, { ...plain, ...changes });
 }
-
-test.describe('splitLines', () => {
-  test('splits on LF, CRLF and CR and ignores one trailing line break', () => {
-    expect(splitLines('a\nb')).toEqual(['a', 'b']);
-    expect(splitLines('a\r\nb\r\n')).toEqual(['a', 'b']);
-    expect(splitLines('a\rb')).toEqual(['a', 'b']);
-    expect(splitLines('a\n\n')).toEqual(['a', '']);
-  });
-
-  test('empty text has no lines, a lone line break is one empty line', () => {
-    expect(splitLines('')).toEqual([]);
-    expect(splitLines('\n')).toEqual(['']);
-  });
-});
 
 test.describe('leadingNumber', () => {
   test('reads the number a line starts with', () => {

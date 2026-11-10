@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -13,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, FileJson, Trash2, CheckCircle2, AlertTriangle, Search, Info, ChevronRight, ChevronDown } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { FileJson, Trash2, CheckCircle2, AlertTriangle, Search, Info, ChevronRight, ChevronDown } from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -82,7 +82,6 @@ export function JsonFormatter() {
   const [indentation, setIndentation] = useState('2');
   const [isMinified, setIsMinified] = useState(false);
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
-  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
   // Reactive validation state computed from the input text
   const validation = useMemo(() => validateJson(input), [input]);
@@ -273,25 +272,15 @@ export function JsonFormatter() {
             />
           )}
 
-          <Button
-            onClick={() => copyToClipboard(outputResult.text)}
+          <CopyButton
+            text={outputResult.text}
+            label="Copy Output"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!hasOutput || Boolean(outputResult.error)}
             size="sm"
-            variant={isCopied ? "default" : "outline"}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {isCopied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                {copyFailed ? 'Copy failed' : 'Copy Output'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

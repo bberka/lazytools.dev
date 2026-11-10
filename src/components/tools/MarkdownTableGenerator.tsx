@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, FileDown, Plus, Table, Trash2, X } from 'lucide-react';
+import { FileDown, Plus, Table, Trash2, X } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import {
   ALIGNMENTS,
   DEFAULT_TABLE_OPTIONS,
@@ -46,7 +46,6 @@ export function MarkdownTableGenerator() {
   const [delimiter, setDelimiter] = useState<Delimiter>('auto');
   const [firstRowHeader, setFirstRowHeader] = useState(true);
   const [importMessage, setImportMessage] = useState<{ text: string; error: boolean } | null>(null);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const markdown = useMemo(() => markdownTable(table, options), [table, options]);
 
@@ -288,15 +287,7 @@ export function MarkdownTableGenerator() {
             className="bg-muted/30 font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(markdown)}
-              disabled={!markdown}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy Markdown'}
-            </Button>
+            <CopyButton text={markdown} label="Copy Markdown" disabled={!markdown} size="sm" />
           </div>
         </CardContent>
       </Card>

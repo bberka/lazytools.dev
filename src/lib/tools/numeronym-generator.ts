@@ -8,6 +8,8 @@
  * Node as well as in the browser.
  */
 
+import { lineEnding, splitLines } from '@/lib/text';
+
 export type NumeronymMode = 'word' | 'phrase';
 
 export interface NumeronymOptions {
@@ -46,12 +48,6 @@ export function numeronym(word: string, minLength: number = DEFAULT_OPTIONS.minL
 
 const WORD = /[\p{L}\p{M}\p{N}]+/gu;
 
-function splitLines(text: string): string[] {
-  const lines = text.split(/\r\n|\r|\n/);
-  if (lines[lines.length - 1] === '') lines.pop();
-  return lines;
-}
-
 /** Shortens every word of the text in place. Numbers and punctuation are left alone. */
 function numeronymWords(text: string, options: NumeronymOptions): string {
   return text.replace(WORD, (word) =>
@@ -63,7 +59,7 @@ function numeronymWords(text: string, options: NumeronymOptions): string {
 /** Shortens each line as a single word made of its letters and digits. */
 function numeronymPhrases(text: string, options: NumeronymOptions): string {
   if (text === '') return '';
-  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const eol = lineEnding(text);
   return splitLines(text)
     .map((line) => {
       const joined = (line.match(WORD) ?? []).join('');

@@ -2,18 +2,17 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Check, Trash2, ArrowLeftRight, Globe, Info, FileText } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Globe, Info, FileText } from 'lucide-react';
 import { convertPunycode, type PunycodeMode } from '@/lib/tools/punycode-converter';
 
 export function PunycodeConverter() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<PunycodeMode>('encode');
 
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const output = useMemo(() => convertPunycode(input, mode), [input, mode]);
 
@@ -106,25 +105,14 @@ export function PunycodeConverter() {
               rows={12}
               className="flex-1 font-mono text-xs leading-relaxed bg-muted/20 border-muted focus-visible:ring-0 cursor-text"
             />
-            <Button
-              onClick={() => copyToClipboard(output)}
+            <CopyButton
+              text={output}
+              label="Copy Output"
+              copiedLabel="Copied!"
               disabled={!output}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
               className="w-full sm:w-auto font-medium transition-all duration-200"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Output
-                </>
-              )}
-            </Button>
+            />
           </CardContent>
         </Card>
       </div>

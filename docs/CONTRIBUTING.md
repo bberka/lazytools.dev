@@ -54,10 +54,11 @@ src/
     tools/              # tool implementations
     ui/                 # shared shadcn-style React components
     CommandPalette.tsx
+    CopyButton.tsx      # labelled copy button with its own clipboard feedback
     FileDropzone.tsx    # shared drop area for file tools
     HomeContent.tsx
     ToolPageClient.tsx
-  hooks/                # useFileIntake, useObjectUrl, useCopyToClipboard, useActionButton
+  hooks/                # useFileIntake, useObjectUrl, useCopyToClipboard, useBrowserFeature, useActionButton
   lib/
     catalog/            # tool catalog: visibility, lookup, search, filter, grouping
     tags/               # tag names, icons, styles, order
@@ -68,6 +69,7 @@ src/
     files/              # file validation, reading, downloads, size labels
     pdf/                # pdfjs loading, worker, rendering, text extraction
     markdown/           # Markdown parser configuration and export template
+    text/               # splitLines, lineEnding, plural, numberReader
     export/             # snapshot PDF and print helpers
     tools/              # pure logic of individual tools
     utils/
@@ -140,7 +142,7 @@ Edit `src/lib/utils/tool-registry.ts`:
 
 The tool catalog in `src/lib/catalog` is built from this registry, so static routes, search, metadata, and renderer wiring all share the same source of truth.
 
-Keep the logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. For file handling use `useFileIntake`, `FileDropzone` and `@/lib/files` instead of your own file input, `FileReader` code or download anchor.
+Keep the logic that can be a plain function in `src/lib/tools/<slug>.ts` and cover it with a unit test in `tests/unit/`. For a copy button use `CopyButton` (it keeps the "Copied" feedback itself) and for line splitting, plurals and typed number fields use `@/lib/text`. For file handling use `useFileIntake`, `FileDropzone` and `@/lib/files` instead of your own file input, `FileReader` code or download anchor.
 
 ### 2. Create the Component
 

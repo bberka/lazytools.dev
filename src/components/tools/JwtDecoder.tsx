@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Check, Key, Trash2 } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Key, Trash2 } from 'lucide-react';
 import { decodeJwt, isJwtExpired, jwtTimes, type DecodedJwt } from '@/lib/tools/jwt-decoder';
 
 function decode(token: string): { decoded: DecodedJwt | null; error: string } {
@@ -26,8 +26,6 @@ export function JwtDecoder() {
   const [input, setInput] = useState('');
   // When the token was last edited: the moment its expiry is judged against.
   const [checkedAt, setCheckedAt] = useState(0);
-  const copyHeader = useCopyToClipboard();
-  const copyPayload = useCopyToClipboard();
 
   const { decoded, error } = useMemo(() => decode(input), [input]);
 
@@ -87,23 +85,12 @@ export function JwtDecoder() {
               <div className="bg-muted p-4 rounded-md font-mono text-sm overflow-x-auto scrollbar-thin">
                 <pre>{JSON.stringify(decoded.header, null, 2)}</pre>
               </div>
-              <Button
-                onClick={() => copyHeader.copyToClipboard(JSON.stringify(decoded.header, null, 2))}
+              <CopyButton
+                text={JSON.stringify(decoded.header, null, 2)}
+                label="Copy Header"
+                copiedLabel="Copied!"
                 size="sm"
-                variant={copyHeader.isCopied ? "default" : "outline"}
-              >
-                {copyHeader.isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Header
-                  </>
-                )}
-              </Button>
+              />
             </CardContent>
           </Card>
 
@@ -145,23 +132,12 @@ export function JwtDecoder() {
                 </div>
               )}
 
-              <Button
-                onClick={() => copyPayload.copyToClipboard(JSON.stringify(decoded.payload, null, 2))}
+              <CopyButton
+                text={JSON.stringify(decoded.payload, null, 2)}
+                label="Copy Payload"
+                copiedLabel="Copied!"
                 size="sm"
-                variant={copyPayload.isCopied ? "default" : "outline"}
-              >
-                {copyPayload.isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Payload
-                  </>
-                )}
-              </Button>
+              />
             </CardContent>
           </Card>
 

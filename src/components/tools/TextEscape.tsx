@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -12,15 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Quote, Trash2, ArrowLeftRight, Check } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Quote, Trash2, ArrowLeftRight } from 'lucide-react';
 import { convertEscape, type EscapeDirection, type EscapeMode } from '@/lib/tools/text-escape';
 
 export function TextEscape() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<EscapeMode>('javascript');
   const [direction, setDirection] = useState<EscapeDirection>('escape');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const { output, error } = useMemo(() => convertEscape(input, mode, direction), [input, mode, direction]);
 
@@ -115,24 +114,13 @@ export function TextEscape() {
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyToClipboard(output)}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

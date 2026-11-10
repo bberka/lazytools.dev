@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,16 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   Ban,
-  Check,
   CircleAlert,
   CircleCheck,
   CircleX,
   Clock,
-  Copy,
   Dices,
   FileKey,
   Hourglass,
@@ -200,7 +198,6 @@ export function JwtSigner() {
   const [verifyToken, setVerifyToken] = useState('');
   const [clockTick, setClockTick] = useState(0);
 
-  const copyToken = useCopyToClipboard();
 
   const headerError = useMemo(() => validateHeader(headerText, algorithm), [headerText, algorithm]);
   const payloadError = useMemo(() => validatePayload(payloadText), [payloadText]);
@@ -526,16 +523,14 @@ export function JwtSigner() {
               )}
 
               <div className="flex flex-wrap gap-2">
-                <Button
+                <CopyButton
+                  text={signedToken}
+                  label="Copy token"
+                  iconClassName="h-4 w-4"
                   type="button"
                   size="sm"
-                  variant={copyToken.isCopied ? 'default' : 'outline'}
                   disabled={!signedToken}
-                  onClick={() => copyToken.copyToClipboard(signedToken)}
-                >
-                  {copyToken.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copyToken.isCopied ? 'Copied' : 'Copy token'}
-                </Button>
+                />
                 <Button type="button" size="sm" variant="outline" onClick={handleReset}>
                   <RotateCcw className="h-4 w-4" />
                   Reset all

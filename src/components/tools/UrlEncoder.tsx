@@ -5,16 +5,15 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { Copy, Check, Trash2, ArrowLeftRight, Link, Unlink } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Link, Unlink } from 'lucide-react';
 import { convertUrlComponent, type UrlCodecMode } from '@/lib/tools/url-encoder';
+import { CopyButton } from '@/components/CopyButton';
 
 type Mode = UrlCodecMode;
 
 export function UrlEncoder() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<Mode>('encode');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const { output, error } = useMemo(() => convertUrlComponent(input, mode), [input, mode]);
 
@@ -83,24 +82,13 @@ export function UrlEncoder() {
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyToClipboard(output)}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

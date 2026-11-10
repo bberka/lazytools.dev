@@ -5,10 +5,10 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { Copy, Check, Trash2, ArrowLeftRight, FolderArchive, FolderOpen } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, FolderArchive, FolderOpen } from 'lucide-react';
 import { formatBytes, type FormatBytesOptions } from '@/lib/files';
 import { runGzip, sizeChangeLabel, type GzipMode } from '@/lib/tools/gzip-compressor';
+import { CopyButton } from '@/components/CopyButton';
 
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B' };
 
@@ -19,7 +19,6 @@ export function GzipCompressor() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<{ inputSize: number; outputSize: number } | null>(null);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Each run takes a number; a result is only shown while its number is still the latest.
   const runId = useRef(0);
@@ -165,18 +164,13 @@ export function GzipCompressor() {
               rows={8}
               className="font-mono"
             />
-            <Button
-              onClick={() => copyToClipboard(output)}
+            <CopyButton
+              text={output}
+              label="Copy"
+              copiedLabel="Copied!"
               disabled={!output}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? (
-                <><Check className="h-4 w-4 mr-2" />Copied!</>
-              ) : (
-                <><Copy className="h-4 w-4 mr-2" />Copy</>
-              )}
-            </Button>
+            />
           </div>
         </CardContent>
       </Card>

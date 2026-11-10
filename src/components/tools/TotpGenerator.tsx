@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Check, Copy, Dices, Info, KeyRound, Loader2, QrCode, Timer, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,7 +87,6 @@ export function TotpGenerator() {
   const [codes, setCodes] = useState<ComputedCodes | null>(null);
   const [qr, setQr] = useState<RenderedQr | null>(null);
 
-  const secretCopy = useCopyToClipboard();
 
   const options = useMemo<TotpOptions>(() => ({ algorithm, digits, period }), [algorithm, digits, period]);
 
@@ -302,24 +302,12 @@ export function TotpGenerator() {
               <Dices className="mr-2 h-4 w-4" />
               Generate random secret
             </Button>
-            <Button
+            <CopyButton
+              text={secret.trim()}
+              label="Copy secret"
               type="button"
-              variant={secretCopy.isCopied ? 'default' : 'outline'}
               disabled={!hasSecret}
-              onClick={() => secretCopy.copyToClipboard(secret.trim())}
-            >
-              {secretCopy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy secret
-                </>
-              )}
-            </Button>
+            />
             <Button type="button" variant="outline" onClick={handleClear}>
               <Trash2 className="mr-2 h-4 w-4" />
               Clear

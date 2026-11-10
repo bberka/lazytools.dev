@@ -4,8 +4,6 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
-  Check,
-  Copy,
   Download,
   FileImage,
   ImageIcon,
@@ -15,11 +13,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FileDropzone } from '@/components/FileDropzone';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { downloadBlob, formatBytes, readFileAsArrayBuffer } from '@/lib/files';
@@ -55,29 +53,6 @@ function FieldRow({ label, value }: { label: string; value: string }) {
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="mt-1 break-words font-mono text-sm font-semibold">{value}</dd>
     </div>
-  );
-}
-
-function CopyButton({
-  text,
-  label,
-  disabled,
-}: {
-  text: string;
-  label: string;
-  disabled?: boolean;
-}) {
-  const { copyToClipboard, isCopied, isError } = useCopyToClipboard();
-  return (
-    <Button
-      type="button"
-      variant={isCopied ? 'default' : 'outline'}
-      disabled={disabled}
-      onClick={() => copyToClipboard(text)}
-    >
-      {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-      {isCopied ? 'Copied' : isError ? 'Copy failed, try again' : label}
-    </Button>
   );
 }
 
@@ -261,7 +236,12 @@ function DecodePanel() {
                     <Download className="mr-2 h-4 w-4" />
                     Download .{analysis.type.extension}
                   </Button>
-                  <CopyButton text={correctedDataUrl} label="Copy data URL" />
+                  <CopyButton
+                    text={correctedDataUrl}
+                    label="Copy data URL"
+                    errorLabel="Copy failed, try again"
+                    type="button"
+                  />
                 </div>
               </>
             )}
@@ -371,7 +351,12 @@ function EncodePanel() {
                 spellCheck={false}
                 className="cursor-text bg-muted/30 font-mono text-xs"
               />
-              <CopyButton text={encoded.dataUrl} label="Copy data URL" />
+              <CopyButton
+                text={encoded.dataUrl}
+                label="Copy data URL"
+                errorLabel="Copy failed, try again"
+                type="button"
+              />
             </div>
 
             <div className="space-y-2">
@@ -386,7 +371,12 @@ function EncodePanel() {
                 spellCheck={false}
                 className="cursor-text bg-muted/30 font-mono text-xs"
               />
-              <CopyButton text={encoded.base64} label="Copy Base64" />
+              <CopyButton
+                text={encoded.base64}
+                label="Copy Base64"
+                errorLabel="Copy failed, try again"
+                type="button"
+              />
             </div>
           </div>
         )}

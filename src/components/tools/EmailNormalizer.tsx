@@ -1,13 +1,13 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { Check, Copy, Mail, Trash2 } from 'lucide-react';
+import { Mail, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_OPTIONS,
@@ -44,7 +44,6 @@ function StatusBadge({ entry }: { entry: EmailEntry }) {
 export function EmailNormalizer() {
   const [text, setText] = useState('');
   const [options, setOptions] = useState<EmailOptions>(DEFAULT_OPTIONS);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const deferredText = useDeferredValue(text);
   const result = useMemo(() => normalizeEmails(deferredText, options), [deferredText, options]);
@@ -166,15 +165,12 @@ export function EmailNormalizer() {
                 className="bg-muted/30 font-mono text-sm"
               />
               <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => copyToClipboard(result.output)}
+                <CopyButton
+                  text={result.output}
+                  label="Copy Result"
                   disabled={!result.output}
                   size="sm"
-                  variant={isCopied ? 'default' : 'outline'}
-                >
-                  {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                  {isCopied ? 'Copied' : 'Copy Result'}
-                </Button>
+                />
               </div>
             </CardContent>
           </Card>

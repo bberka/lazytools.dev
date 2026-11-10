@@ -1,14 +1,14 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { Check, Copy, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Link as LinkIcon, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -43,7 +43,6 @@ export function SlugGenerator() {
   const [text, setText] = useState('');
   const [options, setOptions] = useState<SlugOptions>(DEFAULT_OPTIONS);
   const [maxLengthInput, setMaxLengthInput] = useState('');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const deferredText = useDeferredValue(text);
   const slug = useMemo(() => generateSlugs(deferredText, options), [deferredText, options]);
@@ -207,15 +206,7 @@ export function SlugGenerator() {
             className="bg-muted/30 font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(slug)}
-              disabled={!slug}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy Slug'}
-            </Button>
+            <CopyButton text={slug} label="Copy Slug" disabled={!slug} size="sm" />
           </div>
         </CardContent>
       </Card>

@@ -1,11 +1,12 @@
 'use client';
 
 import { useId, useMemo, useState } from 'react';
-import { CalendarDays, Check, Copy, Trash2 } from 'lucide-react';
+import { CalendarDays, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
-import { useCopyToClipboard, useHydrated } from '@/hooks';
+import { useHydrated } from '@/hooks';
 import { formatLongDate, parseDateInput, toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   calculateAge,
@@ -22,7 +23,6 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
   const id = useId();
   const [birthDate, setBirthDate] = useState('1990-06-15');
   const [targetDate, setTargetDate] = useState(initialTargetDate);
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(() => {
     if (!birthDate || !targetDate) {
@@ -135,23 +135,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>

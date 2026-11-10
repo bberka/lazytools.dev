@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -12,8 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, FileCode, Trash2, CheckCircle2, AlertTriangle, Info, ChevronRight, ChevronDown } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { FileCode, Trash2, CheckCircle2, AlertTriangle, Info, ChevronRight, ChevronDown } from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -83,7 +83,6 @@ export function YamlValidator() {
   const [yaml, setYaml] = useState<YamlTools | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const { copyToClipboard, isCopied, isError: copyFailed } = useCopyToClipboard();
 
   const hasInput = Boolean(input.trim());
 
@@ -295,25 +294,15 @@ export function YamlValidator() {
             />
           )}
 
-          <Button
-            onClick={() => copyToClipboard(outputText)}
+          <CopyButton
+            text={outputText}
+            label="Copy Output"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!hasOutput || !validation?.valid}
             size="sm"
-            variant={isCopied ? "default" : "outline"}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {isCopied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                {copyFailed ? 'Copy failed' : 'Copy Output'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

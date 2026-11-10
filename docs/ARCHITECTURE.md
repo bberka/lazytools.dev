@@ -65,6 +65,8 @@ Behaviour that several callers need lives in one module with a small interface, 
 | `src/lib/files` + `useFileIntake`, `useObjectUrl`, `FileDropzone` | File picking, drag-and-drop, validation, reading, downloads, size labels |
 | `src/lib/pdf` | pdfjs loading, bundled worker, opening, rendering, text extraction |
 | `src/lib/markdown`, `src/lib/export` | Markdown parser configuration, export template, snapshot PDF, print |
+| `CopyButton` (`src/components`), `useCopyToClipboard`, `useBrowserFeature` (`src/hooks`) | Labelled copy buttons that own their clipboard feedback; clipboard state for the odd ones; SSR-safe browser feature detection |
+| `src/lib/text` | Line splitting and line endings, plurals, typed number fields, shared by tool logic |
 | `src/lib/tools/*` | Pure logic of individual tools |
 
 Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests.

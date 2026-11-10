@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useCopyToClipboard } from '@/hooks';
-import { AlertCircle, Binary, Check, Copy, FolderLock, Info, Terminal, Trash2 } from 'lucide-react';
+import { AlertCircle, Binary, FolderLock, Info, Terminal, Trash2 } from 'lucide-react';
 import {
   PRESETS,
   chmodCommands,
@@ -68,8 +68,6 @@ export function ChmodCalculator() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [target, setTarget] = useState('');
 
-  const copyNumeric = useCopyToClipboard();
-  const copySymbolic = useCopyToClipboard();
 
   const commands = chmodCommands(mode, target);
   const explanation = explainMode(mode);
@@ -309,21 +307,15 @@ export function ChmodCalculator() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold">Numeric</span>
-                <Button
+                <CopyButton
+                  text={commands.numeric}
+                  label="Copy"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   type="button"
-                  onClick={() => copyNumeric.copyToClipboard(commands.numeric)}
-                  variant={copyNumeric.isCopied ? 'default' : 'outline'}
                   size="sm"
                   className="h-8"
                   aria-label="Copy numeric command"
-                >
-                  {copyNumeric.isCopied ? (
-                    <Check className="mr-1 h-3.5 w-3.5" />
-                  ) : (
-                    <Copy className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {copyNumeric.isCopied ? 'Copied' : 'Copy'}
-                </Button>
+                />
               </div>
               <div className="break-all rounded-md border bg-muted/30 p-3 font-mono text-sm">
                 {commands.numeric}
@@ -333,21 +325,15 @@ export function ChmodCalculator() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold">Symbolic</span>
-                <Button
+                <CopyButton
+                  text={commands.symbolic}
+                  label="Copy"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   type="button"
-                  onClick={() => copySymbolic.copyToClipboard(commands.symbolic)}
-                  variant={copySymbolic.isCopied ? 'default' : 'outline'}
                   size="sm"
                   className="h-8"
                   aria-label="Copy symbolic command"
-                >
-                  {copySymbolic.isCopied ? (
-                    <Check className="mr-1 h-3.5 w-3.5" />
-                  ) : (
-                    <Copy className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {copySymbolic.isCopied ? 'Copied' : 'Copy'}
-                </Button>
+                />
               </div>
               <div className="break-all rounded-md border bg-muted/30 p-3 font-mono text-sm">
                 {commands.symbolic}

@@ -7,6 +7,8 @@
  * functions, no DOM: they run in Node as well as in the browser.
  */
 
+import { lineEnding, splitLines } from '@/lib/text';
+
 export type SlugSeparator = '-' | '_' | '.' | '';
 export type Transliteration = 'off' | 'basic' | 'german';
 
@@ -115,11 +117,9 @@ export function slugify(text: string, options: SlugOptions): string {
 
 /** One slug per line. Blank lines stay blank so the output lines match the input lines. */
 export function slugifyLines(text: string, options: SlugOptions): string {
-  if (text === '') return '';
-  const eol = text.includes('\r\n') ? '\r\n' : '\n';
-  const lines = text.split(/\r\n|\r|\n/);
-  if (lines[lines.length - 1] === '') lines.pop();
-  return lines.map((line) => slugify(line, options)).join(eol);
+  return splitLines(text)
+    .map((line) => slugify(line, options))
+    .join(lineEnding(text));
 }
 
 export function generateSlugs(text: string, options: SlugOptions): string {

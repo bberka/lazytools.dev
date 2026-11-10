@@ -2,18 +2,16 @@
 
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   AlertCircle,
-  Check,
   CheckCircle2,
-  Copy,
   Info,
   KeyRound,
   ShieldCheck,
@@ -50,8 +48,6 @@ interface Outcome {
 }
 
 function OutputRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
-
   return (
     <div className="space-y-2 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -59,16 +55,14 @@ function OutputRow({ label, value, hint }: { label: string; value: string; hint?
           <span className="text-sm font-semibold">{label}</span>
           {hint && <span className="ml-2 text-xs text-muted-foreground">{hint}</span>}
         </div>
-        <Button
-          onClick={() => copyToClipboard(value)}
-          variant={isCopied ? 'default' : 'outline'}
+        <CopyButton
+          text={value}
+          label="Copy"
+          iconClassName="mr-1 h-3.5 w-3.5"
           size="sm"
           className="h-8 shrink-0"
           aria-label={`Copy ${label} HMAC`}
-        >
-          {isCopied ? <Check className="mr-1 h-3.5 w-3.5" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
-          {isCopied ? 'Copied' : 'Copy'}
-        </Button>
+        />
       </div>
       <div className="select-all break-all rounded-md bg-muted p-3 font-mono text-xs sm:text-sm">{value}</div>
     </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, Download, Info, Trash2, TrendingUp } from 'lucide-react';
+import { AlertCircle, Download, Info, Trash2, TrendingUp } from 'lucide-react';
 import { Stat } from './Stat';
 import { FieldError } from './FieldError';
 import { toast } from 'sonner';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
 import { CURRENCIES, DEFAULT_CURRENCY } from '@/lib/tools/loan-calculator';
@@ -49,7 +49,6 @@ export function CompoundInterestCalculator() {
   const [contribution, setContribution] = useState('');
   const [timing, setTiming] = useState<ContributionTiming>('end');
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
-  const copySummary = useCopyToClipboard();
 
   const evaluation = useMemo(
     () => evaluateCompoundInterest({ principal, rate, years, compounding, contribution, timing }),
@@ -293,24 +292,11 @@ export function CompoundInterestCalculator() {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() =>
-                      copySummary.copyToClipboard(buildCompoundSummary(result, formatMoney))
-                    }
-                    variant={copySummary.isCopied ? 'default' : 'outline'}
-                  >
-                    {copySummary.isCopied ? (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-2 h-4 w-4" />
-                        {copySummary.isError ? 'Copy failed, try again' : 'Copy summary'}
-                      </>
-                    )}
-                  </Button>
+                  <CopyButton
+                    text={buildCompoundSummary(result, formatMoney)}
+                    label="Copy summary"
+                    errorLabel="Copy failed, try again"
+                  />
                   <Button onClick={handleDownload} variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     Download CSV

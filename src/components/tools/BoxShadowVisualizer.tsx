@@ -12,8 +12,6 @@ import {
   Layers,
   Plus,
   Trash2,
-  Copy,
-  Check,
   Eye,
   EyeOff,
   ChevronUp,
@@ -25,14 +23,14 @@ import {
   Info,
   Maximize,
   Compass,
-  LayoutGrid
+  LayoutGrid,
 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { useCopyToClipboard } from '@/hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipSimple } from '@/components/ui/tooltip';
 import {
@@ -229,8 +227,6 @@ export function BoxShadowVisualizer() {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
 
-  const cssCopy = useCopyToClipboard();
-  const tailwindCopy = useCopyToClipboard();
 
   const shadowOutput = useMemo(() => buildBoxShadow(shadows), [shadows]);
 
@@ -1046,15 +1042,13 @@ export function BoxShadowVisualizer() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CSS Code</span>
-                  <Button
+                  <CopyButton
+                    text={shadowOutput.css}
+                    label="Copy CSS"
+                    iconClassName="h-3 w-3"
                     size="sm"
-                    variant={cssCopy.isCopied ? 'default' : 'outline'}
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
-                    onClick={() => cssCopy.copyToClipboard(shadowOutput.css)}
-                  >
-                    {cssCopy.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    {cssCopy.isCopied ? 'Copied' : 'Copy CSS'}
-                  </Button>
+                  />
                 </div>
                 <pre className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin whitespace-pre">
                   {shadowOutput.css}
@@ -1065,15 +1059,13 @@ export function BoxShadowVisualizer() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tailwind CSS Utility</span>
-                  <Button
+                  <CopyButton
+                    text={shadowOutput.tailwind}
+                    label="Copy Class"
+                    iconClassName="h-3 w-3"
                     size="sm"
-                    variant={tailwindCopy.isCopied ? 'default' : 'outline'}
                     className="h-7 px-2.5 rounded-lg text-xs gap-1.5"
-                    onClick={() => tailwindCopy.copyToClipboard(shadowOutput.tailwind)}
-                  >
-                    {tailwindCopy.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    {tailwindCopy.isCopied ? 'Copied' : 'Copy Class'}
-                  </Button>
+                  />
                 </div>
                 <div className="p-3 bg-muted dark:bg-muted/40 rounded-xl font-mono text-xs text-foreground border border-border/40 overflow-x-auto scrollbar-thin break-all">
                   {shadowOutput.tailwind}

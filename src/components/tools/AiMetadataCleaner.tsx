@@ -1,15 +1,15 @@
 'use client';
 
 import { useId, useMemo, useRef, useState } from 'react';
-import { Archive, Check, Copy, Download, FileImage, Image as ImageIcon, ShieldCheck, Trash2, Type, X } from 'lucide-react';
+import { Archive, Download, FileImage, Image as ImageIcon, ShieldCheck, Trash2, Type, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { FileDropzone } from '@/components/FileDropzone';
-import { useCopyToClipboard } from '@/hooks';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { downloadBlob, formatBytes, outputFileName, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
 import { IMAGE_MIME_TYPES, stripImageMetadata, type StripResult } from '@/lib/tools/ai-image-metadata';
@@ -265,7 +265,6 @@ function TextCleaner() {
   const id = useId();
   const [text, setText] = useState('');
   const [options, setOptions] = useState<TextCleanOptions>(DEFAULT_TEXT_OPTIONS);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
   const result = useMemo(() => cleanAiText(text, options), [text, options]);
 
   const setOption = (category: TextCategory, enabled: boolean) =>
@@ -343,15 +342,7 @@ function TextCleaner() {
             className="bg-muted/30 font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(result.text)}
-              disabled={!result.text}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy'}
-            </Button>
+            <CopyButton text={result.text} label="Copy" disabled={!result.text} size="sm" />
             <Button onClick={() => setText('')} disabled={!text} size="sm" variant="outline">
               <Trash2 className="mr-2 h-4 w-4" />
               Clear

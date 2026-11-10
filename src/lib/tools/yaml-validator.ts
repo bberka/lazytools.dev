@@ -10,6 +10,7 @@
 
 import type * as JsYaml from 'js-yaml';
 import { stringifyJson } from './json-formatter';
+import { plural } from '@/lib/text';
 
 export interface YamlValidation {
   valid: boolean;
@@ -66,10 +67,6 @@ function toBigInt(scalar: string): bigint | null {
   } catch {
     return null;
   }
-}
-
-function plural(count: number, noun: string): string {
-  return `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
 }
 
 function summarizeDocument(value: unknown): string {

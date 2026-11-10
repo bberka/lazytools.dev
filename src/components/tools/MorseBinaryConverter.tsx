@@ -3,13 +3,13 @@
 import { useState, useMemo, useRef, useEffect, useId } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Copy, Check, Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, Info } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, Info } from 'lucide-react';
 import { getAudioContextClass } from '@/lib/web-audio';
 import {
   convertCode,
@@ -39,7 +39,6 @@ export function MorseBinaryConverter() {
   // Binary settings
   const [binarySeparator, setBinarySeparator] = useState<BinarySeparator>('space');
 
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
   const separatorId = useId();
 
   const activeSeparator = useMemo(() => {
@@ -371,25 +370,14 @@ export function MorseBinaryConverter() {
               </p>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyToClipboard(output)}
+              <CopyButton
+                text={output}
+                label="Copy Output"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? 'default' : 'outline'}
                 className="font-medium transition-all duration-200"
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Output
-                  </>
-                )}
-              </Button>
+              />
 
               {toolType === 'morse' && (output || input) && (
                 <Button

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, Database, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Database, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { describeLineCount } from '@/lib/tools/formatter-output';
 import {
   formatSql,
@@ -76,7 +76,6 @@ export function SqlFormatter() {
   const [formatted, setFormatted] = useState<SqlFormatResult>(NO_RESULT);
   // False until the formatter has answered once, i.e. while its chunk loads.
   const [hasVerdict, setHasVerdict] = useState(false);
-  const copy = useCopyToClipboard();
 
   const settings = useMemo<SqlFormatSettings>(
     () => ({ dialect, indentation, keywordCase, logicalOperatorNewline }),
@@ -295,25 +294,15 @@ export function SqlFormatter() {
             className="font-mono text-sm"
           />
 
-          <Button
-            onClick={() => copy.copyToClipboard(output)}
+          <CopyButton
+            text={output}
+            label="Copy to Clipboard"
+            copiedLabel="Copied!"
+            errorLabel="Copy failed"
             disabled={!output}
             size="sm"
-            variant={copy.isCopied ? 'default' : 'outline'}
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            {copy.isCopied ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="mr-2 h-4 w-4" />
-                {copy.isError ? 'Copy failed' : 'Copy to Clipboard'}
-              </>
-            )}
-          </Button>
+          />
         </CardContent>
       </Card>
     </div>

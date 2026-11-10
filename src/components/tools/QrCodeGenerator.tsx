@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Download, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { useActionButton, useCopyToClipboard } from '@/hooks';
+import { useActionButton } from '@/hooks';
 import { downloadDataUrl, downloadText, readImageDimensions } from '@/lib/files';
 import {
   prepareQrRequest,
@@ -73,7 +74,6 @@ export function QrCodeGenerator() {
   const [error, setError] = useState('');
 
   const { executeAction, isLoading } = useActionButton();
-  const copy = useCopyToClipboard();
 
   // Each run takes a number; a result is only shown while its number is still the latest.
   const runId = useRef(0);
@@ -311,23 +311,7 @@ export function QrCodeGenerator() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copy.copyToClipboard(content.trim())}
-              variant={copy.isCopied ? 'default' : 'outline'}
-              disabled={!content.trim()}
-            >
-              {copy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy content
-                </>
-              )}
-            </Button>
+            <CopyButton text={content.trim()} label="Copy content" disabled={!content.trim()} />
           </div>
         </CardContent>
       </Card>

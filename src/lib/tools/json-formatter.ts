@@ -11,6 +11,8 @@
  * `ExactNumber`. Everything here is pure, so it runs in Node and in the browser.
  */
 
+import { plural } from '@/lib/text';
+
 /**
  * A number a double cannot hold, kept exactly as it was written. The text is
  * a private field so that it is not a key: the value looks like an empty
@@ -334,10 +336,6 @@ export function stringifyJson(value: unknown, indent?: number | string): string 
 }
 
 // Validation
-
-function plural(count: number, noun: string): string {
-  return `${count.toLocaleString()} ${noun}${count === 1 ? '' : 's'}`;
-}
 
 function summarize(value: unknown): string {
   if (Array.isArray(value)) {

@@ -56,6 +56,7 @@ For normal code changes, at minimum run `npm run typecheck` and the most relevan
 - `src/lib/home` owns home-page session state (`sessionStorage` keys, restore, reset) and the grid keyboard-navigation maths.
 - `src/lib/commands` defines each app command once (label, shortcut, action, feedback). The command palette, the settings dialog, and the single global shortcut listener in `CommandPalette.tsx` work from it.
 - `src/lib/files`, `src/hooks/useFileIntake.ts`, `src/hooks/useObjectUrl.ts`, and `src/components/FileDropzone.tsx` cover taking files in (picker, drag-and-drop, validation, reading) and handing them back (downloads, file names, size labels). Tools must use these instead of their own file inputs, `FileReader` code, or download anchors.
+- `src/components/CopyButton.tsx` is the labelled copy button (own `useCopyToClipboard` state, `label`, `copiedLabel`, `errorLabel`, icon-only when no `label`); `src/hooks/useBrowserFeature.ts` is the SSR-safe browser feature check. `src/lib/text` holds `splitLines`, `lineEnding`, `plural` and `numberReader`; use them instead of private copies in tool logic.
 - `src/lib/pdf` owns pdfjs loading, the bundled worker, opening documents, rendering pages, and text extraction. `src/lib/markdown` owns the Markdown parser configuration and export template. `src/lib/export` holds the snapshot-PDF and print helpers.
 - `src/lib/tools/*` holds the pure logic of individual tools, covered by unit tests.
 - `src/components/ui/*` contains shadcn-style primitives. Avoid editing these for page-level layout fixes.

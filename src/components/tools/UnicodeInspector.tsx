@@ -3,9 +3,7 @@
 import { Fragment, useDeferredValue, useMemo, useState } from 'react';
 import {
   ArrowUp,
-  Check,
   CircleCheck,
-  Copy,
   Highlighter,
   ScanSearch,
   Table2,
@@ -14,12 +12,12 @@ import {
   WandSparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   CHAR_CLASSES,
@@ -118,7 +116,6 @@ export function UnicodeInspector() {
   const [keepScriptJoiners, setKeepScriptJoiners] = useState(false);
   const [replaceSpaces, setReplaceSpaces] = useState(true);
   const [normalization, setNormalization] = useState<NormalizationChoice>('none');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Large pastes should not make typing feel slow.
   const deferredText = useDeferredValue(text);
@@ -383,15 +380,12 @@ export function UnicodeInspector() {
                   className="bg-muted/30 font-mono text-sm"
                 />
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => copyToClipboard(cleaned.text)}
+                  <CopyButton
+                    text={cleaned.text}
+                    label="Copy Result"
                     disabled={!cleaned.text}
                     size="sm"
-                    variant={isCopied ? 'default' : 'outline'}
-                  >
-                    {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                    {isCopied ? 'Copied' : 'Copy Result'}
-                  </Button>
+                  />
                   <Button onClick={handleUseResult} disabled={!cleaned.changed} size="sm" variant="outline">
                     <ArrowUp className="mr-2 h-4 w-4" />
                     Use as Input

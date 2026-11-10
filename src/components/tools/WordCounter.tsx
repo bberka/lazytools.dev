@@ -1,19 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlignLeft, Check, Copy, Eraser, Timer, Type } from 'lucide-react';
+import { AlignLeft, Eraser, Timer, Type } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { analyzeText, formatDuration } from '@/lib/tools/word-counter';
 
 export function WordCounter() {
   const [text, setText] = useState('');
   const [includeNumbers, setIncludeNumbers] = useState(true);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const stats = useMemo(() => analyzeText(text, { includeNumbers }), [includeNumbers, text]);
 
@@ -70,25 +69,13 @@ export function WordCounter() {
             />
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                onClick={() => copyToClipboard(text)}
+              <CopyButton
+                text={text}
+                label="Copy Text"
                 disabled={!text}
-                variant={isCopied ? 'default' : 'outline'}
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Text
-                  </>
-                )}
-              </Button>
+              />
               <Button
                 onClick={handleClear}
                 disabled={!text}

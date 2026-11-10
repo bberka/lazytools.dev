@@ -1,13 +1,13 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { ArrowDownAZ, Check, Copy, Shuffle, Trash2 } from 'lucide-react';
+import { ArrowDownAZ, Shuffle, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -16,15 +16,11 @@ import {
   type LineOptions,
   type SortMode,
 } from '@/lib/tools/text-sorter-deduplicator';
-
-function plural(value: number, one: string, many: string): string {
-  return `${value.toLocaleString()} ${value === 1 ? one : many}`;
-}
+import { plural } from '@/lib/text';
 
 export function TextSorterDeduplicator() {
   const [text, setText] = useState('');
   const [options, setOptions] = useState<LineOptions>(DEFAULT_OPTIONS);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const deferredText = useDeferredValue(text);
   const result = useMemo(() => processLines(deferredText, options), [deferredText, options]);
@@ -166,15 +162,7 @@ export function TextSorterDeduplicator() {
             className="bg-muted/30 font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(result.text)}
-              disabled={!result.text}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy Result'}
-            </Button>
+            <CopyButton text={result.text} label="Copy Result" disabled={!result.text} size="sm" />
             <Button onClick={() => setText(result.text)} disabled={!result.text || result.text === text} size="sm" variant="outline">
               Use as Input
             </Button>

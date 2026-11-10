@@ -1,7 +1,8 @@
 'use client';
 
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
-import { ArrowRightLeft, Check, Clock3, Copy, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Clock3, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCopyToClipboard, useHydrated } from '@/hooks';
+import { useHydrated } from '@/hooks';
 import { toDateInputValue } from '@/lib/tools/calendar-date';
 import {
   COMMON_TIME_ZONES,
@@ -210,7 +211,6 @@ function Converter({ defaults }: { defaults: Defaults }) {
   const [date, setDate] = useState(defaults.date);
   const [hour, setHour] = useState(defaults.hour);
   const [minute, setMinute] = useState(defaults.minute);
-  const copyResult = useCopyToClipboard();
 
   const timeZoneOptions = useMemo(
     () => toTimeZoneOptions(listTimeZones(undefined, [defaults.timeZone])),
@@ -374,23 +374,11 @@ function Converter({ defaults }: { defaults: Defaults }) {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(converted?.targetInputValue ?? '')}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
+            <CopyButton
+              text={converted?.targetInputValue ?? ''}
+              label="Copy result"
               disabled={!converted}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            />
           </div>
         </CardContent>
       </Card>

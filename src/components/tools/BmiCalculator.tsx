@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Scale, Trash2 } from 'lucide-react';
+import { Scale, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   calculateBmi,
   type BmiCategoryId,
@@ -46,7 +46,6 @@ export function BmiCalculator() {
   const [weightUs, setWeightUs] = useState('159');
   const [heightFeet, setHeightFeet] = useState('5');
   const [heightInches, setHeightInches] = useState('9');
-  const copyResult = useCopyToClipboard();
 
   const result = useMemo(
     () =>
@@ -195,23 +194,7 @@ export function BmiCalculator() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.bmi)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.bmi}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy BMI
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.bmi} label="Copy BMI" disabled={!result.bmi} />
           </div>
         </CardContent>
       </Card>

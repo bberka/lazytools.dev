@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRightLeft, Check, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useActionButton, useCopyToClipboard } from '@/hooks';
+import { useActionButton } from '@/hooks';
 import {
   CURRENCIES,
   convertCurrency,
@@ -48,7 +49,6 @@ export function CurrencyConverter() {
   const activeRequest = useRef<AbortController | null>(null);
 
   const { executeAction, isLoading } = useActionButton();
-  const copyResult = useCopyToClipboard();
 
   useEffect(() => {
     return () => {
@@ -228,23 +228,7 @@ export function CurrencyConverter() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(copyValue)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!copyValue}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={copyValue} label="Copy result" disabled={!copyValue} />
           </div>
         </CardContent>
       </Card>

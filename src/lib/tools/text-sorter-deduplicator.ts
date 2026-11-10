@@ -6,6 +6,8 @@
  * Pure functions, no DOM: they run in Node as well as in the browser.
  */
 
+import { lineEnding, splitLines } from '@/lib/text';
+
 export type SortMode =
   | 'none'
   | 'az'
@@ -66,21 +68,6 @@ export const SORT_MODES: ReadonlyArray<{ value: SortMode; label: string }> = [
   { value: 'reverse', label: 'Reverse the order' },
   { value: 'shuffle', label: 'Shuffle' },
 ];
-
-const LINE_BREAK = /\r\n|\r|\n/;
-
-/** The line ending the text uses, so the result keeps it. */
-function detectLineEnding(text: string): string {
-  return text.includes('\r\n') ? '\r\n' : '\n';
-}
-
-/** Splits into lines. One trailing line break does not start another line. */
-export function splitLines(text: string): string[] {
-  if (text === '') return [];
-  const lines = text.split(LINE_BREAK);
-  if (lines[lines.length - 1] === '') lines.pop();
-  return lines;
-}
 
 /** The leading number of a line (`-3`, `2.5`, `1e3`), or null when it has none. */
 export function leadingNumber(line: string): number | null {
@@ -191,7 +178,7 @@ export function processLines(text: string, options: LineOptions): LineResult {
   lines = sortLines(lines, options.sort, options);
 
   return {
-    text: lines.join(detectLineEnding(text)),
+    text: lines.join(lineEnding(text)),
     lines,
     stats: {
       inputLines: source.length,

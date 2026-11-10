@@ -1,6 +1,4 @@
-import { useSyncExternalStore } from 'react';
-
-const subscribeToNothing = () => () => {};
+import { useBrowserFeature } from './useBrowserFeature';
 
 /**
  * False for the prerendered HTML and the first client render, true afterwards.
@@ -8,9 +6,5 @@ const subscribeToNothing = () => () => {};
  * static export without an effect that sets state.
  */
 export function useHydrated(): boolean {
-  return useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false
-  );
+  return useBrowserFeature(() => true, false);
 }

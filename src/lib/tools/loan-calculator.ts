@@ -11,6 +11,8 @@
  * DOM, so it runs in Node.
  */
 
+import { numberReader } from '@/lib/text';
+
 // ── Currencies ────────────────────────────────────────────────────────────────
 
 export interface Currency {
@@ -297,24 +299,7 @@ export function calculateLoan(input: LoanInput): LoanOutcome {
 // ── Typed input ───────────────────────────────────────────────────────────────
 
 const NUMBER_HINT = 'Enter a number such as 6.5. Use a period for decimals.';
-const NUMBER_PATTERN = /^-?(\d+(\.\d*)?|\.\d+)$/;
-const GROUPED_PATTERN = /^-?\d{1,3}(,\d{3})+(\.\d*)?$/;
-
-type NumberRead = { value: number } | { error: string };
-
-/**
- * Reads typed text as a number. Spaces are ignored and commas are accepted
- * only as thousands separators ("1,000"), so "6,5" is rejected instead of
- * silently becoming 65. A blank field is `blankError`, or 0 when `blankError`
- * is null (an optional field).
- */
-function readNumber(text: string, blankError: string | null): NumberRead {
-  const trimmed = text.replace(/\s+/g, '');
-  if (trimmed === '') return blankError === null ? { value: 0 } : { error: blankError };
-  const plain = GROUPED_PATTERN.test(trimmed) ? trimmed.replace(/,/g, '') : trimmed;
-  if (!NUMBER_PATTERN.test(plain)) return { error: NUMBER_HINT };
-  return { value: Number(plain) };
-}
+const readNumber = numberReader(NUMBER_HINT);
 
 /** Calculates the loan from the form as typed, for the given currency code. */
 export function evaluateLoan(

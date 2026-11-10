@@ -3,11 +3,11 @@
 import { useState, useMemo, useRef, useId } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Copy, Check, Trash2, Plus, RefreshCw, ExternalLink, Link2, Code, ArrowRight } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, Plus, RefreshCw, ExternalLink, Link2, Code, ArrowRight } from 'lucide-react';
 import { decodeUrlComponent, encodeUrlComponent } from '@/lib/tools/url-encoder';
 import { buildUrl, parseUrl } from '@/lib/tools/url-parser-builder';
 
@@ -33,7 +33,6 @@ export function UrlParserBuilder() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const nextParamId = useRef(0);
 
-  const copyResult = useCopyToClipboard();
 
   const protocolId = useId();
   const hostId = useId();
@@ -344,24 +343,13 @@ export function UrlParserBuilder() {
               {rebuiltUrl}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyResult.copyToClipboard(rebuiltUrl)}
-                variant={copyResult.isCopied ? 'default' : 'outline'}
+              <CopyButton
+                text={rebuiltUrl}
+                label="Copy URL"
+                copiedLabel="Copied URL!"
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-              >
-                {copyResult.isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied URL!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy URL
-                  </>
-                )}
-              </Button>
+              />
               <Button
                 variant="outline"
                 size="sm"

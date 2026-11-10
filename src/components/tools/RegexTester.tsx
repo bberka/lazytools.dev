@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertCircle, Check, Copy, SearchCode, Trash2, Wand2 } from 'lucide-react';
+import { AlertCircle, SearchCode, Trash2, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TooltipSimple } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 import { explainRegex, testRegex, toFlagString, type RegexFlags } from '@/lib/tools/regex-tester';
 
@@ -113,7 +113,6 @@ export function RegexTester() {
     dotAll: false,
     unicode: false,
   });
-  const copy = useCopyToClipboard();
 
   const flagString = toFlagString(flags);
   const { isValid, error, matches } = useMemo(
@@ -204,24 +203,12 @@ export function RegexTester() {
               </Select>
             </div>
 
-            <Button
-              onClick={() => copy.copyToClipboard(pattern)}
-              variant={copy.isCopied ? 'default' : 'outline'}
+            <CopyButton
+              text={pattern}
+              label="Copy pattern"
               disabled={!pattern}
               className="min-h-11 sm:min-h-10"
-            >
-              {copy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy pattern
-                </>
-              )}
-            </Button>
+            />
 
             <Button onClick={handleClear} variant="outline" className="min-h-11 sm:min-h-10">
               <Trash2 className="mr-2 h-4 w-4" />

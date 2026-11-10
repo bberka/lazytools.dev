@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -332,8 +333,6 @@ export function HtmlConverter() {
   const [exportProgress, setExportProgress] = useState('');
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   // One per copy button, so "Copied" shows only on the button that was pressed.
-  const inputCopy = useCopyToClipboard();
-  const exportCopy = useCopyToClipboard();
   const outputCopy = useCopyToClipboard();
 
   const { markdownOutput, plainTextOutput } = useMemo(() => {
@@ -526,15 +525,14 @@ export function HtmlConverter() {
                 <FileUp className="h-4 w-4" />
                 Import HTML
               </Button>
-              <Button
-                onClick={() => inputCopy.copyToClipboard(input)}
-                variant={inputCopy.isCopied ? 'default' : 'outline'}
+              <CopyButton
+                text={input}
+                label="Copy HTML"
+                errorLabel="Copy failed"
+                iconClassName="h-4 w-4"
                 size="sm"
                 disabled={!input}
-              >
-                {inputCopy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {inputCopy.isCopied ? 'Copied' : inputCopy.isError ? 'Copy failed' : 'Copy HTML'}
-              </Button>
+              />
               <Button onClick={clearInput} variant="outline" size="sm">
                 <Trash2 className="h-4 w-4" />
                 Clear
@@ -764,14 +762,13 @@ export function HtmlConverter() {
                 </Button>
               ) : null}
               {exportFormat !== 'pdf' ? (
-                <Button
-                  onClick={() => exportCopy.copyToClipboard(currentOutput)}
-                  variant={exportCopy.isCopied ? 'default' : 'outline'}
+                <CopyButton
+                  text={currentOutput}
+                  label="Copy output"
+                  errorLabel="Copy failed"
+                  iconClassName="h-4 w-4"
                   disabled={!currentOutput.trim()}
-                >
-                  {exportCopy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {exportCopy.isCopied ? 'Copied' : exportCopy.isError ? 'Copy failed' : 'Copy output'}
-                </Button>
+                />
               ) : null}
             </div>
           </CardContent>

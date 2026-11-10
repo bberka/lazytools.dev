@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -11,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertTriangle, Copy, Check, Trash2, Terminal, Code, Info } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { AlertTriangle, Trash2, Terminal, Code, Info } from 'lucide-react';
 import {
   CURL_TARGET_LANGUAGES,
   generateRequestCode,
@@ -24,7 +24,6 @@ import {
 export function CurlConverter() {
   const [input, setInput] = useState('');
   const [activeLanguage, setActiveLanguage] = useState<CurlTargetLanguage>('js-fetch');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const request = useMemo(() => (input.trim() ? parseCurl(input) : null), [input]);
 
@@ -141,25 +140,14 @@ export function CurlConverter() {
               </div>
             )}
 
-            <Button
-              onClick={() => copyToClipboard(outputCode)}
+            <CopyButton
+              text={outputCode}
+              label="Copy Snippet"
+              copiedLabel="Copied!"
               disabled={!outputCode}
               size="sm"
-              variant={isCopied ? 'default' : 'outline'}
               className="w-full sm:w-auto font-medium transition-all duration-200"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Snippet
-                </>
-              )}
-            </Button>
+            />
           </CardContent>
         </Card>
       </div>

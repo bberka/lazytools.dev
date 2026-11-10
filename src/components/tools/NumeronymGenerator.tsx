@@ -1,14 +1,14 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { Check, Copy, Hash, Trash2 } from 'lucide-react';
+import { Hash, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import {
   DEFAULT_OPTIONS,
   EXAMPLE_TEXT,
@@ -22,7 +22,6 @@ export function NumeronymGenerator() {
   const [mode, setMode] = useState<NumeronymMode>(DEFAULT_OPTIONS.mode);
   const [minLengthInput, setMinLengthInput] = useState(String(DEFAULT_OPTIONS.minLength));
   const [lowercase, setLowercase] = useState(DEFAULT_OPTIONS.lowercase);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const parsed = Number.parseInt(minLengthInput, 10);
   const minLength = Number.isFinite(parsed) ? Math.max(MIN_ALLOWED_LENGTH, parsed) : DEFAULT_OPTIONS.minLength;
@@ -129,15 +128,7 @@ export function NumeronymGenerator() {
             className="bg-muted/30 font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(output)}
-              disabled={!output}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy Result'}
-            </Button>
+            <CopyButton text={output} label="Copy Result" disabled={!output} size="sm" />
           </div>
         </CardContent>
       </Card>

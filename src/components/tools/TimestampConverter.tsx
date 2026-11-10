@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
-import { Check, Copy, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   changeUnit,
   createConverterState,
@@ -36,26 +36,18 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 function ResultCard({ title, value }: { title: string; value: string }) {
-  const copy = useCopyToClipboard();
-
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-lg">{title}</CardTitle>
-        <Button
+        <CopyButton
+          text={value}
+          label="Copy"
+          iconClassName="mr-1 h-3.5 w-3.5"
           type="button"
-          onClick={() => copy.copyToClipboard(value)}
-          variant={copy.isCopied ? 'default' : 'outline'}
           size="sm"
           aria-label={`Copy ${title}`}
-        >
-          {copy.isCopied ? (
-            <Check className="mr-1 h-3.5 w-3.5" />
-          ) : (
-            <Copy className="mr-1 h-3.5 w-3.5" />
-          )}
-          {copy.isCopied ? 'Copied' : 'Copy'}
-        </Button>
+        />
       </CardHeader>
       <CardContent>
         <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">{value}</div>

@@ -5,16 +5,15 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { Copy, Check, Trash2, ArrowLeftRight, Code, Braces } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { Trash2, ArrowLeftRight, Code, Braces } from 'lucide-react';
 import { decodeHtmlEntities, encodeHtmlEntities } from '@/lib/tools/html-encoder';
+import { CopyButton } from '@/components/CopyButton';
 
 type Mode = 'encode' | 'decode';
 
 export function HtmlEncoder() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<Mode>('encode');
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const output = useMemo(
     () => (mode === 'encode' ? encodeHtmlEntities(input) : decodeHtmlEntities(input)),
@@ -77,24 +76,13 @@ export function HtmlEncoder() {
               {output || 'Output will appear here...'}
             </pre>
             <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => copyToClipboard(output)}
+              <CopyButton
+                text={output}
+                label="Copy"
+                copiedLabel="Copied!"
                 disabled={!output}
                 size="sm"
-                variant={isCopied ? "default" : "outline"}
-              >
-                {isCopied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              />
               <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Swap

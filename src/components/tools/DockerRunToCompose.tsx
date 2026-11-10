@@ -3,26 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { downloadText } from '@/lib/files';
 import {
   COMPOSE_YAML_OPTIONS,
   EXAMPLE_DOCKER_RUN,
   convertDockerRun,
 } from '@/lib/tools/docker-run-to-compose';
-import {
-  AlertTriangle,
-  Check,
-  Container,
-  Copy,
-  Download,
-  FileCode,
-  Info,
-  Trash2,
-  Wand2,
-} from 'lucide-react';
+import { AlertTriangle, Container, Download, FileCode, Info, Trash2, Wand2 } from 'lucide-react';
 
 type YamlModule = typeof import('js-yaml');
 
@@ -36,7 +26,6 @@ export function DockerRunToCompose() {
   const [input, setInput] = useState('');
   const [yamlModule, setYamlModule] = useState<YamlModule | null>(null);
   const [yamlLoadFailed, setYamlLoadFailed] = useState(false);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const hasInput = input.trim() !== '';
 
@@ -176,25 +165,14 @@ export function DockerRunToCompose() {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => copyToClipboard(yamlText)}
+                  <CopyButton
+                    text={yamlText}
+                    label="Copy YAML"
+                    copiedLabel="Copied!"
                     disabled={!yamlText}
                     size="sm"
-                    variant={isCopied ? 'default' : 'outline'}
                     className="font-medium transition-all duration-200"
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy YAML
-                      </>
-                    )}
-                  </Button>
+                  />
                   <Button
                     onClick={handleDownload}
                     disabled={!yamlText}

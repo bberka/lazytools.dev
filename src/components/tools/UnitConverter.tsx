@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowRightLeft, Check, Copy, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   UNIT_CATEGORIES,
   convertUnits,
@@ -33,7 +33,6 @@ export function UnitConverter() {
   const [inputValue, setInputValue] = useState('1');
   const [fromUnitId, setFromUnitId] = useState('meter');
   const [toUnitId, setToUnitId] = useState('foot');
-  const copyResult = useCopyToClipboard();
 
   const category = useMemo(() => getUnitCategory(categoryId), [categoryId]);
 
@@ -180,23 +179,7 @@ export function UnitConverter() {
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
-            <Button
-              onClick={() => copyResult.copyToClipboard(result.value)}
-              variant={copyResult.isCopied ? 'default' : 'outline'}
-              disabled={!result.value}
-            >
-              {copyResult.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy result
-                </>
-              )}
-            </Button>
+            <CopyButton text={result.value} label="Copy result" disabled={!result.value} />
           </div>
         </CardContent>
       </Card>

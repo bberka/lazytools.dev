@@ -6,6 +6,8 @@
  * they run in Node as well as in the browser.
  */
 
+import { lineEnding, splitLines } from '@/lib/text';
+
 export interface NatoEntry {
   /** The letter or digit. */
   symbol: string;
@@ -101,16 +103,6 @@ function baseLetter(char: string): string {
   if (folded) return folded;
   const stripped = char.normalize('NFD').replace(/\p{M}+/gu, '');
   return /^[A-Za-z]$/.test(stripped) ? stripped.toUpperCase() : char;
-}
-
-function splitLines(text: string): string[] {
-  const lines = text.split(/\r\n|\r|\n/);
-  if (lines[lines.length - 1] === '') lines.pop();
-  return lines;
-}
-
-function lineEnding(text: string): string {
-  return text.includes('\r\n') ? '\r\n' : '\n';
 }
 
 function encodeLine(line: string, options: EncodeOptions): string {

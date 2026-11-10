@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
@@ -16,7 +16,7 @@ import {
   AlertCircle,
   FileDown,
 } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
 import { getAudioContextClass } from '@/lib/web-audio';
@@ -111,16 +111,11 @@ function getSpeechRecognitionClass(): SpeechRecognitionConstructor | null {
   return win.SpeechRecognition ?? win.webkitSpeechRecognition ?? null;
 }
 
-// Whether the browser can recognize speech never changes while the page is open, so there is nothing to subscribe to.
-const subscribeToNothing = () => () => {};
 const canRecognizeSpeech = () => getSpeechRecognitionClass() !== null;
 
 export function SpeechToText() {
-  // The prerendered page cannot know the browser, so it counts as supported
-  // there and the real answer follows once the page is live. A useState
-  // initializer gave a first client render that differed from the prerendered
-  // HTML in every browser without speech recognition.
-  const isSupported = useSyncExternalStore(subscribeToNothing, canRecognizeSpeech, () => true);
+  // Counts as supported in the prerendered page; the real answer follows once it is live.
+  const isSupported = useBrowserFeature(canRecognizeSpeech, true);
 
   const [isListening, setIsListening] = useState(false);
   // From the press of Start Recording until the recognizer reports that it is running.

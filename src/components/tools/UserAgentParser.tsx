@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,13 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCopyToClipboard } from '@/hooks';
 import {
   Bot,
-  Check,
   CircleAlert,
   Cog,
-  Copy,
   Globe,
   Info,
   Layers,
@@ -130,7 +128,6 @@ export function UserAgentParser() {
   const [hints, setHints] = useState<ClientHints | null>(null);
   const [hintsChecked, setHintsChecked] = useState(false);
 
-  const copyJson = useCopyToClipboard();
 
   const outcome = useMemo(() => parseUserAgent(input), [input]);
   const json = useMemo(() => (outcome.ok ? resultToJson(outcome.result) : ''), [outcome]);
@@ -243,15 +240,13 @@ export function UserAgentParser() {
                   <MonitorSmartphone className="h-5 w-5 text-primary" />
                   Parsed result
                 </CardTitle>
-                <Button
-                  onClick={() => copyJson.copyToClipboard(json)}
-                  variant={copyJson.isCopied ? 'default' : 'outline'}
+                <CopyButton
+                  text={json}
+                  label="Copy JSON"
+                  iconClassName="mr-1 h-3.5 w-3.5"
                   size="sm"
                   className="h-8"
-                >
-                  {copyJson.isCopied ? <Check className="mr-1 h-3.5 w-3.5" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
-                  {copyJson.isCopied ? 'Copied' : 'Copy JSON'}
-                </Button>
+                />
               </div>
               <CardDescription className="break-words">{summarise(result)}</CardDescription>
             </CardHeader>

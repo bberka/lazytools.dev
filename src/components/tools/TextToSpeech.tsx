@@ -6,7 +6,6 @@ import {
   useRef,
   useCallback,
   useMemo,
-  useSyncExternalStore,
   type KeyboardEvent,
 } from 'react';
 import { Button } from '../ui/button';
@@ -29,7 +28,7 @@ import {
   ClipboardPaste,
   AlertCircle,
 } from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks';
+import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   describeSpeechError,
@@ -43,8 +42,6 @@ function getSynthesis(): SpeechSynthesis | null {
   return window.speechSynthesis;
 }
 
-// Whether the browser can speak never changes while the page is open, so there is nothing to subscribe to.
-const subscribeToNothing = () => () => {};
 const canSpeak = () => getSynthesis() !== null && typeof SpeechSynthesisUtterance !== 'undefined';
 
 export function TextToSpeech() {
@@ -66,9 +63,8 @@ export function TextToSpeech() {
   const [isReaderMode, setIsReaderMode] = useState(false);
   const [error, setError] = useState('');
 
-  // The prerendered page cannot know the browser, so it counts as supported
-  // there and the real answer follows once the page is live.
-  const isSupported = useSyncExternalStore(subscribeToNothing, canSpeak, () => true);
+  // Counts as supported in the prerendered page; the real answer follows once it is live.
+  const isSupported = useBrowserFeature(canSpeak, true);
 
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 

@@ -2,17 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
   ArrowLeftRight,
-  Check,
   CheckCircle2,
-  Copy,
   FileDiff,
   Info,
   Sparkles,
@@ -192,8 +190,6 @@ export function JsonDiff() {
   const [rightText, setRightText] = useState('');
   const [ignoreArrayOrder, setIgnoreArrayOrder] = useState(false);
   const [showUnchanged, setShowUnchanged] = useState(false);
-  const copyReport = useCopyToClipboard();
-  const copyPatch = useCopyToClipboard();
 
   const comparison = useMemo(
     () => compareJsonText(leftText, rightText, { ignoreArrayOrder, showUnchanged }),
@@ -374,25 +370,21 @@ export function JsonDiff() {
               {result.entries.length > 0 && (
                 <>
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <Button
-                      onClick={() => copyReport.copyToClipboard(formatReport(result))}
-                      variant={copyReport.isCopied ? 'default' : 'outline'}
+                    <CopyButton
+                      text={formatReport(result)}
+                      label="Copy report"
+                      copiedLabel="Copied!"
                       size="sm"
                       className="min-h-11 sm:min-h-9"
-                    >
-                      {copyReport.isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                      {copyReport.isCopied ? 'Copied!' : 'Copy report'}
-                    </Button>
-                    <Button
-                      onClick={() => copyPatch.copyToClipboard(formatPatch(result.patch))}
-                      variant={copyPatch.isCopied ? 'default' : 'outline'}
+                    />
+                    <CopyButton
+                      text={formatPatch(result.patch)}
+                      label="Copy JSON Patch"
+                      copiedLabel="Copied!"
                       size="sm"
                       className="min-h-11 sm:min-h-9"
                       disabled={result.patch.length === 0}
-                    >
-                      {copyPatch.isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                      {copyPatch.isCopied ? 'Copied!' : 'Copy JSON Patch'}
-                    </Button>
+                    />
                   </div>
 
                   <div

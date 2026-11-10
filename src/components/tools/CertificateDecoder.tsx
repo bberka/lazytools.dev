@@ -2,14 +2,21 @@
 
 import { useState, useCallback, useRef } from 'react';
 import {
-  Shield, Upload, Trash2, AlertTriangle, CheckCircle,
-  Clock, KeyRound, Lock, FileCode, Copy, Check,
+  Shield,
+  Upload,
+  Trash2,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  KeyRound,
+  Lock,
+  FileCode,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { useCopyToClipboard } from '@/hooks';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { readFileAsArrayBuffer } from '@/lib/files';
 import {
@@ -35,9 +42,6 @@ export function CertificateDecoder() {
   const [certificateCount, setCertificateCount] = useState(1);
   const [fps, setFps] = useState<CertificateFingerprints | null>(null);
   const [error, setError] = useState('');
-  const copyFp1 = useCopyToClipboard();
-  const copyFp256 = useCopyToClipboard();
-  const copySn = useCopyToClipboard();
 
   // Reading a file and computing fingerprints are asynchronous. Every input
   // that is shown takes a new number, and so does every file read; a result is
@@ -244,15 +248,13 @@ export function CertificateDecoder() {
                 <span className="text-muted-foreground w-32 shrink-0 text-sm">Serial Number</span>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
                   <code className="font-mono text-xs break-all">{cert.serialNumber}</code>
-                  <Button
+                  <CopyButton
+                    text={cert.serialNumber}
+                    iconClassName="h-3 w-3"
                     size="sm"
-                    variant={copySn.isCopied ? 'default' : 'outline'}
                     className="h-6 w-6 p-0 shrink-0"
-                    onClick={() => copySn.copyToClipboard(cert.serialNumber)}
                     aria-label="Copy serial number"
-                  >
-                    {copySn.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                  />
                 </div>
               </div>
             </CardContent>
@@ -306,30 +308,26 @@ export function CertificateDecoder() {
                   <div className="text-muted-foreground text-xs mb-1">SHA-1</div>
                   <div className="flex items-start gap-2">
                     <code className="font-mono text-xs break-all flex-1">{fps.sha1}</code>
-                    <Button
+                    <CopyButton
+                      text={fps.sha1}
+                      iconClassName="h-3 w-3"
                       size="sm"
-                      variant={copyFp1.isCopied ? 'default' : 'outline'}
                       className="h-6 w-6 p-0 shrink-0"
-                      onClick={() => copyFp1.copyToClipboard(fps.sha1)}
                       aria-label="Copy SHA-1 fingerprint"
-                    >
-                      {copyFp1.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    </Button>
+                    />
                   </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground text-xs mb-1">SHA-256</div>
                   <div className="flex items-start gap-2">
                     <code className="font-mono text-xs break-all flex-1">{fps.sha256}</code>
-                    <Button
+                    <CopyButton
+                      text={fps.sha256}
+                      iconClassName="h-3 w-3"
                       size="sm"
-                      variant={copyFp256.isCopied ? 'default' : 'outline'}
                       className="h-6 w-6 p-0 shrink-0"
-                      onClick={() => copyFp256.copyToClipboard(fps.sha256)}
                       aria-label="Copy SHA-256 fingerprint"
-                    >
-                      {copyFp256.isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    </Button>
+                    />
                   </div>
                 </div>
               </CardContent>

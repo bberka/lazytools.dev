@@ -1,8 +1,9 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { AlertTriangle, Check, Copy, Download, FileCode, Trash2, Wand2 } from 'lucide-react';
+import { AlertTriangle, Download, FileCode, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import { downloadText } from '@/lib/files';
 import {
   beautifyCss,
@@ -68,7 +68,6 @@ export function CssMinifierFormatter() {
   const [mode, setMode] = useState<Mode>('minify');
   const [indent, setIndent] = useState('2');
   const [keepImportant, setKeepImportant] = useState(false);
-  const copy = useCopyToClipboard();
 
   const deferredInput = useDeferredValue(input);
   const result = useMemo(() => {
@@ -234,24 +233,13 @@ export function CssMinifierFormatter() {
           />
 
           <div className="flex flex-wrap gap-2">
-            <Button
+            <CopyButton
+              text={output}
+              label="Copy"
+              errorLabel="Copy failed, try again"
               type="button"
               disabled={!output}
-              variant={copy.isCopied ? 'default' : 'outline'}
-              onClick={() => copy.copyToClipboard(output)}
-            >
-              {copy.isCopied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  {copy.isError ? 'Copy failed, try again' : 'Copy'}
-                </>
-              )}
-            </Button>
+            />
             <Button type="button" variant="outline" disabled={!output} onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" />
               Download .css

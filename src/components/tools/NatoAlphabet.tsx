@@ -1,14 +1,14 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { ArrowLeftRight, Check, Copy, Radio, Trash2 } from 'lucide-react';
+import { ArrowLeftRight, Radio, Trash2 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks';
 import {
   DEFAULT_DECODE_OPTIONS,
   DEFAULT_ENCODE_OPTIONS,
@@ -65,7 +65,6 @@ export function NatoAlphabet() {
   const [wordCase, setWordCase] = useState<WordCase>(DEFAULT_ENCODE_OPTIONS.wordCase);
   const [keepUnknown, setKeepUnknown] = useState(true);
   const [lowercase, setLowercase] = useState(DEFAULT_DECODE_OPTIONS.lowercase);
-  const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   const deferredText = useDeferredValue(text);
   const output = useMemo(
@@ -183,15 +182,7 @@ export function NatoAlphabet() {
             className="bg-muted/30"
           />
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => copyToClipboard(output)}
-              disabled={!output}
-              size="sm"
-              variant={isCopied ? 'default' : 'outline'}
-            >
-              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {isCopied ? 'Copied' : 'Copy Result'}
-            </Button>
+            <CopyButton text={output} label="Copy Result" disabled={!output} size="sm" />
             <Button
               onClick={() => {
                 setText(output);

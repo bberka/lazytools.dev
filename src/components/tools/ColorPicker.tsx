@@ -5,7 +5,6 @@ import {
   useId,
   useMemo,
   useState,
-  useSyncExternalStore,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
@@ -18,6 +17,7 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react';
+import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { useCopyToClipboard } from '@/hooks';
+import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
 import { TooltipSimple } from '@/components/ui/tooltip';
 import {
   colorValues,
@@ -77,10 +77,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
 
-// The EyeDropper API never appears or disappears while the page is open.
-const subscribeToNothing = () => () => {};
 const hasEyeDropper = () => 'EyeDropper' in window;
-const noEyeDropper = () => false;
 
 function ColorValue({
   label,
@@ -89,8 +86,6 @@ function ColorValue({
   label: string;
   value: string;
 }) {
-  const copy = useCopyToClipboard();
-
   return (
     <div className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-3 py-3 transition-colors hover:border-border hover:bg-muted/50">
       <div className="min-w-0 flex-1 space-y-1">
@@ -100,19 +95,13 @@ function ColorValue({
         <p className="truncate font-mono text-sm text-foreground">{value}</p>
       </div>
       <TooltipSimple content={`Copy ${label}`}>
-        <Button
+        <CopyButton
+          text={value}
+          iconClassName="h-4 w-4"
           size="icon"
-          variant={copy.isCopied ? 'default' : 'outline'}
           className="h-9 w-9 rounded-xl"
-          onClick={() => copy.copyToClipboard(value)}
           aria-label={`Copy ${label}`}
-        >
-          {copy.isCopied ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </Button>
+        />
       </TooltipSimple>
     </div>
   );
@@ -142,7 +131,7 @@ export function ColorPicker() {
   const [saveFeedbackVisible, triggerSaveFeedback] = useFeedback();
   const [pickFeedbackVisible, triggerPickFeedback] = useFeedback();
   const [resetFeedbackVisible, triggerResetFeedback] = useFeedback();
-  const eyeDropperSupported = useSyncExternalStore(subscribeToNothing, hasEyeDropper, noEyeDropper);
+  const eyeDropperSupported = useBrowserFeature(hasEyeDropper, false);
 
   const hex = rgbToHex(rgb);
   const picker = useMemo(() => pickerPosition(rgb, dragged), [rgb, dragged]);
@@ -501,18 +490,14 @@ export function ColorPicker() {
 }
 
 function CopyThemeButton({ theme }: { theme: ThemeEntry[] }) {
-  const copy = useCopyToClipboard();
-
   return (
-    <Button
+    <CopyButton
+      text={themeCss(theme)}
+      label="Copy CSS"
+      iconClassName="h-4 w-4"
       size="sm"
-      variant={copy.isCopied ? 'default' : 'outline'}
       className="shrink-0 rounded-xl"
-      onClick={() => copy.copyToClipboard(themeCss(theme))}
-    >
-      {copy.isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copy.isCopied ? 'Copied' : 'Copy CSS'}
-    </Button>
+    />
   );
 }
 
