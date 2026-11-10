@@ -85,7 +85,8 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
         <CardHeader>
           <CardTitle>Date Difference Calculator</CardTitle>
           <CardDescription>
-            Compare two dates and see the exact calendar difference plus total days, weeks, and months.
+            Compare two dates and see the exact calendar difference plus total days, weeks, and
+            months.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -184,7 +185,8 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                   Notes
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Calendar difference uses exact year/month/day boundaries rather than just dividing by 30 or 365.
+                  Calendar difference uses exact year/month/day boundaries rather than just dividing
+                  by 30 or 365.
                 </div>
               </div>
             </div>

@@ -4,7 +4,13 @@ import { useState, useRef, useEffect, useId } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Download, Stamp } from 'lucide-react';
@@ -470,13 +476,19 @@ export function PdfWatermark() {
       </Card>
 
       {loadError && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {loadError}
         </div>
       )}
 
       {rendering && (
-        <div role="status" className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3">
+        <div
+          role="status"
+          className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3"
+        >
           <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Generating live preview...</p>
         </div>
@@ -566,10 +578,10 @@ export function PdfWatermark() {
                               aria-pressed={textColor.toLowerCase() === c.value}
                               onClick={() => setTextColor(c.value)}
                               className={cn(
-                                "w-5 h-5 rounded-full border border-black/10 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                'w-5 h-5 rounded-full border border-black/10 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                 textColor.toLowerCase() === c.value
-                                  ? "scale-125 border-primary shadow-sm"
-                                  : "hover:scale-115"
+                                  ? 'scale-125 border-primary shadow-sm'
+                                  : 'hover:scale-115'
                               )}
                               style={{ backgroundColor: c.value }}
                             />
@@ -593,7 +605,8 @@ export function PdfWatermark() {
                         <span>Font Size</span>
                         <span>{fontSize}px</span>
                       </div>
-                      <Slider aria-label="Font Size"
+                      <Slider
+                        aria-label="Font Size"
                         value={fontSize}
                         onChange={(val) => setFontSize(val)}
                         min={12}
@@ -608,7 +621,8 @@ export function PdfWatermark() {
                         <span>Angle (Degrees)</span>
                         <span>{textAngle}°</span>
                       </div>
-                      <Slider aria-label="Angle (Degrees)"
+                      <Slider
+                        aria-label="Angle (Degrees)"
                         value={textAngle}
                         onChange={(val) => setTextAngle(val)}
                         min={-90}
@@ -632,7 +646,10 @@ export function PdfWatermark() {
                         onDrop={imageIntake.dropzoneProps.onDrop}
                         className="flex items-center gap-3 text-xs text-muted-foreground"
                       >
-                        <input {...imageIntake.inputProps} aria-label="Upload watermark image (PNG/JPG)" />
+                        <input
+                          {...imageIntake.inputProps}
+                          aria-label="Upload watermark image (PNG/JPG)"
+                        />
                         <Button
                           type="button"
                           variant="ghost"
@@ -659,7 +676,8 @@ export function PdfWatermark() {
                           <span>Scale</span>
                           <span>{imageScale}%</span>
                         </div>
-                        <Slider aria-label="Scale"
+                        <Slider
+                          aria-label="Scale"
                           value={imageScale}
                           onChange={(val) => setImageScale(val)}
                           min={10}
@@ -679,7 +697,8 @@ export function PdfWatermark() {
                       <span>Opacity (Transparency)</span>
                       <span>{opacity}%</span>
                     </div>
-                    <Slider aria-label="Opacity (Transparency)"
+                    <Slider
+                      aria-label="Opacity (Transparency)"
                       value={opacity}
                       onChange={(val) => setOpacity(val)}
                       min={5}
@@ -745,7 +764,10 @@ export function PdfWatermark() {
                 </div>
 
                 {exportError && (
-                  <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+                  <div
+                    role="alert"
+                    className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+                  >
                     <strong>Error:</strong> {exportError}
                   </div>
                 )}
@@ -791,11 +813,15 @@ export function PdfWatermark() {
               <canvas ref={previewCanvasRef} className="block max-w-full h-auto" />
 
               {/* Foreground interactive watermark render page */}
-              <canvas ref={overlayCanvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+              <canvas
+                ref={overlayCanvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+              />
             </div>
 
             <div className="text-xs text-muted-foreground mt-2 text-center max-w-md">
-              The preview draws the watermark on page 1 of your document in real-time. Settings will apply to all target pages when exporting.
+              The preview draws the watermark on page 1 of your document in real-time. Settings will
+              apply to all target pages when exporting.
             </div>
           </div>
         </div>

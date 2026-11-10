@@ -585,10 +585,9 @@ test.describe('grid navigation: one grid', () => {
       for (let count = 1; count <= 13; count++) {
         for (let current = -1; current < count; current++) {
           for (const key of ARROWS) {
-            expect(
-              move(current, key, [count], columns),
-              `${key} from ${current} of ${count}`
-            ).toBe(moveInFlatGrid(current, key, count, columns));
+            expect(move(current, key, [count], columns), `${key} from ${current} of ${count}`).toBe(
+              moveInFlatGrid(current, key, count, columns)
+            );
           }
         }
       }
@@ -823,7 +822,9 @@ test.describe('grid navigation: reading the columns off the page', () => {
   });
 
   test('does not count named lines', () => {
-    expect(countGridColumns('[full-start] 100px [content-start content-end] 200px [full-end]')).toBe(2);
+    expect(
+      countGridColumns('[full-start] 100px [content-start content-end] 200px [full-end]')
+    ).toBe(2);
   });
 
   test('falls back to one column when the value names none', () => {

@@ -66,7 +66,13 @@ test.describe('prepareSvg', () => {
   });
 
   test('refuses anything that does not start with an svg element', () => {
-    for (const source of ['hello', '<div><svg/></div>', '<svgfoo/>', '{"svg": true}', '<svg width="1"']) {
+    for (const source of [
+      'hello',
+      '<div><svg/></div>',
+      '<svgfoo/>',
+      '{"svg": true}',
+      '<svg width="1"',
+    ]) {
       const result = prepareSvg(source);
       expect(result.ok).toBe(false);
       expect(result).toMatchObject({ error: expect.stringContaining('<svg>') });
@@ -78,14 +84,14 @@ test.describe('prepareSvg', () => {
     // that as an image, and the tool used to do nothing at all.
     const result = prepared('<svg width="10" height="20"><rect width="10" height="20"/></svg>');
 
-    expect(result.markup).toBe(`<svg ${XMLNS} width="10" height="20"><rect width="10" height="20"/></svg>`);
+    expect(result.markup).toBe(
+      `<svg ${XMLNS} width="10" height="20"><rect width="10" height="20"/></svg>`
+    );
     expect(result).toMatchObject({ width: 10, height: 20 });
   });
 
   test('adds the XLink namespace when xlink attributes are used without it', () => {
-    const result = prepared(
-      `<svg ${XMLNS} width="10" height="10"><use xlink:href="#a"/></svg>`
-    );
+    const result = prepared(`<svg ${XMLNS} width="10" height="10"><use xlink:href="#a"/></svg>`);
 
     expect(result.markup).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"');
   });
@@ -101,10 +107,18 @@ test.describe('prepareSvg', () => {
     // was 0x0 and the "PNG" was an empty data URL in browsers that follow them.
     const square = prepared(`<svg ${XMLNS} viewBox="0 0 24 24"><path/></svg>`);
     expect(square).toMatchObject({ width: 150, height: 150 });
-    expect(square.markup).toBe(`<svg width="150" height="150" ${XMLNS} viewBox="0 0 24 24"><path/></svg>`);
+    expect(square.markup).toBe(
+      `<svg width="150" height="150" ${XMLNS} viewBox="0 0 24 24"><path/></svg>`
+    );
 
-    expect(prepared(`<svg ${XMLNS} viewBox="0 0 400 100"/>`)).toMatchObject({ width: 300, height: 75 });
-    expect(prepared(`<svg ${XMLNS} viewBox="0,0,100,200"/>`)).toMatchObject({ width: 75, height: 150 });
+    expect(prepared(`<svg ${XMLNS} viewBox="0 0 400 100"/>`)).toMatchObject({
+      width: 300,
+      height: 75,
+    });
+    expect(prepared(`<svg ${XMLNS} viewBox="0,0,100,200"/>`)).toMatchObject({
+      width: 75,
+      height: 150,
+    });
   });
 
   test('uses the CSS default of 300x150 when the SVG states nothing', () => {
@@ -174,8 +188,12 @@ test.describe('prepareSvg', () => {
     const result = prepared(svg);
 
     expect(result).toMatchObject({ width: 150, height: 150 });
-    expect(result.markup).toContain(`<svg ${XMLNS} width="150" height="150" viewBox="0 0 10 10"><g/></svg>`);
-    expect(result.markup.startsWith('<?xml version="1.0"?>\n<!-- made by <svg> export -->')).toBe(true);
+    expect(result.markup).toContain(
+      `<svg ${XMLNS} width="150" height="150" viewBox="0 0 10 10"><g/></svg>`
+    );
+    expect(result.markup.startsWith('<?xml version="1.0"?>\n<!-- made by <svg> export -->')).toBe(
+      true
+    );
   });
 
   test('is not confused by quotes and angle brackets inside attribute values', () => {
@@ -192,6 +210,8 @@ test.describe('prepareSvg', () => {
   test('gives up on a prolog that never ends instead of scanning forever', () => {
     expect(prepareSvg('<!-- unfinished <svg/>').ok).toBe(false);
     expect(prepareSvg('<?xml version="1.0" <svg/>').ok).toBe(false);
-    expect(prepareSvg('<?xml version="1.0"?><!DOCTYPE svg [ <!ENTITY a "b"> <svg/>').ok).toBe(false);
+    expect(prepareSvg('<?xml version="1.0"?><!DOCTYPE svg [ <!ENTITY a "b"> <svg/>').ok).toBe(
+      false
+    );
   });
 });

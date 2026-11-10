@@ -83,8 +83,8 @@ export function MimeTypesReference() {
           MIME Types Reference
         </CardTitle>
         <CardDescription>
-          Find the Content-Type for a file extension, or the extensions for a type. Click an extension
-          or a type to copy it.
+          Find the Content-Type for a file extension, or the extensions for a type. Click an
+          extension or a type to copy it.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -172,15 +172,26 @@ export function MimeTypesReference() {
             </Button>
           </div>
         ) : (
-          <div className="max-h-[32rem] overflow-auto rounded-md border" role="region" aria-label="MIME types table" tabIndex={0}>
+          <div
+            className="max-h-[32rem] overflow-auto rounded-md border"
+            role="region"
+            aria-label="MIME types table"
+            tabIndex={0}
+          >
             <table className="w-full border-collapse text-sm">
               <caption className="sr-only">File extensions and their MIME types</caption>
               <thead>
                 <tr>
-                  <th scope="col" className="sticky top-0 bg-muted px-3 py-2 text-left font-medium text-muted-foreground">
+                  <th
+                    scope="col"
+                    className="sticky top-0 bg-muted px-3 py-2 text-left font-medium text-muted-foreground"
+                  >
                     Extension
                   </th>
-                  <th scope="col" className="sticky top-0 bg-muted px-3 py-2 text-left font-medium text-muted-foreground">
+                  <th
+                    scope="col"
+                    className="sticky top-0 bg-muted px-3 py-2 text-left font-medium text-muted-foreground"
+                  >
                     MIME type
                   </th>
                   <th
@@ -227,7 +238,9 @@ export function MimeTypesReference() {
                             {CATEGORY_LABELS[entry.category]}
                           </Badge>
                         </div>
-                        {entry.note && <p className="mt-1 px-3 text-xs text-muted-foreground">{entry.note}</p>}
+                        {entry.note && (
+                          <p className="mt-1 px-3 text-xs text-muted-foreground">{entry.note}</p>
+                        )}
                       </td>
                       <td className="hidden px-3 py-2 sm:table-cell">
                         <Badge variant="secondary">{CATEGORY_LABELS[entry.category]}</Badge>

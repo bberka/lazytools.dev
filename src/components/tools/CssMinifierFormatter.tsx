@@ -72,7 +72,8 @@ export function CssMinifierFormatter() {
   const deferredInput = useDeferredValue(input);
   const result = useMemo(() => {
     if (deferredInput.trim() === '') return null;
-    if (mode === 'minify') return minifyCss(deferredInput, { keepImportantComments: keepImportant });
+    if (mode === 'minify')
+      return minifyCss(deferredInput, { keepImportantComments: keepImportant });
     const choice = INDENT_OPTIONS.find((option) => option.value === indent)?.indent ?? 2;
     return beautifyCss(deferredInput, { indent: choice });
   }, [deferredInput, mode, indent, keepImportant]);
@@ -86,7 +87,11 @@ export function CssMinifierFormatter() {
   const handleDownload = () => {
     if (!output) return;
     try {
-      downloadText(output, mode === 'minify' ? 'styles.min.css' : 'styles.css', 'text/css;charset=utf-8');
+      downloadText(
+        output,
+        mode === 'minify' ? 'styles.min.css' : 'styles.css',
+        'text/css;charset=utf-8'
+      );
       toast.success('CSS downloaded');
     } catch {
       toast.error('Could not download the CSS');
@@ -102,8 +107,8 @@ export function CssMinifierFormatter() {
             CSS input
           </CardTitle>
           <CardDescription>
-            Paste a stylesheet. Strings, urls and calc() spacing are never changed. Everything runs in your
-            browser.
+            Paste a stylesheet. Strings, urls and calc() spacing are never changed. Everything runs
+            in your browser.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -121,7 +126,13 @@ export function CssMinifierFormatter() {
               <Wand2 className="mr-2 h-4 w-4" />
               Load example
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setInput('')} disabled={input === ''}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setInput('')}
+              disabled={input === ''}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -135,7 +146,9 @@ export function CssMinifierFormatter() {
             <div className="space-y-1.5">
               <CardTitle>Result</CardTitle>
               <CardDescription>
-                {mode === 'minify' ? 'Smallest safe output.' : 'One declaration per line, nested blocks indented.'}
+                {mode === 'minify'
+                  ? 'Smallest safe output.'
+                  : 'One declaration per line, nested blocks indented.'}
               </CardDescription>
             </div>
             <div role="group" aria-label="Mode" className="flex gap-1">
@@ -178,9 +191,13 @@ export function CssMinifierFormatter() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Switch id="css-keep-important" checked={keepImportant} onCheckedChange={setKeepImportant} />
+                <Switch
+                  id="css-keep-important"
+                  checked={keepImportant}
+                  onCheckedChange={setKeepImportant}
+                />
                 <label htmlFor="css-keep-important" className="text-sm font-medium">
-                  Keep <span className="font-mono">{"/*!"}</span> comments
+                  Keep <span className="font-mono">{'/*!'}</span> comments
                 </label>
               </div>
             )}
@@ -212,7 +229,10 @@ export function CssMinifierFormatter() {
           )}
 
           {result && result.warnings.length > 0 && (
-            <div role="alert" className="space-y-1 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+            <div
+              role="alert"
+              className="space-y-1 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"
+            >
               {result.warnings.map((warning) => (
                 <p key={warning} className="flex items-start gap-1.5 text-destructive">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />

@@ -15,7 +15,15 @@ import {
 } from '@/lib/tools/basic-auth-generator';
 import { CopyValueButton } from './CopyValueButton';
 
-function ShowHideButton({ shown, onToggle, what }: { shown: boolean; onToggle: () => void; what: string }) {
+function ShowHideButton({
+  shown,
+  onToggle,
+  what,
+}: {
+  shown: boolean;
+  onToggle: () => void;
+  what: string;
+}) {
   return (
     <Button
       type="button"
@@ -40,17 +48,27 @@ export function BasicAuthGenerator() {
   const [showDecoded, setShowDecoded] = useState(false);
 
   const hasCredentials = username !== '' || password !== '';
-  const encoded = useMemo(() => (hasCredentials ? encodeBasicAuth(username, password) : null), [hasCredentials, username, password]);
-  const snippets = useMemo(() => (encoded?.ok ? buildSnippets(username, password, url) : []), [encoded, username, password, url]);
-  const decoded = useMemo(() => (headerInput.trim() === '' ? null : decodeBasicAuth(headerInput)), [headerInput]);
+  const encoded = useMemo(
+    () => (hasCredentials ? encodeBasicAuth(username, password) : null),
+    [hasCredentials, username, password]
+  );
+  const snippets = useMemo(
+    () => (encoded?.ok ? buildSnippets(username, password, url) : []),
+    [encoded, username, password, url]
+  );
+  const decoded = useMemo(
+    () => (headerInput.trim() === '' ? null : decodeBasicAuth(headerInput)),
+    [headerInput]
+  );
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm sm:p-4">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <p>
-          <strong>Basic auth is not encryption.</strong> The header is only Base64, which anyone can reverse, so send
-          it over HTTPS and never share it. Everything here runs in your browser; nothing is uploaded.
+          <strong>Basic auth is not encryption.</strong> The header is only Base64, which anyone can
+          reverse, so send it over HTTPS and never share it. Everything here runs in your browser;
+          nothing is uploaded.
         </p>
       </div>
 
@@ -60,7 +78,9 @@ export function BasicAuthGenerator() {
             <KeyRound className="h-5 w-5 text-primary" />
             Build a header
           </CardTitle>
-          <CardDescription>Credentials are UTF-8 encoded, then Base64 encoded (RFC 7617).</CardDescription>
+          <CardDescription>
+            Credentials are UTF-8 encoded, then Base64 encoded (RFC 7617).
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -93,7 +113,11 @@ export function BasicAuthGenerator() {
                   spellCheck={false}
                   placeholder="password"
                 />
-                <ShowHideButton shown={showPassword} onToggle={() => setShowPassword((value) => !value)} what="password" />
+                <ShowHideButton
+                  shown={showPassword}
+                  onToggle={() => setShowPassword((value) => !value)}
+                  what="password"
+                />
               </div>
             </div>
           </div>
@@ -162,7 +186,10 @@ export function BasicAuthGenerator() {
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {snippet.label}
                       </span>
-                      <CopyValueButton text={snippet.code} label={`Copy ${snippet.label} snippet`} />
+                      <CopyValueButton
+                        text={snippet.code}
+                        label={`Copy ${snippet.label} snippet`}
+                      />
                     </div>
                     <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-xs sm:text-sm">
                       {snippet.code}
@@ -198,7 +225,13 @@ export function BasicAuthGenerator() {
             className="break-all font-mono text-sm"
           />
           <div className="flex justify-end">
-            <Button type="button" variant="outline" size="sm" onClick={() => setHeaderInput('')} disabled={headerInput === ''}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setHeaderInput('')}
+              disabled={headerInput === ''}
+            >
               <Trash2 className="h-4 w-4" />
               Clear
             </Button>
@@ -211,7 +244,9 @@ export function BasicAuthGenerator() {
               <div className="flex items-center gap-2 px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <dt className="text-xs font-medium text-muted-foreground">Username</dt>
-                  <dd className="break-all font-mono text-sm">{decoded.username || <em className="text-muted-foreground">empty</em>}</dd>
+                  <dd className="break-all font-mono text-sm">
+                    {decoded.username || <em className="text-muted-foreground">empty</em>}
+                  </dd>
                 </div>
                 <CopyValueButton text={decoded.username} label="Copy username" />
               </div>
@@ -228,7 +263,11 @@ export function BasicAuthGenerator() {
                     )}
                   </dd>
                 </div>
-                <ShowHideButton shown={showDecoded} onToggle={() => setShowDecoded((value) => !value)} what="decoded password" />
+                <ShowHideButton
+                  shown={showDecoded}
+                  onToggle={() => setShowDecoded((value) => !value)}
+                  what="decoded password"
+                />
                 <CopyValueButton text={decoded.password} label="Copy password" />
               </div>
             </dl>

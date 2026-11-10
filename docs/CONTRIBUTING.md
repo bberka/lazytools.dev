@@ -242,6 +242,7 @@ npm run test:e2e:export
 If you change core features (Search, Favorites, Command Palette) or add tools, add or run the matching tests and confirm the suite passes.
 
 For manual verification:
+
 - The affected tool's main success and error paths
 - Light and dark mode
 - Mobile and desktop layouts

@@ -80,12 +80,42 @@ function withExifOrientation(jpeg: Buffer, orientation: number): Buffer {
   }
 
   const exif = Buffer.from([
-    0xff, 0xe1, 0x00, 0x22, // APP1, 34 bytes long including these two length bytes
-    0x45, 0x78, 0x69, 0x66, 0x00, 0x00, // "Exif", two zero bytes
-    0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08, // big-endian TIFF, first directory at offset 8
-    0x00, 0x01, // one entry
-    0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, orientation, 0x00, 0x00, // Orientation, one SHORT
-    0x00, 0x00, 0x00, 0x00, // no further directory
+    0xff,
+    0xe1,
+    0x00,
+    0x22, // APP1, 34 bytes long including these two length bytes
+    0x45,
+    0x78,
+    0x69,
+    0x66,
+    0x00,
+    0x00, // "Exif", two zero bytes
+    0x4d,
+    0x4d,
+    0x00,
+    0x2a,
+    0x00,
+    0x00,
+    0x00,
+    0x08, // big-endian TIFF, first directory at offset 8
+    0x00,
+    0x01, // one entry
+    0x01,
+    0x12,
+    0x00,
+    0x03,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
+    0x00,
+    orientation,
+    0x00,
+    0x00, // Orientation, one SHORT
+    0x00,
+    0x00,
+    0x00,
+    0x00, // no further directory
   ]);
 
   const afterJfif = 4 + jpeg.readUInt16BE(4);
@@ -96,14 +126,17 @@ function withExifOrientation(jpeg: Buffer, orientation: number): Buffer {
 async function textPdf(pages: string[]): Promise<Buffer> {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
-  for (const text of pages) doc.addPage([300, 200]).drawText(text, { x: 20, y: 100, size: 12, font });
+  for (const text of pages)
+    doc.addPage([300, 200]).drawText(text, { x: 20, y: 100, size: 12, font });
   return Buffer.from(await doc.save());
 }
 
 /** A .docx with one plain paragraph per string. */
 async function docxOf(paragraphs: string[]): Promise<Buffer> {
   const doc = new Document({
-    sections: [{ children: paragraphs.map((text) => new Paragraph({ children: [new TextRun(text)] })) }],
+    sections: [
+      { children: paragraphs.map((text) => new Paragraph({ children: [new TextRun(text)] })) },
+    ],
   });
   return Packer.toBuffer(doc);
 }
@@ -134,7 +167,12 @@ async function pixelsAt(image: Locator, points: [number, number][]): Promise<Rgb
     context.drawImage(img, 0, 0);
 
     return at.map(([x, y]) => {
-      const [r, g, b] = context.getImageData(Math.floor(canvas.width * x), Math.floor(canvas.height * y), 1, 1).data;
+      const [r, g, b] = context.getImageData(
+        Math.floor(canvas.width * x),
+        Math.floor(canvas.height * y),
+        1,
+        1
+      ).data;
       return [r, g, b] as [number, number, number];
     });
   }, points);
@@ -146,7 +184,9 @@ const isBlue = ([r, g, b]: Rgb) => r < 60 && g < 60 && b > 200;
 /** The text of every paragraph of a .docx, read from its main document part. */
 async function docxParagraphs(bytes: Buffer): Promise<string[]> {
   const zip = await JSZip.loadAsync(bytes);
-  expect(Object.keys(zip.files)).toEqual(expect.arrayContaining(['[Content_Types].xml', 'word/document.xml']));
+  expect(Object.keys(zip.files)).toEqual(
+    expect.arrayContaining(['[Content_Types].xml', 'word/document.xml'])
+  );
   const xml = await zip.file('word/document.xml')!.async('string');
 
   const decode = (text: string) =>
@@ -158,7 +198,9 @@ async function docxParagraphs(bytes: Buffer): Promise<string[]> {
       .replace(/&amp;/g, '&');
 
   return Array.from(xml.matchAll(/<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>|<w:p\/>/g), ([, body = '']) =>
-    Array.from(body.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g), ([, text]) => decode(text)).join('')
+    Array.from(body.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g), ([, text]) =>
+      decode(text)
+    ).join('')
   );
 }
 
@@ -171,7 +213,9 @@ interface PdfLine {
 }
 
 /** The text of a PDF as pdf.js reads it, one entry per page, lines from the top down. */
-async function pdfLines(bytes: Buffer): Promise<{ width: number; height: number; lines: PdfLine[] }[]> {
+async function pdfLines(
+  bytes: Buffer
+): Promise<{ width: number; height: number; lines: PdfLine[] }[]> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
   const pdf = await loadingTask.promise;
@@ -190,7 +234,10 @@ async function pdfLines(bytes: Buffer): Promise<{ width: number; height: number;
         if (!('str' in item) || item.str === '') continue;
         const x = item.transform[4];
         const y = Math.round(item.transform[5] * 100) / 100;
-        runsByBaseline.set(y, [...(runsByBaseline.get(y) ?? []), { str: item.str, x, right: x + item.width }]);
+        runsByBaseline.set(y, [
+          ...(runsByBaseline.get(y) ?? []),
+          { str: item.str, x, right: x + item.width },
+        ]);
       }
 
       const lines = Array.from(runsByBaseline, ([y, runs]) => {
@@ -228,11 +275,17 @@ async function dropFiles(page: Page, target: Locator, files: FilePayload[]): Pro
     (items) => {
       const transfer = new DataTransfer();
       for (const item of items) {
-        transfer.items.add(new File([new Uint8Array(item.bytes)], item.name, { type: item.mimeType }));
+        transfer.items.add(
+          new File([new Uint8Array(item.bytes)], item.name, { type: item.mimeType })
+        );
       }
       return transfer;
     },
-    files.map((file) => ({ name: file.name, mimeType: file.mimeType, bytes: Array.from(file.buffer) }))
+    files.map((file) => ({
+      name: file.name,
+      mimeType: file.mimeType,
+      bytes: Array.from(file.buffer),
+    }))
   );
 
   await target.dispatchEvent('dragover', { dataTransfer });
@@ -297,18 +350,24 @@ test.describe('PDF conversion tools', () => {
       await page.getByRole('tab', { name: 'To Word' }).click();
       await expectSelectedTab(page, 'To Word');
       await expect(page).toHaveURL(/\/tools\/pdf-to-word\/$/);
-      await expect(panel).toContainText('Extract text from a PDF and convert it to a Word (.docx) document.');
+      await expect(panel).toContainText(
+        'Extract text from a PDF and convert it to a Word (.docx) document.'
+      );
 
       // The tab list is a keyboard widget: arrows, Home and End move and select.
       await page.keyboard.press('ArrowRight');
       await expectSelectedTab(page, 'From Word');
       await expect(page).toHaveURL(/\/tools\/word-to-pdf\/$/);
-      await expect(panel.getByRole('button', { name: 'Click to upload a Word Document (.docx)' })).toBeVisible();
+      await expect(
+        panel.getByRole('button', { name: 'Click to upload a Word Document (.docx)' })
+      ).toBeVisible();
 
       await page.keyboard.press('End');
       await expectSelectedTab(page, 'From Image');
       await expect(page).toHaveURL(/\/tools\/image-to-pdf\/$/);
-      await expect(panel.getByRole('button', { name: 'Click to upload JPEG or PNG images' })).toBeVisible();
+      await expect(
+        panel.getByRole('button', { name: 'Click to upload JPEG or PNG images' })
+      ).toBeVisible();
 
       await page.keyboard.press('Home');
       await expectSelectedTab(page, 'To Image');
@@ -319,10 +378,34 @@ test.describe('PDF conversion tools', () => {
     });
 
     for (const route of [
-      { slug: 'pdf-to-image', heading: 'PDF to Image', tab: 'To Image', prompt: 'Click to upload a PDF', text: 'Convert PDF pages into high-quality PNG images' },
-      { slug: 'pdf-to-word', heading: 'PDF to Word', tab: 'To Word', prompt: 'Click to upload a PDF', text: 'Extract text from a PDF and convert it to a Word (.docx) document.' },
-      { slug: 'word-to-pdf', heading: 'Word to PDF', tab: 'From Word', prompt: 'Click to upload a Word Document (.docx)', text: 'Extract text from a Word (.docx) document and generate a PDF.' },
-      { slug: 'image-to-pdf', heading: 'Image to PDF', tab: 'From Image', prompt: 'Click to upload JPEG or PNG images', text: 'Convert one or more images into a PDF document' },
+      {
+        slug: 'pdf-to-image',
+        heading: 'PDF to Image',
+        tab: 'To Image',
+        prompt: 'Click to upload a PDF',
+        text: 'Convert PDF pages into high-quality PNG images',
+      },
+      {
+        slug: 'pdf-to-word',
+        heading: 'PDF to Word',
+        tab: 'To Word',
+        prompt: 'Click to upload a PDF',
+        text: 'Extract text from a PDF and convert it to a Word (.docx) document.',
+      },
+      {
+        slug: 'word-to-pdf',
+        heading: 'Word to PDF',
+        tab: 'From Word',
+        prompt: 'Click to upload a Word Document (.docx)',
+        text: 'Extract text from a Word (.docx) document and generate a PDF.',
+      },
+      {
+        slug: 'image-to-pdf',
+        heading: 'Image to PDF',
+        tab: 'From Image',
+        prompt: 'Click to upload JPEG or PNG images',
+        text: 'Convert one or more images into a PDF document',
+      },
     ]) {
       test(`/tools/${route.slug} opens the ${route.tab} tab`, async ({ page }) => {
         const response = await page.goto(`/tools/${route.slug}`);
@@ -337,16 +420,25 @@ test.describe('PDF conversion tools', () => {
       });
     }
 
-    test('is reachable from the home page and converts in one tab after another', async ({ page }) => {
+    test('is reachable from the home page and converts in one tab after another', async ({
+      page,
+    }) => {
       await page.goto('/');
       await page.getByPlaceholder('Search tools...').fill('PDF Converter');
-      await page.getByRole('link', { name: /PDF Converter/ }).first().click();
+      await page
+        .getByRole('link', { name: /PDF Converter/ })
+        .first()
+        .click();
 
       await expect(page).toHaveURL(/\/tools\/pdf-tools\/$/);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('PDF Converter');
 
       const panel = page.getByRole('tabpanel');
-      const pdf = { name: 'memo.pdf', mimeType: PDF_MIME, buffer: await textPdf(['Memo for the team', 'Second sheet']) };
+      const pdf = {
+        name: 'memo.pdf',
+        mimeType: PDF_MIME,
+        buffer: await textPdf(['Memo for the team', 'Second sheet']),
+      };
 
       await panel.getByLabel('Upload a PDF').setInputFiles(pdf);
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
@@ -373,10 +465,16 @@ test.describe('PDF conversion tools', () => {
 
       await page.getByRole('tab', { name: 'From Word' }).click();
       await expect(page).toHaveURL(/\/tools\/word-to-pdf\/$/);
-      await expect(page.getByRole('tabpanel').getByRole('button', { name: 'Click to upload a Word Document (.docx)' })).toBeVisible();
+      await expect(
+        page
+          .getByRole('tabpanel')
+          .getByRole('button', { name: 'Click to upload a Word Document (.docx)' })
+      ).toBeVisible();
 
       // Either the tool's own name or the name of the whole page would be true; "PDF to Image" is not.
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Word to PDF|PDF Converter)$/);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+        /^(Word to PDF|PDF Converter)$/
+      );
       await expect(page).toHaveTitle(/^(Word to PDF|PDF Converter) \| /);
     });
   });
@@ -384,16 +482,24 @@ test.describe('PDF conversion tools', () => {
   // ── PDF to Image ────────────────────────────────────────────────────────────
 
   test.describe('PDF to Image', () => {
-    test('turns every page into a PNG at twice the page size and saves each one', async ({ page }) => {
+    test('turns every page into a PNG at twice the page size and saves each one', async ({
+      page,
+    }) => {
       const doc = await PDFDocument.create();
       // Page 1 is portrait with a red upper half; page 2 is landscape and blue all over.
-      doc.addPage([200, 300]).drawRectangle({ x: 0, y: 150, width: 200, height: 150, color: rgb(1, 0, 0) });
-      doc.addPage([300, 200]).drawRectangle({ x: 0, y: 0, width: 300, height: 200, color: rgb(0, 0, 1) });
+      doc
+        .addPage([200, 300])
+        .drawRectangle({ x: 0, y: 150, width: 200, height: 150, color: rgb(1, 0, 0) });
+      doc
+        .addPage([300, 200])
+        .drawRectangle({ x: 0, y: 0, width: 300, height: 200, color: rgb(0, 0, 1) });
 
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: 'two-pages.pdf', mimeType: PDF_MIME, buffer: Buffer.from(await doc.save()) });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: 'two-pages.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from(await doc.save()),
+      });
       await expect(panel.getByText('two-pages.pdf')).toBeVisible();
 
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
@@ -403,18 +509,32 @@ test.describe('PDF conversion tools', () => {
       const first = panel.getByRole('img', { name: 'Page 1', exact: true });
       await expect(first).toHaveJSProperty('naturalWidth', 400);
       await expect(first).toHaveJSProperty('naturalHeight', 600);
-      expect(await pixelsAt(first, [[0.5, 0.25], [0.5, 0.75]])).toEqual([[255, 0, 0], [255, 255, 255]]);
+      expect(
+        await pixelsAt(first, [
+          [0.5, 0.25],
+          [0.5, 0.75],
+        ])
+      ).toEqual([
+        [255, 0, 0],
+        [255, 255, 255],
+      ]);
 
       const second = panel.getByRole('img', { name: 'Page 2', exact: true });
       await expect(second).toHaveJSProperty('naturalWidth', 600);
       await expect(second).toHaveJSProperty('naturalHeight', 400);
       expect(await pixelsAt(second, [[0.5, 0.5]])).toEqual([[0, 0, 255]]);
 
-      const firstPng = await download(page, panel.getByRole('button', { name: 'Page 1', exact: true }));
+      const firstPng = await download(
+        page,
+        panel.getByRole('button', { name: 'Page 1', exact: true })
+      );
       expect(firstPng.name).toBe('page-1.png');
       expect(pngSize(firstPng.bytes)).toEqual({ width: 400, height: 600 });
 
-      const secondPng = await download(page, panel.getByRole('button', { name: 'Page 2', exact: true }));
+      const secondPng = await download(
+        page,
+        panel.getByRole('button', { name: 'Page 2', exact: true })
+      );
       expect(secondPng.name).toBe('page-2.png');
       expect(pngSize(secondPng.bytes)).toEqual({ width: 600, height: 400 });
 
@@ -424,24 +544,32 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByRole('button', { name: 'Convert to Images' })).toBeHidden();
     });
 
-    test('draws text, honours page rotation and fits a poster into a canvas every browser has', async ({ page }) => {
+    test('draws text, honours page rotation and fits a poster into a canvas every browser has', async ({
+      page,
+    }) => {
       test.setTimeout(90_000);
 
       const doc = await PDFDocument.create();
       const font = await doc.embedFont(StandardFonts.Helvetica);
       // 1: black text in a font the PDF does not embed.
-      doc.addPage([300, 200]).drawText('Hello', { x: 20, y: 60, size: 90, font, color: rgb(0, 0, 0) });
+      doc
+        .addPage([300, 200])
+        .drawText('Hello', { x: 20, y: 60, size: 90, font, color: rgb(0, 0, 0) });
       // 2: a portrait page with a red upper half, shown turned a quarter clockwise.
       const turned = doc.addPage([200, 300]);
       turned.setRotation(degrees(90));
       turned.drawRectangle({ x: 0, y: 150, width: 200, height: 150, color: rgb(1, 0, 0) });
       // 3: the largest page a PDF may have, 200 x 200 inches, with a blue upper half.
-      doc.addPage([14400, 14400]).drawRectangle({ x: 0, y: 7200, width: 14400, height: 7200, color: rgb(0, 0, 1) });
+      doc
+        .addPage([14400, 14400])
+        .drawRectangle({ x: 0, y: 7200, width: 14400, height: 7200, color: rgb(0, 0, 1) });
 
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: 'edge-pages.pdf', mimeType: PDF_MIME, buffer: Buffer.from(await doc.save()) });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: 'edge-pages.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from(await doc.save()),
+      });
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
 
       await expect(panel.getByText('Extracted Pages (3)')).toBeVisible({ timeout: 60_000 });
@@ -470,7 +598,15 @@ test.describe('PDF conversion tools', () => {
       const turnedPage = panel.getByRole('img', { name: 'Page 2', exact: true });
       await expect(turnedPage).toHaveJSProperty('naturalWidth', 600);
       await expect(turnedPage).toHaveJSProperty('naturalHeight', 400);
-      expect(await pixelsAt(turnedPage, [[0.25, 0.5], [0.75, 0.5]])).toEqual([[255, 255, 255], [255, 0, 0]]);
+      expect(
+        await pixelsAt(turnedPage, [
+          [0.25, 0.5],
+          [0.75, 0.5],
+        ])
+      ).toEqual([
+        [255, 255, 255],
+        [255, 0, 0],
+      ]);
 
       // At twice its size the poster would need 28800 x 28800 pixels. It is
       // drawn as large as 4096 x 4096 allows instead of being left out.
@@ -480,7 +616,15 @@ test.describe('PDF conversion tools', () => {
       expect(posterWidth).toBe(posterHeight);
       expect(posterWidth).toBeGreaterThanOrEqual(4090);
       expect(posterWidth).toBeLessThanOrEqual(4096);
-      expect(await pixelsAt(poster, [[0.5, 0.25], [0.5, 0.75]])).toEqual([[0, 0, 255], [255, 255, 255]]);
+      expect(
+        await pixelsAt(poster, [
+          [0.5, 0.25],
+          [0.5, 0.75],
+        ])
+      ).toEqual([
+        [0, 0, 255],
+        [255, 255, 255],
+      ]);
     });
 
     test('takes a PDF by click, by keyboard and by drag-and-drop', async ({ page }) => {
@@ -504,7 +648,9 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByText('keyboard.pdf')).toBeHidden();
 
       // A dropped file of another type is refused and the chosen PDF stays.
-      await dropFiles(page, dropzone, [{ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('plain text') }]);
+      await dropFiles(page, dropzone, [
+        { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('plain text') },
+      ]);
       await expect(panel.getByRole('alert')).toHaveText(
         '"notes.txt" is not a supported file type. Accepted: application/pdf.'
       );
@@ -518,14 +664,22 @@ test.describe('PDF conversion tools', () => {
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
       const input = panel.getByLabel('Upload a PDF');
 
-      await input.setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('plain text') });
+      await input.setInputFiles({
+        name: 'notes.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('plain text'),
+      });
       await expect(panel.getByRole('alert')).toHaveText(
         '"notes.txt" is not a supported file type. Accepted: application/pdf.'
       );
       await expect(panel.getByRole('button', { name: 'Convert to Images' })).toBeHidden();
 
       // Named and typed as a PDF, but the bytes are not one.
-      await input.setInputFiles({ name: 'broken.pdf', mimeType: PDF_MIME, buffer: Buffer.from('this is not a pdf') });
+      await input.setInputFiles({
+        name: 'broken.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from('this is not a pdf'),
+      });
       await expect(panel.getByText('broken.pdf')).toBeVisible();
       await expect(panel.getByRole('alert')).toHaveCount(0);
 
@@ -540,7 +694,9 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByRole('button', { name: 'Convert to Images' })).toBeHidden();
     });
 
-    test('says which page could not be drawn and keeps the page numbers of the others', async ({ page }) => {
+    test('says which page could not be drawn and keeps the page numbers of the others', async ({
+      page,
+    }) => {
       // Stands in for a browser that runs out of image memory on one page: the
       // canvas of page 2, and only that one, cannot be encoded.
       await page.addInitScript(() => {
@@ -560,19 +716,29 @@ test.describe('PDF conversion tools', () => {
       doc.addPage([300, 200]);
 
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: 'three-pages.pdf', mimeType: PDF_MIME, buffer: Buffer.from(await doc.save()) });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: 'three-pages.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from(await doc.save()),
+      });
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
 
       await expect(panel.getByText('Extracted Pages (2)')).toBeVisible(SLOW);
-      await expect(panel.getByRole('alert')).toHaveText('Error: Page 2 could not be rendered and is missing below.');
+      await expect(panel.getByRole('alert')).toHaveText(
+        'Error: Page 2 could not be rendered and is missing below.'
+      );
       await expect(panel.getByRole('img', { name: 'Page 1', exact: true })).toBeVisible();
       await expect(panel.getByRole('img', { name: 'Page 2', exact: true })).toHaveCount(0);
 
       // The third page is still called page 3, on screen and as a file.
-      await expect(panel.getByRole('img', { name: 'Page 3', exact: true })).toHaveJSProperty('naturalWidth', 600);
-      const third = await download(page, panel.getByRole('button', { name: 'Page 3', exact: true }));
+      await expect(panel.getByRole('img', { name: 'Page 3', exact: true })).toHaveJSProperty(
+        'naturalWidth',
+        600
+      );
+      const third = await download(
+        page,
+        panel.getByRole('button', { name: 'Page 3', exact: true })
+      );
       expect(third.name).toBe('page-3.png');
       expect(pngSize(third.bytes)).toEqual({ width: 600, height: 400 });
     });
@@ -582,12 +748,20 @@ test.describe('PDF conversion tools', () => {
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
       const input = panel.getByLabel('Upload a PDF');
 
-      await input.setInputFiles({ name: 'first.pdf', mimeType: PDF_MIME, buffer: await textPdf(['a', 'b', 'c']) });
+      await input.setInputFiles({
+        name: 'first.pdf',
+        mimeType: PDF_MIME,
+        buffer: await textPdf(['a', 'b', 'c']),
+      });
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
       await expect(panel.getByRole('button', { name: 'Converting...' })).toBeDisabled();
 
       // Choosing another file hands the button back at once.
-      await input.setInputFiles({ name: 'second.pdf', mimeType: PDF_MIME, buffer: await textPdf(['only page']) });
+      await input.setInputFiles({
+        name: 'second.pdf',
+        mimeType: PDF_MIME,
+        buffer: await textPdf(['only page']),
+      });
       await expect(panel.getByText('second.pdf')).toBeVisible();
       await expect(panel.getByRole('button', { name: 'Convert to Images' })).toBeEnabled();
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
@@ -609,7 +783,9 @@ test.describe('PDF conversion tools', () => {
       const buffer = Buffer.from(await doc.save({ addDefaultPage: false }));
 
       const panel = await openTool(page, '/tools/pdf-to-image', 'Click to upload a PDF');
-      await panel.getByLabel('Upload a PDF').setInputFiles({ name: 'no-pages.pdf', mimeType: PDF_MIME, buffer });
+      await panel
+        .getByLabel('Upload a PDF')
+        .setInputFiles({ name: 'no-pages.pdf', mimeType: PDF_MIME, buffer });
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
 
       await expect(panel.getByRole('alert')).toBeVisible(SLOW);
@@ -639,9 +815,11 @@ test.describe('PDF conversion tools', () => {
       third.drawText('notes', { x: 40 + closing + space, y: 250, size: 14, font });
 
       const panel = await openTool(page, '/tools/pdf-to-word', 'Click to upload a PDF');
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: 'report.final.pdf', mimeType: PDF_MIME, buffer: Buffer.from(await doc.save()) });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: 'report.final.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from(await doc.save()),
+      });
       await expect(panel.getByText('report.final.pdf')).toBeVisible();
 
       await panel.getByRole('button', { name: 'Convert to Word' }).click();
@@ -666,7 +844,9 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByRole('button', { name: 'Download .docx' })).toBeHidden();
     });
 
-    test('reports a scanned PDF, an unreadable PDF and a file of another type', async ({ page }) => {
+    test('reports a scanned PDF, an unreadable PDF and a file of another type', async ({
+      page,
+    }) => {
       // A "scan": the page is a picture and holds no text.
       const scan = await PDFDocument.create();
       const picture = await scan.embedPng(solidPng(60, 80, [120, 120, 120]));
@@ -675,7 +855,11 @@ test.describe('PDF conversion tools', () => {
       const panel = await openTool(page, '/tools/pdf-to-word', 'Click to upload a PDF');
       const input = panel.getByLabel('Upload a PDF');
 
-      await input.setInputFiles({ name: 'scan.pdf', mimeType: PDF_MIME, buffer: Buffer.from(await scan.save()) });
+      await input.setInputFiles({
+        name: 'scan.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from(await scan.save()),
+      });
       await panel.getByRole('button', { name: 'Convert to Word' }).click();
       await expect(panel.getByRole('alert')).toHaveText(
         'Error: No text found in the PDF. Scanned pages are pictures and have no text to extract.',
@@ -685,18 +869,29 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByRole('button', { name: 'Convert to Word' })).toBeEnabled();
 
       // Choosing the next file takes the old error away.
-      await input.setInputFiles({ name: 'broken.pdf', mimeType: PDF_MIME, buffer: Buffer.from('this is not a pdf') });
+      await input.setInputFiles({
+        name: 'broken.pdf',
+        mimeType: PDF_MIME,
+        buffer: Buffer.from('this is not a pdf'),
+      });
       await expect(panel.getByText('broken.pdf')).toBeVisible();
       await expect(panel.getByRole('alert')).toHaveCount(0);
 
       await panel.getByRole('button', { name: 'Convert to Word' }).click();
-      await expect(panel.getByRole('alert')).toContainText('Error: Failed to extract text from PDF:', SLOW);
+      await expect(panel.getByRole('alert')).toContainText(
+        'Error: Failed to extract text from PDF:',
+        SLOW
+      );
       await expect(panel.getByRole('button', { name: 'Download .docx' })).toBeHidden();
 
       await panel.getByRole('button', { name: 'Clear', exact: true }).click();
       await expect(panel.getByRole('alert')).toHaveCount(0);
 
-      await input.setInputFiles({ name: 'letter.docx', mimeType: DOCX_MIME, buffer: await docxOf(['Not a PDF']) });
+      await input.setInputFiles({
+        name: 'letter.docx',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(['Not a PDF']),
+      });
       await expect(panel.getByRole('alert')).toHaveText(
         '"letter.docx" is not a supported file type. Accepted: application/pdf.'
       );
@@ -707,9 +902,11 @@ test.describe('PDF conversion tools', () => {
       const pdfWorker = await holdPdfWorker(page);
       const panel = await openTool(page, '/tools/pdf-to-word', 'Click to upload a PDF');
 
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: 'cancelled.pdf', mimeType: PDF_MIME, buffer: await textPdf(['Text that is never offered']) });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: 'cancelled.pdf',
+        mimeType: PDF_MIME,
+        buffer: await textPdf(['Text that is never offered']),
+      });
       await panel.getByRole('button', { name: 'Convert to Word' }).click();
       await expect(panel.getByRole('button', { name: 'Extracting Text...' })).toBeDisabled();
 
@@ -740,10 +937,16 @@ test.describe('PDF conversion tools', () => {
         'Regards',
       ];
 
-      const panel = await openTool(page, '/tools/word-to-pdf', 'Click to upload a Word Document (.docx)');
-      await panel
-        .getByLabel('Upload a Word document')
-        .setInputFiles({ name: 'letter.docx', mimeType: DOCX_MIME, buffer: await docxOf(paragraphs) });
+      const panel = await openTool(
+        page,
+        '/tools/word-to-pdf',
+        'Click to upload a Word Document (.docx)'
+      );
+      await panel.getByLabel('Upload a Word document').setInputFiles({
+        name: 'letter.docx',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(paragraphs),
+      });
       await expect(panel.getByText('letter.docx')).toBeVisible();
 
       await panel.getByRole('button', { name: 'Convert to PDF' }).click();
@@ -788,7 +991,9 @@ test.describe('PDF conversion tools', () => {
       });
 
       expect(set).toHaveLength(5);
-      const [greeting, accents, wrapped, cut, closing] = set.map((group) => group.map((line) => line.text));
+      const [greeting, accents, wrapped, cut, closing] = set.map((group) =>
+        group.map((line) => line.text)
+      );
 
       expect(greeting).toEqual(['Dear team,']);
       expect(accents).toEqual([paragraphs[1]]);
@@ -801,13 +1006,24 @@ test.describe('PDF conversion tools', () => {
       expect(closing).toEqual(['Regards']);
     });
 
-    test('continues a long document on further pages without losing a paragraph', async ({ page }) => {
-      const paragraphs = Array.from({ length: 100 }, (_, index) => `Paragraph number ${index + 1} of the office file`);
+    test('continues a long document on further pages without losing a paragraph', async ({
+      page,
+    }) => {
+      const paragraphs = Array.from(
+        { length: 100 },
+        (_, index) => `Paragraph number ${index + 1} of the office file`
+      );
 
-      const panel = await openTool(page, '/tools/word-to-pdf', 'Click to upload a Word Document (.docx)');
-      await panel
-        .getByLabel('Upload a Word document')
-        .setInputFiles({ name: 'Long Report.v2.DOCX', mimeType: DOCX_MIME, buffer: await docxOf(paragraphs) });
+      const panel = await openTool(
+        page,
+        '/tools/word-to-pdf',
+        'Click to upload a Word Document (.docx)'
+      );
+      await panel.getByLabel('Upload a Word document').setInputFiles({
+        name: 'Long Report.v2.DOCX',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(paragraphs),
+      });
       await panel.getByRole('button', { name: 'Convert to PDF' }).click();
 
       const pdf = await download(page, panel.getByRole('button', { name: 'Download .pdf' }));
@@ -827,11 +1043,19 @@ test.describe('PDF conversion tools', () => {
         expect(Math.min(...pdfPage.lines.map((line) => line.y))).toBeGreaterThanOrEqual(50);
       }
 
-      expect(pages.flatMap((pdfPage) => pdfPage.lines.map((line) => line.text))).toEqual(paragraphs);
+      expect(pages.flatMap((pdfPage) => pdfPage.lines.map((line) => line.text))).toEqual(
+        paragraphs
+      );
     });
 
-    test('counts the characters its font cannot show and leaves invisible ones out', async ({ page }) => {
-      const panel = await openTool(page, '/tools/word-to-pdf', 'Click to upload a Word Document (.docx)');
+    test('counts the characters its font cannot show and leaves invisible ones out', async ({
+      page,
+    }) => {
+      const panel = await openTool(
+        page,
+        '/tools/word-to-pdf',
+        'Click to upload a Word Document (.docx)'
+      );
       const input = panel.getByLabel('Upload a Word document');
       const convert = panel.getByRole('button', { name: 'Convert to PDF' });
 
@@ -847,7 +1071,11 @@ test.describe('PDF conversion tools', () => {
         '3 characters are not in the font this tool writes with and show as empty boxes in the PDF.'
       );
 
-      await input.setInputFiles({ name: 'single.docx', mimeType: DOCX_MIME, buffer: await docxOf(['One 日 only']) });
+      await input.setInputFiles({
+        name: 'single.docx',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(['One 日 only']),
+      });
       await expect(panel.getByRole('status')).toHaveCount(0);
       await convert.click();
       await expect(panel.getByRole('status')).toHaveText(
@@ -864,33 +1092,67 @@ test.describe('PDF conversion tools', () => {
       await convert.click();
       const pdf = await download(page, panel.getByRole('button', { name: 'Download .pdf' }));
       await expect(panel.getByRole('status')).toHaveCount(0);
-      expect((await pdfLines(pdf.bytes))[0].lines.map((line) => line.text)).toEqual(['Zerowidth and softhyphen']);
+      expect((await pdfLines(pdf.bytes))[0].lines.map((line) => line.text)).toEqual([
+        'Zerowidth and softhyphen',
+      ]);
     });
 
-    test('reports an empty document, an unreadable one and a file of another type', async ({ page }) => {
-      const panel = await openTool(page, '/tools/word-to-pdf', 'Click to upload a Word Document (.docx)');
+    test('reports an empty document, an unreadable one and a file of another type', async ({
+      page,
+    }) => {
+      const panel = await openTool(
+        page,
+        '/tools/word-to-pdf',
+        'Click to upload a Word Document (.docx)'
+      );
       const input = panel.getByLabel('Upload a Word document');
 
-      await input.setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('plain text') });
-      await expect(panel.getByRole('alert')).toHaveText('"notes.txt" is not a supported file type. Accepted: .docx.');
+      await input.setInputFiles({
+        name: 'notes.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('plain text'),
+      });
+      await expect(panel.getByRole('alert')).toHaveText(
+        '"notes.txt" is not a supported file type. Accepted: .docx.'
+      );
       await expect(panel.getByRole('button', { name: 'Convert to PDF' })).toBeHidden();
 
       // The old binary Word format is not a .docx either.
-      await input.setInputFiles({ name: 'old.doc', mimeType: 'application/msword', buffer: Buffer.from('old format') });
-      await expect(panel.getByRole('alert')).toHaveText('"old.doc" is not a supported file type. Accepted: .docx.');
+      await input.setInputFiles({
+        name: 'old.doc',
+        mimeType: 'application/msword',
+        buffer: Buffer.from('old format'),
+      });
+      await expect(panel.getByRole('alert')).toHaveText(
+        '"old.doc" is not a supported file type. Accepted: .docx.'
+      );
 
-      await input.setInputFiles({ name: 'empty.docx', mimeType: DOCX_MIME, buffer: await docxOf(['', '   ']) });
+      await input.setInputFiles({
+        name: 'empty.docx',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(['', '   ']),
+      });
       await expect(panel.getByRole('alert')).toHaveCount(0);
       await panel.getByRole('button', { name: 'Convert to PDF' }).click();
-      await expect(panel.getByRole('alert')).toHaveText('Error: No text found in the Word document.', SLOW);
+      await expect(panel.getByRole('alert')).toHaveText(
+        'Error: No text found in the Word document.',
+        SLOW
+      );
       await expect(panel.getByRole('button', { name: 'Download .pdf' })).toBeHidden();
       await expect(panel.getByRole('button', { name: 'Convert to PDF' })).toBeEnabled();
 
       // Named .docx, but not the zip archive a .docx is.
-      await input.setInputFiles({ name: 'broken.docx', mimeType: DOCX_MIME, buffer: Buffer.from('not a zip archive') });
+      await input.setInputFiles({
+        name: 'broken.docx',
+        mimeType: DOCX_MIME,
+        buffer: Buffer.from('not a zip archive'),
+      });
       await expect(panel.getByRole('alert')).toHaveCount(0);
       await panel.getByRole('button', { name: 'Convert to PDF' }).click();
-      await expect(panel.getByRole('alert')).toContainText('Error: Failed to convert document:', SLOW);
+      await expect(panel.getByRole('alert')).toContainText(
+        'Error: Failed to convert document:',
+        SLOW
+      );
       await expect(panel.getByRole('button', { name: 'Download .pdf' })).toBeHidden();
 
       await panel.getByRole('button', { name: 'Clear', exact: true }).click();
@@ -899,12 +1161,20 @@ test.describe('PDF conversion tools', () => {
     });
 
     test('explains itself when its font cannot be loaded', async ({ page }) => {
-      await page.route('**/fonts/Roboto-Regular.ttf', (route) => route.fulfill({ status: 404, body: 'Not found' }));
+      await page.route('**/fonts/Roboto-Regular.ttf', (route) =>
+        route.fulfill({ status: 404, body: 'Not found' })
+      );
 
-      const panel = await openTool(page, '/tools/word-to-pdf', 'Click to upload a Word Document (.docx)');
-      await panel
-        .getByLabel('Upload a Word document')
-        .setInputFiles({ name: 'letter.docx', mimeType: DOCX_MIME, buffer: await docxOf(['Dear team,']) });
+      const panel = await openTool(
+        page,
+        '/tools/word-to-pdf',
+        'Click to upload a Word Document (.docx)'
+      );
+      await panel.getByLabel('Upload a Word document').setInputFiles({
+        name: 'letter.docx',
+        mimeType: DOCX_MIME,
+        buffer: await docxOf(['Dear team,']),
+      });
       await panel.getByRole('button', { name: 'Convert to PDF' }).click();
 
       await expect(panel.getByRole('alert')).toHaveText(
@@ -919,8 +1189,14 @@ test.describe('PDF conversion tools', () => {
   // ── Image to PDF ────────────────────────────────────────────────────────────
 
   test.describe('Image to PDF', () => {
-    test('puts the chosen images into one PDF, one page each, in the order shown', async ({ page }) => {
-      const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
+    test('puts the chosen images into one PDF, one page each, in the order shown', async ({
+      page,
+    }) => {
+      const panel = await openTool(
+        page,
+        '/tools/image-to-pdf',
+        'Click to upload JPEG or PNG images'
+      );
 
       const picker = await openFileChooser(page, () =>
         panel.getByRole('button', { name: 'Click to upload JPEG or PNG images' }).click()
@@ -933,9 +1209,18 @@ test.describe('PDF conversion tools', () => {
       ]);
 
       await expect(panel.getByText('Selected Images (3)')).toBeVisible();
-      await expect(panel.getByRole('img', { name: 'red.png' })).toHaveJSProperty('naturalWidth', 40);
-      await expect(panel.getByRole('img', { name: 'blue.png' })).toHaveJSProperty('naturalWidth', 10);
-      await expect(panel.getByRole('img', { name: 'green.png' })).toHaveJSProperty('naturalWidth', 7);
+      await expect(panel.getByRole('img', { name: 'red.png' })).toHaveJSProperty(
+        'naturalWidth',
+        40
+      );
+      await expect(panel.getByRole('img', { name: 'blue.png' })).toHaveJSProperty(
+        'naturalWidth',
+        10
+      );
+      await expect(panel.getByRole('img', { name: 'green.png' })).toHaveJSProperty(
+        'naturalWidth',
+        7
+      );
 
       await panel.getByRole('button', { name: 'Remove blue.png' }).click();
       await expect(panel.getByText('Selected Images (2)')).toBeVisible();
@@ -943,19 +1228,25 @@ test.describe('PDF conversion tools', () => {
 
       const firstPdf = await download(page, panel.getByRole('button', { name: 'Generate PDF' }));
       expect(firstPdf.name).toBe('images.pdf');
-      expect((await PDFDocument.load(firstPdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())).toEqual([
+      expect(
+        (await PDFDocument.load(firstPdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())
+      ).toEqual([
         { width: 40, height: 20 },
         { width: 7, height: 9 },
       ]);
 
       // Images chosen later go to the end of the list.
-      await panel
-        .getByLabel('Upload JPEG or PNG images')
-        .setInputFiles({ name: 'grey.png', mimeType: 'image/png', buffer: solidPng(5, 5, [128, 128, 128]) });
+      await panel.getByLabel('Upload JPEG or PNG images').setInputFiles({
+        name: 'grey.png',
+        mimeType: 'image/png',
+        buffer: solidPng(5, 5, [128, 128, 128]),
+      });
       await expect(panel.getByText('Selected Images (3)')).toBeVisible();
 
       const secondPdf = await download(page, panel.getByRole('button', { name: 'Generate PDF' }));
-      expect((await PDFDocument.load(secondPdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())).toEqual([
+      expect(
+        (await PDFDocument.load(secondPdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())
+      ).toEqual([
         { width: 40, height: 20 },
         { width: 7, height: 9 },
         { width: 5, height: 5 },
@@ -963,7 +1254,11 @@ test.describe('PDF conversion tools', () => {
     });
 
     test('shows photos upright and reads the image type from the file itself', async ({ page }) => {
-      const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
+      const panel = await openTool(
+        page,
+        '/tools/image-to-pdf',
+        'Click to upload JPEG or PNG images'
+      );
       const jpeg = await twoToneJpeg(page);
 
       await panel.getByLabel('Upload JPEG or PNG images').setInputFiles([
@@ -979,7 +1274,9 @@ test.describe('PDF conversion tools', () => {
 
       const pdf = await download(page, panel.getByRole('button', { name: 'Generate PDF' }));
       await expect(panel.getByRole('alert')).toHaveCount(0);
-      expect((await PDFDocument.load(pdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())).toEqual([
+      expect(
+        (await PDFDocument.load(pdf.bytes)).getPages().map((pdfPage) => pdfPage.getSize())
+      ).toEqual([
         { width: 40, height: 20 },
         { width: 20, height: 40 },
         { width: 40, height: 20 },
@@ -988,30 +1285,60 @@ test.describe('PDF conversion tools', () => {
 
       // What is on those pages: the PDF goes through the neighbouring tab, which draws it.
       await page.getByRole('tab', { name: 'To Image' }).click();
-      await panel.getByLabel('Upload a PDF').setInputFiles({ name: pdf.name, mimeType: PDF_MIME, buffer: pdf.bytes });
+      await panel
+        .getByLabel('Upload a PDF')
+        .setInputFiles({ name: pdf.name, mimeType: PDF_MIME, buffer: pdf.bytes });
       await panel.getByRole('button', { name: 'Convert to Images' }).click();
       await expect(panel.getByText('Extracted Pages (4)')).toBeVisible(SLOW);
 
-      const [plainLeft, plainRight] = await pixelsAt(panel.getByRole('img', { name: 'Page 1', exact: true }), [[0.25, 0.5], [0.75, 0.5]]);
+      const [plainLeft, plainRight] = await pixelsAt(
+        panel.getByRole('img', { name: 'Page 1', exact: true }),
+        [
+          [0.25, 0.5],
+          [0.75, 0.5],
+        ]
+      );
       expect(isRed(plainLeft)).toBe(true);
       expect(isBlue(plainRight)).toBe(true);
 
-      const [phoneTop, phoneBottom] = await pixelsAt(panel.getByRole('img', { name: 'Page 2', exact: true }), [[0.5, 0.25], [0.5, 0.75]]);
+      const [phoneTop, phoneBottom] = await pixelsAt(
+        panel.getByRole('img', { name: 'Page 2', exact: true }),
+        [
+          [0.5, 0.25],
+          [0.5, 0.75],
+        ]
+      );
       expect(isRed(phoneTop)).toBe(true);
       expect(isBlue(phoneBottom)).toBe(true);
 
-      const [renamedLeft, renamedRight] = await pixelsAt(panel.getByRole('img', { name: 'Page 3', exact: true }), [[0.25, 0.5], [0.75, 0.5]]);
+      const [renamedLeft, renamedRight] = await pixelsAt(
+        panel.getByRole('img', { name: 'Page 3', exact: true }),
+        [
+          [0.25, 0.5],
+          [0.75, 0.5],
+        ]
+      );
       expect(isRed(renamedLeft)).toBe(true);
       expect(isBlue(renamedRight)).toBe(true);
 
-      expect(await pixelsAt(panel.getByRole('img', { name: 'Page 4', exact: true }), [[0.5, 0.5]])).toEqual([[0, 128, 0]]);
+      expect(
+        await pixelsAt(panel.getByRole('img', { name: 'Page 4', exact: true }), [[0.5, 0.5]])
+      ).toEqual([[0, 128, 0]]);
     });
 
-    test('scales an image longer than a PDF page may be down to the longest page allowed', async ({ page }) => {
-      const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
-      await panel
-        .getByLabel('Upload JPEG or PNG images')
-        .setInputFiles({ name: 'long-screenshot.png', mimeType: 'image/png', buffer: solidPng(14500, 10, [0, 128, 0]) });
+    test('scales an image longer than a PDF page may be down to the longest page allowed', async ({
+      page,
+    }) => {
+      const panel = await openTool(
+        page,
+        '/tools/image-to-pdf',
+        'Click to upload JPEG or PNG images'
+      );
+      await panel.getByLabel('Upload JPEG or PNG images').setInputFiles({
+        name: 'long-screenshot.png',
+        mimeType: 'image/png',
+        buffer: solidPng(14500, 10, [0, 128, 0]),
+      });
       await expect(panel.getByText('Selected Images (1)')).toBeVisible();
 
       const pdf = await download(page, panel.getByRole('button', { name: 'Generate PDF' }));
@@ -1023,7 +1350,11 @@ test.describe('PDF conversion tools', () => {
     });
 
     test('refuses other file types and names the image it cannot read', async ({ page }) => {
-      const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
+      const panel = await openTool(
+        page,
+        '/tools/image-to-pdf',
+        'Click to upload JPEG or PNG images'
+      );
       const input = panel.getByLabel('Upload JPEG or PNG images');
 
       await input.setInputFiles([
@@ -1040,7 +1371,10 @@ test.describe('PDF conversion tools', () => {
 
       await panel.getByRole('button', { name: 'Generate PDF' }).click();
       const failure = panel.getByRole('alert').filter({ hasText: 'Failed to generate PDF' });
-      await expect(failure).toHaveText('Error: Failed to generate PDF: "fake.png" is not a JPEG or PNG image.', SLOW);
+      await expect(failure).toHaveText(
+        'Error: Failed to generate PDF: "fake.png" is not a JPEG or PNG image.',
+        SLOW
+      );
       await expect(panel.getByRole('button', { name: 'Generate PDF' })).toBeEnabled();
 
       // Taking the bad image out takes its error along, and the list with it.
@@ -1049,14 +1383,22 @@ test.describe('PDF conversion tools', () => {
       await expect(panel.getByText('Selected Images')).toBeHidden();
       await expect(panel.getByRole('button', { name: 'Generate PDF' })).toBeHidden();
 
-      await input.setInputFiles({ name: 'red.png', mimeType: 'image/png', buffer: solidPng(40, 20, [255, 0, 0]) });
+      await input.setInputFiles({
+        name: 'red.png',
+        mimeType: 'image/png',
+        buffer: solidPng(40, 20, [255, 0, 0]),
+      });
       await expect(panel.getByRole('alert')).toHaveCount(0);
       const pdf = await download(page, panel.getByRole('button', { name: 'Generate PDF' }));
       expect((await PDFDocument.load(pdf.bytes)).getPageCount()).toBe(1);
     });
 
     test('shows the remove button of an image on hover and on keyboard focus', async ({ page }) => {
-      const panel = await openTool(page, '/tools/image-to-pdf', 'Click to upload JPEG or PNG images');
+      const panel = await openTool(
+        page,
+        '/tools/image-to-pdf',
+        'Click to upload JPEG or PNG images'
+      );
       await panel.getByLabel('Upload JPEG or PNG images').setInputFiles([
         { name: 'red.png', mimeType: 'image/png', buffer: solidPng(40, 20, [255, 0, 0]) },
         { name: 'blue.png', mimeType: 'image/png', buffer: solidPng(10, 30, [0, 0, 255]) },
@@ -1089,7 +1431,9 @@ test.describe('PDF conversion tools', () => {
   test.describe('on a phone', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-    test('fits the screen and shows the remove buttons without a pointer to hover with', async ({ page }) => {
+    test('fits the screen and shows the remove buttons without a pointer to hover with', async ({
+      page,
+    }) => {
       const panel = await openTool(page, '/tools/pdf-tools', 'Click to upload a PDF');
 
       const insideScreen = async (locator: Locator) => {
@@ -1134,18 +1478,22 @@ test.describe('PDF conversion tools', () => {
       const panel = await openTool(page, '/tools/pdf-tools', 'Click to upload a PDF');
 
       // The message for a refused file, the same in all four tools.
-      await panel
-        .getByLabel('Upload a PDF')
-        .setInputFiles({ name: `${name}.txt`, mimeType: 'text/plain', buffer: Buffer.from('plain text') });
+      await panel.getByLabel('Upload a PDF').setInputFiles({
+        name: `${name}.txt`,
+        mimeType: 'text/plain',
+        buffer: Buffer.from('plain text'),
+      });
       const refused = panel.getByRole('alert').filter({ hasText: 'is not a supported file type' });
       await expect(refused).toBeVisible();
       expect(await overhang(refused)).toBe(0);
 
       // The message for an image that cannot be read.
       await page.getByRole('tab', { name: 'From Image' }).click();
-      await panel
-        .getByLabel('Upload JPEG or PNG images')
-        .setInputFiles({ name: `${name}.png`, mimeType: 'image/png', buffer: Buffer.from('not really a png') });
+      await panel.getByLabel('Upload JPEG or PNG images').setInputFiles({
+        name: `${name}.png`,
+        mimeType: 'image/png',
+        buffer: Buffer.from('not really a png'),
+      });
       await panel.getByRole('button', { name: 'Generate PDF' }).click();
       const failure = panel.getByRole('alert').filter({ hasText: 'Failed to generate PDF' });
       await expect(failure).toBeVisible(SLOW);

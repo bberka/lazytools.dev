@@ -19,9 +19,7 @@ export const TOOL_REGISTRY = {
     tags: ['pdf-tools'],
     icon: 'FileText',
     featured: true,
-    keywords: [
-      'pdf', 'image', 'png', 'convert', 'extract', 'word', 'docx',
-    ],
+    keywords: ['pdf', 'image', 'png', 'convert', 'extract', 'word', 'docx'],
     component: loadPdfSuite,
   },
   'pdf-to-image': {
@@ -67,9 +65,25 @@ export const TOOL_REGISTRY = {
     icon: 'FilePenLine',
     featured: true,
     keywords: [
-      'pdf', 'edit', 'annotate', 'signature', 'rotate', 'reorder', 'delete',
-      'merge', 'combine', 'join', 'split', 'extract', 'pages', 'compress',
-      'shrink', 'optimize', 'watermark', 'stamp', 'confidential',
+      'pdf',
+      'edit',
+      'annotate',
+      'signature',
+      'rotate',
+      'reorder',
+      'delete',
+      'merge',
+      'combine',
+      'join',
+      'split',
+      'extract',
+      'pages',
+      'compress',
+      'shrink',
+      'optimize',
+      'watermark',
+      'stamp',
+      'confidential',
     ],
     component: loadPdfSuite,
   },
@@ -120,12 +134,25 @@ export const TOOL_REGISTRY = {
     icon: 'Image',
     featured: true,
     keywords: [
-      'image', 'convert', 'resize', 'rotate', 'flip', 'filters', 'ico',
-      'favicon', 'compress', 'optimize', 'shrink', 'crop', 'aspect ratio',
-      'webp', 'png', 'jpeg', 'jpg',
+      'image',
+      'convert',
+      'resize',
+      'rotate',
+      'flip',
+      'filters',
+      'ico',
+      'favicon',
+      'compress',
+      'optimize',
+      'shrink',
+      'crop',
+      'aspect ratio',
+      'webp',
+      'png',
+      'jpeg',
+      'jpg',
     ],
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'image-tools': {
     name: 'Image Converter & Editor',
@@ -134,8 +161,7 @@ export const TOOL_REGISTRY = {
     icon: 'Image',
     keywords: ['image', 'convert', 'resize', 'rotate', 'crop', 'compress'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'image-compressor': {
     name: 'Compress Image',
@@ -144,8 +170,7 @@ export const TOOL_REGISTRY = {
     icon: 'Zap',
     keywords: ['image', 'compress', 'optimize', 'shrink', 'size'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'image-resizer': {
     name: 'Resize Image',
@@ -154,8 +179,7 @@ export const TOOL_REGISTRY = {
     icon: 'Maximize',
     keywords: ['image', 'resize', 'dimensions', 'width', 'height'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'image-cropper': {
     name: 'Crop Image',
@@ -164,8 +188,7 @@ export const TOOL_REGISTRY = {
     icon: 'Crop',
     keywords: ['image', 'crop', 'cut', 'aspect ratio'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'image-to-icon': {
     name: 'Image to Icon',
@@ -174,8 +197,7 @@ export const TOOL_REGISTRY = {
     icon: 'Box',
     keywords: ['image', 'icon', 'ico', 'favicon', 'convert'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
+    component: () => import('@/components/tools/ImageConverter').then((m) => m.ImageConverter),
   },
   'svg-to-png': {
     name: 'SVG to PNG Converter',
@@ -183,8 +205,7 @@ export const TOOL_REGISTRY = {
     tags: ['image-tools'],
     icon: 'FileImage',
     keywords: ['svg', 'png', 'rasterize', 'convert', 'vector'],
-    component: () =>
-      import('@/components/tools/SvgToPng').then((m) => m.SvgToPng),
+    component: () => import('@/components/tools/SvgToPng').then((m) => m.SvgToPng),
   },
   'exif-viewer-remover': {
     name: 'EXIF Viewer & Remover',
@@ -201,8 +222,21 @@ export const TOOL_REGISTRY = {
     tags: ['security', 'image-tools'],
     icon: 'ShieldCheck',
     keywords: [
-      'ai', 'metadata', 'c2pa', 'content credentials', 'watermark', 'zero-width', 'chatgpt',
-      'stable diffusion', 'midjourney', 'comfyui', 'exif', 'xmp', 'utm', 'invisible characters', 'privacy',
+      'ai',
+      'metadata',
+      'c2pa',
+      'content credentials',
+      'watermark',
+      'zero-width',
+      'chatgpt',
+      'stable diffusion',
+      'midjourney',
+      'comfyui',
+      'exif',
+      'xmp',
+      'utm',
+      'invisible characters',
+      'privacy',
     ],
     component: () =>
       import('@/components/tools/AiMetadataCleaner').then((m) => m.AiMetadataCleaner),
@@ -216,11 +250,8 @@ export const TOOL_REGISTRY = {
     description: 'Pick colors, adjust color channels, and get CSS codes.',
     tags: ['design'],
     icon: 'Pipette',
-    keywords: [
-      'color', 'picker', 'eyedropper', 'palette', 'hex', 'rgb', 'hsl', 'css', 'swatch',
-    ],
-    component: () =>
-      import('@/components/tools/ColorPicker').then((m) => m.ColorPicker),
+    keywords: ['color', 'picker', 'eyedropper', 'palette', 'hex', 'rgb', 'hsl', 'css', 'swatch'],
+    component: () => import('@/components/tools/ColorPicker').then((m) => m.ColorPicker),
   },
   'color-tools': {
     name: 'Color Picker',
@@ -229,8 +260,7 @@ export const TOOL_REGISTRY = {
     icon: 'Palette',
     keywords: ['color', 'picker', 'hex', 'rgb', 'hsl', 'css'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/ColorPicker').then((m) => m.ColorPicker),
+    component: () => import('@/components/tools/ColorPicker').then((m) => m.ColorPicker),
   },
   'color-contrast-checker': {
     name: 'Color Contrast Checker',
@@ -270,8 +300,7 @@ export const TOOL_REGISTRY = {
     icon: 'Braces',
     featured: true,
     keywords: ['json', 'format', 'validate', 'pretty', 'validator', 'tree', 'query', 'jsonpath'],
-    component: () =>
-      import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
+    component: () => import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
   },
   'data-formatter': {
     name: 'JSON Formatter & Validator',
@@ -280,8 +309,7 @@ export const TOOL_REGISTRY = {
     icon: 'Braces',
     keywords: ['json', 'format', 'validate', 'pretty'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
+    component: () => import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
   },
   'json-validator': {
     name: 'JSON Validator',
@@ -290,8 +318,7 @@ export const TOOL_REGISTRY = {
     icon: 'CheckCircle',
     keywords: ['json', 'validate', 'validator', 'syntax', 'parse'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
+    component: () => import('@/components/tools/JsonFormatter').then((m) => m.JsonFormatter),
   },
   'yaml-validator': {
     name: 'YAML Formatter & Validator',
@@ -299,8 +326,7 @@ export const TOOL_REGISTRY = {
     tags: ['formatters-validators'],
     icon: 'FileCode',
     keywords: ['yaml', 'format', 'validate', 'pretty', 'validator', 'tree', 'syntax', 'parse'],
-    component: () =>
-      import('@/components/tools/YamlValidator').then((m) => m.YamlValidator),
+    component: () => import('@/components/tools/YamlValidator').then((m) => m.YamlValidator),
   },
   'xml-formatter': {
     name: 'XML Formatter & Validator',
@@ -308,8 +334,7 @@ export const TOOL_REGISTRY = {
     tags: ['formatters-validators'],
     icon: 'FileCode',
     keywords: ['xml', 'format', 'pretty', 'validate', 'validator', 'tree', 'syntax'],
-    component: () =>
-      import('@/components/tools/XmlFormatter').then((m) => m.XmlFormatter),
+    component: () => import('@/components/tools/XmlFormatter').then((m) => m.XmlFormatter),
   },
   'xml-validator': {
     name: 'XML Validator',
@@ -318,8 +343,7 @@ export const TOOL_REGISTRY = {
     icon: 'CheckCircle',
     keywords: ['xml', 'validate', 'syntax'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/XmlFormatter').then((m) => m.XmlFormatter),
+    component: () => import('@/components/tools/XmlFormatter').then((m) => m.XmlFormatter),
   },
   'sql-formatter': {
     name: 'SQL Formatter & Validator',
@@ -327,8 +351,7 @@ export const TOOL_REGISTRY = {
     tags: ['formatters-validators'],
     icon: 'Database',
     keywords: ['sql', 'format', 'database', 'query', 'validate', 'validator', 'syntax'],
-    component: () =>
-      import('@/components/tools/SqlFormatter').then((m) => m.SqlFormatter),
+    component: () => import('@/components/tools/SqlFormatter').then((m) => m.SqlFormatter),
   },
 
   // =========================================================================
@@ -340,8 +363,17 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools', 'pdf-tools', 'converters'],
     icon: 'FileText',
     keywords: [
-      'markdown', 'preview', 'render', 'editor', 'write', 'html', 'export',
-      'pdf', 'png', 'jpg', 'print',
+      'markdown',
+      'preview',
+      'render',
+      'editor',
+      'write',
+      'html',
+      'export',
+      'pdf',
+      'png',
+      'jpg',
+      'print',
     ],
     component: () =>
       import('@/components/tools/MarkdownConverter').then((m) => m.MarkdownConverter),
@@ -372,19 +404,15 @@ export const TOOL_REGISTRY = {
     tags: ['converters'],
     icon: 'FileText',
     keywords: ['markdown', 'docx', 'word', 'convert', 'pagination', 'spacing', 'page break'],
-    component: () =>
-      import('@/components/tools/MarkdownToDocx').then((m) => m.MarkdownToDocx),
+    component: () => import('@/components/tools/MarkdownToDocx').then((m) => m.MarkdownToDocx),
   },
   'html-converter': {
     name: 'HTML Converter',
     description: 'Convert HTML code to PDF, Markdown, or plain text format.',
     tags: ['pdf-tools', 'converters', 'text-tools'],
     icon: 'FileCode',
-    keywords: [
-      'html', 'pdf', 'markdown', 'md', 'plain text', 'convert', 'export', 'print', 'css',
-    ],
-    component: () =>
-      import('@/components/tools/HtmlConverter').then((m) => m.HtmlConverter),
+    keywords: ['html', 'pdf', 'markdown', 'md', 'plain text', 'convert', 'export', 'print', 'css'],
+    component: () => import('@/components/tools/HtmlConverter').then((m) => m.HtmlConverter),
   },
 
   // =========================================================================
@@ -396,8 +424,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Binary',
     keywords: ['base64', 'encode', 'decode'],
-    component: () =>
-      import('@/components/tools/Base64Converter').then((m) => m.Base64Converter),
+    component: () => import('@/components/tools/Base64Converter').then((m) => m.Base64Converter),
   },
   'encoder-decoder': {
     name: 'Base64 Encoder/Decoder',
@@ -406,8 +433,7 @@ export const TOOL_REGISTRY = {
     icon: 'Binary',
     keywords: ['base64', 'encode', 'decode'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/Base64Converter').then((m) => m.Base64Converter),
+    component: () => import('@/components/tools/Base64Converter').then((m) => m.Base64Converter),
   },
   'hex-converter': {
     name: 'Hex ↔ String Converter',
@@ -415,8 +441,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Binary',
     keywords: ['hex', 'string', 'text', 'convert', 'encode', 'decode', 'binary'],
-    component: () =>
-      import('@/components/tools/HexConverter').then((m) => m.HexConverter),
+    component: () => import('@/components/tools/HexConverter').then((m) => m.HexConverter),
   },
   'html-encoder': {
     name: 'HTML Encoder/Decoder',
@@ -424,8 +449,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Code2',
     keywords: ['html', 'encode', 'decode', 'entities'],
-    component: () =>
-      import('@/components/tools/HtmlEncoder').then((m) => m.HtmlEncoder),
+    component: () => import('@/components/tools/HtmlEncoder').then((m) => m.HtmlEncoder),
   },
   'text-escape': {
     name: 'Text Escape/Unescape',
@@ -433,8 +457,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Quote',
     keywords: ['escape', 'unescape', 'text', 'special'],
-    component: () =>
-      import('@/components/tools/TextEscape').then((m) => m.TextEscape),
+    component: () => import('@/components/tools/TextEscape').then((m) => m.TextEscape),
   },
   'punycode-converter': {
     name: 'Punycode Converter',
@@ -455,8 +478,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Link',
     keywords: ['url', 'encode', 'decode', 'uri'],
-    component: () =>
-      import('@/components/tools/UrlEncoder').then((m) => m.UrlEncoder),
+    component: () => import('@/components/tools/UrlEncoder').then((m) => m.UrlEncoder),
   },
   'url-tools': {
     name: 'URL Encoder/Decoder',
@@ -465,8 +487,7 @@ export const TOOL_REGISTRY = {
     icon: 'Link',
     keywords: ['url', 'encode', 'decode', 'uri'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/UrlEncoder').then((m) => m.UrlEncoder),
+    component: () => import('@/components/tools/UrlEncoder').then((m) => m.UrlEncoder),
   },
   'url-parser-builder': {
     name: 'URL Parser & Builder',
@@ -474,8 +495,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'Link2',
     keywords: ['url', 'parser', 'builder', 'query', 'parameter', 'encode', 'decode'],
-    component: () =>
-      import('@/components/tools/UrlParserBuilder').then((m) => m.UrlParserBuilder),
+    component: () => import('@/components/tools/UrlParserBuilder').then((m) => m.UrlParserBuilder),
   },
 
   // =========================================================================
@@ -487,8 +507,7 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'MapPin',
     keywords: ['ip', 'address', 'lookup', 'geolocation', 'network'],
-    component: () =>
-      import('@/components/tools/IpLookup').then((m) => m.IpLookup),
+    component: () => import('@/components/tools/IpLookup').then((m) => m.IpLookup),
   },
   'network-tools': {
     name: 'IP Address Lookup',
@@ -497,8 +516,7 @@ export const TOOL_REGISTRY = {
     icon: 'Globe',
     keywords: ['ip', 'address', 'lookup', 'geolocation', 'network'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/IpLookup').then((m) => m.IpLookup),
+    component: () => import('@/components/tools/IpLookup').then((m) => m.IpLookup),
   },
   'dns-lookup': {
     name: 'DNS Records Lookup',
@@ -506,8 +524,7 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'Server',
     keywords: ['dns', 'lookup', 'records', 'domain', 'nameserver'],
-    component: () =>
-      import('@/components/tools/DnsLookup').then((m) => m.DnsLookup),
+    component: () => import('@/components/tools/DnsLookup').then((m) => m.DnsLookup),
   },
   'subnet-calculator': {
     name: 'Subnet Calculator',
@@ -515,8 +532,7 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'Network',
     keywords: ['subnet', 'cidr', 'netmask', 'ip', 'calculator'],
-    component: () =>
-      import('@/components/tools/SubnetCalculator').then((m) => m.SubnetCalculator),
+    component: () => import('@/components/tools/SubnetCalculator').then((m) => m.SubnetCalculator),
   },
   'port-checker': {
     name: 'Port Scanner',
@@ -524,8 +540,7 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'Radar',
     keywords: ['port', 'scanner', 'check', 'services', 'network'],
-    component: () =>
-      import('@/components/tools/PortChecker').then((m) => m.PortChecker),
+    component: () => import('@/components/tools/PortChecker').then((m) => m.PortChecker),
   },
 
   // =========================================================================
@@ -537,8 +552,7 @@ export const TOOL_REGISTRY = {
     tags: ['security'],
     icon: 'Shield',
     keywords: ['hash', 'md5', 'sha', 'checksum'],
-    component: () =>
-      import('@/components/tools/HashGenerator').then((m) => m.HashGenerator),
+    component: () => import('@/components/tools/HashGenerator').then((m) => m.HashGenerator),
   },
   'security-tools': {
     name: 'Hash Generator',
@@ -547,17 +561,25 @@ export const TOOL_REGISTRY = {
     icon: 'Shield',
     keywords: ['hash', 'md5', 'sha', 'checksum'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/HashGenerator').then((m) => m.HashGenerator),
+    component: () => import('@/components/tools/HashGenerator').then((m) => m.HashGenerator),
   },
   'password-hasher': {
     name: 'Password Hasher',
     description: 'Hash and verify passwords with Bcrypt or Argon2.',
     tags: ['security'],
     icon: 'ShieldCheck',
-    keywords: ['bcrypt', 'argon2', 'argon2id', 'argon2i', 'argon2d', 'hash', 'password', 'verify', 'security'],
-    component: () =>
-      import('@/components/tools/PasswordHasher').then((m) => m.PasswordHasher),
+    keywords: [
+      'bcrypt',
+      'argon2',
+      'argon2id',
+      'argon2i',
+      'argon2d',
+      'hash',
+      'password',
+      'verify',
+      'security',
+    ],
+    component: () => import('@/components/tools/PasswordHasher').then((m) => m.PasswordHasher),
   },
   'bcrypt-hasher': {
     name: 'Bcrypt Hasher',
@@ -566,8 +588,7 @@ export const TOOL_REGISTRY = {
     icon: 'ShieldCheck',
     keywords: ['bcrypt', 'hash', 'password', 'verify', 'security'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/PasswordHasher').then((m) => m.PasswordHasher),
+    component: () => import('@/components/tools/PasswordHasher').then((m) => m.PasswordHasher),
   },
   'aes-encryption': {
     name: 'AES Encryption/Decryption',
@@ -575,8 +596,7 @@ export const TOOL_REGISTRY = {
     tags: ['security'],
     icon: 'Lock',
     keywords: ['aes', 'encrypt', 'decrypt', 'security', 'cipher'],
-    component: () =>
-      import('@/components/tools/AesEncryption').then((m) => m.AesEncryption),
+    component: () => import('@/components/tools/AesEncryption').then((m) => m.AesEncryption),
   },
   'rsa-key-generator': {
     name: 'RSA Key Pair Generator',
@@ -584,15 +604,25 @@ export const TOOL_REGISTRY = {
     tags: ['security'],
     icon: 'KeySquare',
     keywords: ['rsa', 'key', 'pair', 'public', 'private', 'encryption', 'security'],
-    component: () =>
-      import('@/components/tools/RsaKeyGenerator').then((m) => m.RsaKeyGenerator),
+    component: () => import('@/components/tools/RsaKeyGenerator').then((m) => m.RsaKeyGenerator),
   },
   'certificate-decoder': {
     name: 'Certificate Decoder',
     description: 'Inspect and decode X.509 certificates and fingerprints.',
     tags: ['security'],
     icon: 'BadgeCheck',
-    keywords: ['certificate', 'x509', 'ssl', 'tls', 'pem', 'crt', 'der', 'openssl', 'inspect', 'decode'],
+    keywords: [
+      'certificate',
+      'x509',
+      'ssl',
+      'tls',
+      'pem',
+      'crt',
+      'der',
+      'openssl',
+      'inspect',
+      'decode',
+    ],
     component: () =>
       import('@/components/tools/CertificateDecoder').then((m) => m.CertificateDecoder),
   },
@@ -625,7 +655,14 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Clock3',
     keywords: [
-      'timezone', 'time zone', 'convert', 'date time', 'utc', 'offset', 'iana', 'world clock',
+      'timezone',
+      'time zone',
+      'convert',
+      'date time',
+      'utc',
+      'offset',
+      'iana',
+      'world clock',
     ],
     component: () =>
       import('@/components/tools/TimezoneConverter').then((m) => m.TimezoneConverter),
@@ -636,19 +673,23 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Cake',
     keywords: [
-      'age', 'birthday', 'date of birth', 'years', 'months', 'days', 'next birthday', 'calculator',
+      'age',
+      'birthday',
+      'date of birth',
+      'years',
+      'months',
+      'days',
+      'next birthday',
+      'calculator',
     ],
-    component: () =>
-      import('@/components/tools/AgeCalculator').then((m) => m.AgeCalculator),
+    component: () => import('@/components/tools/AgeCalculator').then((m) => m.AgeCalculator),
   },
   'date-difference-calculator': {
     name: 'Date Difference Calculator',
     description: 'Calculate the exact duration and days between two dates.',
     tags: ['calculators'],
     icon: 'CalendarRange',
-    keywords: [
-      'date', 'difference', 'duration', 'days', 'weeks', 'months', 'years', 'calculator',
-    ],
+    keywords: ['date', 'difference', 'duration', 'days', 'weeks', 'months', 'years', 'calculator'],
     component: () =>
       import('@/components/tools/DateDifferenceCalculator').then((m) => m.DateDifferenceCalculator),
   },
@@ -662,8 +703,7 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'CaseSensitive',
     keywords: ['case', 'camel', 'snake', 'pascal', 'kebab', 'convert'],
-    component: () =>
-      import('@/components/tools/CaseConverter').then((m) => m.CaseConverter),
+    component: () => import('@/components/tools/CaseConverter').then((m) => m.CaseConverter),
   },
   'text-utilities': {
     name: 'Case Converter',
@@ -672,8 +712,7 @@ export const TOOL_REGISTRY = {
     icon: 'Type',
     keywords: ['case', 'camel', 'snake', 'pascal', 'kebab', 'convert'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/CaseConverter').then((m) => m.CaseConverter),
+    component: () => import('@/components/tools/CaseConverter').then((m) => m.CaseConverter),
   },
   'word-counter': {
     name: 'Word Counter',
@@ -681,8 +720,7 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'WholeWord',
     keywords: ['word', 'counter', 'characters', 'sentences', 'reading time', 'text'],
-    component: () =>
-      import('@/components/tools/WordCounter').then((m) => m.WordCounter),
+    component: () => import('@/components/tools/WordCounter').then((m) => m.WordCounter),
   },
   'find-replace': {
     name: 'Find and Replace',
@@ -690,8 +728,7 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'Replace',
     keywords: ['find', 'replace', 'search', 'regex', 'text'],
-    component: () =>
-      import('@/components/tools/FindAndReplace').then((m) => m.FindAndReplace),
+    component: () => import('@/components/tools/FindAndReplace').then((m) => m.FindAndReplace),
   },
 
   // =========================================================================
@@ -703,8 +740,7 @@ export const TOOL_REGISTRY = {
     tags: ['utilities'],
     icon: 'Volume2',
     keywords: ['tts', 'text to speech', 'voice', 'speak', 'speech', 'read aloud', 'audio'],
-    component: () =>
-      import('@/components/tools/TextToSpeech').then((m) => m.TextToSpeech),
+    component: () => import('@/components/tools/TextToSpeech').then((m) => m.TextToSpeech),
   },
   'speech-tools': {
     name: 'Text to Speech',
@@ -713,17 +749,23 @@ export const TOOL_REGISTRY = {
     icon: 'Volume2',
     keywords: ['tts', 'text to speech', 'voice', 'speak'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/TextToSpeech').then((m) => m.TextToSpeech),
+    component: () => import('@/components/tools/TextToSpeech').then((m) => m.TextToSpeech),
   },
   'speech-to-text': {
     name: 'Speech to Text',
     description: 'Transcribe voice or microphone input into text in real-time.',
     tags: ['utilities'],
     icon: 'Mic',
-    keywords: ['stt', 'speech to text', 'dictation', 'transcribe', 'voice typing', 'microphone', 'speech recognition'],
-    component: () =>
-      import('@/components/tools/SpeechToText').then((m) => m.SpeechToText),
+    keywords: [
+      'stt',
+      'speech to text',
+      'dictation',
+      'transcribe',
+      'voice typing',
+      'microphone',
+      'speech recognition',
+    ],
+    component: () => import('@/components/tools/SpeechToText').then((m) => m.SpeechToText),
   },
 
   // =========================================================================
@@ -734,7 +776,16 @@ export const TOOL_REGISTRY = {
     description: 'Design and preview glassmorphism CSS backdrop effects.',
     tags: ['design'],
     icon: 'Sparkles',
-    keywords: ['glassmorphism', 'glass', 'css', 'generator', 'backdrop-filter', 'ui', 'design', 'styles'],
+    keywords: [
+      'glassmorphism',
+      'glass',
+      'css',
+      'generator',
+      'backdrop-filter',
+      'ui',
+      'design',
+      'styles',
+    ],
     component: () =>
       import('@/components/tools/GlassmorphismGenerator').then((m) => m.GlassmorphismGenerator),
   },
@@ -754,8 +805,15 @@ export const TOOL_REGISTRY = {
     tags: ['design'],
     icon: 'Layers',
     keywords: [
-      'css', 'shadow', 'box-shadow', 'generator', 'visualizer', 'tailwind',
-      'style', 'glow', 'neumorphism',
+      'css',
+      'shadow',
+      'box-shadow',
+      'generator',
+      'visualizer',
+      'tailwind',
+      'style',
+      'glow',
+      'neumorphism',
     ],
     component: () =>
       import('@/components/tools/BoxShadowVisualizer').then((m) => m.BoxShadowVisualizer),
@@ -771,8 +829,7 @@ export const TOOL_REGISTRY = {
     icon: 'Fingerprint',
     featured: true,
     keywords: ['uuid', 'guid', 'generate', 'unique'],
-    component: () =>
-      import('@/components/tools/UuidGenerator').then((m) => m.UuidGenerator),
+    component: () => import('@/components/tools/UuidGenerator').then((m) => m.UuidGenerator),
   },
   'id-generator': {
     name: 'UUID Generator',
@@ -781,15 +838,24 @@ export const TOOL_REGISTRY = {
     icon: 'Fingerprint',
     keywords: ['uuid', 'guid', 'generate', 'unique'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/UuidGenerator').then((m) => m.UuidGenerator),
+    component: () => import('@/components/tools/UuidGenerator').then((m) => m.UuidGenerator),
   },
   'snowflake-id-generator': {
     name: 'Snowflake ID Generator & Decoder',
     description: 'Generate and decode customizable 64-bit Snowflake IDs.',
     tags: ['generators'],
     icon: 'Cpu',
-    keywords: ['snowflake', 'id', 'generator', 'decoder', 'parser', 'unique', 'twitter', 'discord', 'instagram'],
+    keywords: [
+      'snowflake',
+      'id',
+      'generator',
+      'decoder',
+      'parser',
+      'unique',
+      'twitter',
+      'discord',
+      'instagram',
+    ],
     component: () =>
       import('@/components/tools/SnowflakeGenerator').then((m) => m.SnowflakeGenerator),
   },
@@ -867,8 +933,7 @@ export const TOOL_REGISTRY = {
     tags: ['converters'],
     icon: 'Terminal',
     keywords: ['curl', 'fetch', 'axios', 'python', 'go', 'rust', 'request', 'convert', 'snippet'],
-    component: () =>
-      import('@/components/tools/CurlConverter').then((m) => m.CurlConverter),
+    component: () => import('@/components/tools/CurlConverter').then((m) => m.CurlConverter),
   },
   'code-generator': {
     name: 'cURL Command to Code',
@@ -877,17 +942,36 @@ export const TOOL_REGISTRY = {
     icon: 'Terminal',
     keywords: ['curl', 'fetch', 'axios', 'python', 'go', 'rust'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/CurlConverter').then((m) => m.CurlConverter),
+    component: () => import('@/components/tools/CurlConverter').then((m) => m.CurlConverter),
   },
   'json-to-code': {
     name: 'JSON to Code',
     description: 'Generate typed models from JSON in many languages.',
     tags: ['converters'],
     icon: 'FileCode',
-    keywords: ['json', 'typescript', 'ts', 'interface', 'type', 'convert', 'generate', 'schema', 'go', 'python', 'java', 'csharp', 'rust', 'swift', 'kotlin', 'dart', 'zod', 'struct', 'class', 'dataclass'],
-    component: () =>
-      import('@/components/tools/JsonToTypescript').then((m) => m.JsonToTypescript),
+    keywords: [
+      'json',
+      'typescript',
+      'ts',
+      'interface',
+      'type',
+      'convert',
+      'generate',
+      'schema',
+      'go',
+      'python',
+      'java',
+      'csharp',
+      'rust',
+      'swift',
+      'kotlin',
+      'dart',
+      'zod',
+      'struct',
+      'class',
+      'dataclass',
+    ],
+    component: () => import('@/components/tools/JsonToTypescript').then((m) => m.JsonToTypescript),
   },
   'json-to-typescript': {
     name: 'JSON to Code',
@@ -896,8 +980,7 @@ export const TOOL_REGISTRY = {
     icon: 'FileCode',
     keywords: ['json', 'typescript', 'ts', 'interface', 'type', 'convert', 'generate', 'schema'],
     hidden: true,
-    component: () =>
-      import('@/components/tools/JsonToTypescript').then((m) => m.JsonToTypescript),
+    component: () => import('@/components/tools/JsonToTypescript').then((m) => m.JsonToTypescript),
   },
 
   // =========================================================================
@@ -922,9 +1005,7 @@ export const TOOL_REGISTRY = {
     keywords: ['yaml', 'json', 'converter', 'serialize', 'parse'],
     hidden: true,
     component: () =>
-      import('@/components/tools/YamlJsonConverter').then(
-        (module) => module.YamlJsonConverter
-      ),
+      import('@/components/tools/YamlJsonConverter').then((module) => module.YamlJsonConverter),
   },
   'csv-json-converter': {
     name: 'CSV ↔ JSON Converter',
@@ -934,9 +1015,7 @@ export const TOOL_REGISTRY = {
     keywords: ['csv', 'json', 'converter', 'spreadsheet', 'table', 'delimiter'],
     hidden: true,
     component: () =>
-      import('@/components/tools/CsvJsonConverter').then(
-        (module) => module.CsvJsonConverter
-      ),
+      import('@/components/tools/CsvJsonConverter').then((module) => module.CsvJsonConverter),
   },
   'jwt-decoder': {
     name: 'JWT Decoder',
@@ -944,8 +1023,7 @@ export const TOOL_REGISTRY = {
     tags: ['encoders-decoders'],
     icon: 'KeyRound',
     keywords: ['jwt', 'token', 'decode', 'authentication'],
-    component: () =>
-      import('@/components/tools/JwtDecoder').then((module) => module.JwtDecoder),
+    component: () => import('@/components/tools/JwtDecoder').then((module) => module.JwtDecoder),
   },
   'morse-binary-converter': {
     name: 'Morse Code & Binary Converter',
@@ -964,8 +1042,7 @@ export const TOOL_REGISTRY = {
     tags: ['utilities'],
     icon: 'Calendar',
     keywords: ['cron', 'schedule', 'parse', 'generate'],
-    component: () =>
-      import('@/components/tools/CronParser').then((module) => module.CronParser),
+    component: () => import('@/components/tools/CronParser').then((module) => module.CronParser),
   },
   'qr-code-generator': {
     name: 'QR Code Generator',
@@ -974,9 +1051,7 @@ export const TOOL_REGISTRY = {
     icon: 'QrCode',
     keywords: ['qr', 'qrcode', 'barcode', 'url', 'text', 'png', 'svg'],
     component: () =>
-      import('@/components/tools/QrCodeGenerator').then(
-        (module) => module.QrCodeGenerator
-      ),
+      import('@/components/tools/QrCodeGenerator').then((module) => module.QrCodeGenerator),
   },
   'gzip-compressor': {
     name: 'GZip Compressor / Decompressor',
@@ -985,9 +1060,7 @@ export const TOOL_REGISTRY = {
     icon: 'PackageOpen',
     keywords: ['gzip', 'compress', 'decompress', 'deflate', 'base64', 'zip'],
     component: () =>
-      import('@/components/tools/GzipCompressor').then(
-        (module) => module.GzipCompressor
-      ),
+      import('@/components/tools/GzipCompressor').then((module) => module.GzipCompressor),
   },
   'regex-tester': {
     name: 'Regex Tester',
@@ -995,10 +1068,7 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'SearchCode',
     keywords: ['regex', 'regexp', 'test', 'pattern'],
-    component: () =>
-      import('@/components/tools/RegexTester').then(
-        (module) => module.RegexTester
-      ),
+    component: () => import('@/components/tools/RegexTester').then((module) => module.RegexTester),
   },
   'text-diff': {
     name: 'Text Diff Visualizer',
@@ -1006,8 +1076,7 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'GitCompare',
     keywords: ['diff', 'compare', 'text', 'changes'],
-    component: () =>
-      import('@/components/tools/TextDiff').then((module) => module.TextDiff),
+    component: () => import('@/components/tools/TextDiff').then((module) => module.TextDiff),
   },
   'resume-ats-analyzer': {
     name: 'CV / Resume ATS Analyzer',
@@ -1016,9 +1085,7 @@ export const TOOL_REGISTRY = {
     icon: 'FileSearch',
     keywords: ['resume', 'cv', 'ats', 'pdf', 'readability', 'keywords', 'job description'],
     component: () =>
-      import('@/components/tools/ResumeAtsAnalyzer').then(
-        (module) => module.ResumeAtsAnalyzer
-      ),
+      import('@/components/tools/ResumeAtsAnalyzer').then((module) => module.ResumeAtsAnalyzer),
   },
   'svg-path-editor': {
     name: 'SVG Path Editor/Optimizer',
@@ -1027,9 +1094,7 @@ export const TOOL_REGISTRY = {
     icon: 'Pen',
     keywords: ['svg', 'path', 'editor', 'optimize', 'visualize', 'vector'],
     component: () =>
-      import('@/components/tools/SvgPathEditor').then(
-        (module) => module.SvgPathEditor
-      ),
+      import('@/components/tools/SvgPathEditor').then((module) => module.SvgPathEditor),
   },
   'percentage-calculator': {
     name: 'Percentage Calculator',
@@ -1037,8 +1102,14 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Percent',
     keywords: [
-      'percentage', 'percent', 'calculator', 'ratio', 'increase', 'decrease',
-      'change', 'math',
+      'percentage',
+      'percent',
+      'calculator',
+      'ratio',
+      'increase',
+      'decrease',
+      'change',
+      'math',
     ],
     component: () =>
       import('@/components/tools/PercentageCalculator').then(
@@ -1051,13 +1122,20 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Scale',
     keywords: [
-      'unit', 'converter', 'measurement', 'length', 'weight', 'temperature',
-      'speed', 'time', 'data', 'area', 'volume',
+      'unit',
+      'converter',
+      'measurement',
+      'length',
+      'weight',
+      'temperature',
+      'speed',
+      'time',
+      'data',
+      'area',
+      'volume',
     ],
     component: () =>
-      import('@/components/tools/UnitConverter').then(
-        (module) => module.UnitConverter
-      ),
+      import('@/components/tools/UnitConverter').then((module) => module.UnitConverter),
   },
   'bmi-calculator': {
     name: 'BMI Calculator',
@@ -1065,13 +1143,17 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Scale',
     keywords: [
-      'bmi', 'body mass index', 'weight', 'height', 'health', 'metric',
-      'pounds', 'kilograms',
+      'bmi',
+      'body mass index',
+      'weight',
+      'height',
+      'health',
+      'metric',
+      'pounds',
+      'kilograms',
     ],
     component: () =>
-      import('@/components/tools/BmiCalculator').then(
-        (module) => module.BmiCalculator
-      ),
+      import('@/components/tools/BmiCalculator').then((module) => module.BmiCalculator),
   },
   'currency-converter': {
     name: 'Currency Converter',
@@ -1079,13 +1161,17 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'BadgeDollarSign',
     keywords: [
-      'currency', 'exchange rate', 'forex', 'money', 'usd', 'eur', 'convert',
+      'currency',
+      'exchange rate',
+      'forex',
+      'money',
+      'usd',
+      'eur',
+      'convert',
       'live rates',
     ],
     component: () =>
-      import('@/components/tools/CurrencyConverter').then(
-        (module) => module.CurrencyConverter
-      ),
+      import('@/components/tools/CurrencyConverter').then((module) => module.CurrencyConverter),
   },
   'list-converter': {
     name: 'List Converter',
@@ -1094,9 +1180,7 @@ export const TOOL_REGISTRY = {
     icon: 'ListCollapse',
     keywords: ['list', 'convert', 'csv', 'json', 'sql', 'in', 'array', 'format'],
     component: () =>
-      import('@/components/tools/ListConverter').then(
-        (module) => module.ListConverter
-      ),
+      import('@/components/tools/ListConverter').then((module) => module.ListConverter),
   },
   'password-generator': {
     name: 'Password Generator',
@@ -1105,9 +1189,7 @@ export const TOOL_REGISTRY = {
     icon: 'Key',
     keywords: ['password', 'generate', 'random', 'secure'],
     component: () =>
-      import('@/components/tools/PasswordGenerator').then(
-        (module) => module.PasswordGenerator
-      ),
+      import('@/components/tools/PasswordGenerator').then((module) => module.PasswordGenerator),
   },
   'clamp-calculator': {
     name: 'CSS Clamp Calculator',
@@ -1115,13 +1197,18 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Maximize',
     keywords: [
-      'css', 'clamp', 'fluid', 'responsive', 'typography', 'font size',
-      'rem', 'px', 'calculator',
+      'css',
+      'clamp',
+      'fluid',
+      'responsive',
+      'typography',
+      'font size',
+      'rem',
+      'px',
+      'calculator',
     ],
     component: () =>
-      import('@/components/tools/ClampCalculator').then(
-        (module) => module.ClampCalculator
-      ),
+      import('@/components/tools/ClampCalculator').then((module) => module.ClampCalculator),
   },
   'hmac-generator': {
     name: 'HMAC Generator',
@@ -1129,13 +1216,21 @@ export const TOOL_REGISTRY = {
     tags: ['security'],
     icon: 'Signature',
     keywords: [
-      'hmac', 'sha256', 'sha512', 'sha1', 'sha384', 'signature', 'webhook',
-      'secret', 'mac', 'verify', 'authentication', 'base64',
+      'hmac',
+      'sha256',
+      'sha512',
+      'sha1',
+      'sha384',
+      'signature',
+      'webhook',
+      'secret',
+      'mac',
+      'verify',
+      'authentication',
+      'base64',
     ],
     component: () =>
-      import('@/components/tools/HmacGenerator').then(
-        (module) => module.HmacGenerator
-      ),
+      import('@/components/tools/HmacGenerator').then((module) => module.HmacGenerator),
   },
   'jwt-signer': {
     name: 'JWT Creator & Signer',
@@ -1143,13 +1238,20 @@ export const TOOL_REGISTRY = {
     tags: ['security', 'encoders-decoders'],
     icon: 'FileKey',
     keywords: [
-      'jwt', 'json web token', 'jws', 'sign', 'signer', 'hs256', 'hs384',
-      'hs512', 'hmac', 'token', 'verify', 'auth',
+      'jwt',
+      'json web token',
+      'jws',
+      'sign',
+      'signer',
+      'hs256',
+      'hs384',
+      'hs512',
+      'hmac',
+      'token',
+      'verify',
+      'auth',
     ],
-    component: () =>
-      import('@/components/tools/JwtSigner').then(
-        (module) => module.JwtSigner
-      ),
+    component: () => import('@/components/tools/JwtSigner').then((module) => module.JwtSigner),
   },
   'totp-generator': {
     name: 'TOTP Code Generator',
@@ -1157,13 +1259,21 @@ export const TOOL_REGISTRY = {
     tags: ['security', 'generators'],
     icon: 'Timer',
     keywords: [
-      'totp', '2fa', 'otp', 'mfa', 'authenticator', 'one-time password', 'hotp',
-      'rfc 6238', 'otpauth', 'base32', 'google authenticator', 'qr code',
+      'totp',
+      '2fa',
+      'otp',
+      'mfa',
+      'authenticator',
+      'one-time password',
+      'hotp',
+      'rfc 6238',
+      'otpauth',
+      'base32',
+      'google authenticator',
+      'qr code',
     ],
     component: () =>
-      import('@/components/tools/TotpGenerator').then(
-        (module) => module.TotpGenerator
-      ),
+      import('@/components/tools/TotpGenerator').then((module) => module.TotpGenerator),
   },
   'ulid-generator': {
     name: 'ULID Generator & Decoder',
@@ -1171,14 +1281,19 @@ export const TOOL_REGISTRY = {
     tags: ['generators'],
     icon: 'CalendarClock',
     keywords: [
-      'ulid', 'ulid generator', 'ulid decoder', 'sortable id', 'unique id',
-      'crockford base32', 'monotonic', 'ulid to uuid', 'uuid to ulid',
+      'ulid',
+      'ulid generator',
+      'ulid decoder',
+      'sortable id',
+      'unique id',
+      'crockford base32',
+      'monotonic',
+      'ulid to uuid',
+      'uuid to ulid',
       'timestamp id',
     ],
     component: () =>
-      import('@/components/tools/UlidGenerator').then(
-        (module) => module.UlidGenerator
-      ),
+      import('@/components/tools/UlidGenerator').then((module) => module.UlidGenerator),
   },
   'chmod-calculator': {
     name: 'Chmod Calculator',
@@ -1186,13 +1301,19 @@ export const TOOL_REGISTRY = {
     tags: ['utilities', 'calculators'],
     icon: 'FolderLock',
     keywords: [
-      'chmod', 'unix permissions', 'file permissions', 'octal', 'symbolic',
-      'rwx', 'setuid', 'setgid', 'sticky bit', 'linux',
+      'chmod',
+      'unix permissions',
+      'file permissions',
+      'octal',
+      'symbolic',
+      'rwx',
+      'setuid',
+      'setgid',
+      'sticky bit',
+      'linux',
     ],
     component: () =>
-      import('@/components/tools/ChmodCalculator').then(
-        (module) => module.ChmodCalculator
-      ),
+      import('@/components/tools/ChmodCalculator').then((module) => module.ChmodCalculator),
   },
   'json-diff': {
     name: 'JSON Diff',
@@ -1200,13 +1321,18 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools', 'formatters-validators'],
     icon: 'FileDiff',
     keywords: [
-      'json', 'diff', 'compare', 'difference', 'patch', 'rfc 6902',
-      'json pointer', 'structural', 'validate', 'changes',
+      'json',
+      'diff',
+      'compare',
+      'difference',
+      'patch',
+      'rfc 6902',
+      'json pointer',
+      'structural',
+      'validate',
+      'changes',
     ],
-    component: () =>
-      import('@/components/tools/JsonDiff').then(
-        (module) => module.JsonDiff
-      ),
+    component: () => import('@/components/tools/JsonDiff').then((module) => module.JsonDiff),
   },
   'css-gradient-generator': {
     name: 'CSS Gradient Generator',
@@ -1214,9 +1340,16 @@ export const TOOL_REGISTRY = {
     tags: ['design', 'generators'],
     icon: 'Rainbow',
     keywords: [
-      'css gradient', 'gradient generator', 'linear gradient',
-      'radial gradient', 'conic gradient', 'repeating gradient', 'color stops',
-      'tailwind gradient', 'background', 'css background',
+      'css gradient',
+      'gradient generator',
+      'linear gradient',
+      'radial gradient',
+      'conic gradient',
+      'repeating gradient',
+      'color stops',
+      'tailwind gradient',
+      'background',
+      'css background',
     ],
     component: () =>
       import('@/components/tools/CssGradientGenerator').then(
@@ -1229,13 +1362,19 @@ export const TOOL_REGISTRY = {
     tags: ['converters', 'utilities'],
     icon: 'Container',
     keywords: [
-      'docker', 'docker run', 'docker compose', 'docker-compose', 'compose',
-      'yaml', 'container', 'converter', 'command line', 'devops',
+      'docker',
+      'docker run',
+      'docker compose',
+      'docker-compose',
+      'compose',
+      'yaml',
+      'container',
+      'converter',
+      'command line',
+      'devops',
     ],
     component: () =>
-      import('@/components/tools/DockerRunToCompose').then(
-        (module) => module.DockerRunToCompose
-      ),
+      import('@/components/tools/DockerRunToCompose').then((module) => module.DockerRunToCompose),
   },
   'unicode-inspector': {
     name: 'Unicode & Zero-Width Inspector',
@@ -1243,14 +1382,21 @@ export const TOOL_REGISTRY = {
     tags: ['text-tools'],
     icon: 'ScanSearch',
     keywords: [
-      'unicode', 'zero-width', 'invisible characters', 'code point', 'utf-8',
-      'byte order mark', 'bidi', 'normalize', 'nfc', 'grapheme', 'hidden text',
+      'unicode',
+      'zero-width',
+      'invisible characters',
+      'code point',
+      'utf-8',
+      'byte order mark',
+      'bidi',
+      'normalize',
+      'nfc',
+      'grapheme',
+      'hidden text',
       'non-breaking space',
     ],
     component: () =>
-      import('@/components/tools/UnicodeInspector').then(
-        (module) => module.UnicodeInspector
-      ),
+      import('@/components/tools/UnicodeInspector').then((module) => module.UnicodeInspector),
   },
   'http-status-codes': {
     name: 'HTTP Status Codes',
@@ -1258,13 +1404,21 @@ export const TOOL_REGISTRY = {
     tags: ['networking', 'utilities'],
     icon: 'ServerCrash',
     keywords: [
-      'http', 'status', 'codes', 'response', 'error', '404', '500', 'redirect',
-      'rest', 'api', 'rfc', 'reference',
+      'http',
+      'status',
+      'codes',
+      'response',
+      'error',
+      '404',
+      '500',
+      'redirect',
+      'rest',
+      'api',
+      'rfc',
+      'reference',
     ],
     component: () =>
-      import('@/components/tools/HttpStatusCodes').then(
-        (module) => module.HttpStatusCodes
-      ),
+      import('@/components/tools/HttpStatusCodes').then((module) => module.HttpStatusCodes),
   },
   'user-agent-parser': {
     name: 'User-Agent Parser',
@@ -1272,14 +1426,19 @@ export const TOOL_REGISTRY = {
     tags: ['networking', 'utilities'],
     icon: 'MonitorSmartphone',
     keywords: [
-      'user agent', 'user-agent', 'ua string', 'browser detection', 'parser',
-      'device detection', 'bot detection', 'navigator', 'useragent',
+      'user agent',
+      'user-agent',
+      'ua string',
+      'browser detection',
+      'parser',
+      'device detection',
+      'bot detection',
+      'navigator',
+      'useragent',
       'operating system',
     ],
     component: () =>
-      import('@/components/tools/UserAgentParser').then(
-        (module) => module.UserAgentParser
-      ),
+      import('@/components/tools/UserAgentParser').then((module) => module.UserAgentParser),
   },
   'loan-calculator': {
     name: 'Loan & Mortgage Calculator',
@@ -1287,13 +1446,20 @@ export const TOOL_REGISTRY = {
     tags: ['calculators'],
     icon: 'Landmark',
     keywords: [
-      'loan', 'mortgage', 'amortization', 'amortisation', 'payment', 'interest',
-      'repayment', 'payoff', 'schedule', 'emi', 'extra payment',
+      'loan',
+      'mortgage',
+      'amortization',
+      'amortisation',
+      'payment',
+      'interest',
+      'repayment',
+      'payoff',
+      'schedule',
+      'emi',
+      'extra payment',
     ],
     component: () =>
-      import('@/components/tools/LoanCalculator').then(
-        (module) => module.LoanCalculator
-      ),
+      import('@/components/tools/LoanCalculator').then((module) => module.LoanCalculator),
   },
   'ipv4-converter': {
     name: 'IPv4 Address Converter',
@@ -1301,13 +1467,22 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'Binary',
     keywords: [
-      'ipv4', 'ip address', 'converter', 'integer', 'decimal', 'hex', 'octal',
-      'binary', 'dotted', 'mapped', 'ipv6', 'ffff', 'long',
+      'ipv4',
+      'ip address',
+      'converter',
+      'integer',
+      'decimal',
+      'hex',
+      'octal',
+      'binary',
+      'dotted',
+      'mapped',
+      'ipv6',
+      'ffff',
+      'long',
     ],
     component: () =>
-      import('@/components/tools/Ipv4Converter').then(
-        (module) => module.Ipv4Converter
-      ),
+      import('@/components/tools/Ipv4Converter').then((module) => module.Ipv4Converter),
   },
   'ipv4-range-expander': {
     name: 'IPv4 Range Expander',
@@ -1315,13 +1490,20 @@ export const TOOL_REGISTRY = {
     tags: ['networking'],
     icon: 'Layers',
     keywords: [
-      'ipv4', 'cidr', 'range', 'expand', 'list', 'addresses', 'collapse',
-      'aggregate', 'summarize', 'supernet', 'ip range',
+      'ipv4',
+      'cidr',
+      'range',
+      'expand',
+      'list',
+      'addresses',
+      'collapse',
+      'aggregate',
+      'summarize',
+      'supernet',
+      'ip range',
     ],
     component: () =>
-      import('@/components/tools/Ipv4RangeExpander').then(
-        (module) => module.Ipv4RangeExpander
-      ),
+      import('@/components/tools/Ipv4RangeExpander').then((module) => module.Ipv4RangeExpander),
   },
   'mac-address-generator': {
     name: 'MAC Address Generator',
@@ -1329,13 +1511,20 @@ export const TOOL_REGISTRY = {
     tags: ['generators', 'networking'],
     icon: 'Network',
     keywords: [
-      'mac', 'mac address', 'random', 'generator', 'ethernet', 'hardware address',
-      'unicast', 'multicast', 'locally administered', 'validator', 'cisco',
+      'mac',
+      'mac address',
+      'random',
+      'generator',
+      'ethernet',
+      'hardware address',
+      'unicast',
+      'multicast',
+      'locally administered',
+      'validator',
+      'cisco',
     ],
     component: () =>
-      import('@/components/tools/MacAddressGenerator').then(
-        (module) => module.MacAddressGenerator
-      ),
+      import('@/components/tools/MacAddressGenerator').then((module) => module.MacAddressGenerator),
   },
   'basic-auth-generator': {
     name: 'Basic Auth Header Generator',
@@ -1343,13 +1532,21 @@ export const TOOL_REGISTRY = {
     tags: ['generators', 'security'],
     icon: 'KeyRound',
     keywords: [
-      'basic auth', 'authorization', 'header', 'base64', 'http', 'credentials',
-      'username', 'password', 'curl', 'fetch', 'httpie', 'rfc 7617',
+      'basic auth',
+      'authorization',
+      'header',
+      'base64',
+      'http',
+      'credentials',
+      'username',
+      'password',
+      'curl',
+      'fetch',
+      'httpie',
+      'rfc 7617',
     ],
     component: () =>
-      import('@/components/tools/BasicAuthGenerator').then(
-        (module) => module.BasicAuthGenerator
-      ),
+      import('@/components/tools/BasicAuthGenerator').then((module) => module.BasicAuthGenerator),
   },
   'open-graph-generator': {
     name: 'Open Graph Meta Generator',
@@ -1357,13 +1554,20 @@ export const TOOL_REGISTRY = {
     tags: ['utilities', 'design'],
     icon: 'Share2',
     keywords: [
-      'open graph', 'og', 'meta tags', 'twitter card', 'social', 'preview',
-      'seo', 'share', 'facebook', 'linkedin', 'og:image',
+      'open graph',
+      'og',
+      'meta tags',
+      'twitter card',
+      'social',
+      'preview',
+      'seo',
+      'share',
+      'facebook',
+      'linkedin',
+      'og:image',
     ],
     component: () =>
-      import('@/components/tools/OpenGraphGenerator').then(
-        (module) => module.OpenGraphGenerator
-      ),
+      import('@/components/tools/OpenGraphGenerator').then((module) => module.OpenGraphGenerator),
   },
   'keycode-info': {
     name: 'Keycode Info',
@@ -1371,13 +1575,18 @@ export const TOOL_REGISTRY = {
     tags: ['utilities'],
     icon: 'Keyboard',
     keywords: [
-      'keycode', 'key code', 'keyboard', 'event.key', 'event.code', 'which',
-      'keydown', 'javascript', 'key press', 'scancode',
+      'keycode',
+      'key code',
+      'keyboard',
+      'event.key',
+      'event.code',
+      'which',
+      'keydown',
+      'javascript',
+      'key press',
+      'scancode',
     ],
-    component: () =>
-      import('@/components/tools/KeycodeInfo').then(
-        (module) => module.KeycodeInfo
-      ),
+    component: () => import('@/components/tools/KeycodeInfo').then((module) => module.KeycodeInfo),
   },
   'text-sorter-deduplicator': {
     name: 'Text Sorter & Deduplicator',
@@ -1403,7 +1612,7 @@ export const TOOL_REGISTRY = {
         (module) => module.TextSorterDeduplicator
       ),
   },
-  'slugify': {
+  slugify: {
     name: 'Slug Generator',
     description: 'Turn any title into a clean URL slug, with accents transliterated',
     tags: ['text-tools'],
@@ -1422,9 +1631,7 @@ export const TOOL_REGISTRY = {
       'stopwords',
     ],
     component: () =>
-      import('@/components/tools/SlugGenerator').then(
-        (module) => module.SlugGenerator
-      ),
+      import('@/components/tools/SlugGenerator').then((module) => module.SlugGenerator),
   },
   'nato-alphabet': {
     name: 'NATO Phonetic Alphabet',
@@ -1444,9 +1651,7 @@ export const TOOL_REGISTRY = {
       'decode',
     ],
     component: () =>
-      import('@/components/tools/NatoAlphabet').then(
-        (module) => module.NatoAlphabet
-      ),
+      import('@/components/tools/NatoAlphabet').then((module) => module.NatoAlphabet),
   },
   'numeronym-generator': {
     name: 'Numeronym Generator',
@@ -1466,9 +1671,7 @@ export const TOOL_REGISTRY = {
       'shorten words',
     ],
     component: () =>
-      import('@/components/tools/NumeronymGenerator').then(
-        (module) => module.NumeronymGenerator
-      ),
+      import('@/components/tools/NumeronymGenerator').then((module) => module.NumeronymGenerator),
   },
   'email-normalizer': {
     name: 'Email Normalizer',
@@ -1489,9 +1692,7 @@ export const TOOL_REGISTRY = {
       'canonical email',
     ],
     component: () =>
-      import('@/components/tools/EmailNormalizer').then(
-        (module) => module.EmailNormalizer
-      ),
+      import('@/components/tools/EmailNormalizer').then((module) => module.EmailNormalizer),
   },
   'markdown-table-generator': {
     name: 'Markdown Table Generator',
@@ -1555,9 +1756,7 @@ export const TOOL_REGISTRY = {
       'variables',
     ],
     component: () =>
-      import('@/components/tools/MathEvaluator').then(
-        (module) => module.MathEvaluator
-      ),
+      import('@/components/tools/MathEvaluator').then((module) => module.MathEvaluator),
   },
   'svg-placeholder-generator': {
     name: 'SVG Placeholder Generator',
@@ -1618,9 +1817,7 @@ export const TOOL_REGISTRY = {
       'application/json',
     ],
     component: () =>
-      import('@/components/tools/MimeTypesReference').then(
-        (module) => module.MimeTypesReference
-      ),
+      import('@/components/tools/MimeTypesReference').then((module) => module.MimeTypesReference),
   },
   'base64-image-decoder': {
     name: 'Base64 Image Decoder',
@@ -1640,8 +1837,6 @@ export const TOOL_REGISTRY = {
       'jpeg',
     ],
     component: () =>
-      import('@/components/tools/Base64ImageDecoder').then(
-        (module) => module.Base64ImageDecoder
-      ),
+      import('@/components/tools/Base64ImageDecoder').then((module) => module.Base64ImageDecoder),
   },
 } as const satisfies Record<string, ToolRegistryEntry>;

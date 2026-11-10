@@ -278,7 +278,9 @@ test.describe('tool catalog: filter', () => {
   });
 
   test('treats a blank query and no criteria as the whole browse list', () => {
-    expect(ids(catalog.filter({ query: '  ', tag: null, onlyFavorites: null }))).toEqual(VISIBLE_IDS);
+    expect(ids(catalog.filter({ query: '  ', tag: null, onlyFavorites: null }))).toEqual(
+      VISIBLE_IDS
+    );
   });
 
   test('keeps only favorites, in catalog order', () => {
@@ -294,7 +296,10 @@ test.describe('tool catalog: filter', () => {
   test('includes a favorited hidden tool, after the visible favorites', () => {
     const favorites = ['pdf-merge', 'uuid-generator'];
 
-    expect(ids(catalog.filter({ onlyFavorites: favorites }))).toEqual(['uuid-generator', 'pdf-merge']);
+    expect(ids(catalog.filter({ onlyFavorites: favorites }))).toEqual([
+      'uuid-generator',
+      'pdf-merge',
+    ]);
     // A hidden tool that is not a favorite stays out
     expect(ids(catalog.filter({ onlyFavorites: ['json-formatter'] }))).toEqual(['json-formatter']);
   });

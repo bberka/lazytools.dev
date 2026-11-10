@@ -5,7 +5,13 @@ import { CircleAlert, Code2, ImageIcon, Share2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -58,7 +64,10 @@ function CountHint({ value, limit, what }: { value: string; limit: number; what:
   const hint = lengthHint(value, limit);
   return (
     <span
-      className={cn('text-xs tabular-nums', hint.state === 'over' ? 'font-medium text-destructive' : 'text-muted-foreground')}
+      className={cn(
+        'text-xs tabular-nums',
+        hint.state === 'over' ? 'font-medium text-destructive' : 'text-muted-foreground'
+      )}
       aria-label={`${what} length`}
     >
       {hint.count} / {hint.limit}
@@ -81,7 +90,8 @@ export function OpenGraphGenerator() {
   const isBlank = JSON.stringify(fields) === JSON.stringify(EMPTY_OG_FIELDS);
 
   const image = fields.image.trim();
-  const showImage = loadImage && image !== '' && failedImage !== image && /^https?:\/\//i.test(image);
+  const showImage =
+    loadImage && image !== '' && failedImage !== image && /^https?:\/\//i.test(image);
   const large = fields.twitterCard === 'summary_large_image';
   const host = displayHost(fields.url) || fields.siteName.trim();
 
@@ -97,13 +107,28 @@ export function OpenGraphGenerator() {
             <CardDescription>The tags are written as you type.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Field id="og-title" label="Title" hint={<CountHint value={fields.title} limit={TITLE_LIMIT} what="Title" />}>
-              <Input id="og-title" value={fields.title} onChange={(e) => set('title', e.target.value)} placeholder="My page title" />
+            <Field
+              id="og-title"
+              label="Title"
+              hint={<CountHint value={fields.title} limit={TITLE_LIMIT} what="Title" />}
+            >
+              <Input
+                id="og-title"
+                value={fields.title}
+                onChange={(e) => set('title', e.target.value)}
+                placeholder="My page title"
+              />
             </Field>
             <Field
               id="og-description"
               label="Description"
-              hint={<CountHint value={fields.description} limit={DESCRIPTION_LIMIT} what="Description" />}
+              hint={
+                <CountHint
+                  value={fields.description}
+                  limit={DESCRIPTION_LIMIT}
+                  what="Description"
+                />
+              }
             >
               <Textarea
                 id="og-description"
@@ -136,11 +161,19 @@ export function OpenGraphGenerator() {
               />
             </Field>
             <Field id="og-image-alt" label="Image alt text">
-              <Input id="og-image-alt" value={fields.imageAlt} onChange={(e) => set('imageAlt', e.target.value)} />
+              <Input
+                id="og-image-alt"
+                value={fields.imageAlt}
+                onChange={(e) => set('imageAlt', e.target.value)}
+              />
             </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field id="og-site-name" label="Site name">
-                <Input id="og-site-name" value={fields.siteName} onChange={(e) => set('siteName', e.target.value)} />
+                <Input
+                  id="og-site-name"
+                  value={fields.siteName}
+                  onChange={(e) => set('siteName', e.target.value)}
+                />
               </Field>
               <Field id="og-locale" label="Locale">
                 <Input
@@ -167,7 +200,10 @@ export function OpenGraphGenerator() {
                 </Select>
               </Field>
               <Field id="og-twitter-card" label="Twitter card">
-                <Select value={fields.twitterCard} onValueChange={(value) => set('twitterCard', value as TwitterCard)}>
+                <Select
+                  value={fields.twitterCard}
+                  onValueChange={(value) => set('twitterCard', value as TwitterCard)}
+                >
                   <SelectTrigger id="og-twitter-card">
                     <SelectValue />
                   </SelectTrigger>
@@ -201,7 +237,13 @@ export function OpenGraphGenerator() {
                 />
               </Field>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => setFields(EMPTY_OG_FIELDS)} disabled={isBlank}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFields(EMPTY_OG_FIELDS)}
+              disabled={isBlank}
+            >
               <Trash2 className="h-4 w-4" />
               Clear
             </Button>
@@ -233,7 +275,10 @@ export function OpenGraphGenerator() {
             {warnings.length > 0 && (
               <ul aria-label="Warnings" className="space-y-1">
                 {warnings.map((warning) => (
-                  <li key={warning} className="flex items-start gap-1.5 text-xs text-muted-foreground sm:text-sm">
+                  <li
+                    key={warning}
+                    className="flex items-start gap-1.5 text-xs text-muted-foreground sm:text-sm"
+                  >
                     <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>{warning}</span>
                   </li>
@@ -246,7 +291,9 @@ export function OpenGraphGenerator() {
         <Card>
           <CardHeader>
             <CardTitle>Preview</CardTitle>
-            <CardDescription>A rough idea of a shared link. Each site draws it a little differently.</CardDescription>
+            <CardDescription>
+              A rough idea of a shared link. Each site draws it a little differently.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div
@@ -275,7 +322,9 @@ export function OpenGraphGenerator() {
                 )}
               </div>
               <div className="min-w-0 space-y-0.5 p-3">
-                {host && <div className="truncate text-xs uppercase text-muted-foreground">{host}</div>}
+                {host && (
+                  <div className="truncate text-xs uppercase text-muted-foreground">{host}</div>
+                )}
                 <div className="line-clamp-2 break-words text-sm font-semibold">
                   {fields.title.trim() || 'Your page title'}
                 </div>
@@ -291,13 +340,16 @@ export function OpenGraphGenerator() {
                   Load the image in the preview
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  Off by default: turning it on makes your browser request the image URL from its server.
+                  Off by default: turning it on makes your browser request the image URL from its
+                  server.
                 </p>
               </div>
               <Switch id="og-load-image" checked={loadImage} onCheckedChange={setLoadImage} />
             </div>
             {loadImage && image !== '' && failedImage === image && (
-              <p className="text-xs text-destructive">The image could not be loaded from that URL.</p>
+              <p className="text-xs text-destructive">
+                The image could not be loaded from that URL.
+              </p>
             )}
           </CardContent>
         </Card>

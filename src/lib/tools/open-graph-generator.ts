@@ -3,7 +3,15 @@
  * checks the values against the lengths social sites tend to show.
  */
 
-export const OG_TYPES = ['website', 'article', 'book', 'profile', 'video.other', 'music.song', 'product'] as const;
+export const OG_TYPES = [
+  'website',
+  'article',
+  'book',
+  'profile',
+  'video.other',
+  'music.song',
+  'product',
+] as const;
 export type OgType = (typeof OG_TYPES)[number];
 
 export const TWITTER_CARDS = ['summary', 'summary_large_image'] as const;
@@ -119,10 +127,14 @@ export function checkFields(fields: OpenGraphFields): string[] {
   const image = fields.image.trim();
   const locale = fields.locale.trim();
 
-  if (url !== '' && !isAbsoluteHttpUrl(url)) warnings.push('The page URL should be absolute, starting with http:// or https://.');
-  if (image !== '' && !isAbsoluteHttpUrl(image)) warnings.push('The image URL should be absolute, starting with http:// or https://.');
-  if (locale !== '' && !/^[a-z]{2,3}(_[A-Z]{2})?$/.test(locale)) warnings.push('The locale looks like en or en_US (language, then an optional _REGION).');
-  if (singleLine(fields.title) === '') warnings.push('Add a title: og:title is the one tag every site expects.');
+  if (url !== '' && !isAbsoluteHttpUrl(url))
+    warnings.push('The page URL should be absolute, starting with http:// or https://.');
+  if (image !== '' && !isAbsoluteHttpUrl(image))
+    warnings.push('The image URL should be absolute, starting with http:// or https://.');
+  if (locale !== '' && !/^[a-z]{2,3}(_[A-Z]{2})?$/.test(locale))
+    warnings.push('The locale looks like en or en_US (language, then an optional _REGION).');
+  if (singleLine(fields.title) === '')
+    warnings.push('Add a title: og:title is the one tag every site expects.');
   return warnings;
 }
 

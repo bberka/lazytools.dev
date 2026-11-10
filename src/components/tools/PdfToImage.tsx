@@ -51,7 +51,9 @@ function PagePreview({ image }: { image: PageImage }) {
 
   return (
     <div className="aspect-[1/1.4] relative overflow-hidden rounded border bg-white">
-      {url && <img src={url} alt={`Page ${image.pageNumber}`} className="object-contain w-full h-full" />}
+      {url && (
+        <img src={url} alt={`Page ${image.pageNumber}`} className="object-contain w-full h-full" />
+      )}
     </div>
   );
 }
@@ -115,7 +117,9 @@ export function PdfToImage() {
         if (!isCurrent()) return;
         setImages(pages);
         setError(
-          pdf.pageCount === 0 ? 'This PDF has no pages to convert.' : describeFailedPages(failedPages, pdf.pageCount)
+          pdf.pageCount === 0
+            ? 'This PDF has no pages to convert.'
+            : describeFailedPages(failedPages, pdf.pageCount)
         );
       } finally {
         await pdf.destroy();
@@ -140,7 +144,9 @@ export function PdfToImage() {
             <ImageIcon className="h-5 w-5" />
             PDF to Image
           </CardTitle>
-          <CardDescription>Convert PDF pages into high-quality PNG images directly in your browser</CardDescription>
+          <CardDescription>
+            Convert PDF pages into high-quality PNG images directly in your browser
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -175,7 +181,10 @@ export function PdfToImage() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}

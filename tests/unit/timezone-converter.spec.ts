@@ -109,15 +109,15 @@ test.describe('convertTimeZone', () => {
   });
 
   test('converts the times on either side of the skipped hour', () => {
-    expect(
-      convert('2024-03-10T01:59', 'America/New_York', 'UTC').utcDate.toISOString()
-    ).toBe('2024-03-10T06:59:00.000Z');
-    expect(
-      convert('2024-03-10T03:00', 'America/New_York', 'UTC').utcDate.toISOString()
-    ).toBe('2024-03-10T07:00:00.000Z');
-    expect(
-      convert('2024-10-06T02:45', 'Australia/Lord_Howe', 'UTC').utcDate.toISOString()
-    ).toBe('2024-10-05T15:45:00.000Z');
+    expect(convert('2024-03-10T01:59', 'America/New_York', 'UTC').utcDate.toISOString()).toBe(
+      '2024-03-10T06:59:00.000Z'
+    );
+    expect(convert('2024-03-10T03:00', 'America/New_York', 'UTC').utcDate.toISOString()).toBe(
+      '2024-03-10T07:00:00.000Z'
+    );
+    expect(convert('2024-10-06T02:45', 'Australia/Lord_Howe', 'UTC').utcDate.toISOString()).toBe(
+      '2024-10-05T15:45:00.000Z'
+    );
   });
 
   test('resolves a time that happens twice to one of its two moments', () => {

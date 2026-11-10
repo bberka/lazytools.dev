@@ -10,11 +10,16 @@ import {
   type OpenGraphFields,
 } from '@/lib/tools/open-graph-generator';
 
-const fields = (overrides: Partial<OpenGraphFields>): OpenGraphFields => ({ ...EMPTY_OG_FIELDS, ...overrides });
+const fields = (overrides: Partial<OpenGraphFields>): OpenGraphFields => ({
+  ...EMPTY_OG_FIELDS,
+  ...overrides,
+});
 
 test.describe('escapeAttribute', () => {
   test('escapes the characters that break a double-quoted attribute', () => {
-    expect(escapeAttribute(`Tom & "Jerry" <b>it's</b>`)).toBe('Tom &amp; &quot;Jerry&quot; &lt;b&gt;it&#39;s&lt;/b&gt;');
+    expect(escapeAttribute(`Tom & "Jerry" <b>it's</b>`)).toBe(
+      'Tom &amp; &quot;Jerry&quot; &lt;b&gt;it&#39;s&lt;/b&gt;'
+    );
   });
 
   test('escapes an ampersand first so entities are not doubled', () => {
@@ -68,7 +73,9 @@ test.describe('generateMetaTags', () => {
   });
 
   test('escapes values and collapses line breaks', () => {
-    const tags = generateMetaTags(fields({ title: 'A "quoted" & <odd>\ntitle', description: '  two\n\n  lines  ' }));
+    const tags = generateMetaTags(
+      fields({ title: 'A "quoted" & <odd>\ntitle', description: '  two\n\n  lines  ' })
+    );
     expect(tags).toContain('content="A &quot;quoted&quot; &amp; &lt;odd&gt; title"');
     expect(tags).toContain('<meta property="og:description" content="two lines" />');
   });
@@ -112,7 +119,14 @@ test.describe('lengthHint', () => {
 test.describe('checkFields', () => {
   test('is quiet for good fields', () => {
     expect(
-      checkFields(fields({ title: 'T', url: 'https://a.test/', image: 'http://a.test/i.png', locale: 'en_US' }))
+      checkFields(
+        fields({
+          title: 'T',
+          url: 'https://a.test/',
+          image: 'http://a.test/i.png',
+          locale: 'en_US',
+        })
+      )
     ).toEqual([]);
     expect(checkFields(fields({ title: 'T', locale: 'en' }))).toEqual([]);
   });

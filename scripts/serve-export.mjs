@@ -86,7 +86,9 @@ createServer((request, response) => {
     }
   }
 
-  const notFound = [join(root, '404.html'), join(root, '404', 'index.html')].find((file) => existsSync(file));
+  const notFound = [join(root, '404.html'), join(root, '404', 'index.html')].find((file) =>
+    existsSync(file)
+  );
   if (notFound) {
     send(response, 404, notFound);
     return;

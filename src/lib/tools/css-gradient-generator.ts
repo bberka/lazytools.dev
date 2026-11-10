@@ -198,7 +198,7 @@ export function moveStop(stops: ColorStop[], id: string, direction: 'up' | 'down
 export function updateStop(
   stops: ColorStop[],
   id: string,
-  patch: Partial<Pick<ColorStop, 'color' | 'position'>>,
+  patch: Partial<Pick<ColorStop, 'color' | 'position'>>
 ): ColorStop[] {
   return stops.map((stop) => {
     if (stop.id !== id) return stop;
@@ -236,7 +236,7 @@ export function buildGradientValue(model: GradientModel): string {
   }
 
   const stops = resolveStops(model.stops).map(
-    (stop) => `${stop.color} ${formatNumber(stop.position)}%`,
+    (stop) => `${stop.color} ${formatNumber(stop.position)}%`
   );
   return `${model.repeating ? 'repeating-' : ''}${type}-gradient(${[head, ...stops].join(', ')})`;
 }
@@ -292,7 +292,7 @@ function preset(
   id: string,
   name: string,
   overrides: Partial<Omit<GradientModel, 'stops'>>,
-  stops: Array<[string, number]>,
+  stops: Array<[string, number]>
 ): GradientPreset {
   return { id, name, model: { ...createDefaultModel(), ...overrides, stops: stopsFrom(stops) } };
 }
@@ -346,7 +346,7 @@ export const GRADIENT_PRESETS: GradientPreset[] = [
  */
 export function randomGradient(
   current: GradientModel,
-  random: () => number = Math.random,
+  random: () => number = Math.random
 ): GradientModel {
   const next = () => {
     const value = random();

@@ -33,7 +33,6 @@ export function UrlParserBuilder() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const nextParamId = useRef(0);
 
-
   const protocolId = useId();
   const hostId = useId();
   const pathId = useId();
@@ -76,7 +75,9 @@ export function UrlParserBuilder() {
   };
 
   const addParamRow = () => {
-    updateForm({ params: [...form.params, { id: newParamId(), key: '', value: '', enabled: true }] });
+    updateForm({
+      params: [...form.params, { id: newParamId(), key: '', value: '', enabled: true }],
+    });
   };
 
   const updateParamRow = (id: string, changes: Partial<Omit<QueryParam, 'id'>>) => {
@@ -134,7 +135,12 @@ export function UrlParserBuilder() {
             className="font-mono text-sm"
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -145,9 +151,7 @@ export function UrlParserBuilder() {
       {/* Path Components breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            URL Base Structure
-          </CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">URL Base Structure</CardTitle>
           <CardDescription className="text-xs">
             Edit the protocol, host, and path details directly.
           </CardDescription>
@@ -240,14 +244,19 @@ export function UrlParserBuilder() {
           ) : (
             <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin pr-1">
               {form.params.map((param) => (
-                <div key={param.id} className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20 sm:flex-row sm:items-center">
+                <div
+                  key={param.id}
+                  className="flex flex-col gap-2 p-3 border rounded-md bg-muted/20 sm:flex-row sm:items-center"
+                >
                   <div className="flex items-center gap-2 shrink-0">
                     <Checkbox
                       checked={param.enabled}
                       onCheckedChange={(checked) => updateParamRow(param.id, { enabled: checked })}
                       aria-label="Enable parameter"
                     />
-                    <span className="text-xs text-muted-foreground sm:hidden font-medium">Active</span>
+                    <span className="text-xs text-muted-foreground sm:hidden font-medium">
+                      Active
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 flex-1 sm:grid-cols-2">

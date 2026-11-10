@@ -33,7 +33,10 @@ function toPem(base64: string, label: 'PUBLIC KEY' | 'PRIVATE KEY'): string {
  * out in `format`. The keys never leave the machine: generation and export
  * both happen in WebCrypto.
  */
-export async function generateRsaKeyPair(bits: RsaKeySize, format: RsaKeyFormat): Promise<RsaKeyPair> {
+export async function generateRsaKeyPair(
+  bits: RsaKeySize,
+  format: RsaKeyFormat
+): Promise<RsaKeyPair> {
   const keys = await crypto.subtle.generateKey(
     {
       name: 'RSA-OAEP',
@@ -66,7 +69,12 @@ export async function generateRsaKeyPair(bits: RsaKeySize, format: RsaKeyFormat)
   const privateBase64 = bytesToBase64(new Uint8Array(pkcs8));
 
   return format === 'PEM'
-    ? { publicKey: toPem(publicBase64, 'PUBLIC KEY'), privateKey: toPem(privateBase64, 'PRIVATE KEY'), format, bits }
+    ? {
+        publicKey: toPem(publicBase64, 'PUBLIC KEY'),
+        privateKey: toPem(privateBase64, 'PRIVATE KEY'),
+        format,
+        bits,
+      }
     : { publicKey: publicBase64, privateKey: privateBase64, format, bits };
 }
 

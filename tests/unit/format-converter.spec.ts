@@ -105,15 +105,26 @@ test.describe('convertData basics', () => {
   });
 
   test('passes text through when both formats are the same', async () => {
-    expect(await convertData('a:   1 # note', 'yaml', 'yaml')).toEqual({ output: 'a:   1 # note', error: null });
-    expect(await convertData('<a>  <b/></a>', 'xml', 'xml')).toEqual({ output: '<a>  <b/></a>', error: null });
+    expect(await convertData('a:   1 # note', 'yaml', 'yaml')).toEqual({
+      output: 'a:   1 # note',
+      error: null,
+    });
+    expect(await convertData('<a>  <b/></a>', 'xml', 'xml')).toEqual({
+      output: '<a>  <b/></a>',
+      error: null,
+    });
     expect(await convertData('a;b', 'csv', 'csv')).toEqual({ output: 'a;b', error: null });
-    expect(await convertData('a  =  1', 'toml', 'toml')).toEqual({ output: 'a  =  1', error: null });
+    expect(await convertData('a  =  1', 'toml', 'toml')).toEqual({
+      output: 'a  =  1',
+      error: null,
+    });
   });
 
   // With JSON on both sides the indentation setting was shown but did nothing.
   test('re-indents JSON to JSON and reports invalid JSON', async () => {
-    expect(await output('{"a":[1,2]}', 'json', 'json', { jsonIndent: 4 })).toBe('{\n    "a": [\n        1,\n        2\n    ]\n}');
+    expect(await output('{"a":[1,2]}', 'json', 'json', { jsonIndent: 4 })).toBe(
+      '{\n    "a": [\n        1,\n        2\n    ]\n}'
+    );
     expect(await output('{"a":1}', 'json', 'json', { jsonIndent: '\t' })).toBe('{\n\t"a": 1\n}');
     expect((await convertData('{"a":}', 'json', 'json')).error?.stage).toBe('parse');
   });
@@ -142,7 +153,9 @@ test.describe('JSON, YAML and TOML', () => {
     const json = '{"name":"Ada","roles":["Admin","Editor"],"active":true,"score":4.5,"none":null}';
     const yaml = await output(json, 'json', 'yaml');
 
-    expect(yaml).toBe('name: Ada\nroles:\n  - Admin\n  - Editor\nactive: true\nscore: 4.5\nnone: null\n');
+    expect(yaml).toBe(
+      'name: Ada\nroles:\n  - Admin\n  - Editor\nactive: true\nscore: 4.5\nnone: null\n'
+    );
     expect(JSON.parse(await output(yaml, 'yaml', 'json'))).toEqual(JSON.parse(json));
   });
 
@@ -152,7 +165,10 @@ test.describe('JSON, YAML and TOML', () => {
   });
 
   test('turns a stream of YAML documents into a list', async () => {
-    expect(JSON.parse(await output('a: 1\n---\nb: 2', 'yaml', 'json'))).toEqual([{ a: 1 }, { b: 2 }]);
+    expect(JSON.parse(await output('a: 1\n---\nb: 2', 'yaml', 'json'))).toEqual([
+      { a: 1 },
+      { b: 2 },
+    ]);
   });
 
   test('converts an empty YAML document to null', async () => {
@@ -160,7 +176,8 @@ test.describe('JSON, YAML and TOML', () => {
   });
 
   test('converts TOML tables and arrays of tables', async () => {
-    const toml = 'title = "Example"\n\n[owner]\nname = "Ada"\n\n[[servers]]\nhost = "a"\n\n[[servers]]\nhost = "b"\n';
+    const toml =
+      'title = "Example"\n\n[owner]\nname = "Ada"\n\n[[servers]]\nhost = "a"\n\n[[servers]]\nhost = "b"\n';
 
     expect(JSON.parse(await output(toml, 'toml', 'json'))).toEqual({
       title: 'Example',
@@ -187,8 +204,12 @@ test.describe('JSON, YAML and TOML', () => {
   test('keeps Unicode and emoji', async () => {
     const json = '{"greeting":"héllo 😀","日本":"語"}';
 
-    expect(JSON.parse(await output(await output(json, 'json', 'yaml'), 'yaml', 'json'))).toEqual(JSON.parse(json));
-    expect(JSON.parse(await output(await output(json, 'json', 'toml'), 'toml', 'json'))).toEqual(JSON.parse(json));
+    expect(JSON.parse(await output(await output(json, 'json', 'yaml'), 'yaml', 'json'))).toEqual(
+      JSON.parse(json)
+    );
+    expect(JSON.parse(await output(await output(json, 'json', 'toml'), 'toml', 'json'))).toEqual(
+      JSON.parse(json)
+    );
   });
 });
 
@@ -230,7 +251,9 @@ test.describe('CSV', () => {
   });
 
   test('converts CSV without a header row to a list of rows', async () => {
-    expect(JSON.parse(await output('name,age\nJohn,30', 'csv', 'json', { useHeaders: false }))).toEqual([
+    expect(
+      JSON.parse(await output('name,age\nJohn,30', 'csv', 'json', { useHeaders: false }))
+    ).toEqual([
       ['name', 'age'],
       ['John', '30'],
     ]);
@@ -268,8 +291,12 @@ test.describe('CSV', () => {
   });
 
   test('uses the delimiter setting in both directions', async () => {
-    expect(JSON.parse(await output('a;b\n1,5;2', 'csv', 'json', { delimiter: ';' }))).toEqual([{ a: '1,5', b: '2' }]);
-    expect(await output('[{"a":"1;5","b":2}]', 'json', 'csv', { delimiter: ';' })).toBe('a;b\n"1;5";2');
+    expect(JSON.parse(await output('a;b\n1,5;2', 'csv', 'json', { delimiter: ';' }))).toEqual([
+      { a: '1,5', b: '2' },
+    ]);
+    expect(await output('[{"a":"1;5","b":2}]', 'json', 'csv', { delimiter: ';' })).toBe(
+      'a;b\n"1;5";2'
+    );
     expect(await output('[{"a":1,"b":2}]', 'json', 'csv', { delimiter: '\t' })).toBe('a\tb\n1\t2');
   });
 
@@ -284,20 +311,26 @@ test.describe('CSV', () => {
   });
 
   test('quotes cells that need it and writes null, false and zero', async () => {
-    expect(await output('[{"a":"x,y","b":"say \\"hi\\"","c":"two\\nlines","d":null,"e":false,"f":0}]', 'json', 'csv')).toBe(
-      'a,b,c,d,e,f\n"x,y","say ""hi""","two\nlines",,false,0'
-    );
+    expect(
+      await output(
+        '[{"a":"x,y","b":"say \\"hi\\"","c":"two\\nlines","d":null,"e":false,"f":0}]',
+        'json',
+        'csv'
+      )
+    ).toBe('a,b,c,d,e,f\n"x,y","say ""hi""","two\nlines",,false,0');
   });
 
   // Nested values used to come out as "[object Object]".
   test('writes a nested object or list as JSON in its cell', async () => {
-    expect(await output('[{"name":"A","tags":["x","y"],"address":{"city":"NY"}}]', 'json', 'csv')).toBe(
-      'name,tags,address\nA,"[""x"",""y""]","{""city"":""NY""}"'
-    );
+    expect(
+      await output('[{"name":"A","tags":["x","y"],"address":{"city":"NY"}}]', 'json', 'csv')
+    ).toBe('name,tags,address\nA,"[""x"",""y""]","{""city"":""NY""}"');
   });
 
   test('writes a date from YAML as an ISO string', async () => {
-    expect(await output('- at: 2024-01-01T10:00:00Z', 'yaml', 'csv')).toBe('at\n2024-01-01T10:00:00.000Z');
+    expect(await output('- at: 2024-01-01T10:00:00Z', 'yaml', 'csv')).toBe(
+      'at\n2024-01-01T10:00:00.000Z'
+    );
   });
 
   test('round-trips through JSON', async () => {
@@ -313,13 +346,27 @@ test.describe('CSV', () => {
 
 test.describe('XML', () => {
   test('reads XML into the xml-js compact form', async () => {
-    expect(JSON.parse(await output('<root a="1"><name>John</name><n>1</n><n>2</n></root>', 'xml', 'json'))).toEqual({
-      root: { _attributes: { a: '1' }, name: { _text: 'John' }, n: [{ _text: '1' }, { _text: '2' }] },
+    expect(
+      JSON.parse(
+        await output('<root a="1"><name>John</name><n>1</n><n>2</n></root>', 'xml', 'json')
+      )
+    ).toEqual({
+      root: {
+        _attributes: { a: '1' },
+        name: { _text: 'John' },
+        n: [{ _text: '1' }, { _text: '2' }],
+      },
     });
   });
 
   test('writes an object with one key as that root element', async () => {
-    expect(await output('{"person":{"name":"John","age":30,"ok":true,"none":null,"empty":""}}', 'json', 'xml')).toBe(
+    expect(
+      await output(
+        '{"person":{"name":"John","age":30,"ok":true,"none":null,"empty":""}}',
+        'json',
+        'xml'
+      )
+    ).toBe(
       '<person>\n  <name>John</name>\n  <age>30</age>\n  <ok>true</ok>\n  <none/>\n  <empty/>\n</person>'
     );
   });
@@ -330,12 +377,16 @@ test.describe('XML', () => {
     expect(await output('[{"name":"John"},{"name":"Ada"}]', 'json', 'xml')).toBe(
       '<root>\n  <item>\n    <name>John</name>\n  </item>\n  <item>\n    <name>Ada</name>\n  </item>\n</root>'
     );
-    expect(await output('[1,"two",null]', 'json', 'xml')).toBe('<root>\n  <item>1</item>\n  <item>two</item>\n  <item/>\n</root>');
+    expect(await output('[1,"two",null]', 'json', 'xml')).toBe(
+      '<root>\n  <item>1</item>\n  <item>two</item>\n  <item/>\n</root>'
+    );
   });
 
   // Several keys at the top produced several root elements.
   test('wraps an object with several keys in <root>', async () => {
-    expect(await output('{"name":"John","age":30}', 'json', 'xml')).toBe('<root>\n  <name>John</name>\n  <age>30</age>\n</root>');
+    expect(await output('{"name":"John","age":30}', 'json', 'xml')).toBe(
+      '<root>\n  <name>John</name>\n  <age>30</age>\n</root>'
+    );
     expect(await output('{"users":[{"n":1},{"n":2}]}', 'json', 'xml')).toBe(
       '<root>\n  <users>\n    <n>1</n>\n  </users>\n  <users>\n    <n>2</n>\n  </users>\n</root>'
     );
@@ -357,7 +408,9 @@ test.describe('XML', () => {
 
   // Keys were copied in as element names even when XML does not allow them.
   test('turns keys into valid element names', async () => {
-    expect(await output('{"data":{"first name":"x","1st":2,"a/b":3,"ünï-cödé.ok":4}}', 'json', 'xml')).toBe(
+    expect(
+      await output('{"data":{"first name":"x","1st":2,"a/b":3,"ünï-cödé.ok":4}}', 'json', 'xml')
+    ).toBe(
       '<data>\n  <first_name>x</first_name>\n  <_1st>2</_1st>\n  <a_b>3</a_b>\n  <ünï-cödé.ok>4</ünï-cödé.ok>\n</data>'
     );
   });
@@ -386,31 +439,50 @@ test.describe('XML', () => {
   });
 
   test('keeps a colon after a prefix that an element above declares', async () => {
-    const xml = '<feed xmlns:atom="http://www.w3.org/2005/Atom">\n  <atom:link rel="self"/>\n  <xml:note>x</xml:note>\n</feed>';
+    const xml =
+      '<feed xmlns:atom="http://www.w3.org/2005/Atom">\n  <atom:link rel="self"/>\n  <xml:note>x</xml:note>\n</feed>';
 
     expect(await output(await output(xml, 'xml', 'json'), 'json', 'xml')).toBe(xml);
     // The element that declares the prefix may use it itself.
-    expect(await output('{"atom:feed":{"_attributes":{"xmlns:atom":"u"},"atom:id":"1"}}', 'json', 'xml')).toBe(
-      '<atom:feed xmlns:atom="u">\n  <atom:id>1</atom:id>\n</atom:feed>'
-    );
+    expect(
+      await output('{"atom:feed":{"_attributes":{"xmlns:atom":"u"},"atom:id":"1"}}', 'json', 'xml')
+    ).toBe('<atom:feed xmlns:atom="u">\n  <atom:id>1</atom:id>\n</atom:feed>');
     // Declared further down, it does not cover what is above or beside it.
     expect(
-      await output('{"top":{"og:a":1,"child":{"_attributes":{"xmlns:og":"u"},"og:b":2}}}', 'json', 'xml')
-    ).toBe('<top>\n  <og_a>1</og_a>\n  <child xmlns:og="u">\n    <og:b>2</og:b>\n  </child>\n</top>');
+      await output(
+        '{"top":{"og:a":1,"child":{"_attributes":{"xmlns:og":"u"},"og:b":2}}}',
+        'json',
+        'xml'
+      )
+    ).toBe(
+      '<top>\n  <og_a>1</og_a>\n  <child xmlns:og="u">\n    <og:b>2</og:b>\n  </child>\n</top>'
+    );
   });
 
   test('escapes markup characters in text', async () => {
-    expect(await output('{"a":"x < y & z > w"}', 'json', 'xml')).toBe('<a>x &lt; y &amp; z &gt; w</a>');
+    expect(await output('{"a":"x < y & z > w"}', 'json', 'xml')).toBe(
+      '<a>x &lt; y &amp; z &gt; w</a>'
+    );
   });
 
   test('round-trips XML through JSON, attributes and declaration included', async () => {
-    const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<root id="1">\n  <name>John</name>\n  <tag>a</tag>\n  <tag>b</tag>\n  <empty/>\n</root>';
+    const xml =
+      '<?xml version="1.0" encoding="UTF-8"?>\n<root id="1">\n  <name>John</name>\n  <tag>a</tag>\n  <tag>b</tag>\n  <empty/>\n</root>';
 
     expect(await output(await output(xml, 'xml', 'json'), 'json', 'xml')).toBe(xml);
   });
 
   test('output for every shape of data parses again as XML', async () => {
-    const shapes = ['[]', '[[1,2],[3,4]]', '{"a":1,"b":[1,2]}', '"text"', '0', 'false', '{"only":[1,2]}', '{"9":{"x y":1}}'];
+    const shapes = [
+      '[]',
+      '[[1,2],[3,4]]',
+      '{"a":1,"b":[1,2]}',
+      '"text"',
+      '0',
+      'false',
+      '{"only":[1,2]}',
+      '{"9":{"x y":1}}',
+    ];
 
     for (const shape of shapes) {
       const xml = await output(shape, 'json', 'xml');
@@ -459,11 +531,17 @@ test.describe('errors', () => {
   test('marks data the target format cannot hold as a write error', async () => {
     expect(await convertData('[1, 2, 3]', 'json', 'csv')).toEqual({
       output: '',
-      error: { stage: 'write', message: 'CSV conversion requires items to all be objects or all be arrays.' },
+      error: {
+        stage: 'write',
+        message: 'CSV conversion requires items to all be objects or all be arrays.',
+      },
     });
     expect(await convertData('"text"', 'json', 'csv')).toEqual({
       output: '',
-      error: { stage: 'write', message: 'Data must be an array of objects or arrays to convert to CSV.' },
+      error: {
+        stage: 'write',
+        message: 'Data must be an array of objects or arrays to convert to CSV.',
+      },
     });
     expect(await convertData('{"a":[1,"x"]}', 'json', 'toml')).toEqual({
       output: '',

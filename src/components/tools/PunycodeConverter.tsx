@@ -13,7 +13,6 @@ export function PunycodeConverter() {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<PunycodeMode>('encode');
 
-
   const output = useMemo(() => convertPunycode(input, mode), [input, mode]);
 
   const handleModeChange = (nextMode: PunycodeMode) => {
@@ -67,7 +66,9 @@ export function PunycodeConverter() {
                   ? 'e.g. münchen.de\nhttps://домены.рф/index.html'
                   : 'e.g. xn--mnchen-3ya.de\nhttps://xn--d1acufc5f.xn--p1ai/index.html'
               }
-              aria-label={mode === 'encode' ? 'Unicode domains or URLs' : 'Punycode domains or URLs'}
+              aria-label={
+                mode === 'encode' ? 'Unicode domains or URLs' : 'Punycode domains or URLs'
+              }
               rows={12}
               className="flex-1 font-mono text-xs leading-relaxed bg-background"
             />
@@ -94,7 +95,9 @@ export function PunycodeConverter() {
             <CardTitle className="text-sm font-semibold">
               {mode === 'encode' ? 'Punycode Output' : 'Unicode Output'}
             </CardTitle>
-            <CardDescription>Converted result in ACE format or international format.</CardDescription>
+            <CardDescription>
+              Converted result in ACE format or international format.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col space-y-4">
             <Textarea
@@ -120,8 +123,12 @@ export function PunycodeConverter() {
       <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
         <div>
-          <strong className="font-semibold block mb-0.5 text-foreground">International Domain Names (IDN)</strong>
-          Punycode is used to translate Unicode strings into an ASCII-Compatible Encoding (ACE) format, allowing international domains to resolve correctly within standard DNS architectures.
+          <strong className="font-semibold block mb-0.5 text-foreground">
+            International Domain Names (IDN)
+          </strong>
+          Punycode is used to translate Unicode strings into an ASCII-Compatible Encoding (ACE)
+          format, allowing international domains to resolve correctly within standard DNS
+          architectures.
         </div>
       </div>
     </div>

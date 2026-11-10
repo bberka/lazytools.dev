@@ -45,7 +45,10 @@ test.describe('parseTimestamp', () => {
   });
 
   test('keeps the decimal part of seconds to the millisecond', () => {
-    expect(parseTimestamp('1640995200.5', 'seconds')).toEqual({ kind: 'instant', ms: 1640995200500 });
+    expect(parseTimestamp('1640995200.5', 'seconds')).toEqual({
+      kind: 'instant',
+      ms: 1640995200500,
+    });
     expect(parseTimestamp('1640995200.123', 'seconds')).toEqual({
       kind: 'instant',
       ms: 1640995200123,

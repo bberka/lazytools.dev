@@ -33,7 +33,8 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
     description:
       "The server agrees to switch this connection to the protocol named in the request's Upgrade header.",
     spec: 'RFC 9110, Section 15.2.2',
-    usage: 'Seen when a WebSocket handshake succeeds or a connection is upgraded to another protocol.',
+    usage:
+      'Seen when a WebSocket handshake succeeds or a connection is upgraded to another protocol.',
   },
   {
     code: 102,
@@ -77,7 +78,8 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
     description:
       'The request has been accepted for processing, but the processing has not finished and may still fail.',
     spec: 'RFC 9110, Section 15.3.3',
-    usage: 'Used for queued or asynchronous work, such as a background job whose result is available later.',
+    usage:
+      'Used for queued or asynchronous work, such as a background job whose result is available later.',
   },
   {
     code: 203,
@@ -102,7 +104,8 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
     description:
       'The request succeeded and the client should reset the view that sent it, such as clearing a form.',
     spec: 'RFC 9110, Section 15.3.6',
-    usage: 'Rarely used. Meant for data-entry pages that should be cleared ready for the next input.',
+    usage:
+      'Rarely used. Meant for data-entry pages that should be cleared ready for the next input.',
   },
   {
     code: 206,
@@ -190,7 +193,8 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
     description:
       'Defined in an earlier version of HTTP to tell the client to repeat the request through the proxy named in the Location header. Now deprecated.',
     spec: 'RFC 9110, Section 15.4.6',
-    usage: 'Deprecated, partly because of security concerns. Servers should not send it and clients should not act on it.',
+    usage:
+      'Deprecated, partly because of security concerns. Servers should not send it and clients should not act on it.',
   },
   {
     code: 306,
@@ -215,7 +219,8 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
     description:
       'The resource has permanently moved to the URI in the Location header. Unlike 301, the client must repeat the request with the same method and body.',
     spec: 'RFC 9110, Section 15.4.9',
-    usage: 'Use it instead of 301 for permanent moves of endpoints that receive POST, PUT or DELETE.',
+    usage:
+      'Use it instead of 301 for permanent moves of endpoints that receive POST, PUT or DELETE.',
   },
 
   // 4xx: Client Error
@@ -467,8 +472,7 @@ export const STATUS_CODE_ENTRIES: readonly StatusCodeEntry[] = [
   {
     code: 451,
     phrase: 'Unavailable For Legal Reasons',
-    description:
-      'The server is denying access to the resource as a consequence of a legal demand.',
+    description: 'The server is denying access to the resource as a consequence of a legal demand.',
     spec: 'RFC 7725',
     usage:
       'Used for content blocked by court orders or government demands. The number is a nod to the novel Fahrenheit 451.',

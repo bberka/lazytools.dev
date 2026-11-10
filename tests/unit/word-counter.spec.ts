@@ -99,7 +99,9 @@ test.describe('analyzeText', () => {
 
   test('counts an e-mail address and a web address as one word each', () => {
     expect(count('Mail ada@example.com or visit https://example.com/docs today').words).toBe(6);
-    expect(count('Mail ada@example.com or visit https://example.com/docs today', false).words).toBe(6);
+    expect(count('Mail ada@example.com or visit https://example.com/docs today', false).words).toBe(
+      6
+    );
     expect(count('See www.example.com/a?b=1&c=2.').words).toBe(2);
     expect(count('See www.example.com/a?b=1&c=2.').longestWord).toBe('www.example.com/a?b=1&c=2');
     expect(count('Write to first.last+tag@mail.example.co.uk, please').longestWord).toBe(

@@ -26,7 +26,8 @@ export function Ipv4Converter() {
             IPv4 Address
           </CardTitle>
           <CardDescription>
-            Type an address in any form: dotted decimal, integer, hex (0x), octal, binary or IPv4-mapped IPv6.
+            Type an address in any form: dotted decimal, integer, hex (0x), octal, binary or
+            IPv4-mapped IPv6.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -42,7 +43,12 @@ export function Ipv4Converter() {
               autoCapitalize="none"
               className="flex-1 font-mono"
             />
-            <Button type="button" variant="outline" onClick={() => setInput('')} disabled={!hasInput}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setInput('')}
+              disabled={!hasInput}
+            >
               <Trash2 className="h-4 w-4" />
               Clear
             </Button>
@@ -81,7 +87,9 @@ export function Ipv4Converter() {
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2">
               All forms
-              <Badge variant="secondary">Read as {IPV4_FORMAT_LABELS[result.format].toLowerCase()}</Badge>
+              <Badge variant="secondary">
+                Read as {IPV4_FORMAT_LABELS[result.format].toLowerCase()}
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -90,7 +98,10 @@ export function Ipv4Converter() {
                 <li key={form.id} className="flex items-center gap-2 px-3 py-2">
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-medium text-muted-foreground">{form.label}</div>
-                    <div className="break-all font-mono text-sm" data-testid={`ipv4-form-${form.id}`}>
+                    <div
+                      className="break-all font-mono text-sm"
+                      data-testid={`ipv4-form-${form.id}`}
+                    >
                       {form.value}
                     </div>
                   </div>

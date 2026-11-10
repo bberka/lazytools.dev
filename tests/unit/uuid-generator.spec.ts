@@ -111,6 +111,8 @@ test.describe('generateIds', () => {
   });
 
   test('Snowflake generation fails loudly when the clock is before its epoch', () => {
-    expect(() => generateIds('snowflake', 1, fixedSource(Date.UTC(2020, 0, 1), 0))).toThrow(/before the epoch/);
+    expect(() => generateIds('snowflake', 1, fixedSource(Date.UTC(2020, 0, 1), 0))).toThrow(
+      /before the epoch/
+    );
   });
 });

@@ -37,7 +37,13 @@ test.describe('describeKey', () => {
 
   test('keeps the shifted character in key and the physical key in code', () => {
     const info = describeKey(event({ key: 'A', shiftKey: true }));
-    expect(info).toMatchObject({ key: 'A', code: 'KeyA', character: 'A', shift: true, modifiers: ['Shift'] });
+    expect(info).toMatchObject({
+      key: 'A',
+      code: 'KeyA',
+      character: 'A',
+      shift: true,
+      modifiers: ['Shift'],
+    });
   });
 
   test('names the space bar', () => {
@@ -66,9 +72,16 @@ test.describe('describeKey', () => {
   });
 
   test('reads the location', () => {
-    expect(describeKey(event({ key: 'Shift', code: 'ShiftLeft', keyCode: 16, location: 1 })).locationName).toBe('Left');
-    expect(describeKey(event({ key: 'Shift', code: 'ShiftRight', keyCode: 16, location: 2 })).locationName).toBe('Right');
-    expect(describeKey(event({ key: '5', code: 'Numpad5', keyCode: 101, location: 3 })).locationName).toBe('Numpad');
+    expect(
+      describeKey(event({ key: 'Shift', code: 'ShiftLeft', keyCode: 16, location: 1 })).locationName
+    ).toBe('Left');
+    expect(
+      describeKey(event({ key: 'Shift', code: 'ShiftRight', keyCode: 16, location: 2 }))
+        .locationName
+    ).toBe('Right');
+    expect(
+      describeKey(event({ key: '5', code: 'Numpad5', keyCode: 101, location: 3 })).locationName
+    ).toBe('Numpad');
     expect(describeKey(event({ location: 9 })).locationName).toBe('Unknown (9)');
   });
 
@@ -79,7 +92,9 @@ test.describe('describeKey', () => {
   });
 
   test('passes the repeat flag and the virtual-keyboard keyCode 229 through', () => {
-    expect(describeKey(event({ key: 'Unidentified', code: '', keyCode: 229, which: 229, repeat: true }))).toMatchObject({
+    expect(
+      describeKey(event({ key: 'Unidentified', code: '', keyCode: 229, which: 229, repeat: true }))
+    ).toMatchObject({
       keyCode: 229,
       which: 229,
       repeat: true,
@@ -110,7 +125,11 @@ test.describe('pushHistory', () => {
 
 test.describe('keyInfoText', () => {
   test('writes one value per line', () => {
-    expect(keyInfoText(describeKey(event({ key: ' ', code: 'Space', keyCode: 32, which: 32, ctrlKey: true })))).toBe(
+    expect(
+      keyInfoText(
+        describeKey(event({ key: ' ', code: 'Space', keyCode: 32, which: 32, ctrlKey: true }))
+      )
+    ).toBe(
       [
         'event.key: " "',
         'event.code: "Space"',

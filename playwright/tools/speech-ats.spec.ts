@@ -387,9 +387,7 @@ async function recognize(page: Page, index: number, resultIndex: number, phrases
 /** Presses Start Recording and lets the stand-in recognizer report that it is running. */
 async function startRecording(page: Page, index = 0) {
   await page.getByRole('button', { name: 'Start Recording' }).click();
-  await expect
-    .poll(async () => (await recognitionSessions(page))[index]?.started ?? 0)
-    .toBe(1);
+  await expect.poll(async () => (await recognitionSessions(page))[index]?.started ?? 0).toBe(1);
   await recognitionEvent(page, index, 'start');
   await expect(page.getByRole('button', { name: 'Stop Recording' })).toBeVisible();
 }
@@ -766,7 +764,9 @@ test.describe('Speech tools and resume analyzer', () => {
 
       // The reading moves on by itself.
       await speechEvent(page, 0, 'end');
-      await expect.poll(() => spokenTexts(page)).toEqual(['General Kenobi!', 'You are a bold one.']);
+      await expect
+        .poll(() => spokenTexts(page))
+        .toEqual(['General Kenobi!', 'You are a bold one.']);
       await speechEvent(page, 1, 'start');
       await expect(sentences.nth(2)).toHaveAttribute('aria-current', 'true');
 
@@ -816,9 +816,7 @@ test.describe('Speech tools and resume analyzer', () => {
 
       await speechEvent(page, 0, 'error', { error: 'synthesis-failed' });
       await expect(alertSaying(page, 'The speech engine could not speak this text.')).toBeVisible();
-      await expect
-        .poll(() => spokenTexts(page))
-        .toEqual(['First sentence.', 'Second sentence.']);
+      await expect.poll(() => spokenTexts(page)).toEqual(['First sentence.', 'Second sentence.']);
 
       // A code the tool has no wording for is still shown, with the code.
       await speechEvent(page, 1, 'error', { error: 'engine-on-fire' });
@@ -1581,9 +1579,7 @@ test.describe('Speech tools and resume analyzer', () => {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         buffer: Buffer.from('not a pdf'),
       });
-      await expect(
-        alertSaying(page, '"resume.docx" is not a supported file type.')
-      ).toBeVisible();
+      await expect(alertSaying(page, '"resume.docx" is not a supported file type.')).toBeVisible();
       await expect(page.getByText('No file chosen')).toBeVisible();
       await expect(analyzeButton).toBeDisabled();
 

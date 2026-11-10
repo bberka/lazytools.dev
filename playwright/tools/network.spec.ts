@@ -100,7 +100,10 @@ test.describe('Network tools', () => {
       await blockExternalRequests(page, baseURL);
     });
 
-    test('looks up an address and shows its location and network details', async ({ page, context }) => {
+    test('looks up an address and shows its location and network details', async ({
+      page,
+      context,
+    }) => {
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
       const requested: string[] = [];
@@ -152,7 +155,13 @@ test.describe('Network tools', () => {
         return fulfillJson(
           route,
           pathname === '/json'
-            ? { ip: '203.0.113.7', city: 'Lisbon', region: 'Lisbon', country: 'PT', loc: '38.7167,-9.1333' }
+            ? {
+                ip: '203.0.113.7',
+                city: 'Lisbon',
+                region: 'Lisbon',
+                country: 'PT',
+                loc: '38.7167,-9.1333',
+              }
             : GOOGLE_DNS
         );
       });
@@ -227,7 +236,9 @@ test.describe('Network tools', () => {
       await page.getByRole('textbox', { name: 'IP address' }).fill('192.168.1.1');
       await page.getByRole('button', { name: 'Lookup IP' }).click();
 
-      await expect(errorAlert(page)).toHaveText('Error: This is a private/reserved IP address (bogon)');
+      await expect(errorAlert(page)).toHaveText(
+        'Error: This is a private/reserved IP address (bogon)'
+      );
       await expect(valueOf(page, 'IP Address')).toHaveText('192.168.1.1');
       await expect(page.getByText('City', { exact: true })).toHaveCount(0);
       await expect(page.getByRole('link', { name: 'View on Google Maps' })).toHaveCount(0);
@@ -274,7 +285,9 @@ test.describe('Network tools', () => {
       expect(order).toEqual(['ipinfo.io', 'https://freeipapi.com/api/json/1.1.1.1']);
     });
 
-    test('falls back to the third provider and keeps a location on the equator', async ({ page }) => {
+    test('falls back to the third provider and keeps a location on the equator', async ({
+      page,
+    }) => {
       const order: string[] = [];
       await page.route('https://ipinfo.io/**', (route) => {
         order.push('ipinfo.io');
@@ -282,7 +295,12 @@ test.describe('Network tools', () => {
       });
       await page.route('https://freeipapi.com/**', (route) => {
         order.push('freeipapi.com');
-        return route.fulfill({ status: 500, headers: CORS_HEADERS, contentType: 'text/html', body: '<h1>Oops</h1>' });
+        return route.fulfill({
+          status: 500,
+          headers: CORS_HEADERS,
+          contentType: 'text/html',
+          body: '<h1>Oops</h1>',
+        });
       });
       await page.route('https://ipapi.co/**', (route) => {
         order.push(route.request().url());
@@ -316,11 +334,20 @@ test.describe('Network tools', () => {
     test('reports a failed lookup when every provider fails', async ({ page }) => {
       await page.route('https://ipinfo.io/**', (route) => route.abort('internetdisconnected'));
       await page.route('https://freeipapi.com/**', (route) =>
-        route.fulfill({ status: 200, headers: CORS_HEADERS, contentType: 'text/html', body: '<html>blocked</html>' })
+        route.fulfill({
+          status: 200,
+          headers: CORS_HEADERS,
+          contentType: 'text/html',
+          body: '<html>blocked</html>',
+        })
       );
       // ipapi.co reports a rate limit inside an HTTP 200 body.
       await page.route('https://ipapi.co/**', (route) =>
-        fulfillJson(route, { error: true, reason: 'RateLimited', message: 'Visit ipapi.co/ratelimited/' })
+        fulfillJson(route, {
+          error: true,
+          reason: 'RateLimited',
+          message: 'Visit ipapi.co/ratelimited/',
+        })
       );
 
       await openTool(page, 'ip-lookup', 'IP Address Lookup');
@@ -343,7 +370,11 @@ test.describe('Network tools', () => {
         hanging += 1;
       });
       await page.route('https://freeipapi.com/**', (route) =>
-        fulfillJson(route, { ipAddress: '9.9.9.9', cityName: 'Berkeley', countryName: 'United States' })
+        fulfillJson(route, {
+          ipAddress: '9.9.9.9',
+          cityName: 'Berkeley',
+          countryName: 'United States',
+        })
       );
 
       await openTool(page, 'ip-lookup', 'IP Address Lookup');
@@ -386,7 +417,9 @@ test.describe('Network tools', () => {
       await expect(page.getByRole('button', { name: 'Looking up...' })).toBeDisabled();
       await expect.poll(() => called).toEqual(['ipinfo.io']);
 
-      const cancelled = page.waitForEvent('requestfailed', (request) => request.url().startsWith('https://ipinfo.io/'));
+      const cancelled = page.waitForEvent('requestfailed', (request) =>
+        request.url().startsWith('https://ipinfo.io/')
+      );
       await page.getByRole('button', { name: 'Clear' }).click();
       await cancelled;
 
@@ -490,7 +523,9 @@ test.describe('Network tools', () => {
       };
       const queries = await stubDns(page, ({ type }) => ({
         Status: 0,
-        Answer: [{ name: 'example.com.', type: Number(type), TTL: 7200, data: `record of type ${type}` }],
+        Answer: [
+          { name: 'example.com.', type: Number(type), TTL: 7200, data: `record of type ${type}` },
+        ],
       }));
 
       await openTool(page, 'dns-lookup', 'DNS Records Lookup');
@@ -504,15 +539,23 @@ test.describe('Network tools', () => {
       for (const [type, number] of Object.entries(TYPE_NUMBERS)) {
         await chooseRecordType(page, type);
         await page.getByRole('button', { name: 'Lookup DNS' }).click();
-        await expect(resultsCard(page).getByText(`record of type ${number}`, { exact: true })).toBeVisible();
-        await expect(resultsCard(page).getByText(`Found 1 ${type} record`, { exact: true })).toBeVisible();
+        await expect(
+          resultsCard(page).getByText(`record of type ${number}`, { exact: true })
+        ).toBeVisible();
+        await expect(
+          resultsCard(page).getByText(`Found 1 ${type} record`, { exact: true })
+        ).toBeVisible();
         await expect(resultsCard(page).getByText('TTL: 2h', { exact: true })).toBeVisible();
       }
 
-      expect(queries).toEqual(Object.values(TYPE_NUMBERS).map((type) => ({ name: 'example.com', type })));
+      expect(queries).toEqual(
+        Object.values(TYPE_NUMBERS).map((type) => ({ name: 'example.com', type }))
+      );
     });
 
-    test('picks a record type with the keyboard and keeps describing the lookup that ran', async ({ page }) => {
+    test('picks a record type with the keyboard and keeps describing the lookup that ran', async ({
+      page,
+    }) => {
       const queries = await stubDns(page, () => ({
         Status: 0,
         Answer: [{ name: 'example.com.', type: 15, TTL: 3600, data: '10 mail.example.com.' }],
@@ -560,7 +603,9 @@ test.describe('Network tools', () => {
       await page.getByRole('button', { name: 'Lookup DNS' }).click();
 
       const card = resultsCard(page);
-      await expect(card.getByText('Found 1 A record and 1 CNAME record', { exact: true })).toBeVisible();
+      await expect(
+        card.getByText('Found 1 A record and 1 CNAME record', { exact: true })
+      ).toBeVisible();
       await expect(card.getByText('CNAME', { exact: true })).toHaveCount(1);
       await expect(card.getByText('example.com.', { exact: true })).toBeVisible();
       await expect(card.getByText('93.184.216.34', { exact: true })).toBeVisible();
@@ -573,7 +618,9 @@ test.describe('Network tools', () => {
     test('accepts service labels, international names and a trailing dot', async ({ page }) => {
       const queries = await stubDns(page, ({ name }) => ({
         Status: 0,
-        Answer: [{ name: `${name}.`, type: 16, TTL: 600, data: `"v=DMARC1; p=reject" for ${name}` }],
+        Answer: [
+          { name: `${name}.`, type: 16, TTL: 600, data: `"v=DMARC1; p=reject" for ${name}` },
+        ],
       }));
 
       await openTool(page, 'dns-lookup', 'DNS Records Lookup');
@@ -586,12 +633,16 @@ test.describe('Network tools', () => {
       await expect(
         resultsCard(page).getByText('"v=DMARC1; p=reject" for _dmarc.example.com', { exact: true })
       ).toBeVisible();
-      await expect(resultsCard(page).getByText('Found 1 TXT record', { exact: true })).toBeVisible();
+      await expect(
+        resultsCard(page).getByText('Found 1 TXT record', { exact: true })
+      ).toBeVisible();
       await expect(resultsCard(page).getByText('TTL: 10m', { exact: true })).toBeVisible();
 
       await domain.fill('  example.org.  ');
       await lookup.click();
-      await expect(resultsCard(page).getByText('"v=DMARC1; p=reject" for example.org', { exact: true })).toBeVisible();
+      await expect(
+        resultsCard(page).getByText('"v=DMARC1; p=reject" for example.org', { exact: true })
+      ).toBeVisible();
 
       // An international name is queried in its ASCII (punycode) form.
       await domain.fill('münchen.de');
@@ -615,7 +666,13 @@ test.describe('Network tools', () => {
       const domain = page.getByRole('textbox', { name: 'Domain name' });
       const lookup = page.getByRole('button', { name: 'Lookup DNS' });
 
-      for (const invalid of ['exa mple.com', 'https://example.com', '-example.com', 'example..com', '192.168.1.1']) {
+      for (const invalid of [
+        'exa mple.com',
+        'https://example.com',
+        '-example.com',
+        'example..com',
+        '192.168.1.1',
+      ]) {
         await domain.fill(invalid);
         await lookup.click();
         await expect(errorAlert(page), invalid).toHaveText('Error: Invalid domain name format');
@@ -634,8 +691,14 @@ test.describe('Network tools', () => {
     test('explains a domain that does not exist and a type with no records', async ({ page }) => {
       await stubDns(page, ({ name }) =>
         name === 'missing.example'
-          ? { Status: 3, Authority: [{ name: 'example.', type: 6, TTL: 900, data: 'a.iana-servers.net.' }] }
-          : { Status: 0, Authority: [{ name: 'example.com.', type: 6, TTL: 900, data: 'ns.icann.org.' }] }
+          ? {
+              Status: 3,
+              Authority: [{ name: 'example.', type: 6, TTL: 900, data: 'a.iana-servers.net.' }],
+            }
+          : {
+              Status: 0,
+              Authority: [{ name: 'example.com.', type: 6, TTL: 900, data: 'ns.icann.org.' }],
+            }
       );
 
       await openTool(page, 'dns-lookup', 'DNS Records Lookup');
@@ -644,7 +707,9 @@ test.describe('Network tools', () => {
 
       await domain.fill('missing.example');
       await lookup.click();
-      await expect(errorAlert(page)).toHaveText('Error: DNS query failed: the domain does not exist (NXDOMAIN)');
+      await expect(errorAlert(page)).toHaveText(
+        'Error: DNS query failed: the domain does not exist (NXDOMAIN)'
+      );
       await expect(page.getByText('DNS Records', { exact: true })).toHaveCount(0);
 
       await chooseRecordType(page, 'AAAA');
@@ -659,7 +724,12 @@ test.describe('Network tools', () => {
       await page.route('https://dns.google/resolve**', (route) => {
         if (mode === 'offline') return route.abort('internetdisconnected');
         if (mode === 'http-500') return fulfillJson(route, { error: 'backend' }, 500);
-        return route.fulfill({ status: 200, headers: CORS_HEADERS, contentType: 'text/html', body: '<html></html>' });
+        return route.fulfill({
+          status: 200,
+          headers: CORS_HEADERS,
+          contentType: 'text/html',
+          body: '<html></html>',
+        });
       });
 
       await openTool(page, 'dns-lookup', 'DNS Records Lookup');
@@ -677,7 +747,9 @@ test.describe('Network tools', () => {
 
       mode = 'not-json';
       await lookup.click();
-      await expect(errorAlert(page)).toHaveText('Error: The DNS service returned an unexpected response');
+      await expect(errorAlert(page)).toHaveText(
+        'Error: The DNS service returned an unexpected response'
+      );
       await expect(lookup).toBeEnabled();
     });
 
@@ -698,7 +770,9 @@ test.describe('Network tools', () => {
 
       await page.clock.fastForward(10_000);
 
-      await expect(errorAlert(page)).toHaveText('Error: The DNS query timed out. Please try again.');
+      await expect(errorAlert(page)).toHaveText(
+        'Error: The DNS query timed out. Please try again.'
+      );
       await expect(page.getByRole('button', { name: 'Lookup DNS' })).toBeEnabled();
       await page.unrouteAll({ behavior: 'ignoreErrors' });
     });
@@ -906,7 +980,9 @@ test.describe('Network tools', () => {
       });
     });
 
-    test('takes a prefix typed after the address and updates the fields to match', async ({ page }) => {
+    test('takes a prefix typed after the address and updates the fields to match', async ({
+      page,
+    }) => {
       await openTool(page, 'subnet-calculator', 'Subnet Calculator');
       const ip = page.getByRole('textbox', { name: 'IP address' });
       const cidr = page.getByRole('spinbutton', { name: 'CIDR prefix length' });
@@ -967,7 +1043,14 @@ test.describe('Network tools', () => {
       await calculate.click();
       await expect(valueOf(page, 'Network Address')).toHaveText('10.1.2.0');
 
-      for (const invalid of ['192.168.1.256', '192.168.1', '192.168.1.1abc', '1e2.1.1.1', '-0.1.1.1', 'example.com']) {
+      for (const invalid of [
+        '192.168.1.256',
+        '192.168.1',
+        '192.168.1.1abc',
+        '1e2.1.1.1',
+        '-0.1.1.1',
+        'example.com',
+      ]) {
         await ip.fill(invalid);
         await calculate.click();
         await expect(errorAlert(page), invalid).toHaveText('Error: Invalid IPv4 address format');
@@ -978,7 +1061,9 @@ test.describe('Network tools', () => {
       for (const invalid of ['33', '-1', '24.5', '']) {
         await cidr.fill(invalid);
         await calculate.click();
-        await expect(errorAlert(page), `prefix "${invalid}"`).toHaveText('Error: CIDR must be between 0 and 32');
+        await expect(errorAlert(page), `prefix "${invalid}"`).toHaveText(
+          'Error: CIDR must be between 0 and 32'
+        );
         await expect(page.getByText('Network Information', { exact: true })).toHaveCount(0);
       }
 
@@ -1036,7 +1121,10 @@ test.describe('Network tools', () => {
 
         const realFetch = window.fetch.bind(window);
         window.fetch = (input, init) => {
-          const url = new URL(input instanceof Request ? input.url : String(input), window.location.href);
+          const url = new URL(
+            input instanceof Request ? input.url : String(input),
+            window.location.href
+          );
           if (url.origin === window.location.origin) return realFetch(input, init);
 
           const port = url.port || (url.protocol === 'https:' ? '443' : '80');
@@ -1077,16 +1165,26 @@ test.describe('Network tools', () => {
         const probeLog = await stubProbes(page, { 80: 200, 443: 500, 8080: 404 });
 
         await openTool(page, 'port-checker', 'Port Scanner');
-        await expect(page.getByRole('button', { name: 'Common Ports' })).toHaveAttribute('aria-pressed', 'true');
-        await expect(page.getByRole('button', { name: 'Custom Ports' })).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.getByRole('button', { name: 'Common Ports' })).toHaveAttribute(
+          'aria-pressed',
+          'true'
+        );
+        await expect(page.getByRole('button', { name: 'Custom Ports' })).toHaveAttribute(
+          'aria-pressed',
+          'false'
+        );
         const scan = page.getByRole('button', { name: 'Scan Ports' });
         await expect(scan).toBeDisabled();
 
         await page.getByLabel('Hostname or IP Address').fill(HOST);
         await scan.click();
 
-        await expect(page.getByText('Scan complete - 20 ports scanned', { exact: true })).toBeVisible();
-        await expect(progressCard(page)).toHaveText(/3\s*Open\s*0\s*Closed\s*17\s*Filtered\s*0\s*Checking$/);
+        await expect(
+          page.getByText('Scan complete - 20 ports scanned', { exact: true })
+        ).toBeVisible();
+        await expect(progressCard(page)).toHaveText(
+          /3\s*Open\s*0\s*Closed\s*17\s*Filtered\s*0\s*Checking$/
+        );
         await expect(page.getByText(/^Port \d+ - /)).toHaveText([
           'Port 21 - FTP',
           'Port 22 - SSH',
@@ -1123,8 +1221,12 @@ test.describe('Network tools', () => {
         // One probe per port, in order; the TLS ports over https and the rest over http.
         const { probes } = await probeLog();
         expect(probes).toEqual(
-          [21, 22, 23, 25, 53, 80, 110, 143, 443, 465, 587, 993, 995, 3306, 3389, 5432, 6379, 8080, 8443, 27017].map(
-            (port) => `${port === 443 || port === 8443 ? 'https' : 'http'}://${HOST}:${port}/favicon.ico`
+          [
+            21, 22, 23, 25, 53, 80, 110, 143, 443, 465, 587, 993, 995, 3306, 3389, 5432, 6379, 8080,
+            8443, 27017,
+          ].map(
+            (port) =>
+              `${port === 443 || port === 8443 ? 'https' : 'http'}://${HOST}:${port}/favicon.ico`
           )
         );
       });
@@ -1135,7 +1237,10 @@ test.describe('Network tools', () => {
 
         await openTool(page, 'port-checker', 'Port Scanner');
         await page.getByRole('button', { name: 'Custom Ports' }).click();
-        await expect(page.getByRole('button', { name: 'Custom Ports' })).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.getByRole('button', { name: 'Custom Ports' })).toHaveAttribute(
+          'aria-pressed',
+          'true'
+        );
         await expect(page.getByText('Maximum 50 ports per scan', { exact: true })).toBeVisible();
 
         await page.getByLabel('Hostname or IP Address').fill(HOST);
@@ -1144,8 +1249,12 @@ test.describe('Network tools', () => {
         await page.getByRole('button', { name: 'Scan Ports' }).click();
 
         // The scan goes port by port in ascending order and waits on the port that does not answer.
-        await expect(page.getByText('Scanning... 3/5 ports checked', { exact: true })).toBeVisible();
-        await expect(progressCard(page)).toHaveText(/1\s*Open\s*0\s*Closed\s*2\s*Filtered\s*2\s*Checking$/);
+        await expect(
+          page.getByText('Scanning... 3/5 ports checked', { exact: true })
+        ).toBeVisible();
+        await expect(progressCard(page)).toHaveText(
+          /1\s*Open\s*0\s*Closed\s*2\s*Filtered\s*2\s*Checking$/
+        );
         await expect(page.getByText(/^Port \d+ - /)).toHaveText([
           'Port 80 - HTTP',
           'Port 5432 - PostgreSQL',
@@ -1164,8 +1273,12 @@ test.describe('Network tools', () => {
         // A port that has not answered after three seconds counts as filtered.
         await page.clock.fastForward(3_000);
 
-        await expect(page.getByText('Scan complete - 5 ports scanned', { exact: true })).toBeVisible();
-        await expect(progressCard(page)).toHaveText(/2\s*Open\s*0\s*Closed\s*3\s*Filtered\s*0\s*Checking$/);
+        await expect(
+          page.getByText('Scan complete - 5 ports scanned', { exact: true })
+        ).toBeVisible();
+        await expect(progressCard(page)).toHaveText(
+          /2\s*Open\s*0\s*Closed\s*3\s*Filtered\s*0\s*Checking$/
+        );
         await expect(portRow(page, 8001)).toHaveText(/^Port 8001 - Unknown\s*TCP\s*Filtered$/);
         await expect(portRow(page, 8002)).toHaveText(/^Port 8002 - Unknown\s*TCP\s*Open$/);
         await expect(page.getByRole('button', { name: 'Scan Ports' })).toBeEnabled();
@@ -1177,7 +1290,9 @@ test.describe('Network tools', () => {
         });
       });
 
-      test('probes an IPv6 address in brackets and an IPv4 address without leading zeros', async ({ page }) => {
+      test('probes an IPv6 address in brackets and an IPv4 address without leading zeros', async ({
+        page,
+      }) => {
         const probeLog = await stubProbes(page, { 8080: 200 });
 
         await openTool(page, 'port-checker', 'Port Scanner');
@@ -1196,9 +1311,18 @@ test.describe('Network tools', () => {
           await page.getByRole('button', { name: 'Scan Ports' }).click();
           await expect
             .poll(async () => (await probeLog()).probes, typed)
-            .toEqual(addresses.slice(0, index + 1).map(([, address]) => `http://${address}:8080/favicon.ico`));
-          await expect(page.getByText('Scan complete - 1 ports scanned', { exact: true }), typed).toBeVisible();
-          await expect(portRow(page, 8080), typed).toHaveText(/^Port 8080 - HTTP Proxy\s*TCP\s*Open$/);
+            .toEqual(
+              addresses
+                .slice(0, index + 1)
+                .map(([, address]) => `http://${address}:8080/favicon.ico`)
+            );
+          await expect(
+            page.getByText('Scan complete - 1 ports scanned', { exact: true }),
+            typed
+          ).toBeVisible();
+          await expect(portRow(page, 8080), typed).toHaveText(
+            /^Port 8080 - HTTP Proxy\s*TCP\s*Open$/
+          );
           await expect(errorAlert(page), typed).toHaveCount(0);
         }
       });
@@ -1210,10 +1334,18 @@ test.describe('Network tools', () => {
         const host = page.getByLabel('Hostname or IP Address');
         const scan = page.getByRole('button', { name: 'Scan Ports' });
 
-        for (const invalid of ['not a host', 'http://example.com', '999.1.1.1', '1.2.3', 'exa_mple.com']) {
+        for (const invalid of [
+          'not a host',
+          'http://example.com',
+          '999.1.1.1',
+          '1.2.3',
+          'exa_mple.com',
+        ]) {
           await host.fill(invalid);
           await scan.click();
-          await expect(errorAlert(page), invalid).toHaveText('Error: Invalid hostname or IP address format');
+          await expect(errorAlert(page), invalid).toHaveText(
+            'Error: Invalid hostname or IP address format'
+          );
           await expect(page.getByText('Scan Progress', { exact: true })).toHaveCount(0);
         }
 
@@ -1244,7 +1376,9 @@ test.describe('Network tools', () => {
         for (const tooMany of ['1-65535', '1000-1050', '1-30,40-70']) {
           await ports.fill(tooMany);
           await scan.click();
-          await expect(errorAlert(page), tooMany).toHaveText('Error: Please limit the scan to 50 ports maximum');
+          await expect(errorAlert(page), tooMany).toHaveText(
+            'Error: Please limit the scan to 50 ports maximum'
+          );
         }
 
         await expect(page.getByText('Scan Progress', { exact: true })).toHaveCount(0);
@@ -1255,8 +1389,12 @@ test.describe('Network tools', () => {
         // Exactly fifty ports is within the limit.
         await ports.fill('1000-1049');
         await scan.click();
-        await expect(page.getByText('Scan complete - 50 ports scanned', { exact: true })).toBeVisible();
-        await expect(progressCard(page)).toHaveText(/0\s*Open\s*0\s*Closed\s*50\s*Filtered\s*0\s*Checking$/);
+        await expect(
+          page.getByText('Scan complete - 50 ports scanned', { exact: true })
+        ).toBeVisible();
+        await expect(progressCard(page)).toHaveText(
+          /0\s*Open\s*0\s*Closed\s*50\s*Filtered\s*0\s*Checking$/
+        );
         await expect(errorAlert(page)).toHaveCount(0);
         expect((await probeLog()).probes).toHaveLength(50);
       });
@@ -1270,9 +1408,13 @@ test.describe('Network tools', () => {
         await page.getByLabel('Ports (comma-separated or ranges)').fill('8080-8082');
         await page.getByRole('button', { name: 'Scan Ports' }).click();
 
-        await expect(page.getByText('Scanning... 0/3 ports checked', { exact: true })).toBeVisible();
+        await expect(
+          page.getByText('Scanning... 0/3 ports checked', { exact: true })
+        ).toBeVisible();
         await expect(page.getByRole('button', { name: 'Scanning...' })).toBeDisabled();
-        await expect.poll(async () => (await probeLog()).probes).toEqual([`http://${HOST}:8080/favicon.ico`]);
+        await expect
+          .poll(async () => (await probeLog()).probes)
+          .toEqual([`http://${HOST}:8080/favicon.ico`]);
 
         await page.getByRole('button', { name: 'Clear' }).click();
 
@@ -1350,10 +1492,16 @@ test.describe('Network tools', () => {
           await expect(portRow(page, silent.port)).toHaveText(/TCP\s*Checking$/);
           await page.clock.fastForward(3_000);
 
-          await expect(page.getByText('Scan complete - 5 ports scanned', { exact: true })).toBeVisible();
-          await expect(progressCard(page)).toHaveText(/3\s*Open\s*0\s*Closed\s*2\s*Filtered\s*0\s*Checking$/);
+          await expect(
+            page.getByText('Scan complete - 5 ports scanned', { exact: true })
+          ).toBeVisible();
+          await expect(progressCard(page)).toHaveText(
+            /3\s*Open\s*0\s*Closed\s*2\s*Filtered\s*0\s*Checking$/
+          );
           await expect(portRow(page, 22)).toHaveText(/^Port 22 - SSH\s*TCP\s*Filtered$/);
-          await expect(portRow(page, appPort)).toHaveText(new RegExp(`^Port ${appPort} - Unknown\\s*TCP\\s*Open$`));
+          await expect(portRow(page, appPort)).toHaveText(
+            new RegExp(`^Port ${appPort} - Unknown\\s*TCP\\s*Open$`)
+          );
           await expect(portRow(page, notFound.port)).toHaveText(/ - Unknown\s*TCP\s*Open$/);
           await expect(portRow(page, api.port)).toHaveText(/ - Unknown\s*TCP\s*Open$/);
           await expect(portRow(page, silent.port)).toHaveText(/ - Unknown\s*TCP\s*Filtered$/);

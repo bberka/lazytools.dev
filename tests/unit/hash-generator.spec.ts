@@ -19,7 +19,10 @@ const NODE_NAMES: Record<HashAlgorithm, string> = {
 /** The digests Node's own implementation gives for the same bytes. */
 function reference(bytes: Uint8Array) {
   return Object.fromEntries(
-    HASH_ALGORITHMS.map((algorithm) => [algorithm, createHash(NODE_NAMES[algorithm]).update(bytes).digest('hex')])
+    HASH_ALGORITHMS.map((algorithm) => [
+      algorithm,
+      createHash(NODE_NAMES[algorithm]).update(bytes).digest('hex'),
+    ])
   );
 }
 
@@ -51,7 +54,9 @@ test.describe('computeHashes', () => {
     const hashes = await computeHashes('');
     expect(hashes.MD5).toBe('d41d8cd98f00b204e9800998ecf8427e');
     expect(hashes['SHA-1']).toBe('da39a3ee5e6b4b0d3255bfef95601890afd80709');
-    expect(hashes['SHA-256']).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+    expect(hashes['SHA-256']).toBe(
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    );
     expect(await computeHashes(new ArrayBuffer(0))).toEqual(hashes);
   });
 

@@ -51,7 +51,21 @@ test.describe('fromRoman', () => {
   });
 
   test('returns null for anything that is not a standard numeral', () => {
-    for (const text of ['', '   ', 'IIII', 'VV', 'VX', 'IC', 'IL', 'XM', 'IIV', 'MMMM', 'ABC', 'X I', '12']) {
+    for (const text of [
+      '',
+      '   ',
+      'IIII',
+      'VV',
+      'VX',
+      'IC',
+      'IL',
+      'XM',
+      'IIV',
+      'MMMM',
+      'ABC',
+      'X I',
+      '12',
+    ]) {
       expect(fromRoman(text), JSON.stringify(text)).toBeNull();
     }
   });
@@ -81,7 +95,19 @@ test.describe('parseDecimal', () => {
   });
 
   test('returns null out of range and for anything but digits', () => {
-    for (const text of ['', '0', '000', '4000', '99999999999999999999', '-5', '+5', '12.5', '1e3', 'abc', '1 2']) {
+    for (const text of [
+      '',
+      '0',
+      '000',
+      '4000',
+      '99999999999999999999',
+      '-5',
+      '+5',
+      '12.5',
+      '1e3',
+      'abc',
+      '1 2',
+    ]) {
       expect(parseDecimal(text), JSON.stringify(text)).toBeNull();
     }
   });

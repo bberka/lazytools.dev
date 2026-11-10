@@ -246,7 +246,12 @@ function tokenize(source: string): Token[] {
     if (/[A-Za-z_]/.test(char)) {
       NAME_AT.lastIndex = i;
       const match = NAME_AT.exec(source)!;
-      tokens.push({ type: 'name', name: match[0].toLowerCase(), index: i, end: i + match[0].length });
+      tokens.push({
+        type: 'name',
+        name: match[0].toLowerCase(),
+        index: i,
+        end: i + match[0].length,
+      });
       i += match[0].length;
       continue;
     }
@@ -320,8 +325,16 @@ class Parser {
     const second = this.tokens[1];
     if (first.type === 'name' && second.type === 'op' && second.op === '=') {
       if (has(CONSTANTS, first.name) || has(FUNCTIONS, first.name) || first.name === 'ans') {
-        const kind = has(FUNCTIONS, first.name) ? 'a function' : first.name === 'ans' ? 'set automatically' : 'a constant';
-        fail(`"${first.name}" is ${kind} and cannot be assigned`, first.index, first.end - first.index);
+        const kind = has(FUNCTIONS, first.name)
+          ? 'a function'
+          : first.name === 'ans'
+            ? 'set automatically'
+            : 'a constant';
+        fail(
+          `"${first.name}" is ${kind} and cannot be assigned`,
+          first.index,
+          first.end - first.index
+        );
       }
       this.position = 2;
       const value = this.finish(this.parseSum());
@@ -335,15 +348,25 @@ class Parser {
     const token = this.peek();
     if (token.type === 'end') return value;
     if (token.type === 'op' && token.op === ')') fail('Unmatched ")"', token.index);
-    if (token.type === 'op' && token.op === '=') fail('Unexpected "="; only "name = expression" can assign', token.index);
-    if (token.type === 'number' || token.type === 'name' || (token.type === 'op' && token.op === '(')) {
-      fail(`Unexpected ${describe(token, this.source)}; put an operator such as * before it`, token.index, token.end - token.index);
+    if (token.type === 'op' && token.op === '=')
+      fail('Unexpected "="; only "name = expression" can assign', token.index);
+    if (
+      token.type === 'number' ||
+      token.type === 'name' ||
+      (token.type === 'op' && token.op === '(')
+    ) {
+      fail(
+        `Unexpected ${describe(token, this.source)}; put an operator such as * before it`,
+        token.index,
+        token.end - token.index
+      );
     }
     fail(`Unexpected ${describe(token, this.source)}`, token.index, token.end - token.index);
   }
 
   private check(value: number, token: Token): number {
-    if (!Number.isFinite(value)) fail('The result is too large or undefined', token.index, token.end - token.index);
+    if (!Number.isFinite(value))
+      fail('The result is too large or undefined', token.index, token.end - token.index);
     return value;
   }
 
@@ -391,9 +414,11 @@ class Parser {
       this.enter(token);
       const exponent = this.parseExponent();
       this.leave();
-      if (base === 0 && exponent < 0) fail('Zero cannot be raised to a negative power', token.index);
+      if (base === 0 && exponent < 0)
+        fail('Zero cannot be raised to a negative power', token.index);
       const value = Math.pow(base, exponent);
-      if (Number.isNaN(value)) fail('A negative number cannot be raised to a fractional power', token.index);
+      if (Number.isNaN(value))
+        fail('A negative number cannot be raised to a fractional power', token.index);
       return this.check(value, token);
     }
     return base;
@@ -419,8 +444,17 @@ class Parser {
       if (this.isOp('(')) return this.parseCall(token);
       if (has(CONSTANTS, token.name)) return CONSTANTS[token.name];
       if (has(this.variables, token.name)) return this.variables[token.name];
-      if (has(FUNCTIONS, token.name)) fail(`"${token.name}" is a function; write ${token.name}(...)`, token.index, token.end - token.index);
-      fail(`Unknown name "${this.source.slice(token.index, token.end)}"`, token.index, token.end - token.index);
+      if (has(FUNCTIONS, token.name))
+        fail(
+          `"${token.name}" is a function; write ${token.name}(...)`,
+          token.index,
+          token.end - token.index
+        );
+      fail(
+        `Unknown name "${this.source.slice(token.index, token.end)}"`,
+        token.index,
+        token.end - token.index
+      );
     }
 
     if (token.type === 'op' && token.op === '(') {
@@ -429,7 +463,12 @@ class Parser {
       const value = this.parseSum();
       const close = this.next();
       if (close.type !== 'op' || close.op !== ')') {
-        fail(close.type === 'end' ? 'Missing ")"' : `Expected ")" but found ${describe(close, this.source)}`, close.index);
+        fail(
+          close.type === 'end'
+            ? 'Missing ")"'
+            : `Expected ")" but found ${describe(close, this.source)}`,
+          close.index
+        );
       }
       this.leave();
       return value;
@@ -442,7 +481,12 @@ class Parser {
   private parseCall(nameToken: Token & { type: 'name' }): number {
     const spec = has(FUNCTIONS, nameToken.name) ? FUNCTIONS[nameToken.name] : undefined;
     const length = nameToken.end - nameToken.index;
-    if (!spec) fail(`Unknown function "${this.source.slice(nameToken.index, nameToken.end)}"`, nameToken.index, length);
+    if (!spec)
+      fail(
+        `Unknown function "${this.source.slice(nameToken.index, nameToken.end)}"`,
+        nameToken.index,
+        length
+      );
 
     const open = this.next();
     this.enter(open);
@@ -456,7 +500,12 @@ class Parser {
     }
     const close = this.next();
     if (close.type !== 'op' || close.op !== ')') {
-      fail(close.type === 'end' ? 'Missing ")"' : `Expected "," or ")" but found ${describe(close, this.source)}`, close.index);
+      fail(
+        close.type === 'end'
+          ? 'Missing ")"'
+          : `Expected "," or ")" but found ${describe(close, this.source)}`,
+        close.index
+      );
     }
     this.leave();
 
@@ -474,7 +523,11 @@ class Parser {
       );
     }
 
-    const value = spec.run(args, { angle: this.angle, at: nameToken.index, length: close.end - nameToken.index });
+    const value = spec.run(args, {
+      angle: this.angle,
+      at: nameToken.index,
+      length: close.end - nameToken.index,
+    });
     return this.check(value, nameToken);
   }
 }
@@ -500,7 +553,10 @@ export function evaluateExpression(source: string, options: EvaluateOptions = {}
       : { ok: true, value: clean };
   } catch (error) {
     if (error instanceof MathError) {
-      return { ok: false, error: { message: error.message, index: error.index, length: error.length } };
+      return {
+        ok: false,
+        error: { message: error.message, index: error.index, length: error.length },
+      };
     }
     throw error;
   }

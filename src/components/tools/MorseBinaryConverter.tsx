@@ -7,9 +7,25 @@ import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Trash2, ArrowLeftRight, Music, Play, Square, AlertTriangle, Binary, Info } from 'lucide-react';
+import {
+  Trash2,
+  ArrowLeftRight,
+  Music,
+  Play,
+  Square,
+  AlertTriangle,
+  Binary,
+  Info,
+} from 'lucide-react';
 import { getAudioContextClass } from '@/lib/web-audio';
 import {
   convertCode,
@@ -197,11 +213,7 @@ export function MorseBinaryConverter() {
       </Tabs>
 
       {/* Mode selection */}
-      <Tabs
-        value={mode}
-        onValueChange={(val) => handleModeChange(val as Mode)}
-        className="w-full"
-      >
+      <Tabs value={mode} onValueChange={(val) => handleModeChange(val as Mode)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2 whitespace-normal">
             Encode Text (Plain to Code)
@@ -233,7 +245,8 @@ export function MorseBinaryConverter() {
                     Beep Frequency (Pitch): {frequency} Hz
                   </label>
                 </div>
-                <Slider aria-label="Beep Frequency (Pitch)"
+                <Slider
+                  aria-label="Beep Frequency (Pitch)"
                   value={frequency}
                   min={300}
                   max={900}
@@ -249,7 +262,8 @@ export function MorseBinaryConverter() {
                     Speed (Words per Minute): {wpm} WPM
                   </label>
                 </div>
-                <Slider aria-label="Speed (Words per Minute)"
+                <Slider
+                  aria-label="Speed (Words per Minute)"
                   value={wpm}
                   min={10}
                   max={35}
@@ -294,7 +308,11 @@ export function MorseBinaryConverter() {
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">
-              {mode === 'encode' ? 'Plain Text Input' : toolType === 'morse' ? 'Morse Code Input' : 'Binary Input'}
+              {mode === 'encode'
+                ? 'Plain Text Input'
+                : toolType === 'morse'
+                  ? 'Morse Code Input'
+                  : 'Binary Input'}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col space-y-4">
@@ -305,11 +323,15 @@ export function MorseBinaryConverter() {
                 mode === 'encode'
                   ? 'Type plain text here...'
                   : toolType === 'morse'
-                  ? '.... . .-.. .-.. --- / .-- --- .-. .-.. -..'
-                  : '01001000 01100101 01101100 01101100 01101111'
+                    ? '.... . .-.. .-.. --- / .-- --- .-. .-.. -..'
+                    : '01001000 01100101 01101100 01101100 01101111'
               }
               aria-label={
-                mode === 'encode' ? 'Plain text input' : toolType === 'morse' ? 'Morse code input' : 'Binary input'
+                mode === 'encode'
+                  ? 'Plain text input'
+                  : toolType === 'morse'
+                    ? 'Morse code input'
+                    : 'Binary input'
               }
               rows={10}
               className="flex-1 font-mono text-xs leading-relaxed bg-background"
@@ -346,7 +368,11 @@ export function MorseBinaryConverter() {
         <Card className="flex flex-col border-muted/60 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">
-              {mode === 'encode' ? (toolType === 'morse' ? 'Morse Code Output' : 'Binary Output') : 'Plain Text Output'}
+              {mode === 'encode'
+                ? toolType === 'morse'
+                  ? 'Morse Code Output'
+                  : 'Binary Output'
+                : 'Plain Text Output'}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col space-y-4">
@@ -355,7 +381,11 @@ export function MorseBinaryConverter() {
               readOnly
               placeholder="Conversion result appears here..."
               aria-label={
-                mode === 'encode' ? (toolType === 'morse' ? 'Morse code output' : 'Binary output') : 'Plain text output'
+                mode === 'encode'
+                  ? toolType === 'morse'
+                    ? 'Morse code output'
+                    : 'Binary output'
+                  : 'Plain text output'
               }
               rows={10}
               className="flex-1 font-mono text-xs leading-relaxed bg-muted/20 border-muted focus-visible:ring-0 cursor-text"
@@ -366,7 +396,8 @@ export function MorseBinaryConverter() {
                 <span className="font-mono text-foreground break-all">
                   {skipped.slice(0, MAX_SKIPPED_SHOWN).join(' ')}
                 </span>
-                {skipped.length > MAX_SKIPPED_SHOWN && ` and ${skipped.length - MAX_SKIPPED_SHOWN} more`}
+                {skipped.length > MAX_SKIPPED_SHOWN &&
+                  ` and ${skipped.length - MAX_SKIPPED_SHOWN} more`}
               </p>
             )}
             <div className="flex flex-wrap gap-2">
@@ -408,7 +439,9 @@ export function MorseBinaryConverter() {
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
         <div>
           <strong className="font-semibold block mb-0.5 text-foreground">Encoders & Signals</strong>
-          This tool generates binary representations or audible Morse Code sequences completely inside your browser using the HTML5 Web Audio API, making it a fast utility for offline coding and text translation.
+          This tool generates binary representations or audible Morse Code sequences completely
+          inside your browser using the HTML5 Web Audio API, making it a fast utility for offline
+          coding and text translation.
         </div>
       </div>
     </div>

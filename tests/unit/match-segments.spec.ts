@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { splitAtMatches } from '@/lib/tools/match-segments';
 
-const join = (segments: Array<{ text: string }>) => segments.map((segment) => segment.text).join('');
+const join = (segments: Array<{ text: string }>) =>
+  segments.map((segment) => segment.text).join('');
 
 test.describe('splitAtMatches', () => {
   test('alternates unmatched and matched text', () => {

@@ -63,7 +63,9 @@ for (const profile of PROFILES) {
           scrollWidth: document.documentElement.scrollWidth,
           clientWidth: document.documentElement.clientWidth,
         }));
-        expect(scroll.scrollWidth, 'page scrolls horizontally').toBeLessThanOrEqual(scroll.clientWidth + 1);
+        expect(scroll.scrollWidth, 'page scrolls horizontally').toBeLessThanOrEqual(
+          scroll.clientWidth + 1
+        );
 
         const overflow = await findHorizontalOverflow(page);
         expect(overflow, `elements wider than the viewport:\n${format(overflow)}`).toEqual([]);

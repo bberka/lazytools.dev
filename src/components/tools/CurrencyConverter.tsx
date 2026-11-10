@@ -267,9 +267,7 @@ export function CurrencyConverter() {
                 </div>
               </div>
               <div className="rounded-md border bg-card p-4">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Symbols
-                </div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Symbols</div>
                 <div className="mt-1 font-semibold">
                   {getCurrencySymbol(result.base)} to {getCurrencySymbol(result.quote)}
                 </div>
@@ -281,7 +279,8 @@ export function CurrencyConverter() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-4 text-sm text-muted-foreground sm:pt-6">
-          Rates are fetched from Frankfurter when you click convert. These are reference rates and can change as newer published data becomes available.
+          Rates are fetched from Frankfurter when you click convert. These are reference rates and
+          can change as newer published data becomes available.
         </CardContent>
       </Card>
     </div>

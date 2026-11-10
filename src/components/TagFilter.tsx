@@ -77,11 +77,7 @@ export function TagFilter({
                     styles.bgActiveHover,
                     'shadow-sm font-semibold'
                   )
-                : cn(
-                    styles.bgHover,
-                    styles.textHover,
-                    styles.borderHover
-                  )
+                : cn(styles.bgHover, styles.textHover, styles.borderHover)
             )}
           >
             <Icon

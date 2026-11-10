@@ -138,7 +138,9 @@ export function SqlFormatter() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-2">
-              <label htmlFor="sql-dialect" className="text-sm font-medium">SQL dialect</label>
+              <label htmlFor="sql-dialect" className="text-sm font-medium">
+                SQL dialect
+              </label>
               <Select
                 value={dialect}
                 onValueChange={(value) => {
@@ -162,7 +164,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-indentation" className="text-sm font-medium">Indentation</label>
+              <label htmlFor="sql-indentation" className="text-sm font-medium">
+                Indentation
+              </label>
               <Select
                 value={indentation}
                 onValueChange={(value) => {
@@ -185,7 +189,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-keyword-case" className="text-sm font-medium">Keyword case</label>
+              <label htmlFor="sql-keyword-case" className="text-sm font-medium">
+                Keyword case
+              </label>
               <Select
                 value={keywordCase}
                 onValueChange={(value) => {
@@ -209,7 +215,9 @@ export function SqlFormatter() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="sql-operator-wrapping" className="text-sm font-medium">AND / OR wrapping</label>
+              <label htmlFor="sql-operator-wrapping" className="text-sm font-medium">
+                AND / OR wrapping
+              </label>
               <Select
                 value={logicalOperatorNewline}
                 onValueChange={(value) => {
@@ -234,11 +242,21 @@ export function SqlFormatter() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <Button onClick={() => setIsMinified(true)} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={() => setIsMinified(true)}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               Minify
             </Button>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -257,7 +275,8 @@ export function SqlFormatter() {
                 <>
                   <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Valid SQL:</strong> Formatted successfully under {DIALECT_OPTIONS.find(d => d.value === dialect)?.label ?? dialect} dialect.
+                    <strong>Valid SQL:</strong> Formatted successfully under{' '}
+                    {DIALECT_OPTIONS.find((d) => d.value === dialect)?.label ?? dialect} dialect.
                   </div>
                 </>
               ) : (

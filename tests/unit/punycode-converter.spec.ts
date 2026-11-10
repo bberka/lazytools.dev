@@ -115,9 +115,9 @@ test.describe('convertPunycode', () => {
     expect(convertPunycode('https://xn--d1acufc5f.xn--p1ai/index.html', 'decode')).toBe(
       'https://домены.рф/index.html'
     );
-    expect(convertPunycode('http://user:pw@xn--bcher-kva.example:8080/a%20b?q=1#top', 'decode')).toBe(
-      'http://user:pw@bücher.example:8080/a%20b?q=1#top'
-    );
+    expect(
+      convertPunycode('http://user:pw@xn--bcher-kva.example:8080/a%20b?q=1#top', 'decode')
+    ).toBe('http://user:pw@bücher.example:8080/a%20b?q=1#top');
     // The path is not touched, even when it looks like a Punycode label.
     expect(convertPunycode('https://example.com/xn--mnchen-3ya.de', 'decode')).toBe(
       'https://example.com/xn--mnchen-3ya.de'

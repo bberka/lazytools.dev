@@ -70,9 +70,7 @@ function RelativeTimeCard({ instant, since }: { instant: number; since: number }
     return () => window.clearInterval(timer);
   }, []);
 
-  return (
-    <ResultCard title="Relative" value={formatRelativeTime(instant, Math.max(since, tick))} />
-  );
+  return <ResultCard title="Relative" value={formatRelativeTime(instant, Math.max(since, tick))} />;
 }
 
 export function TimestampConverter() {
@@ -110,9 +108,7 @@ export function TimestampConverter() {
             </label>
             <Select
               value={state.unit}
-              onValueChange={(unit: TimestampUnit) =>
-                apply((current) => changeUnit(current, unit))
-              }
+              onValueChange={(unit: TimestampUnit) => apply((current) => changeUnit(current, unit))}
             >
               <SelectTrigger id={`${id}-unit`} className="w-48">
                 <SelectValue />
@@ -120,7 +116,9 @@ export function TimestampConverter() {
               <SelectContent>
                 <SelectGroup>
                   {unitOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
@@ -172,7 +170,9 @@ export function TimestampConverter() {
                     <SelectContent className="max-h-60">
                       <SelectGroup>
                         {HOURS.map((h) => (
-                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
@@ -190,7 +190,9 @@ export function TimestampConverter() {
                     <SelectContent className="max-h-60">
                       <SelectGroup>
                         {MINUTES.map((m) => (
-                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
                         ))}
                       </SelectGroup>
                     </SelectContent>
@@ -210,13 +212,16 @@ export function TimestampConverter() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleNow} variant="outline" size="sm">Now</Button>
+            <Button onClick={handleNow} variant="outline" size="sm">
+              Now
+            </Button>
             <Button
               onClick={() => apply((current) => createConverterState(current.unit))}
               variant="outline"
               size="sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />Clear
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear
             </Button>
           </div>
         </CardContent>

@@ -60,10 +60,7 @@ export function HomeContent() {
     [favorites, searchQuery, selectedTag, showFavoritesOnly]
   );
 
-  const groupedTools = useMemo(
-    () => toolCatalog.groupByTag(filteredTools),
-    [filteredTools]
-  );
+  const groupedTools = useMemo(() => toolCatalog.groupByTag(filteredTools), [filteredTools]);
 
   const favoriteTools = useMemo(
     () => toolCatalog.byIds(favorites, { order: 'catalog' }),
@@ -168,7 +165,8 @@ export function HomeContent() {
               compactMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
             )}
           >
-            {showFavoritesOnly ? 'Search Results in Favorites' : 'Search Results'} ({filteredTools.length})
+            {showFavoritesOnly ? 'Search Results in Favorites' : 'Search Results'} (
+            {filteredTools.length})
           </h2>
           {filteredTools.length > 0 ? (
             <ToolGrid compactMode={compactMode}>
@@ -191,62 +189,57 @@ export function HomeContent() {
         </section>
       )}
 
-      {favoriteTools.length > 0 &&
-        !selectedTag &&
-        !showFavoritesOnly &&
-        !searchQuery && (
-          <section>
-            <h2
-              className={cn(
-                'mb-3 flex items-center gap-2 font-bold sm:mb-4',
-                compactMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
-              )}
-            >
-              <Star className="h-6 w-6 fill-yellow-500 text-yellow-500" />
-              Favorites
-            </h2>
-            <ToolGrid compactMode={compactMode}>
-              {favoriteTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} compactMode={compactMode} />
-              ))}
-            </ToolGrid>
-          </section>
-        )}
+      {favoriteTools.length > 0 && !selectedTag && !showFavoritesOnly && !searchQuery && (
+        <section>
+          <h2
+            className={cn(
+              'mb-3 flex items-center gap-2 font-bold sm:mb-4',
+              compactMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
+            )}
+          >
+            <Star className="h-6 w-6 fill-yellow-500 text-yellow-500" />
+            Favorites
+          </h2>
+          <ToolGrid compactMode={compactMode}>
+            {favoriteTools.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} compactMode={compactMode} />
+            ))}
+          </ToolGrid>
+        </section>
+      )}
 
       {!showFavoritesOnly && !searchQuery && (
         <div className={cn(compactMode ? 'space-y-4 sm:space-y-5' : 'space-y-6 sm:space-y-8')}>
-          {tagSections.map(
-            ({ tag: tagId, tools: tagTools, firstIndex }) => {
-              const tag = TAGS[tagId];
-              const Icon = tag.icon;
+          {tagSections.map(({ tag: tagId, tools: tagTools, firstIndex }) => {
+            const tag = TAGS[tagId];
+            const Icon = tag.icon;
 
-              return (
-                <section key={tagId}>
-                  <h2
-                    className={cn(
-                      'mb-3 font-bold sm:mb-4 flex items-center gap-2.5',
-                      compactMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl',
-                      tag.color
-                    )}
-                  >
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                    <span>{tag.name}</span>
-                  </h2>
-                  <ToolGrid compactMode={compactMode}>
-                    {tagTools.map((tool, index) => (
-                      <ToolCard
-                        key={tool.id}
-                        tool={tool}
-                        compactMode={compactMode}
-                        keyboardIndex={firstIndex + index}
-                        isActive={selectedSearchIndex === firstIndex + index}
-                      />
-                    ))}
-                  </ToolGrid>
-                </section>
-              );
-            }
-          )}
+            return (
+              <section key={tagId}>
+                <h2
+                  className={cn(
+                    'mb-3 font-bold sm:mb-4 flex items-center gap-2.5',
+                    compactMode ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl',
+                    tag.color
+                  )}
+                >
+                  <Icon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                  <span>{tag.name}</span>
+                </h2>
+                <ToolGrid compactMode={compactMode}>
+                  {tagTools.map((tool, index) => (
+                    <ToolCard
+                      key={tool.id}
+                      tool={tool}
+                      compactMode={compactMode}
+                      keyboardIndex={firstIndex + index}
+                      isActive={selectedSearchIndex === firstIndex + index}
+                    />
+                  ))}
+                </ToolGrid>
+              </section>
+            );
+          })}
         </div>
       )}
 
@@ -284,13 +277,7 @@ export function HomeContent() {
   );
 }
 
-function ToolGrid({
-  compactMode,
-  children,
-}: {
-  compactMode: boolean;
-  children: ReactNode;
-}) {
+function ToolGrid({ compactMode, children }: { compactMode: boolean; children: ReactNode }) {
   return (
     <div
       data-tool-grid
@@ -299,9 +286,7 @@ function ToolGrid({
         compactMode ? 'gap-2' : 'gap-4'
       )}
     >
-      <AnimatePresence mode="popLayout">
-        {children}
-      </AnimatePresence>
+      <AnimatePresence mode="popLayout">{children}</AnimatePresence>
     </div>
   );
 }
@@ -333,23 +318,36 @@ function ToolCard({
       data-keyboard-index={keyboardIndex}
     >
       <Link href={`/tools/${tool.id}`} className="group block h-full">
-        <Card className={cn(
-          "h-full transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(139,92,246,0.15)]",
-          isActive && "-translate-y-1.5 border-primary shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(139,92,246,0.15)] bg-primary/[0.01] dark:bg-primary/[0.03]",
-          compactMode && "flex flex-col justify-center"
-        )}>
-          <CardHeader
-            className={cn(compactMode ? 'p-2 sm:p-4' : 'p-3 sm:p-5')}
-          >
-            <div className={cn("flex justify-between gap-3", compactMode ? "items-center" : "items-start")}>
-              <div className={cn("flex min-w-0 flex-1", compactMode ? "items-center gap-2" : "items-start gap-3")}>
-                <div className={cn(
-                  "flex shrink-0 items-center justify-center bg-secondary/80 transition-all duration-300 group-hover:scale-110",
-                  compactMode ? "h-8 w-8 rounded-lg" : "h-10 w-10 rounded-xl",
-                  isActive && "scale-110",
-                  primaryTag.color
-                )}>
-                  <IconComponent className={cn(compactMode ? "h-4 w-4" : "h-5 w-5")} />
+        <Card
+          className={cn(
+            'h-full transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(139,92,246,0.15)]',
+            isActive &&
+              '-translate-y-1.5 border-primary shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(139,92,246,0.15)] bg-primary/[0.01] dark:bg-primary/[0.03]',
+            compactMode && 'flex flex-col justify-center'
+          )}
+        >
+          <CardHeader className={cn(compactMode ? 'p-2 sm:p-4' : 'p-3 sm:p-5')}>
+            <div
+              className={cn(
+                'flex justify-between gap-3',
+                compactMode ? 'items-center' : 'items-start'
+              )}
+            >
+              <div
+                className={cn(
+                  'flex min-w-0 flex-1',
+                  compactMode ? 'items-center gap-2' : 'items-start gap-3'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex shrink-0 items-center justify-center bg-secondary/80 transition-all duration-300 group-hover:scale-110',
+                    compactMode ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl',
+                    isActive && 'scale-110',
+                    primaryTag.color
+                  )}
+                >
+                  <IconComponent className={cn(compactMode ? 'h-4 w-4' : 'h-5 w-5')} />
                 </div>
                 <div className="space-y-1 min-w-0 flex-1">
                   <CardTitle

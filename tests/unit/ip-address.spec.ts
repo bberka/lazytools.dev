@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { ipv4ToNumber, isValidIPv6, normalizeIp, numberToIPv4, parseIPv4 } from '@/lib/tools/ip-address';
+import {
+  ipv4ToNumber,
+  isValidIPv6,
+  normalizeIp,
+  numberToIPv4,
+  parseIPv4,
+} from '@/lib/tools/ip-address';
 
 test.describe('parseIPv4', () => {
   test('reads the four octets of a dotted-decimal address', () => {
@@ -13,7 +19,16 @@ test.describe('parseIPv4', () => {
   });
 
   test('rejects octets above 255 and the wrong number of parts', () => {
-    for (const text of ['256.1.1.1', '1.2.3.999', '1.2.3', '1.2.3.4.5', '1.2.3.', '.1.2.3', '1..2.3', '']) {
+    for (const text of [
+      '256.1.1.1',
+      '1.2.3.999',
+      '1.2.3',
+      '1.2.3.4.5',
+      '1.2.3.',
+      '.1.2.3',
+      '1..2.3',
+      '',
+    ]) {
       expect(parseIPv4(text), text).toBeNull();
     }
   });
@@ -75,7 +90,13 @@ test.describe('isValidIPv6', () => {
 
   // Regression: the old pattern counted colons, so it turned these valid addresses down.
   test('accepts a compression at either end of seven groups and an IPv4 tail', () => {
-    const valid = ['1:2:3:4:5:6:7::', '::2:3:4:5:6:7:8', '::ffff:192.0.2.1', '64:ff9b::8.8.8.8', '1:2:3:4:5:6:1.2.3.4'];
+    const valid = [
+      '1:2:3:4:5:6:7::',
+      '::2:3:4:5:6:7:8',
+      '::ffff:192.0.2.1',
+      '64:ff9b::8.8.8.8',
+      '1:2:3:4:5:6:1.2.3.4',
+    ];
     for (const text of valid) {
       expect(isValidIPv6(text), text).toBe(true);
     }

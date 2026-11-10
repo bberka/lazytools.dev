@@ -35,7 +35,10 @@ export function bytesToBase64(bytes: Uint8Array): string {
   for (let index = 0; index < whole; index += 3) {
     const chunk = (bytes[index] << 16) | (bytes[index + 1] << 8) | bytes[index + 2];
     output +=
-      ALPHABET[chunk >> 18] + ALPHABET[(chunk >> 12) & 63] + ALPHABET[(chunk >> 6) & 63] + ALPHABET[chunk & 63];
+      ALPHABET[chunk >> 18] +
+      ALPHABET[(chunk >> 12) & 63] +
+      ALPHABET[(chunk >> 6) & 63] +
+      ALPHABET[chunk & 63];
   }
 
   if (bytes.length - whole === 1) {

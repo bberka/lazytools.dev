@@ -36,7 +36,12 @@ function base64ToBytes(base64: string): Uint8Array {
   const compact = base64.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
   const body = compact.replace(/=+$/, '');
 
-  if (!body || !/^[A-Za-z0-9+/]+$/.test(body) || compact.length - body.length > 2 || body.length % 4 === 1) {
+  if (
+    !body ||
+    !/^[A-Za-z0-9+/]+$/.test(body) ||
+    compact.length - body.length > 2 ||
+    body.length % 4 === 1
+  ) {
     throw new Error('The input is not valid Base64.');
   }
 
@@ -47,7 +52,8 @@ function base64ToBytes(base64: string): Uint8Array {
 }
 
 async function transform(bytes: Uint8Array, mode: GzipMode): Promise<Uint8Array> {
-  const stream = mode === 'compress' ? new CompressionStream('gzip') : new DecompressionStream('gzip');
+  const stream =
+    mode === 'compress' ? new CompressionStream('gzip') : new DecompressionStream('gzip');
   // Piping from a Blob leaves one promise to await, so bad data cannot leave a rejection unhandled.
   const piped = new Blob([bytes as BlobPart]).stream().pipeThrough(stream);
   return new Uint8Array(await new Response(piped).arrayBuffer());

@@ -120,7 +120,9 @@ test.describe('buildPlaceholderSvg', () => {
   });
 
   test('the radius is clamped to half the shorter side', () => {
-    expect(buildPlaceholderSvg({ ...config, width: 100, height: 40, radius: 999 })).toContain('rx="20"');
+    expect(buildPlaceholderSvg({ ...config, width: 100, height: 40, radius: 999 })).toContain(
+      'rx="20"'
+    );
   });
 
   test('hidden text leaves only the rectangle', () => {
@@ -132,8 +134,12 @@ test.describe('buildPlaceholderSvg', () => {
   test('markup in the text cannot break out of the SVG', () => {
     const svg = buildPlaceholderSvg({ ...config, text: '</text><script>alert("x")</script>&"' });
     expect(svg).not.toContain('<script');
-    expect(svg).toContain('&lt;/text&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&quot;</text>');
-    expect(svg).toContain('aria-label="&lt;/text&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&quot;"');
+    expect(svg).toContain(
+      '&lt;/text&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&quot;</text>'
+    );
+    expect(svg).toContain(
+      'aria-label="&lt;/text&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&quot;"'
+    );
     // exactly one text element and one svg element
     expect(svg.match(/<text /g)).toHaveLength(1);
     expect(svg.match(/<svg /g)).toHaveLength(1);
@@ -176,7 +182,9 @@ test.describe('data URI and snippets', () => {
     expect(outputs.css).toBe(
       `.placeholder {\n  width: 600px;\n  height: 400px;\n  background: url("${outputs.dataUri}") center / cover no-repeat;\n}`
     );
-    expect(outputs.html).toBe(`<img src="${outputs.dataUri}" width="600" height="400" alt="600 x 400">`);
+    expect(outputs.html).toBe(
+      `<img src="${outputs.dataUri}" width="600" height="400" alt="600 x 400">`
+    );
     expect(outputs.dataUri).toBe(svgToDataUri(outputs.svg));
   });
 
@@ -203,7 +211,9 @@ test.describe('evaluatePlaceholder', () => {
 
   test('size limits', () => {
     expect(invalid({ width: '0' }).width).toBe('Width must be a whole number from 1 to 5000.');
-    expect(invalid({ height: '5001' }).height).toBe('Height must be a whole number from 1 to 5000.');
+    expect(invalid({ height: '5001' }).height).toBe(
+      'Height must be a whole number from 1 to 5000.'
+    );
     expect(invalid({ width: '12.5' }).width).toBeDefined();
     expect(invalid({ width: '-3' }).width).toBeDefined();
     expect(invalid({ width: '' }).width).toBeDefined();
@@ -213,8 +223,12 @@ test.describe('evaluatePlaceholder', () => {
   });
 
   test('a fixed font size is only checked when auto is off', () => {
-    expect(evaluatePlaceholder({ ...fields, autoFont: true, fontSize: 'zzz' }).status).toBe('ready');
-    expect(invalid({ autoFont: false, fontSize: '0' }).fontSize).toBe('Font size must be a whole number from 1 to 1000.');
+    expect(evaluatePlaceholder({ ...fields, autoFont: true, fontSize: 'zzz' }).status).toBe(
+      'ready'
+    );
+    expect(invalid({ autoFont: false, fontSize: '0' }).fontSize).toBe(
+      'Font size must be a whole number from 1 to 1000.'
+    );
     expect(invalid({ autoFont: false, fontSize: '1001' }).fontSize).toBeDefined();
     const outcome = evaluatePlaceholder({ ...fields, autoFont: false, fontSize: '40' });
     if (outcome.status === 'ready') expect(outcome.outputs.svg).toContain('font-size="40"');

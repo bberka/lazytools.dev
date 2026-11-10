@@ -27,9 +27,13 @@ function base64ToBytes(base64: string): Bytes {
 }
 
 async function deriveKey(password: string, salt: Bytes): Promise<CryptoKey> {
-  const passwordKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, [
-    'deriveKey',
-  ]);
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
 
   return crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
@@ -50,7 +54,11 @@ export async function encryptText(plaintext: string, password: string): Promise<
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
   const key = await deriveKey(password, salt);
 
-  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(plaintext)
+  );
 
   const combined = new Uint8Array(SALT_BYTES + IV_BYTES + encrypted.byteLength);
   combined.set(salt, 0);

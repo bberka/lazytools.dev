@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   DEFAULT_OPTIONS,
@@ -36,7 +42,11 @@ const TRANSLITERATIONS: ReadonlyArray<{ value: Transliteration; label: string; h
     label: 'German spelling',
     hint: 'Like plain letters, but ä ö ü become ae oe ue, as in German URLs.',
   },
-  { value: 'off', label: 'Keep letters as typed', hint: 'Accents and other letters stay in the slug.' },
+  {
+    value: 'off',
+    label: 'Keep letters as typed',
+    hint: 'Accents and other letters stay in the slug.',
+  },
 ];
 
 export function SlugGenerator() {
@@ -50,8 +60,10 @@ export function SlugGenerator() {
   const update = <K extends keyof SlugOptions>(key: K, value: SlugOptions[K]) =>
     setOptions((current) => ({ ...current, [key]: value }));
 
-  const separatorValue = SEPARATORS.find((entry) => entry.separator === options.separator)?.value ?? 'hyphen';
-  const transliterationHint = TRANSLITERATIONS.find((entry) => entry.value === options.transliteration)?.hint ?? '';
+  const separatorValue =
+    SEPARATORS.find((entry) => entry.separator === options.separator)?.value ?? 'hyphen';
+  const transliterationHint =
+    TRANSLITERATIONS.find((entry) => entry.value === options.transliteration)?.hint ?? '';
   const slugCount = slug.split(/\r\n|\n/).filter(Boolean).length;
   const hasText = text.length > 0;
 
@@ -69,7 +81,9 @@ export function SlugGenerator() {
             <LinkIcon className="h-5 w-5 text-primary" />
             Text to Slugify
           </CardTitle>
-          <CardDescription>Turn a title into a clean URL slug. It never leaves your browser.</CardDescription>
+          <CardDescription>
+            Turn a title into a clean URL slug. It never leaves your browser.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -105,7 +119,10 @@ export function SlugGenerator() {
               <Select
                 value={separatorValue}
                 onValueChange={(value) =>
-                  update('separator', SEPARATORS.find((entry) => entry.value === value)?.separator ?? '-')
+                  update(
+                    'separator',
+                    SEPARATORS.find((entry) => entry.value === value)?.separator ?? '-'
+                  )
                 }
               >
                 <SelectTrigger id="slug-separator">
@@ -158,7 +175,9 @@ export function SlugGenerator() {
                 value={maxLengthInput}
                 onChange={(e) => handleMaxLength(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Cuts between words, so no word is left half written.</p>
+              <p className="text-xs text-muted-foreground">
+                Cuts between words, so no word is left half written.
+              </p>
             </div>
             <div className="space-y-3">
               <Checkbox

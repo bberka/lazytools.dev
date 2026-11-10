@@ -630,7 +630,10 @@ function numbersAreExact(json: string): boolean {
     const value = Number(literal);
     if (!Number.isFinite(value)) return false;
     if (/^-?\d+$/.test(literal)) return Number.isSafeInteger(value);
-    const significant = literal.replace(/[eE].*$/, '').replace(/[-.]/g, '').replace(/^0+/, '');
+    const significant = literal
+      .replace(/[eE].*$/, '')
+      .replace(/[-.]/g, '')
+      .replace(/^0+/, '');
     return significant.length <= 15;
   });
 }
@@ -824,9 +827,7 @@ function generateGoHttp(request: CurlRequest): string {
 
   if (data) {
     // A raw string literal drops carriage returns, so those need the quoted form.
-    const literal = data.includes('\r')
-      ? quote(data)
-      : `\`${data.replace(/`/g, '` + "`" + `')}\``;
+    const literal = data.includes('\r') ? quote(data) : `\`${data.replace(/`/g, '` + "`" + `')}\``;
     code += `  payload := strings.NewReader(${literal})\n\n`;
   } else {
     code += `  var payload io.Reader = nil\n\n`;
@@ -1005,7 +1006,16 @@ function generateJavaOkHttp(request: CurlRequest): string {
 }
 
 /** The static properties `System.Net.Http.HttpMethod` has. */
-const CSHARP_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'PATCH']);
+const CSHARP_METHODS = new Set([
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+  'TRACE',
+  'PATCH',
+]);
 
 function generateCsharpHttpClient(request: CurlRequest): string {
   const { url, method, headers, data } = request;

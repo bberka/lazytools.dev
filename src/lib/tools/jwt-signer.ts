@@ -390,7 +390,9 @@ async function importHmacKey(
 ): Promise<CryptoKey> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle) throw new Error(NO_WEBCRYPTO);
-  return subtle.importKey('raw', key, { name: 'HMAC', hash: HASH_NAMES[algorithm] }, false, [usage]);
+  return subtle.importKey('raw', key, { name: 'HMAC', hash: HASH_NAMES[algorithm] }, false, [
+    usage,
+  ]);
 }
 
 /** HMAC of `data` with `key`, using the hash behind the JWT algorithm. Rejects if WebCrypto fails. */
@@ -491,7 +493,11 @@ export async function signJwt(options: SignOptions): Promise<SignResult> {
 
   let signature: Bytes;
   try {
-    signature = await hmac(algorithm, key.value, new TextEncoder().encode(`${headerPart}.${payloadPart}`));
+    signature = await hmac(
+      algorithm,
+      key.value,
+      new TextEncoder().encode(`${headerPart}.${payloadPart}`)
+    );
   } catch (error) {
     return { ok: false, field: 'crypto', error: errorMessage(error) };
   }
@@ -629,7 +635,10 @@ export async function verifyJwt(options: VerifyOptions): Promise<VerifyResult> {
   }
 
   const { nbf, exp } = payload.value;
-  for (const [claim, value] of [['nbf', nbf], ['exp', exp]] as const) {
+  for (const [claim, value] of [
+    ['nbf', nbf],
+    ['exp', exp],
+  ] as const) {
     if (value !== undefined && !isNumericDate(value)) {
       return verdict(
         'malformed',

@@ -20,7 +20,17 @@ export type BlindnessType =
   | 'achromatomaly';
 
 /** Nine numbers, row by row: each output channel as a mix of red, green and blue. */
-export type ColorMatrix = readonly [number, number, number, number, number, number, number, number, number];
+export type ColorMatrix = readonly [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
 
 export interface BlindnessInfo {
   name: string;
@@ -104,7 +114,10 @@ function encode(linear: number): number {
  * Applies a colour matrix to RGBA pixels in place, in linear light, the way
  * an `feColorMatrix` filter does. Alpha is not touched.
  */
-export function applyColorMatrix(pixels: Uint8ClampedArray | Uint8Array, matrix: ColorMatrix): void {
+export function applyColorMatrix(
+  pixels: Uint8ClampedArray | Uint8Array,
+  matrix: ColorMatrix
+): void {
   const [m0, m1, m2, m3, m4, m5, m6, m7, m8] = matrix;
 
   for (let index = 0; index + 3 < pixels.length; index += 4) {
@@ -122,7 +135,10 @@ export function applyColorMatrix(pixels: Uint8ClampedArray | Uint8Array, matrix:
  * Turns RGBA pixels (as in `ImageData.data`) into what someone with the
  * given colour vision would see. Works in place; normal vision is a no-op.
  */
-export function simulateColorBlindness(pixels: Uint8ClampedArray | Uint8Array, type: BlindnessType): void {
+export function simulateColorBlindness(
+  pixels: Uint8ClampedArray | Uint8Array,
+  type: BlindnessType
+): void {
   const { matrix } = BLINDNESS_TYPES[type];
   if (matrix) applyColorMatrix(pixels, matrix);
 }

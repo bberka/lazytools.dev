@@ -68,7 +68,6 @@ export function ChmodCalculator() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [target, setTarget] = useState('');
 
-
   const commands = chmodCommands(mode, target);
   const explanation = explainMode(mode);
   const matchedPreset = findPreset(mode);
@@ -121,7 +120,11 @@ export function ChmodCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div role="group" aria-label="Permission checkboxes" className="grid grid-cols-4 gap-y-3">
+            <div
+              role="group"
+              aria-label="Permission checkboxes"
+              className="grid grid-cols-4 gap-y-3"
+            >
               <div />
               {BIT_COLUMNS.map(({ bit, label }) => (
                 <div
@@ -143,7 +146,9 @@ export function ChmodCalculator() {
                     <div key={bit} className="flex items-center justify-center">
                       <Checkbox
                         checked={hasPermission(mode, who, bit)}
-                        onCheckedChange={(checked) => applyMode(withPermission(mode, who, bit, checked))}
+                        onCheckedChange={(checked) =>
+                          applyMode(withPermission(mode, who, bit, checked))
+                        }
                         aria-label={`${label} ${bitLabel.toLowerCase()}`}
                         className="h-5 w-5"
                       />
@@ -261,8 +266,8 @@ export function ChmodCalculator() {
 
             <p className="text-xs text-muted-foreground">
               A fourth leading digit sets the special bits: 4 setuid, 2 setgid, 1 sticky. In the
-              symbolic form, s and t mean the bit and execute are both set; capital S and T mean
-              the bit is set without execute. You can also paste the 10 characters from ls -l.
+              symbolic form, s and t mean the bit and execute are both set; capital S and T mean the
+              bit is set without execute. You can also paste the 10 characters from ls -l.
             </p>
 
             <div className="flex flex-wrap gap-2">

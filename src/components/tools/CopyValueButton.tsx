@@ -14,7 +14,12 @@ interface CopyValueButtonProps {
 }
 
 /** A copy button that shows a check mark for a moment after a successful copy. */
-export function CopyValueButton({ text, label, showLabel = false, className }: CopyValueButtonProps) {
+export function CopyValueButton({
+  text,
+  label,
+  showLabel = false,
+  className,
+}: CopyValueButtonProps) {
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   return (

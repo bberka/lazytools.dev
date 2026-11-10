@@ -38,9 +38,9 @@ test.describe('splitting and cleaning', () => {
   });
 
   test('can keep whitespace and empty items', () => {
-    expect(items(' a ,,b', { inputDelimiter: 'comma', trimItems: false, removeEmpty: false })).toEqual(
-      [' a ', '', 'b']
-    );
+    expect(
+      items(' a ,,b', { inputDelimiter: 'comma', trimItems: false, removeEmpty: false })
+    ).toEqual([' a ', '', 'b']);
     expect(items(' a , ,b', { inputDelimiter: 'comma', trimItems: false })).toEqual([
       ' a ',
       ' ',
@@ -59,10 +59,12 @@ test.describe('splitting and cleaning', () => {
   // Defect: duplicates were removed before the case conversion, so "Apple"
   // and "apple" both survived and came out as two identical items.
   test('removes items that only become duplicates after the case conversion', () => {
-    expect(items('Apple\napple\nAPPLE\npear', { deduplicate: true, caseConversion: 'lower' })).toEqual(
-      ['apple', 'pear']
-    );
-    expect(items('Apple\napple', { deduplicate: true, caseConversion: 'upper' })).toEqual(['APPLE']);
+    expect(
+      items('Apple\napple\nAPPLE\npear', { deduplicate: true, caseConversion: 'lower' })
+    ).toEqual(['apple', 'pear']);
+    expect(items('Apple\napple', { deduplicate: true, caseConversion: 'upper' })).toEqual([
+      'APPLE',
+    ]);
   });
 
   test('converts case', () => {
@@ -72,7 +74,11 @@ test.describe('splitting and cleaning', () => {
 
   test('sorts in either direction, ignoring case', () => {
     expect(items('pear\nApple\nbanana', { sortOrder: 'asc' })).toEqual(['Apple', 'banana', 'pear']);
-    expect(items('pear\nApple\nbanana', { sortOrder: 'desc' })).toEqual(['pear', 'banana', 'Apple']);
+    expect(items('pear\nApple\nbanana', { sortOrder: 'desc' })).toEqual([
+      'pear',
+      'banana',
+      'Apple',
+    ]);
   });
 
   test('has no items for empty or blank input', () => {

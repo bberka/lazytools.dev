@@ -108,7 +108,11 @@ test.describe('tokenizer', () => {
 
   test('an unescaped line break ends the command and the rest is reported as ignored', () => {
     const result = tokenize('docker run nginx\ndocker logs x');
-    expect(result).toEqual({ ok: true, tokens: ['docker', 'run', 'nginx'], ignored: 'docker logs x' });
+    expect(result).toEqual({
+      ok: true,
+      tokens: ['docker', 'run', 'nginx'],
+      ignored: 'docker logs x',
+    });
   });
 
   test('control operators end the command', () => {
@@ -132,8 +136,14 @@ test.describe('tokenizer', () => {
   });
 
   test('unterminated quotes are an error, not an exception', () => {
-    expect(tokenize(`docker run -e A='b`)).toEqual({ ok: false, error: "Unterminated single quote (')." });
-    expect(tokenize('docker run -e "A=b')).toEqual({ ok: false, error: 'Unterminated double quote (").' });
+    expect(tokenize(`docker run -e A='b`)).toEqual({
+      ok: false,
+      error: "Unterminated single quote (').",
+    });
+    expect(tokenize('docker run -e "A=b')).toEqual({
+      ok: false,
+      error: 'Unterminated double quote (").',
+    });
   });
 
   test('empty input gives no tokens', () => {
@@ -260,7 +270,9 @@ test.describe('flags', () => {
   });
 
   test('--mount: a read-only bind mount', () => {
-    const result = convert('docker run --mount type=bind,source=/srv/conf,target=/etc/conf,readonly nginx');
+    const result = convert(
+      'docker run --mount type=bind,source=/srv/conf,target=/etc/conf,readonly nginx'
+    );
     expect(result.compose.services.nginx.volumes).toEqual([
       { type: 'bind', source: '/srv/conf', target: '/etc/conf', read_only: true },
     ]);
@@ -276,18 +288,23 @@ test.describe('flags', () => {
   });
 
   test('--mount: tmpfs with a size, and bind propagation', () => {
-    expect(serviceOf('docker run --mount type=tmpfs,target=/tmp,tmpfs-size=64m nginx').volumes).toEqual([
-      { type: 'tmpfs', target: '/tmp', tmpfs: { size: '64m' } },
-    ]);
     expect(
-      serviceOf('docker run --mount type=bind,src=/mnt,target=/mnt,bind-propagation=rshared nginx').volumes
+      serviceOf('docker run --mount type=tmpfs,target=/tmp,tmpfs-size=64m nginx').volumes
+    ).toEqual([{ type: 'tmpfs', target: '/tmp', tmpfs: { size: '64m' } }]);
+    expect(
+      serviceOf('docker run --mount type=bind,src=/mnt,target=/mnt,bind-propagation=rshared nginx')
+        .volumes
     ).toEqual([{ type: 'bind', source: '/mnt', target: '/mnt', bind: { propagation: 'rshared' } }]);
   });
 
   test('--mount: unsupported options, a missing target and an unknown type are warned about', () => {
-    const options = convert('docker run --mount type=volume,source=v,target=/v,volume-opt=type=nfs nginx');
+    const options = convert(
+      'docker run --mount type=volume,source=v,target=/v,volume-opt=type=nfs nginx'
+    );
     expect(options.warnings.join(' ')).toContain('"volume-opt" option');
-    expect(options.compose.services.nginx.volumes).toEqual([{ type: 'volume', source: 'v', target: '/v' }]);
+    expect(options.compose.services.nginx.volumes).toEqual([
+      { type: 'volume', source: 'v', target: '/v' },
+    ]);
 
     const noTarget = convert('docker run --mount type=bind,source=/a nginx');
     expect(noTarget.compose.services.nginx.volumes).toBeUndefined();
@@ -354,7 +371,9 @@ test.describe('flags', () => {
   });
 
   test('--network-alias without a network attaches to the default network; --ip without one is warned about', () => {
-    expect(serviceOf('docker run --net-alias api nginx').networks).toEqual({ default: { aliases: ['api'] } });
+    expect(serviceOf('docker run --net-alias api nginx').networks).toEqual({
+      default: { aliases: ['api'] },
+    });
     const ip = convert('docker run --ip 10.0.0.5 nginx');
     expect(ip.compose.services.nginx.networks).toBeUndefined();
     expect(ip.warnings.join(' ')).toContain('--ip and --ip6 need a user-defined network');
@@ -376,7 +395,9 @@ test.describe('flags', () => {
   });
 
   test('--hostname, -h, -u, -w, --domainname', () => {
-    const service = serviceOf('docker run -h box --domainname example.org -u 1000:1000 -w /srv nginx');
+    const service = serviceOf(
+      'docker run -h box --domainname example.org -u 1000:1000 -w /srv nginx'
+    );
     expect(service).toMatchObject({
       hostname: 'box',
       domainname: 'example.org',
@@ -402,7 +423,10 @@ test.describe('flags', () => {
     expect(serviceOf('docker run -it ubuntu bash')).toMatchObject({ stdin_open: true, tty: true });
     expect(serviceOf('docker run -i ubuntu')).toMatchObject({ stdin_open: true });
     expect(serviceOf('docker run -i ubuntu').tty).toBeUndefined();
-    expect(serviceOf('docker run --interactive --tty ubuntu')).toMatchObject({ stdin_open: true, tty: true });
+    expect(serviceOf('docker run --interactive --tty ubuntu')).toMatchObject({
+      stdin_open: true,
+      tty: true,
+    });
   });
 
   test('combined short flags: -dit, and a value flag at the end of the cluster', () => {
@@ -416,7 +440,10 @@ test.describe('flags', () => {
       ports: ['8080:80'],
     });
     expect(serviceOf('docker run -itp8080:80 nginx').ports).toEqual(['8080:80']);
-    expect(serviceOf('docker run -tie A=1 nginx')).toMatchObject({ environment: ['A=1'], tty: true });
+    expect(serviceOf('docker run -tie A=1 nginx')).toMatchObject({
+      environment: ['A=1'],
+      tty: true,
+    });
   });
 
   test('--privileged, and an explicit false', () => {
@@ -429,7 +456,9 @@ test.describe('flags', () => {
   });
 
   test('--cap-add and --cap-drop', () => {
-    const service = serviceOf('docker run --cap-add NET_ADMIN --cap-add=SYS_TIME --cap-drop ALL nginx');
+    const service = serviceOf(
+      'docker run --cap-add NET_ADMIN --cap-add=SYS_TIME --cap-drop ALL nginx'
+    );
     expect(service.cap_add).toEqual(['NET_ADMIN', 'SYS_TIME']);
     expect(service.cap_drop).toEqual(['ALL']);
   });
@@ -471,7 +500,9 @@ test.describe('flags', () => {
   });
 
   test('--ulimit with soft and hard limits, a single limit, and a bad value', () => {
-    const service = serviceOf('docker run --ulimit nofile=1024:2048 --ulimit nproc=65535 --ulimit memlock=-1:-1 nginx');
+    const service = serviceOf(
+      'docker run --ulimit nofile=1024:2048 --ulimit nproc=65535 --ulimit memlock=-1:-1 nginx'
+    );
     expect(service.ulimits).toEqual({
       nofile: { soft: 1024, hard: 2048 },
       nproc: 65535,
@@ -484,7 +515,9 @@ test.describe('flags', () => {
 
   test('--log-driver and --log-opt', () => {
     expect(
-      serviceOf('docker run --log-driver json-file --log-opt max-size=10m --log-opt=max-file=3 nginx').logging
+      serviceOf(
+        'docker run --log-driver json-file --log-opt max-size=10m --log-opt=max-file=3 nginx'
+      ).logging
     ).toEqual({ driver: 'json-file', options: { 'max-size': '10m', 'max-file': '3' } });
     expect(serviceOf('docker run --log-driver none nginx').logging).toEqual({ driver: 'none' });
     expect(serviceOf('docker run --log-opt max-size=1m nginx').logging).toEqual({
@@ -523,7 +556,9 @@ test.describe('flags', () => {
   });
 
   test('a health interval without a command is kept; non-numeric retries are warned about', () => {
-    expect(serviceOf('docker run --health-interval 10s nginx').healthcheck).toEqual({ interval: '10s' });
+    expect(serviceOf('docker run --health-interval 10s nginx').healthcheck).toEqual({
+      interval: '10s',
+    });
     const bad = convert('docker run --health-retries many nginx');
     expect(bad.compose.services.nginx.healthcheck).toBeUndefined();
     expect(bad.warnings.join(' ')).toContain('expected a whole number');
@@ -557,23 +592,31 @@ test.describe('flags', () => {
   });
 
   test('--volumes-from refers to the container', () => {
-    expect(serviceOf('docker run --volumes-from data:ro nginx').volumes_from).toEqual(['container:data:ro']);
+    expect(serviceOf('docker run --volumes-from data:ro nginx').volumes_from).toEqual([
+      'container:data:ro',
+    ]);
   });
 
   test('--gpus', () => {
     const device = (extra: Record<string, unknown>) => ({
-      resources: { reservations: { devices: [{ driver: 'nvidia', ...extra, capabilities: ['gpu'] }] } },
+      resources: {
+        reservations: { devices: [{ driver: 'nvidia', ...extra, capabilities: ['gpu'] }] },
+      },
     });
     expect(serviceOf('docker run --gpus all nginx').deploy).toEqual(device({ count: 'all' }));
     expect(serviceOf('docker run --gpus 2 nginx').deploy).toEqual(device({ count: 2 }));
     expect(serviceOf(`docker run --gpus '"device=0,1"' nginx`).deploy).toEqual(
       device({ device_ids: ['0', '1'] })
     );
-    expect(convert('docker run --gpus banana nginx').warnings.join(' ')).toContain('only "all", a count');
+    expect(convert('docker run --gpus banana nginx').warnings.join(' ')).toContain(
+      'only "all", a count'
+    );
   });
 
   test('--storage-opt', () => {
-    expect(serviceOf('docker run --storage-opt size=10G nginx').storage_opt).toEqual({ size: '10G' });
+    expect(serviceOf('docker run --storage-opt size=10G nginx').storage_opt).toEqual({
+      size: '10G',
+    });
   });
 });
 
@@ -609,7 +652,9 @@ test.describe('notes and warnings', () => {
   });
 
   test('flags Docker has but Compose cannot express are warned about with a reason', () => {
-    const result = convert('docker run -P --label-file labels.txt --cpuset-mems 0 --blkio-weight 300 nginx');
+    const result = convert(
+      'docker run -P --label-file labels.txt --cpuset-mems 0 --blkio-weight 300 nginx'
+    );
     expect(result.warnings).toHaveLength(4);
     expect(result.warnings[0]).toContain('`-P` was not converted');
     expect(result.warnings[1]).toContain('`--label-file labels.txt` was not converted');
@@ -619,7 +664,9 @@ test.describe('notes and warnings', () => {
   });
 
   test('harmless flags with no Compose setting go to the notes', () => {
-    const result = convert('docker run --sig-proxy=false -q --disable-content-trust --detach-keys ctrl-x -a stdout nginx');
+    const result = convert(
+      'docker run --sig-proxy=false -q --disable-content-trust --detach-keys ctrl-x -a stdout nginx'
+    );
     expect(result.notes).toHaveLength(5);
     expect(result.warnings).toEqual([]);
   });
@@ -712,7 +759,10 @@ test.describe('a realistic command', () => {
           command: ['apache2-foreground'],
           restart: 'unless-stopped',
           ports: ['8080:80'],
-          volumes: ['nextcloud_data:/var/www/html', '/srv/nextcloud/config:/var/www/html/config:ro'],
+          volumes: [
+            'nextcloud_data:/var/www/html',
+            '/srv/nextcloud/config:/var/www/html/config:ro',
+          ],
           environment: ['MYSQL_HOST=db', 'MYSQL_PASSWORD=s3cr3t pass'],
           env_file: ['./nextcloud.env'],
           labels: ['traefik.enable=true', 'traefik.http.routers.nc.rule=Host(`cloud.example.com`)'],
@@ -811,7 +861,10 @@ test.describe('YAML output', () => {
   });
 
   test('the realistic examples survive a YAML round trip', () => {
-    for (const command of [EXAMPLE_DOCKER_RUN, 'docker run -dit -p 80:80/tcp --mount type=bind,src=/a,dst=/b,ro nginx']) {
+    for (const command of [
+      EXAMPLE_DOCKER_RUN,
+      'docker run -dit -p 80:80/tcp --mount type=bind,src=/a,dst=/b,ro nginx',
+    ]) {
       const result = convert(command);
       expect(load(dump(result.compose, COMPOSE_YAML_OPTIONS))).toEqual(result.compose);
     }
@@ -837,7 +890,8 @@ test.describe('input that is not a docker run command', () => {
   });
 
   test('other commands', () => {
-    const message = 'This does not look like a docker run command. It should start with "docker run".';
+    const message =
+      'This does not look like a docker run command. It should start with "docker run".';
     expect(rejected('ls -la')).toBe(message);
     expect(rejected('curl https://example.com')).toBe(message);
     expect(rejected('hello world')).toBe(message);
@@ -846,11 +900,15 @@ test.describe('input that is not a docker run command', () => {
   });
 
   test('other docker commands', () => {
-    expect(rejected('docker ps -a')).toBe('Only "docker run" can be converted, but this command is "docker ps".');
+    expect(rejected('docker ps -a')).toBe(
+      'Only "docker run" can be converted, but this command is "docker ps".'
+    );
     expect(rejected('docker compose up -d')).toBe(
       'Only "docker run" can be converted, but this command is "docker compose".'
     );
-    expect(rejected('docker')).toBe('This does not look like a docker run command. It should start with "docker run".');
+    expect(rejected('docker')).toBe(
+      'This does not look like a docker run command. It should start with "docker run".'
+    );
   });
 
   test('docker run with no image', () => {
@@ -870,7 +928,21 @@ test.describe('input that is not a docker run command', () => {
   });
 
   test('never throws on odd input', () => {
-    for (const input of ['\\', '"', "'", '$', '$(', '${', '-', '--', 'docker run --', 'docker run -p', '```', '\u0000', 'docker run \\']) {
+    for (const input of [
+      '\\',
+      '"',
+      "'",
+      '$',
+      '$(',
+      '${',
+      '-',
+      '--',
+      'docker run --',
+      'docker run -p',
+      '```',
+      '\u0000',
+      'docker run \\',
+    ]) {
       expect(() => convertDockerRun(input)).not.toThrow();
     }
   });

@@ -368,7 +368,9 @@ test.describe('Date and time tools', () => {
       await page.getByRole('button', { name: new RegExp(`^${side} `) }).click();
       await page.getByRole('combobox', { name: `Search ${side} time zones` }).fill(query);
       await page.getByRole('option', { name: label, exact: true }).click();
-      await expect(page.getByRole('button', { name: `${side} ${label}`, exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: `${side} ${label}`, exact: true })
+      ).toBeVisible();
       await expect(page.getByRole('listbox')).toHaveCount(0);
     }
 

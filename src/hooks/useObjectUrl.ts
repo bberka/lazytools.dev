@@ -21,7 +21,7 @@ export function useObjectUrl(source: Blob | null | undefined): string | null {
     const url = URL.createObjectURL(source);
     // The URL cannot exist before this effect runs, so state is the only way
     // to get it into the render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // oxlint-disable-next-line react-hooks/set-state-in-effect
     setEntry({ source, url });
 
     return () => {

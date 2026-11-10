@@ -81,9 +81,7 @@ export interface CronSchedule {
   fields: Record<keyof CronParts, CronField>;
 }
 
-export type CronParseResult =
-  | { ok: true; schedule: CronSchedule }
-  | { ok: false; error: string };
+export type CronParseResult = { ok: true; schedule: CronSchedule } | { ok: false; error: string };
 
 // ── Parsing ───────────────────────────────────────────────────────────────────
 

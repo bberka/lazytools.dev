@@ -63,7 +63,9 @@ test.describe('hexToText', () => {
 
   test('reports input without hex digits or with an odd number of them', () => {
     expect(() => hexToText('--')).toThrow('No valid hexadecimal characters found.');
-    expect(() => hexToText('486')).toThrow('Hexadecimal string must have an even number of characters.');
+    expect(() => hexToText('486')).toThrow(
+      'Hexadecimal string must have an even number of characters.'
+    );
   });
 
   test('shows bytes that are not UTF-8 as U+FFFD', () => {
@@ -81,7 +83,10 @@ test.describe('convertHex', () => {
   // Defect: whitespace-only text used to encode to an empty result.
   test('encodes text that is only whitespace', () => {
     expect(convertHex(' ', 'encode')).toEqual({ output: '20', error: '' });
-    expect(convertHex('\t\n', 'encode', { delimiter: ' ' })).toEqual({ output: '09 0a', error: '' });
+    expect(convertHex('\t\n', 'encode', { delimiter: ' ' })).toEqual({
+      output: '09 0a',
+      error: '',
+    });
   });
 
   test('turns a failure into an error without output', () => {

@@ -49,8 +49,7 @@ const WORDS_WITH_NUMBERS = new RegExp(
   'gu'
 );
 const WORDS_LETTERS_ONLY = new RegExp(
-  `${WEB_ADDRESS}|${EMAIL_ADDRESS}|` +
-    String.raw`\p{L}[\p{L}\p{M}]*(?:['’-]\p{L}[\p{L}\p{M}]*)*`,
+  `${WEB_ADDRESS}|${EMAIL_ADDRESS}|` + String.raw`\p{L}[\p{L}\p{M}]*(?:['’-]\p{L}[\p{L}\p{M}]*)*`,
   'gu'
 );
 

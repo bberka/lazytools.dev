@@ -139,11 +139,7 @@ export function RsaKeyGenerator() {
             </div>
           </div>
 
-          <Button
-            onClick={handleGenerate}
-            className="w-full sm:w-auto"
-            disabled={isLoading}
-          >
+          <Button onClick={handleGenerate} className="w-full sm:w-auto" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -158,7 +154,10 @@ export function RsaKeyGenerator() {
           </Button>
 
           {error && (
-            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}
@@ -172,9 +171,7 @@ export function RsaKeyGenerator() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
                 <CardTitle>Public Key</CardTitle>
-                <CardDescription className="mt-1">
-                  Share this key for encryption
-                </CardDescription>
+                <CardDescription className="mt-1">Share this key for encryption</CardDescription>
               </div>
               <div className="flex gap-2">
                 <TooltipSimple content="Copy public key">
@@ -259,14 +256,20 @@ export function RsaKeyGenerator() {
               <div className="flex items-start gap-3">
                 <div className="text-yellow-600 dark:text-yellow-500">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
                   </svg>
                 </div>
                 <div className="text-sm space-y-1">
                   <p className="font-medium">Security Notice</p>
                   <p className="text-muted-foreground">
-                    This key pair is generated entirely in your browser. Never share your private key.
-                    Store it securely and consider using a password manager or encrypted storage.
+                    This key pair is generated entirely in your browser. Never share your private
+                    key. Store it securely and consider using a password manager or encrypted
+                    storage.
                   </p>
                 </div>
               </div>

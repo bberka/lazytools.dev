@@ -24,13 +24,14 @@ const SHA_ALGORITHMS = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'] as const;
 // ── MD5 (RFC 1321) ────────────────────────────────────────────────────────────
 
 const MD5_SHIFTS = [
-  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
-  5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
-  4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
-  6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+  7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14,
+  20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6,
+  10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ];
 
-const MD5_CONSTANTS = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000));
+const MD5_CONSTANTS = Array.from({ length: 64 }, (_, i) =>
+  Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000)
+);
 
 /**
  * MD5 of raw bytes. It works on the bytes as they are, so a file hashes to the
@@ -137,5 +138,8 @@ export async function computeHashes(data: string | ArrayBuffer | Uint8Array): Pr
 export function findMatchingAlgorithm(hashes: HashSet, expected: string): HashAlgorithm | null {
   const wanted = expected.trim().toLowerCase();
   if (!wanted) return null;
-  return HASH_ALGORITHMS.find((algorithm) => hashes[algorithm] !== '' && hashes[algorithm] === wanted) ?? null;
+  return (
+    HASH_ALGORITHMS.find((algorithm) => hashes[algorithm] !== '' && hashes[algorithm] === wanted) ??
+    null
+  );
 }

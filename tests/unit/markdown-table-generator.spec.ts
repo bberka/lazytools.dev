@@ -73,9 +73,18 @@ test.describe('markdownTable', () => {
   });
 
   test('empty cells keep their column', () => {
-    expect(markdownTable(table([['a', ''], ['', 'b']], ['default', 'default']), compact)).toBe(
-      '| a |  |\n| --- | --- |\n|  | b |'
-    );
+    expect(
+      markdownTable(
+        table(
+          [
+            ['a', ''],
+            ['', 'b'],
+          ],
+          ['default', 'default']
+        ),
+        compact
+      )
+    ).toBe('| a |  |\n| --- | --- |\n|  | b |');
   });
 
   test('wide characters count double so the columns line up', () => {
@@ -100,9 +109,12 @@ test.describe('markdownTable', () => {
       ].join('\n')
     );
     expect(markdownTable(SAMPLE_TABLE, compact)).toBe(
-      ['| Name | Role | Score |', '| :-- | --- | --: |', '| Ada | Engineer | 95 |', '| Linus | Maintainer | 88 |'].join(
-        '\n'
-      )
+      [
+        '| Name | Role | Score |',
+        '| :-- | --- | --: |',
+        '| Ada | Engineer | 95 |',
+        '| Linus | Maintainer | 88 |',
+      ].join('\n')
     );
   });
 
@@ -135,7 +147,9 @@ test.describe('escapeCell', () => {
   test('works through the table', () => {
     const t = table([['a|b'], ['1\n2']], ['default']);
     expect(markdownTable(t, compact)).toBe('| a\\|b |\n| --- |\n| 1<br>2 |');
-    expect(markdownTable(t, { pad: false, escapePipes: false })).toBe('| a|b |\n| --- |\n| 1<br>2 |');
+    expect(markdownTable(t, { pad: false, escapePipes: false })).toBe(
+      '| a|b |\n| --- |\n| 1<br>2 |'
+    );
   });
 });
 
@@ -163,12 +177,37 @@ test.describe('editing the grid', () => {
   });
 
   test('addRow appends or inserts below the header and never touches the original', () => {
-    const original = table([['h1', 'h2'], ['a', 'b']], ['left', 'right']);
-    expect(addRow(original).cells).toEqual([['h1', 'h2'], ['a', 'b'], ['', '']]);
-    expect(addRow(original, 1).cells).toEqual([['h1', 'h2'], ['', ''], ['a', 'b']]);
-    expect(addRow(original, 0).cells).toEqual([['h1', 'h2'], ['', ''], ['a', 'b']]);
-    expect(addRow(original, 99).cells).toEqual([['h1', 'h2'], ['a', 'b'], ['', '']]);
-    expect(original.cells).toEqual([['h1', 'h2'], ['a', 'b']]);
+    const original = table(
+      [
+        ['h1', 'h2'],
+        ['a', 'b'],
+      ],
+      ['left', 'right']
+    );
+    expect(addRow(original).cells).toEqual([
+      ['h1', 'h2'],
+      ['a', 'b'],
+      ['', ''],
+    ]);
+    expect(addRow(original, 1).cells).toEqual([
+      ['h1', 'h2'],
+      ['', ''],
+      ['a', 'b'],
+    ]);
+    expect(addRow(original, 0).cells).toEqual([
+      ['h1', 'h2'],
+      ['', ''],
+      ['a', 'b'],
+    ]);
+    expect(addRow(original, 99).cells).toEqual([
+      ['h1', 'h2'],
+      ['a', 'b'],
+      ['', ''],
+    ]);
+    expect(original.cells).toEqual([
+      ['h1', 'h2'],
+      ['a', 'b'],
+    ]);
   });
 
   test('removeRow removes body rows only', () => {
@@ -179,17 +218,35 @@ test.describe('editing the grid', () => {
   });
 
   test('addColumn appends or inserts and keeps alignments in step', () => {
-    const t = table([['a', 'b'], ['1', '2']], ['left', 'right']);
+    const t = table(
+      [
+        ['a', 'b'],
+        ['1', '2'],
+      ],
+      ['left', 'right']
+    );
     const appended = addColumn(t);
-    expect(appended.cells).toEqual([['a', 'b', ''], ['1', '2', '']]);
+    expect(appended.cells).toEqual([
+      ['a', 'b', ''],
+      ['1', '2', ''],
+    ]);
     expect(appended.alignments).toEqual(['left', 'right', 'default']);
     const inserted = addColumn(t, 1);
-    expect(inserted.cells).toEqual([['a', '', 'b'], ['1', '', '2']]);
+    expect(inserted.cells).toEqual([
+      ['a', '', 'b'],
+      ['1', '', '2'],
+    ]);
     expect(inserted.alignments).toEqual(['left', 'default', 'right']);
   });
 
   test('removeColumn keeps at least one column', () => {
-    const t = table([['a', 'b'], ['1', '2']], ['left', 'right']);
+    const t = table(
+      [
+        ['a', 'b'],
+        ['1', '2'],
+      ],
+      ['left', 'right']
+    );
     const removed = removeColumn(t, 0);
     expect(removed.cells).toEqual([['b'], ['2']]);
     expect(removed.alignments).toEqual(['right']);
@@ -198,8 +255,17 @@ test.describe('editing the grid', () => {
   });
 
   test('setCell and setAlignment change one thing', () => {
-    const t = table([['a', 'b'], ['1', '2']], ['left', 'right']);
-    expect(setCell(t, 1, 0, 'x').cells).toEqual([['a', 'b'], ['x', '2']]);
+    const t = table(
+      [
+        ['a', 'b'],
+        ['1', '2'],
+      ],
+      ['left', 'right']
+    );
+    expect(setCell(t, 1, 0, 'x').cells).toEqual([
+      ['a', 'b'],
+      ['x', '2'],
+    ]);
     expect(setCell(t, 9, 0, 'x')).toBe(t);
     expect(setCell(t, 0, 9, 'x')).toBe(t);
     expect(setAlignment(t, 0, 'center').alignments).toEqual(['center', 'right']);
@@ -208,7 +274,11 @@ test.describe('editing the grid', () => {
 
   test('clearCells empties the text and keeps the shape', () => {
     const cleared = clearCells(SAMPLE_TABLE);
-    expect(cleared.cells).toEqual([['', '', ''], ['', '', ''], ['', '', '']]);
+    expect(cleared.cells).toEqual([
+      ['', '', ''],
+      ['', '', ''],
+      ['', '', ''],
+    ]);
     expect(cleared.alignments).toEqual(SAMPLE_TABLE.alignments);
     expect(isBlank(cleared)).toBe(true);
     expect(isBlank(SAMPLE_TABLE)).toBe(false);
@@ -217,9 +287,18 @@ test.describe('editing the grid', () => {
 
 test.describe('parseDelimited', () => {
   test('reads CSV, TSV and semicolon files', () => {
-    expect(parseDelimited('a,b\n1,2')).toEqual([['a', 'b'], ['1', '2']]);
-    expect(parseDelimited('a\tb\n1\t2')).toEqual([['a', 'b'], ['1', '2']]);
-    expect(parseDelimited('a;b\n1;2')).toEqual([['a', 'b'], ['1', '2']]);
+    expect(parseDelimited('a,b\n1,2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+    expect(parseDelimited('a\tb\n1\t2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+    expect(parseDelimited('a;b\n1;2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
   });
 
   test('an explicit delimiter wins over detection', () => {
@@ -228,23 +307,47 @@ test.describe('parseDelimited', () => {
   });
 
   test('quoted cells hold delimiters, doubled quotes and line breaks', () => {
-    expect(parseDelimited('a,"b,c"\r\n"x ""y""",2')).toEqual([['a', 'b,c'], ['x "y"', '2']]);
-    expect(parseDelimited('a,"line1\nline2"\nz,y')).toEqual([['a', 'line1\nline2'], ['z', 'y']]);
+    expect(parseDelimited('a,"b,c"\r\n"x ""y""",2')).toEqual([
+      ['a', 'b,c'],
+      ['x "y"', '2'],
+    ]);
+    expect(parseDelimited('a,"line1\nline2"\nz,y')).toEqual([
+      ['a', 'line1\nline2'],
+      ['z', 'y'],
+    ]);
   });
 
   test('CRLF, CR, a BOM and blank lines', () => {
-    expect(parseDelimited('﻿a,b\r\n\r\n1,2\r\n')).toEqual([['a', 'b'], ['1', '2']]);
-    expect(parseDelimited('a,b\r1,2')).toEqual([['a', 'b'], ['1', '2']]);
-    expect(parseDelimited('a,b\n,\n1,2')).toEqual([['a', 'b'], ['1', '2']]);
+    expect(parseDelimited('﻿a,b\r\n\r\n1,2\r\n')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+    expect(parseDelimited('a,b\r1,2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+    expect(parseDelimited('a,b\n,\n1,2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
   });
 
   test('short rows are padded so the result is rectangular', () => {
-    expect(parseDelimited('a,b,c\n1')).toEqual([['a', 'b', 'c'], ['1', '', '']]);
-    expect(parseDelimited('a\n1,2,3')).toEqual([['a', '', ''], ['1', '2', '3']]);
+    expect(parseDelimited('a,b,c\n1')).toEqual([
+      ['a', 'b', 'c'],
+      ['1', '', ''],
+    ]);
+    expect(parseDelimited('a\n1,2,3')).toEqual([
+      ['a', '', ''],
+      ['1', '2', '3'],
+    ]);
   });
 
   test('keeps unicode and empty trailing cells', () => {
-    expect(parseDelimited('über,\u{1F600}\n1,')).toEqual([['über', '\u{1F600}'], ['1', '']]);
+    expect(parseDelimited('über,\u{1F600}\n1,')).toEqual([
+      ['über', '\u{1F600}'],
+      ['1', ''],
+    ]);
   });
 
   test('empty input has no rows', () => {
@@ -265,15 +368,27 @@ test.describe('parseDelimited', () => {
 
 test.describe('tableFromRows', () => {
   test('uses the first row as the header', () => {
-    const result = tableFromRows([[' Name ', 'Qty'], ['Apple', '3']], true);
-    expect(result?.table.cells).toEqual([['Name', 'Qty'], ['Apple', '3']]);
+    const result = tableFromRows(
+      [
+        [' Name ', 'Qty'],
+        ['Apple', '3'],
+      ],
+      true
+    );
+    expect(result?.table.cells).toEqual([
+      ['Name', 'Qty'],
+      ['Apple', '3'],
+    ]);
     expect(result?.table.alignments).toEqual(['default', 'default']);
     expect(result?.truncated).toBe(false);
   });
 
   test('without a header row, invents one', () => {
     const result = tableFromRows([['Apple', '3']], false);
-    expect(result?.table.cells).toEqual([['Column 1', 'Column 2'], ['Apple', '3']]);
+    expect(result?.table.cells).toEqual([
+      ['Column 1', 'Column 2'],
+      ['Apple', '3'],
+    ]);
   });
 
   test('nothing to import', () => {

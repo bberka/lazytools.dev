@@ -110,7 +110,9 @@ export interface MacInfo {
 export type MacParseResult = { ok: true; info: MacInfo } | { ok: false; error: string };
 
 function toBytes(hexDigits: string): number[] {
-  return Array.from({ length: 6 }, (_, index) => parseInt(hexDigits.slice(index * 2, index * 2 + 2), 16));
+  return Array.from({ length: 6 }, (_, index) =>
+    parseInt(hexDigits.slice(index * 2, index * 2 + 2), 16)
+  );
 }
 
 /** Reads a MAC address in any of the four formats. Separators cannot be mixed. */
@@ -136,7 +138,8 @@ export function parseMac(input: string, uppercase = false): MacParseResult {
   } else {
     return {
       ok: false,
-      error: 'Not a MAC address. Use 6 bytes as aa:bb:cc:dd:ee:ff, aa-bb-cc-dd-ee-ff, aabb.ccdd.eeff or aabbccddeeff.',
+      error:
+        'Not a MAC address. Use 6 bytes as aa:bb:cc:dd:ee:ff, aa-bb-cc-dd-ee-ff, aabb.ccdd.eeff or aabbccddeeff.',
     };
   }
 

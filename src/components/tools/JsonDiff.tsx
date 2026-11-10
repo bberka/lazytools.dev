@@ -74,7 +74,15 @@ function KindBadge({ kind, className }: { kind: DiffKind; className?: string }) 
   );
 }
 
-function ValueLine({ label, value, showType = false }: { label: string; value: JsonValue; showType?: boolean }) {
+function ValueLine({
+  label,
+  value,
+  showType = false,
+}: {
+  label: string;
+  value: JsonValue;
+  showType?: boolean;
+}) {
   return (
     <div className="flex items-baseline gap-2 text-xs">
       <span className="w-10 shrink-0 text-muted-foreground">{label}</span>
@@ -139,7 +147,10 @@ function JsonSide({
         spellCheck={false}
         aria-invalid={invalid}
         aria-describedby={`${id}-status`}
-        className={cn('font-mono text-sm', invalid && 'border-destructive focus-visible:ring-destructive')}
+        className={cn(
+          'font-mono text-sm',
+          invalid && 'border-destructive focus-visible:ring-destructive'
+        )}
       />
       <div id={`${id}-status`} aria-live="polite" className="min-h-5 text-xs">
         {state.status === 'invalid' && (
@@ -213,7 +224,8 @@ export function JsonDiff() {
   };
 
   const lossyNumbers =
-    (left.status === 'valid' ? left.lossyNumbers : 0) + (right.status === 'valid' ? right.lossyNumbers : 0);
+    (left.status === 'valid' ? left.lossyNumbers : 0) +
+    (right.status === 'valid' ? right.lossyNumbers : 0);
   const hasInvalidSide = left.status === 'invalid' || right.status === 'invalid';
   const bothEmpty = left.status === 'empty' && right.status === 'empty';
   const shownEntries = result ? result.entries.slice(0, MAX_ROWS) : [];
@@ -227,7 +239,8 @@ export function JsonDiff() {
             JSON Inputs & Options
           </CardTitle>
           <CardDescription>
-            Paste two JSON documents. They are compared by structure, so key order never counts as a difference.
+            Paste two JSON documents. They are compared by structure, so key order never counts as a
+            difference.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -276,7 +289,12 @@ export function JsonDiff() {
                 <ArrowLeftRight className="mr-2 h-4 w-4" />
                 Swap sides
               </Button>
-              <Button onClick={handleSample} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+              <Button
+                onClick={handleSample}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9"
+              >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Load sample
               </Button>
@@ -321,17 +339,14 @@ export function JsonDiff() {
                 <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs">
                   <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>
-                    {lossyNumbers} number{lossyNumbers === 1 ? ' has' : 's have'} more than 15 significant digits.
-                    Numbers are compared as 64-bit floats, so values that differ in the later digits can look equal.
+                    {lossyNumbers} number{lossyNumbers === 1 ? ' has' : 's have'} more than 15
+                    significant digits. Numbers are compared as 64-bit floats, so values that differ
+                    in the later digits can look equal.
                   </span>
                 </div>
               )}
 
-              <div
-                role="status"
-                aria-label="Difference summary"
-                className="flex flex-wrap gap-2"
-              >
+              <div role="status" aria-label="Difference summary" className="flex flex-wrap gap-2">
                 {SUMMARY_KINDS.map((kind) => {
                   const count = result.summary[kind === 'type-changed' ? 'typeChanged' : kind];
                   return (
@@ -362,7 +377,9 @@ export function JsonDiff() {
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <div>
                     <strong>No differences.</strong> The two documents are structurally equal
-                    {result.ignoreArrayOrder ? ', ignoring key order and array order.' : ', ignoring key order.'}
+                    {result.ignoreArrayOrder
+                      ? ', ignoring key order and array order.'
+                      : ', ignoring key order.'}
                   </div>
                 </div>
               )}
@@ -414,8 +431,8 @@ export function JsonDiff() {
                   {result.entries.length > shownEntries.length && (
                     <p className="text-xs text-muted-foreground">
                       Showing the first {shownEntries.length.toLocaleString()} of{' '}
-                      {result.entries.length.toLocaleString()} entries. The copied report and patch include all of
-                      them.
+                      {result.entries.length.toLocaleString()} entries. The copied report and patch
+                      include all of them.
                     </p>
                   )}
 
@@ -423,9 +440,9 @@ export function JsonDiff() {
                     <p className="flex items-start gap-2 text-xs text-muted-foreground">
                       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>
-                        Array order is ignored. Paths of added items point into the right document and all other paths
-                        into the left one. The JSON Patch makes the left document equal to the right one apart from
-                        the order of array elements.
+                        Array order is ignored. Paths of added items point into the right document
+                        and all other paths into the left one. The JSON Patch makes the left
+                        document equal to the right one apart from the order of array elements.
                       </span>
                     </p>
                   )}

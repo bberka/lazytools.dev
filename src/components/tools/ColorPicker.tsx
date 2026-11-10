@@ -8,24 +8,10 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import {
-  Check,
-  Copy,
-  Palette,
-  Pipette,
-  Plus,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
+import { Check, Copy, Palette, Pipette, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
@@ -79,13 +65,7 @@ function clamp(value: number, min: number, max: number) {
 
 const hasEyeDropper = () => 'EyeDropper' in window;
 
-function ColorValue({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function ColorValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-3 py-3 transition-colors hover:border-border hover:bg-muted/50">
       <div className="min-w-0 flex-1 space-y-1">
@@ -246,9 +226,10 @@ export function ColorPicker() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Picker
                   </p>
-                  <p className="text-sm font-medium">Drag in the field to choose saturation and brightness.</p>
+                  <p className="text-sm font-medium">
+                    Drag in the field to choose saturation and brightness.
+                  </p>
                 </div>
-
               </div>
 
               <ColorField
@@ -341,11 +322,7 @@ export function ColorPicker() {
                 variant={saveFeedbackVisible ? 'default' : 'outline'}
                 className="h-12 w-full rounded-xl"
               >
-                {saveFeedbackVisible ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
+                {saveFeedbackVisible ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {saveFeedbackVisible ? 'Saved' : 'Save Swatch'}
               </Button>
               <Button
@@ -364,11 +341,12 @@ export function ColorPicker() {
                 {resetFeedbackVisible ? 'Reset Done' : 'Reset'}
               </Button>
             </div>
-
           </div>
 
           <div className="space-y-3 rounded-[28px] border border-border/70 bg-muted/[0.18] p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">RGB Channels</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              RGB Channels
+            </p>
             <ChannelSlider
               label="Red"
               value={rgb.r}
@@ -390,7 +368,6 @@ export function ColorPicker() {
           </div>
         </CardContent>
       </Card>
-
 
       <Card>
         <CardHeader>
@@ -468,7 +445,9 @@ export function ColorPicker() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>Theme Palette</CardTitle>
-              <CardDescription>CSS variables for a full UI theme based on your primary color.</CardDescription>
+              <CardDescription>
+                CSS variables for a full UI theme based on your primary color.
+              </CardDescription>
             </div>
             <CopyThemeButton theme={theme} />
           </div>
@@ -515,7 +494,9 @@ function ThemeSwatchButton({ entry, onClick }: { entry: ThemeEntry; onClick: () 
           onClick={onClick}
           aria-label={`Use ${entry.label}`}
         >
-          <span className="truncate font-mono text-[10px] font-medium opacity-70">{entry.variable}</span>
+          <span className="truncate font-mono text-[10px] font-medium opacity-70">
+            {entry.variable}
+          </span>
         </button>
       </TooltipSimple>
       <div className="flex items-center gap-2 p-3">
@@ -558,7 +539,9 @@ function ChannelSlider({
   return (
     <div className="space-y-3 rounded-[22px] border border-border/60 bg-muted/[0.18] px-4 py-4">
       <div className="flex items-center justify-between gap-4">
-        <label id={labelId} className="text-sm font-medium">{label}</label>
+        <label id={labelId} className="text-sm font-medium">
+          {label}
+        </label>
         <span className="font-mono text-sm text-muted-foreground">
           {value}
           {suffix}
@@ -596,9 +579,7 @@ function SwatchButton({
           <p className="truncate text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
-          <p className="truncate font-mono text-sm text-foreground">
-            {color}
-          </p>
+          <p className="truncate font-mono text-sm text-foreground">{color}</p>
         </div>
         <TooltipSimple content={`Copy ${color}`}>
           <Button
@@ -608,11 +589,7 @@ function SwatchButton({
             onClick={() => copy.copyToClipboard(color)}
             aria-label={`Copy ${color}`}
           >
-            {copy.isCopied ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
+            {copy.isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           </Button>
         </TooltipSimple>
       </div>
@@ -707,13 +684,7 @@ function ColorField({
   );
 }
 
-function HueSlider({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-}) {
+function HueSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const labelId = useId();
 
   const updateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -757,7 +728,9 @@ function HueSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-4">
-        <span id={labelId} className="text-sm font-medium">Hue</span>
+        <span id={labelId} className="text-sm font-medium">
+          Hue
+        </span>
         <span className="font-mono text-sm text-muted-foreground">{value}deg</span>
       </div>
       <div

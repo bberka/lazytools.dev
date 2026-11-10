@@ -10,9 +10,7 @@ interface FavoritesContextType {
   clearFavorites: () => void;
 }
 
-const FavoritesContext = createContext<FavoritesContextType | undefined>(
-  undefined
-);
+const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const favorites = usePreference('favorites');
@@ -21,10 +19,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     preferences.toggleFavorite(toolId);
   }, []);
 
-  const isFavorite = useCallback(
-    (toolId: string) => favorites.includes(toolId),
-    [favorites]
-  );
+  const isFavorite = useCallback((toolId: string) => favorites.includes(toolId), [favorites]);
 
   const clearFavorites = useCallback(() => {
     preferences.set('favorites', []);
@@ -40,9 +35,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     [favorites, toggleFavorite, isFavorite, clearFavorites]
   );
 
-  return (
-    <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>
-  );
+  return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
 }
 
 export function useFavorites() {

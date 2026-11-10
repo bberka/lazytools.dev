@@ -52,7 +52,10 @@ export interface TreeBranch {
  * but not described, so a huge or self-referencing value costs nothing until
  * the reader expands it.
  */
-export function describeTreeNode(value: unknown, vocabulary: TreeVocabulary): TreeLeaf | TreeBranch {
+export function describeTreeNode(
+  value: unknown,
+  vocabulary: TreeVocabulary
+): TreeLeaf | TreeBranch {
   if (value === null || value === undefined) {
     return { kind: 'leaf', type: 'empty', text: vocabulary.empty };
   }

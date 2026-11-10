@@ -37,9 +37,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
-      .then((cache) =>
-        Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
-      )
+      .then((cache) => Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -143,8 +141,19 @@ async function staleWhileRevalidate(request) {
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/_next/static/') ||
-    ['.css', '.js', '.json', '.webmanifest', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff2', '.ttf'].some(
-      (extension) => url.pathname.endsWith(extension)
-    )
+    [
+      '.css',
+      '.js',
+      '.json',
+      '.webmanifest',
+      '.svg',
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.webp',
+      '.ico',
+      '.woff2',
+      '.ttf',
+    ].some((extension) => url.pathname.endsWith(extension))
   );
 }

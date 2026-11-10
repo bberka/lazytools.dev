@@ -192,7 +192,11 @@ export function MathEvaluator() {
                   ) : (
                     <Copy className="mr-2 h-4 w-4" />
                   )}
-                  {copiedNow('live') ? 'Copied' : isError && copiedKey === 'live' ? 'Copy failed' : 'Copy result'}
+                  {copiedNow('live')
+                    ? 'Copied'
+                    : isError && copiedKey === 'live'
+                      ? 'Copy failed'
+                      : 'Copy result'}
                 </Button>
               </div>
             )}
@@ -208,7 +212,9 @@ export function MathEvaluator() {
                     {'\n'}
                     <span className="text-destructive">
                       {' '.repeat(live.error.index)}
-                      {'^'.repeat(Math.min(live.error.length, Math.max(1, input.length - live.error.index)))}
+                      {'^'.repeat(
+                        Math.min(live.error.length, Math.max(1, input.length - live.error.index))
+                      )}
                     </span>
                   </pre>
                 </div>
@@ -231,14 +237,22 @@ export function MathEvaluator() {
                 </Button>
               ))}
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={input === ''}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClear}
+              disabled={input === ''}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Clear
             </Button>
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Examples</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Examples
+            </p>
             <div className="flex flex-wrap gap-2">
               {EXAMPLE_EXPRESSIONS.map((example) => (
                 <Button
@@ -264,8 +278,8 @@ export function MathEvaluator() {
               <div className="space-y-1.5">
                 <CardTitle>History</CardTitle>
                 <CardDescription>
-                  The last result is available as <span className="font-mono">ans</span>. Press the up
-                  arrow in the field to bring back an earlier line.
+                  The last result is available as <span className="font-mono">ans</span>. Press the
+                  up arrow in the field to bring back an earlier line.
                 </CardDescription>
               </div>
               <Button
@@ -339,7 +353,10 @@ export function MathEvaluator() {
               ) : (
                 <ul aria-label="Variables" className="space-y-1.5">
                   {variableNames.map((name) => (
-                    <li key={name} className="flex items-center justify-between gap-2 font-mono text-sm">
+                    <li
+                      key={name}
+                      className="flex items-center justify-between gap-2 font-mono text-sm"
+                    >
                       <span>{name}</span>
                       <span className="break-all text-right">{formatResult(variables[name])}</span>
                     </li>
@@ -356,8 +373,8 @@ export function MathEvaluator() {
             <CardContent className="space-y-3 text-sm">
               <p>
                 <span className="font-medium">Operators: </span>
-                <span className="font-mono">+ - * / ^ %</span> and parentheses. <span className="font-mono">%</span> is
-                the remainder.
+                <span className="font-mono">+ - * / ^ %</span> and parentheses.{' '}
+                <span className="font-mono">%</span> is the remainder.
               </p>
               <p>
                 <span className="font-medium">Constants: </span>
@@ -368,8 +385,9 @@ export function MathEvaluator() {
                 <span className="font-mono break-words">{FUNCTION_NAMES.join(' ')}</span>
               </p>
               <p className="text-muted-foreground">
-                <span className="font-mono">log</span> is base 10 and <span className="font-mono">ln</span> is the
-                natural logarithm. The angle unit applies to sin, cos, tan and their inverses.
+                <span className="font-mono">log</span> is base 10 and{' '}
+                <span className="font-mono">ln</span> is the natural logarithm. The angle unit
+                applies to sin, cos, tan and their inverses.
               </p>
             </CardContent>
           </Card>

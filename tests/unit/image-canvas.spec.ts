@@ -23,7 +23,15 @@ test.describe('canvasImageType', () => {
   });
 
   test('turns everything else into PNG', () => {
-    for (const type of ['image/gif', 'image/bmp', 'image/svg+xml', 'image/avif', 'image/x-icon', 'text/plain', '']) {
+    for (const type of [
+      'image/gif',
+      'image/bmp',
+      'image/svg+xml',
+      'image/avif',
+      'image/x-icon',
+      'text/plain',
+      '',
+    ]) {
       expect(canvasImageType(type)).toBe('image/png');
     }
   });

@@ -24,7 +24,10 @@ export const DEFAULT_OPTIONS: NumeronymOptions = { mode: 'word', minLength: 4, l
 
 export const MIN_ALLOWED_LENGTH = 3;
 
-const segmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+const segmenter =
+  typeof Intl !== 'undefined' && 'Segmenter' in Intl
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null;
 
 /** Grapheme clusters of a string. Falls back to code points where Intl.Segmenter is missing. */
 export function graphemes(text: string): string[] {
@@ -37,7 +40,11 @@ function minimumLength(minLength: number): number {
 }
 
 /** Numeronym of one word, or the word itself when it is shorter than `minLength`. */
-export function numeronym(word: string, minLength: number = DEFAULT_OPTIONS.minLength, lowercase = false): string {
+export function numeronym(
+  word: string,
+  minLength: number = DEFAULT_OPTIONS.minLength,
+  lowercase = false
+): string {
   const characters = graphemes(word);
   const result =
     characters.length < minimumLength(minLength)
@@ -73,7 +80,9 @@ function numeronymPhrases(text: string, options: NumeronymOptions): string {
 }
 
 export function generateNumeronyms(text: string, options: NumeronymOptions): string {
-  return options.mode === 'phrase' ? numeronymPhrases(text, options) : numeronymWords(text, options);
+  return options.mode === 'phrase'
+    ? numeronymPhrases(text, options)
+    : numeronymWords(text, options);
 }
 
 export const EXAMPLE_TEXT = [

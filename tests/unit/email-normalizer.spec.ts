@@ -97,7 +97,9 @@ test.describe('normalizeAddress', () => {
     expect(normalize('John.Doe+News@Gmail.com')).toBe('johndoe@gmail.com');
     expect(normalize('a.b@googlemail.com')).toBe('ab@gmail.com');
     expect(normalize('a.b.c+x+y@GMAIL.COM')).toBe('abc@gmail.com');
-    expect(normalize('John.Doe+News@Gmail.com', { gmailRules: false })).toBe('john.doe+news@gmail.com');
+    expect(normalize('John.Doe+News@Gmail.com', { gmailRules: false })).toBe(
+      'john.doe+news@gmail.com'
+    );
     expect(normalize('a.b@googlemail.com', { gmailRules: false })).toBe('a.b@googlemail.com');
   });
 
@@ -111,7 +113,9 @@ test.describe('normalizeAddress', () => {
     expect(normalize('user+a+b@example.com', { stripPlusTags: true })).toBe('user@example.com');
     expect(normalize('user+tag@example.com')).toBe('user+tag@example.com');
     expect(normalize('+tag@example.com', { stripPlusTags: true })).toBe('+tag@example.com');
-    expect(normalize('first.last+x@example.com', { stripPlusTags: true })).toBe('first.last@example.com');
+    expect(normalize('first.last+x@example.com', { stripPlusTags: true })).toBe(
+      'first.last@example.com'
+    );
   });
 
   test('international domains are written in ASCII, or left alone', () => {
@@ -134,7 +138,14 @@ test.describe('normalizeEmails', () => {
     ]);
     expect(result.entries.map((entry) => entry.duplicateOf)).toEqual([null, 1, 1, null]);
     expect(result.output).toBe('ab@gmail.com\nc@x.com');
-    expect(result.stats).toEqual({ total: 4, valid: 4, invalid: 0, unique: 2, duplicates: 2, changed: 3 });
+    expect(result.stats).toEqual({
+      total: 4,
+      valid: 4,
+      invalid: 0,
+      unique: 2,
+      duplicates: 2,
+      changed: 3,
+    });
   });
 
   test('can keep the repeats in the output', () => {
@@ -150,18 +161,36 @@ test.describe('normalizeEmails', () => {
 
   test('invalid addresses are reported, not normalized, and never count as duplicates', () => {
     const result = run('bad\nbad\na@x.com');
-    expect(result.entries.map((entry) => [entry.valid, entry.reason, entry.normalized, entry.duplicateOf])).toEqual([
+    expect(
+      result.entries.map((entry) => [
+        entry.valid,
+        entry.reason,
+        entry.normalized,
+        entry.duplicateOf,
+      ])
+    ).toEqual([
       [false, 'Missing @', '', null],
       [false, 'Missing @', '', null],
       [true, '', 'a@x.com', null],
     ]);
     expect(result.output).toBe('a@x.com');
-    expect(result.stats).toEqual({ total: 3, valid: 1, invalid: 2, unique: 1, duplicates: 0, changed: 0 });
+    expect(result.stats).toEqual({
+      total: 3,
+      valid: 1,
+      invalid: 2,
+      unique: 1,
+      duplicates: 0,
+      changed: 0,
+    });
   });
 
   test('an address that Gmail rules would empty is invalid', () => {
     const result = run('+tag@gmail.com');
-    expect(result.entries[0]).toMatchObject({ valid: false, reason: 'Empty local part', normalized: '' });
+    expect(result.entries[0]).toMatchObject({
+      valid: false,
+      reason: 'Empty local part',
+      normalized: '',
+    });
     expect(run('...@gmail.com').entries[0].valid).toBe(false);
   });
 
@@ -182,7 +211,14 @@ test.describe('normalizeEmails', () => {
     const result = run('');
     expect(result.entries).toEqual([]);
     expect(result.output).toBe('');
-    expect(result.stats).toEqual({ total: 0, valid: 0, invalid: 0, unique: 0, duplicates: 0, changed: 0 });
+    expect(result.stats).toEqual({
+      total: 0,
+      valid: 0,
+      invalid: 0,
+      unique: 0,
+      duplicates: 0,
+      changed: 0,
+    });
   });
 
   test('international letters in the local part are valid and lower-cased', () => {
@@ -192,8 +228,31 @@ test.describe('normalizeEmails', () => {
   test('the example text', () => {
     const result = run(EXAMPLE_TEXT);
     expect(result.output).toBe('johndoe@gmail.com\nada@example.com\ninfo@xn--bcher-kva.de');
-    expect(result.entries.map((entry) => entry.reason)).toEqual(['', '', '', '', 'Missing @', '', 'Empty domain']);
-    expect(result.entries.map((entry) => entry.duplicateOf)).toEqual([null, 1, null, null, null, 3, null]);
-    expect(result.stats).toEqual({ total: 7, valid: 5, invalid: 2, unique: 3, duplicates: 2, changed: 4 });
+    expect(result.entries.map((entry) => entry.reason)).toEqual([
+      '',
+      '',
+      '',
+      '',
+      'Missing @',
+      '',
+      'Empty domain',
+    ]);
+    expect(result.entries.map((entry) => entry.duplicateOf)).toEqual([
+      null,
+      1,
+      null,
+      null,
+      null,
+      3,
+      null,
+    ]);
+    expect(result.stats).toEqual({
+      total: 7,
+      valid: 5,
+      invalid: 2,
+      unique: 3,
+      duplicates: 2,
+      changed: 4,
+    });
   });
 });

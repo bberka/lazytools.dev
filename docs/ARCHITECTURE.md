@@ -55,19 +55,19 @@ Current behavior:
 
 Behaviour that several callers need lives in one module with a small interface, so it can be tested through that interface and changed in one place.
 
-| Module | Owns |
-| --- | --- |
-| `src/lib/catalog` | Visibility, lookup with loader, search scoring, filtering, grouping by tag |
-| `src/lib/tags` | Tag name, description, icon, per-surface classes, order |
-| `src/lib/preferences` | `localStorage` keys, defaults, hydration, write-through, cross-tab sync |
-| `src/lib/home` | Home-page `sessionStorage` state, reset signal, grid navigation maths |
-| `src/lib/commands` | App commands, shortcuts, platform labels |
-| `src/lib/files` + `useFileIntake`, `useObjectUrl`, `FileDropzone` | File picking, drag-and-drop, validation, reading, downloads, size labels |
-| `src/lib/pdf` | pdfjs loading, bundled worker, opening, rendering, text extraction |
-| `src/lib/markdown`, `src/lib/export` | Markdown parser configuration, export template, snapshot PDF, print |
+| Module                                                                                   | Owns                                                                                                                          |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/catalog`                                                                        | Visibility, lookup with loader, search scoring, filtering, grouping by tag                                                    |
+| `src/lib/tags`                                                                           | Tag name, description, icon, per-surface classes, order                                                                       |
+| `src/lib/preferences`                                                                    | `localStorage` keys, defaults, hydration, write-through, cross-tab sync                                                       |
+| `src/lib/home`                                                                           | Home-page `sessionStorage` state, reset signal, grid navigation maths                                                         |
+| `src/lib/commands`                                                                       | App commands, shortcuts, platform labels                                                                                      |
+| `src/lib/files` + `useFileIntake`, `useObjectUrl`, `FileDropzone`                        | File picking, drag-and-drop, validation, reading, downloads, size labels                                                      |
+| `src/lib/pdf`                                                                            | pdfjs loading, bundled worker, opening, rendering, text extraction                                                            |
+| `src/lib/markdown`, `src/lib/export`                                                     | Markdown parser configuration, export template, snapshot PDF, print                                                           |
 | `CopyButton` (`src/components`), `useCopyToClipboard`, `useBrowserFeature` (`src/hooks`) | Labelled copy buttons that own their clipboard feedback; clipboard state for the odd ones; SSR-safe browser feature detection |
-| `src/lib/text` | Line splitting and line endings, plurals, typed number fields, shared by tool logic |
-| `src/lib/tools/*` | Pure logic of individual tools |
+| `src/lib/text`                                                                           | Line splitting and line endings, plurals, typed number fields, shared by tool logic                                           |
+| `src/lib/tools/*`                                                                        | Pure logic of individual tools                                                                                                |
 
 Storage-backed modules take their storage as an argument, with a browser adapter for the app and an in-memory adapter for unit tests.
 
@@ -88,6 +88,7 @@ npm run build
 ```
 
 Output:
+
 ```text
 out/
 ```
@@ -103,6 +104,7 @@ npm run desktop:build
 ```
 
 Outputs:
+
 - Build target: `src-tauri/target/release/`
 - Installers: `src-tauri/target/release/bundle/` (e.g. `.msi`, `.exe` on Windows)
 

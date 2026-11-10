@@ -1,10 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  explainRegex,
-  testRegex,
-  toFlagString,
-  type RegexFlags,
-} from '@/lib/tools/regex-tester';
+import { explainRegex, testRegex, toFlagString, type RegexFlags } from '@/lib/tools/regex-tester';
 
 const flags = (overrides: Partial<RegexFlags> = {}): RegexFlags => ({
   global: true,
@@ -107,8 +102,11 @@ test.describe('testRegex', () => {
 const tokens = (pattern: string, options?: Parameters<typeof explainRegex>[1]) =>
   explainRegex(pattern, options).map((item) => item.token);
 
-const describeToken = (pattern: string, token: string, options?: Parameters<typeof explainRegex>[1]) =>
-  explainRegex(pattern, options).find((item) => item.token === token);
+const describeToken = (
+  pattern: string,
+  token: string,
+  options?: Parameters<typeof explainRegex>[1]
+) => explainRegex(pattern, options).find((item) => item.token === token);
 
 test.describe('explainRegex', () => {
   test('explains nothing for an empty pattern', () => {
@@ -147,13 +145,21 @@ test.describe('explainRegex', () => {
   });
 
   test('explains groups, alternation and character sets', () => {
-    expect(tokens('(a|b)(?:[^x-z]c)')).toEqual(['(', 'a', '|', 'b', ')', '(?:', '[^x-z]', 'c', ')']);
+    expect(tokens('(a|b)(?:[^x-z]c)')).toEqual([
+      '(',
+      'a',
+      '|',
+      'b',
+      ')',
+      '(?:',
+      '[^x-z]',
+      'c',
+      ')',
+    ]);
     expect(describeToken('[^x-z]', '[^x-z]')?.description).toBe(
       'Any single character NOT in set: "x-z"'
     );
-    expect(describeToken('[abc]', '[abc]')?.description).toBe(
-      'Any single character in set: "abc"'
-    );
+    expect(describeToken('[abc]', '[abc]')?.description).toBe('Any single character in set: "abc"');
   });
 
   // Defect: "(?=" was read as a capturing group, an optional marker and a

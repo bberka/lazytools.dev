@@ -72,7 +72,11 @@ export function LoanCalculator() {
   const handleDownload = () => {
     if (!result) return;
     try {
-      downloadText(scheduleToCsv(result), 'loan-amortization-schedule.csv', 'text/csv;charset=utf-8');
+      downloadText(
+        scheduleToCsv(result),
+        'loan-amortization-schedule.csv',
+        'text/csv;charset=utf-8'
+      );
       toast.success('Schedule downloaded');
     } catch {
       toast.error('Could not download the schedule');
@@ -166,7 +170,10 @@ export function LoanCalculator() {
                     aria-invalid={Boolean(errors.term)}
                     aria-describedby={errors.term ? 'loan-term-error' : undefined}
                   />
-                  <Select value={termUnit} onValueChange={(value) => setTermUnit(value as TermUnit)}>
+                  <Select
+                    value={termUnit}
+                    onValueChange={(value) => setTermUnit(value as TermUnit)}
+                  >
                     <SelectTrigger aria-label="Term unit" className="h-9 w-28 shrink-0">
                       <SelectValue placeholder="Unit" />
                     </SelectTrigger>

@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useRef, useState, useSyncExternalStore, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useCallback,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { Keyboard, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,7 +40,11 @@ export function KeycodeInfo() {
   const nextId = useRef(0);
   const [focused, setFocused] = useState(false);
 
-  const coarsePointer = useSyncExternalStore(subscribeToPointer, readCoarsePointer, readCoarsePointerOnServer);
+  const coarsePointer = useSyncExternalStore(
+    subscribeToPointer,
+    readCoarsePointer,
+    readCoarsePointerOnServer
+  );
 
   const record = useCallback((event: ReactKeyboardEvent<HTMLElement>, typing: boolean) => {
     // The app listens for shortcuts (Ctrl/Cmd+K, Alt+C, Alt+W) on window.
@@ -85,11 +95,15 @@ export function KeycodeInfo() {
           >
             {current ? (
               <>
-                <div className="font-mono text-4xl font-bold sm:text-6xl" data-testid="keycode-label">
+                <div
+                  className="font-mono text-4xl font-bold sm:text-6xl"
+                  data-testid="keycode-label"
+                >
                   {current.label}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  keyCode <span className="font-mono font-semibold text-foreground">{current.keyCode}</span>
+                  keyCode{' '}
+                  <span className="font-mono font-semibold text-foreground">{current.keyCode}</span>
                 </div>
               </>
             ) : (
@@ -121,7 +135,8 @@ export function KeycodeInfo() {
                 spellCheck={false}
               />
               <p className="text-xs text-muted-foreground">
-                Many on-screen keyboards report every key as keyCode 229 and key &quot;Unidentified&quot;.
+                Many on-screen keyboards report every key as keyCode 229 and key
+                &quot;Unidentified&quot;.
               </p>
             </div>
           )}
@@ -134,15 +149,27 @@ export function KeycodeInfo() {
             <CardTitle>Event details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="keycode-details">
+            <dl
+              className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
+              data-testid="keycode-details"
+            >
               <Value label="event.key" value={JSON.stringify(current.key)} />
               <Value label="event.code" value={JSON.stringify(current.code)} />
               <Value label="event.keyCode (deprecated)" value={String(current.keyCode)} />
               <Value label="event.which (deprecated)" value={String(current.which)} />
-              <Value label="event.location" value={`${current.location} (${current.locationName})`} />
+              <Value
+                label="event.location"
+                value={`${current.location} (${current.locationName})`}
+              />
               <Value
                 label="Character"
-                value={current.character === null ? 'none' : current.character === ' ' ? '(space)' : current.character}
+                value={
+                  current.character === null
+                    ? 'none'
+                    : current.character === ' '
+                      ? '(space)'
+                      : current.character
+                }
                 mono={current.character !== null}
               />
             </dl>
@@ -157,7 +184,11 @@ export function KeycodeInfo() {
                   ['Repeat', current.repeat],
                 ] as const
               ).map(([name, on]) => (
-                <Badge key={name} variant={on ? 'default' : 'outline'} className={on ? undefined : 'text-muted-foreground'}>
+                <Badge
+                  key={name}
+                  variant={on ? 'default' : 'outline'}
+                  className={on ? undefined : 'text-muted-foreground'}
+                >
                   {name}: {on ? 'true' : 'false'}
                 </Badge>
               ))}
@@ -190,10 +221,18 @@ export function KeycodeInfo() {
               <table className="w-full text-left text-sm" aria-label="Recent keys">
                 <thead className="bg-muted/50 text-xs text-muted-foreground">
                   <tr>
-                    <th scope="col" className="px-3 py-2 font-medium">key</th>
-                    <th scope="col" className="px-3 py-2 font-medium">code</th>
-                    <th scope="col" className="px-3 py-2 font-medium">keyCode</th>
-                    <th scope="col" className="px-3 py-2 font-medium">Modifiers</th>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      key
+                    </th>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      code
+                    </th>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      keyCode
+                    </th>
+                    <th scope="col" className="px-3 py-2 font-medium">
+                      Modifiers
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -202,7 +241,9 @@ export function KeycodeInfo() {
                       <td className="px-3 py-1.5 font-mono">{entry.label}</td>
                       <td className="px-3 py-1.5 font-mono">{entry.code || '-'}</td>
                       <td className="px-3 py-1.5 font-mono">{entry.keyCode}</td>
-                      <td className="px-3 py-1.5 text-muted-foreground">{entry.modifiers.join('+') || '-'}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">
+                        {entry.modifiers.join('+') || '-'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -100,7 +100,10 @@ function normalise(input: string): string {
   return ua;
 }
 
-function firstRuleMatch(rules: readonly NamedRule[], ua: string): { name: string; version: string | null } | null {
+function firstRuleMatch(
+  rules: readonly NamedRule[],
+  ua: string
+): { name: string; version: string | null } | null {
   for (const rule of rules) {
     const match = rule.pattern.exec(ua);
     if (match) return { name: rule.name, version: cleanVersion(match[1]) };
@@ -133,7 +136,10 @@ function detectOs(ua: string): NameVersion {
   for (const rule of OS_RULES) {
     const match = rule.pattern.exec(ua);
     if (match) {
-      return { name: rule.name, version: rule.version ? rule.version(match) : cleanVersion(match[1]) };
+      return {
+        name: rule.name,
+        version: rule.version ? rule.version(match) : cleanVersion(match[1]),
+      };
     }
   }
   return { name: null, version: null };
@@ -184,7 +190,11 @@ function parseAndroidModel(ua: string): { model: string | null; reduced: boolean
   const model = match[1].replace(/\s+Build\/.*$/i, '').trim();
   if (model === 'K') return { model: null, reduced: true };
   // What follows "Android x;" is often a token of its own, not a model.
-  if (!model || model.includes('/') || /^(?:U|Mobile|Tablet|wv|Linux|Android|rv:.*|generic.*|unknown)$/i.test(model)) {
+  if (
+    !model ||
+    model.includes('/') ||
+    /^(?:U|Mobile|Tablet|wv|Linux|Android|rv:.*|generic.*|unknown)$/i.test(model)
+  ) {
     return { model: null, reduced: false };
   }
   return { model, reduced: false };
@@ -193,7 +203,10 @@ function parseAndroidModel(ua: string): { model: string | null; reduced: boolean
 function androidVendor(model: string): { vendor: string; model: string } | null {
   for (const rule of ANDROID_VENDOR_RULES) {
     if (rule.pattern.test(model)) {
-      return { vendor: rule.vendor, model: rule.strip ? model.replace(rule.strip, '') || model : model };
+      return {
+        vendor: rule.vendor,
+        model: rule.strip ? model.replace(rule.strip, '') || model : model,
+      };
     }
   }
   return null;
@@ -223,7 +236,11 @@ function detectDevice(ua: string, os: NameVersion, androidModel: string | null):
     const parts = (/\(([^)]*)\)/.exec(ua)?.[1] ?? '').split(';').map((part) => part.trim());
     const index = parts.findIndex((part) => part.toLowerCase() in WINDOWS_PHONE_VENDORS);
     return index >= 0 && parts[index + 1]
-      ? { type: 'mobile', vendor: WINDOWS_PHONE_VENDORS[parts[index].toLowerCase()], model: parts[index + 1] }
+      ? {
+          type: 'mobile',
+          vendor: WINDOWS_PHONE_VENDORS[parts[index].toLowerCase()],
+          model: parts[index + 1],
+        }
       : { type: 'mobile', vendor: null, model: null };
   }
 
@@ -241,7 +258,8 @@ function detectDevice(ua: string, os: NameVersion, androidModel: string | null):
   }
 
   if (isPhone || os.name === 'KaiOS') return { type: 'mobile', vendor: null, model: null };
-  if (os.name && DESKTOP_OPERATING_SYSTEMS.has(os.name)) return { type: 'desktop', vendor: null, model: null };
+  if (os.name && DESKTOP_OPERATING_SYSTEMS.has(os.name))
+    return { type: 'desktop', vendor: null, model: null };
   return { type: 'unknown', vendor: null, model: null };
 }
 
@@ -257,11 +275,13 @@ function buildNotes(
   kind: ClientKind,
   os: NameVersion,
   device: DeviceInfo,
-  reducedAndroid: boolean,
+  reducedAndroid: boolean
 ): string[] {
   const notes: string[] = [];
   if (os.name === 'Windows' && os.version === '10 or 11' && device.type === 'desktop') {
-    notes.push('Windows 11 also reports Windows NT 10.0, so Windows 10 and 11 cannot be told apart from this string.');
+    notes.push(
+      'Windows 11 also reports Windows NT 10.0, so Windows 10 and 11 cannot be told apart from this string.'
+    );
   }
   if (os.name === 'macOS' && os.version?.startsWith('10.15')) {
     notes.push('Browsers freeze the macOS version at 10.15.7, so the real version may be newer.');
@@ -271,11 +291,13 @@ function buildNotes(
   }
   if (reducedAndroid) {
     notes.push(
-      "Chrome's reduced User-Agent freezes the Android version and replaces the device model with K, so both are left unknown.",
+      "Chrome's reduced User-Agent freezes the Android version and replaces the device model with K, so both are left unknown."
     );
   }
   if (kind === 'bot') {
-    notes.push('A bot names itself, and anyone can copy the name. Verify crawlers by reverse DNS before trusting them.');
+    notes.push(
+      'A bot names itself, and anyone can copy the name. Verify crawlers by reverse DNS before trusting them.'
+    );
   }
   return notes;
 }
@@ -286,7 +308,11 @@ export function parseUserAgent(input: string): ParseOutcome {
     return { ok: false, code: 'empty', error: 'Enter a User-Agent string to parse.' };
   }
   if (input.length > MAX_USER_AGENT_LENGTH * 4) {
-    return { ok: false, code: 'too-long', error: `A User-Agent is at most ${MAX_USER_AGENT_LENGTH} characters long.` };
+    return {
+      ok: false,
+      code: 'too-long',
+      error: `A User-Agent is at most ${MAX_USER_AGENT_LENGTH} characters long.`,
+    };
   }
 
   const userAgent = normalise(input);
@@ -294,7 +320,11 @@ export function parseUserAgent(input: string): ParseOutcome {
     return { ok: false, code: 'empty', error: 'Enter a User-Agent string to parse.' };
   }
   if (userAgent.length > MAX_USER_AGENT_LENGTH) {
-    return { ok: false, code: 'too-long', error: `A User-Agent is at most ${MAX_USER_AGENT_LENGTH} characters long.` };
+    return {
+      ok: false,
+      code: 'too-long',
+      error: `A User-Agent is at most ${MAX_USER_AGENT_LENGTH} characters long.`,
+    };
   }
 
   const client = detectClient(userAgent);

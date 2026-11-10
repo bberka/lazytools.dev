@@ -71,9 +71,7 @@ const MAX_SEARCH_RESULTS = 50;
 // Zone list
 
 function runtimeTimeZones(): string[] {
-  const supportedValuesOf = Intl.supportedValuesOf as
-    | ((key: 'timeZone') => string[])
-    | undefined;
+  const supportedValuesOf = Intl.supportedValuesOf as ((key: 'timeZone') => string[]) | undefined;
 
   return typeof supportedValuesOf === 'function' ? supportedValuesOf('timeZone') : [];
 }
@@ -122,7 +120,10 @@ export function toTimeZoneOptions(timeZones: readonly string[]): TimeZoneOption[
 }
 
 function searchKey(text: string): string {
-  return text.toLowerCase().replace(/[_\s]+/g, ' ').trim();
+  return text
+    .toLowerCase()
+    .replace(/[_\s]+/g, ' ')
+    .trim();
 }
 
 /**
@@ -205,9 +206,7 @@ function getTimeZoneParts(date: Date, timeZone: string): DateParts {
     second: '2-digit',
   }).formatToParts(date);
   const map = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== 'literal')
-      .map((part) => [part.type, Number(part.value)])
+    parts.filter((part) => part.type !== 'literal').map((part) => [part.type, Number(part.value)])
   ) as Record<string, number>;
 
   return {

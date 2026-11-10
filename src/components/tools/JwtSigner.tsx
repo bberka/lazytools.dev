@@ -198,7 +198,6 @@ export function JwtSigner() {
   const [verifyToken, setVerifyToken] = useState('');
   const [clockTick, setClockTick] = useState(0);
 
-
   const headerError = useMemo(() => validateHeader(headerText, algorithm), [headerText, algorithm]);
   const payloadError = useMemo(() => validatePayload(payloadText), [payloadText]);
   const secretCheck = useMemo(() => decodeSecret(secret, secretEncoding), [secret, secretEncoding]);
@@ -269,8 +268,8 @@ export function JwtSigner() {
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <p className="text-muted-foreground">
           <span className="font-medium text-foreground">Nothing leaves your browser.</span> Tokens
-          are signed and checked on this page with WebCrypto. Your header, payload, secret and tokens
-          are never uploaded or saved. This tool is for testing authorization flows, so use
+          are signed and checked on this page with WebCrypto. Your header, payload, secret and
+          tokens are never uploaded or saved. This tool is for testing authorization flows, so use
           throwaway secrets rather than production keys.
         </p>
       </div>
@@ -503,7 +502,10 @@ export function JwtSigner() {
                     <ul className="space-y-1 text-xs text-muted-foreground" aria-label="Warnings">
                       {signed.warnings.map((warning) => (
                         <li key={warning} className="flex items-start gap-1.5">
-                          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <TriangleAlert
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
                           <span>
                             <span className="font-medium text-foreground">Warning: </span>
                             {warning}
@@ -547,7 +549,8 @@ export function JwtSigner() {
               </CardTitle>
               <CardDescription>
                 Checks a pasted token against the secret and encoding set in Algorithm &amp; Secret.
-                The algorithm comes from the token&apos;s header, and exp and nbf use this device&apos;s clock.
+                The algorithm comes from the token&apos;s header, and exp and nbf use this
+                device&apos;s clock.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

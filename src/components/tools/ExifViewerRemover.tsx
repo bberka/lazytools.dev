@@ -1,7 +1,20 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, Copy, Download, Eye, Image as ImageIcon, Loader2, Shield, Trash2, Upload, X, Archive, FileImage } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Download,
+  Eye,
+  Image as ImageIcon,
+  Loader2,
+  Shield,
+  Trash2,
+  Upload,
+  X,
+  Archive,
+  FileImage,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -26,8 +39,17 @@ import {
   readFileAsArrayBuffer,
   type FormatBytesOptions,
 } from '@/lib/files';
-import { parseExifSections, uniqueFileNames, type ExifSection } from '@/lib/tools/exif-viewer-remover';
-import { canvasImageType, canvasToBlob, imageTypeExtension, type CanvasImageType } from '@/lib/tools/image-canvas';
+import {
+  parseExifSections,
+  uniqueFileNames,
+  type ExifSection,
+} from '@/lib/tools/exif-viewer-remover';
+import {
+  canvasImageType,
+  canvasToBlob,
+  imageTypeExtension,
+  type CanvasImageType,
+} from '@/lib/tools/image-canvas';
 import JSZip from 'jszip';
 
 type OutputFormat = 'original' | 'jpeg' | 'png' | 'webp';
@@ -138,7 +160,7 @@ export function ExifViewerRemover() {
     setBatchZip(null);
     setBatchError('');
 
-    const resetItems: BatchItem[] = batchItems.map(item => ({
+    const resetItems: BatchItem[] = batchItems.map((item) => ({
       ...item,
       status: 'waiting' as BatchFileStatus,
       error: undefined,
@@ -205,7 +227,9 @@ export function ExifViewerRemover() {
 
     try {
       const cleaned = activeItems.flatMap((item) =>
-        item.status === 'done' && item.cleanedBlob ? [{ file: item.file, blob: item.cleanedBlob }] : []
+        item.status === 'done' && item.cleanedBlob
+          ? [{ file: item.file, blob: item.cleanedBlob }]
+          : []
       );
 
       if (cleaned.length === 0) {
@@ -218,7 +242,10 @@ export function ExifViewerRemover() {
       // archive keeps only the last of them.
       const zipFileNames = uniqueFileNames(
         cleaned.map(({ file: source, blob }) =>
-          outputFileName(source.name, { suffix: '-clean', extension: imageTypeExtension(blob.type) })
+          outputFileName(source.name, {
+            suffix: '-clean',
+            extension: imageTypeExtension(blob.type),
+          })
         )
       );
 
@@ -258,7 +285,11 @@ export function ExifViewerRemover() {
       case 'waiting':
         return <Badge variant="outline">Waiting</Badge>;
       case 'processing':
-        return <Badge variant="secondary" className="animate-pulse">Processing</Badge>;
+        return (
+          <Badge variant="secondary" className="animate-pulse">
+            Processing
+          </Badge>
+        );
       case 'done':
         return <Badge className="bg-green-600 hover:bg-green-600/90 text-white">Cleaned</Badge>;
       case 'error':
@@ -318,9 +349,13 @@ export function ExifViewerRemover() {
       if (run !== singleRun.current) return;
 
       const extension = imageTypeExtension(blob.type);
-      const nextCleanFile = new File([blob], outputFileName(file.name, { suffix: '-clean', extension }), {
-        type: blob.type,
-      });
+      const nextCleanFile = new File(
+        [blob],
+        outputFileName(file.name, { suffix: '-clean', extension }),
+        {
+          type: blob.type,
+        }
+      );
 
       setCleanFile(nextCleanFile);
     } catch (removeError) {
@@ -444,17 +479,24 @@ export function ExifViewerRemover() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label id={`${id}-format-label`} className="mb-2 block text-sm font-medium">Output format</label>
+                  <label id={`${id}-format-label`} className="mb-2 block text-sm font-medium">
+                    Output format
+                  </label>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
                   >
-                    <SelectTrigger id={`${id}-format`} aria-labelledby={`${id}-format-label ${id}-format`}>
+                    <SelectTrigger
+                      id={`${id}-format`}
+                      aria-labelledby={`${id}-format-label ${id}-format`}
+                    >
                       <SelectValue placeholder="Select output format" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="original">Keep original format when supported</SelectItem>
+                        <SelectItem value="original">
+                          Keep original format when supported
+                        </SelectItem>
                         <SelectItem value="jpeg">JPEG</SelectItem>
                         <SelectItem value="png">PNG</SelectItem>
                         <SelectItem value="webp">WebP</SelectItem>
@@ -498,7 +540,8 @@ export function ExifViewerRemover() {
 
                 {cleanFile && (
                   <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
-                    Cleaned image ready: {cleanFile.name} ({formatBytes(cleanFile.size, SIZE_FORMAT)})
+                    Cleaned image ready: {cleanFile.name} (
+                    {formatBytes(cleanFile.size, SIZE_FORMAT)})
                   </div>
                 )}
               </CardContent>
@@ -513,7 +556,8 @@ export function ExifViewerRemover() {
                   Metadata Viewer
                 </CardTitle>
                 <CardDescription>
-                  JPEG EXIF tags are shown when present. Other image formats may have little or no EXIF metadata.
+                  JPEG EXIF tags are shown when present. Other image formats may have little or no
+                  EXIF metadata.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -542,7 +586,9 @@ export function ExifViewerRemover() {
                                   variant={copied ? 'default' : 'ghost'}
                                   size="icon"
                                   className="h-8 w-8"
-                                  aria-label={copied ? `Copied ${field.label}` : `Copy ${field.label}`}
+                                  aria-label={
+                                    copied ? `Copied ${field.label}` : `Copy ${field.label}`
+                                  }
                                 >
                                   {copied ? (
                                     <Check className="h-4 w-4" />
@@ -559,7 +605,8 @@ export function ExifViewerRemover() {
                   </div>
                 ) : (
                   <div className="rounded-md border border-dashed px-4 py-4 sm:py-8 text-center text-sm text-muted-foreground">
-                    No EXIF fields were detected in this file, or the format does not expose EXIF data in this viewer.
+                    No EXIF fields were detected in this file, or the format does not expose EXIF
+                    data in this viewer.
                   </div>
                 )}
               </CardContent>
@@ -579,12 +626,20 @@ export function ExifViewerRemover() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <p className="mb-2 text-sm font-medium">Original</p>
-                    <img src={previewUrl} alt="Original upload" className="w-full rounded-md border" />
+                    <img
+                      src={previewUrl}
+                      alt="Original upload"
+                      className="w-full rounded-md border"
+                    />
                   </div>
                   {cleanUrl && (
                     <div>
                       <p className="mb-2 text-sm font-medium">Cleaned</p>
-                      <img src={cleanUrl} alt="Metadata removed" className="w-full rounded-md border" />
+                      <img
+                        src={cleanUrl}
+                        alt="Metadata removed"
+                        className="w-full rounded-md border"
+                      />
                     </div>
                   )}
                 </div>
@@ -601,7 +656,8 @@ export function ExifViewerRemover() {
                 Batch EXIF Remover
               </CardTitle>
               <CardDescription>
-                Drag and drop multiple images to strip all EXIF metadata concurrently and download them in a single ZIP archive.
+                Drag and drop multiple images to strip all EXIF metadata concurrently and download
+                them in a single ZIP archive.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -623,7 +679,9 @@ export function ExifViewerRemover() {
               {batchItems.length > 0 && (
                 <div className="flex flex-col gap-4 p-4 rounded-lg border bg-card sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex-1 space-y-2 max-w-sm">
-                    <label id={`${id}-batch-format-label`} className="text-sm font-medium">Batch Output Format</label>
+                    <label id={`${id}-batch-format-label`} className="text-sm font-medium">
+                      Batch Output Format
+                    </label>
                     <Select
                       value={batchOutputFormat}
                       onValueChange={(value) => setBatchOutputFormat(value as OutputFormat)}
@@ -646,7 +704,10 @@ export function ExifViewerRemover() {
                     </Select>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={handleProcessBatch} disabled={batchProcessing || batchItems.length === 0}>
+                    <Button
+                      onClick={handleProcessBatch}
+                      disabled={batchProcessing || batchItems.length === 0}
+                    >
                       {batchProcessing ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -668,11 +729,7 @@ export function ExifViewerRemover() {
                         Download ZIP Again ({formatBytes(batchZip.size, SIZE_FORMAT)})
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      onClick={handleClearBatch}
-                      disabled={batchProcessing}
-                    >
+                    <Button variant="outline" onClick={handleClearBatch} disabled={batchProcessing}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Clear All
                     </Button>
@@ -699,21 +756,35 @@ export function ExifViewerRemover() {
                 {completedItems.length > 0 && (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 p-4 rounded-lg bg-green-500/5 dark:bg-green-500/10 border border-green-500/20 text-sm">
                     <div>
-                      <div className="text-muted-foreground text-xs font-semibold uppercase">Total Original Size</div>
-                      <div className="font-bold text-base mt-0.5">{formatBytes(batchItems.reduce((acc, item) => acc + item.file.size, 0), SIZE_FORMAT)}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground text-xs font-semibold uppercase">Cleaned Size</div>
+                      <div className="text-muted-foreground text-xs font-semibold uppercase">
+                        Total Original Size
+                      </div>
                       <div className="font-bold text-base mt-0.5">
-                        {totalCleanedSize > 0 ? formatBytes(totalCleanedSize, SIZE_FORMAT) : 'Processing...'}
+                        {formatBytes(
+                          batchItems.reduce((acc, item) => acc + item.file.size, 0),
+                          SIZE_FORMAT
+                        )}
                       </div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground text-xs font-semibold uppercase">Data Saved</div>
+                      <div className="text-muted-foreground text-xs font-semibold uppercase">
+                        Cleaned Size
+                      </div>
+                      <div className="font-bold text-base mt-0.5">
+                        {totalCleanedSize > 0
+                          ? formatBytes(totalCleanedSize, SIZE_FORMAT)
+                          : 'Processing...'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground text-xs font-semibold uppercase">
+                        Data Saved
+                      </div>
                       <div className="font-bold text-base mt-0.5 text-green-600 dark:text-green-400">
                         {totalSavedBytes > 0 ? (
                           <>
-                            {formatBytes(totalSavedBytes, SIZE_FORMAT)} ({savingsPercent.toFixed(1)}%)
+                            {formatBytes(totalSavedBytes, SIZE_FORMAT)} ({savingsPercent.toFixed(1)}
+                            %)
                           </>
                         ) : (
                           '0 B (0%)'
@@ -736,20 +807,34 @@ export function ExifViewerRemover() {
                     </thead>
                     <tbody className="divide-y">
                       {batchItems.map((item) => {
-                        const targetFormat = batchOutputFormat === 'original'
-                          ? (item.file.type === 'image/jpeg' ? 'JPEG' : item.file.type === 'image/png' ? 'PNG' : item.file.type === 'image/webp' ? 'WebP' : 'PNG')
-                          : batchOutputFormat.toUpperCase();
+                        const targetFormat =
+                          batchOutputFormat === 'original'
+                            ? item.file.type === 'image/jpeg'
+                              ? 'JPEG'
+                              : item.file.type === 'image/png'
+                                ? 'PNG'
+                                : item.file.type === 'image/webp'
+                                  ? 'WebP'
+                                  : 'PNG'
+                            : batchOutputFormat.toUpperCase();
 
                         return (
                           <tr key={item.id} className="hover:bg-muted/30">
-                            <td className="p-3 font-medium max-w-[200px] sm:max-w-xs truncate" title={item.file.name}>
+                            <td
+                              className="p-3 font-medium max-w-[200px] sm:max-w-xs truncate"
+                              title={item.file.name}
+                            >
                               <div className="flex items-center gap-2">
                                 <FileImage className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="truncate">{item.file.name}</span>
                               </div>
                             </td>
-                            <td className="p-3 text-muted-foreground font-mono">{formatBytes(item.file.size, SIZE_FORMAT)}</td>
-                            <td className="p-3 text-muted-foreground font-mono text-xs">{targetFormat}</td>
+                            <td className="p-3 text-muted-foreground font-mono">
+                              {formatBytes(item.file.size, SIZE_FORMAT)}
+                            </td>
+                            <td className="p-3 text-muted-foreground font-mono text-xs">
+                              {targetFormat}
+                            </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
                                 {getStatusBadge(item.status, item.error)}
@@ -788,5 +873,4 @@ export function ExifViewerRemover() {
       </Tabs>
     </div>
   );
-
 }

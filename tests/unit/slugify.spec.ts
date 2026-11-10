@@ -10,7 +10,8 @@ import {
 
 // Expected values are worked out by hand from the rules in the module header.
 
-const slug = (text: string, changes: Partial<SlugOptions> = {}) => slugify(text, { ...DEFAULT_OPTIONS, ...changes });
+const slug = (text: string, changes: Partial<SlugOptions> = {}) =>
+  slugify(text, { ...DEFAULT_OPTIONS, ...changes });
 
 test.describe('slugify basics', () => {
   test('lower-cases, drops punctuation and joins words with a hyphen', () => {
@@ -47,9 +48,7 @@ test.describe('slugify basics', () => {
 
 test.describe('transliteration', () => {
   test('Turkish letters become plain Latin letters', () => {
-    expect(slug('Işık Şişli Çağ Üzüm Öğle İstanbul')).toBe(
-      'isik-sisli-cag-uzum-ogle-istanbul'
-    );
+    expect(slug('Işık Şişli Çağ Üzüm Öğle İstanbul')).toBe('isik-sisli-cag-uzum-ogle-istanbul');
   });
 
   test('sharp s and ligatures', () => {
@@ -85,9 +84,13 @@ test.describe('transliteration', () => {
 
 test.describe('stopwords', () => {
   test('are removed when asked, whatever their case', () => {
-    expect(slug('The Quick Brown Fox of the Year', { removeStopwords: true })).toBe('quick-brown-fox-year');
+    expect(slug('The Quick Brown Fox of the Year', { removeStopwords: true })).toBe(
+      'quick-brown-fox-year'
+    );
     expect(slug('THE Cat', { removeStopwords: true })).toBe('cat');
-    expect(slug('Crème Brûlée à la carte', { removeStopwords: true })).toBe('creme-brulee-la-carte');
+    expect(slug('Crème Brûlée à la carte', { removeStopwords: true })).toBe(
+      'creme-brulee-la-carte'
+    );
   });
 
   test('a text made only of stopwords keeps them', () => {
@@ -115,7 +118,9 @@ test.describe('maximum length', () => {
 
   test('counts code points, not UTF-16 units', () => {
     // Three mathematical script capitals are 3 code points (6 UTF-16 units).
-    expect(slug('\u{1D49C}\u{1D49C}\u{1D49C}\u{1D49C}', { maxLength: 3, lowercase: false })).toBe('\u{1D49C}\u{1D49C}\u{1D49C}');
+    expect(slug('\u{1D49C}\u{1D49C}\u{1D49C}\u{1D49C}', { maxLength: 3, lowercase: false })).toBe(
+      '\u{1D49C}\u{1D49C}\u{1D49C}'
+    );
   });
 
   test('zero means no limit', () => {
@@ -123,14 +128,18 @@ test.describe('maximum length', () => {
   });
 
   test('is applied after stopwords are removed', () => {
-    expect(slug('The Quick Brown Fox', { removeStopwords: true, maxLength: 11 })).toBe('quick-brown');
+    expect(slug('The Quick Brown Fox', { removeStopwords: true, maxLength: 11 })).toBe(
+      'quick-brown'
+    );
   });
 });
 
 test.describe('one slug per line', () => {
   test('keeps blank lines and the CRLF line ending', () => {
     const options = { ...DEFAULT_OPTIONS, perLine: true };
-    expect(slugifyLines('Hello World\r\n\r\nFoo  Bar\r\n', options)).toBe('hello-world\r\n\r\nfoo-bar');
+    expect(slugifyLines('Hello World\r\n\r\nFoo  Bar\r\n', options)).toBe(
+      'hello-world\r\n\r\nfoo-bar'
+    );
     expect(slugifyLines('One\nTwo', options)).toBe('one\ntwo');
     expect(slugifyLines('', options)).toBe('');
   });
@@ -143,5 +152,7 @@ test.describe('one slug per line', () => {
 
 test('the example text', () => {
   expect(slug(EXAMPLE_TEXT)).toBe('the-quick-brown-fox-strasse-isik-cagris-cafe');
-  expect(slug(EXAMPLE_TEXT, { removeStopwords: true })).toBe('quick-brown-fox-strasse-isik-cagris-cafe');
+  expect(slug(EXAMPLE_TEXT, { removeStopwords: true })).toBe(
+    'quick-brown-fox-strasse-isik-cagris-cafe'
+  );
 });

@@ -79,9 +79,7 @@ export function PercentageCalculator() {
       <Card>
         <CardHeader>
           <CardTitle>Percentage Calculator</CardTitle>
-          <CardDescription>
-            Calculate percentages, increases and decreases.
-          </CardDescription>
+          <CardDescription>Calculate percentages, increases and decreases.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

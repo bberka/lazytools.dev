@@ -27,7 +27,9 @@ export function ipv4ToNumber(octets: IPv4Octets): number {
 
 /** Dotted-decimal form of an unsigned 32-bit number. */
 export function numberToIPv4(value: number): string {
-  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join('.');
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.'
+  );
 }
 
 /**

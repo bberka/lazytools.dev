@@ -42,7 +42,9 @@ test.describe('encodeNato', () => {
   });
 
   test('marks the break between words with a slash and collapses runs of spaces', () => {
-    expect(encode('Hello World')).toBe('Hotel Echo Lima Lima Oscar / Whiskey Oscar Romeo Lima Delta');
+    expect(encode('Hello World')).toBe(
+      'Hotel Echo Lima Lima Oscar / Whiskey Oscar Romeo Lima Delta'
+    );
     expect(encode('a  \t b')).toBe('Alfa / Bravo');
     expect(encode('  a b  ')).toBe('Alfa / Bravo');
   });
@@ -133,6 +135,8 @@ test.describe('decodeNato', () => {
   test('round-trips text of letters, digits and punctuation, as upper case', () => {
     const text = 'Hello World 2024!';
     expect(decode(encode(text))).toBe('HELLO WORLD 2024!');
-    expect(decode(encode(text, { digitStyle: 'plain', wordCase: 'upper' }))).toBe('HELLO WORLD 2024!');
+    expect(decode(encode(text, { digitStyle: 'plain', wordCase: 'upper' }))).toBe(
+      'HELLO WORLD 2024!'
+    );
   });
 });

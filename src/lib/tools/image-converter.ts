@@ -41,7 +41,9 @@ export interface OutputPlan {
 export const ICO_MAX_SIDE = 256;
 
 function requestedSide(value: number | '' | null | undefined): number | null {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 1 ? Math.round(value) : null;
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1
+    ? Math.round(value)
+    : null;
 }
 
 /**

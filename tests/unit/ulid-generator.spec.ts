@@ -235,34 +235,47 @@ test.describe('generateUlids', () => {
 
   test('the largest timestamp gives the largest ULID', () => {
     const [ulid] = valueOf(
-      generateUlids({ count: 1, timestamp: MAX_TIMESTAMP }, { randomBytes: constantBytes(MAX_RANDOM_HEX) })
+      generateUlids(
+        { count: 1, timestamp: MAX_TIMESTAMP },
+        { randomBytes: constantBytes(MAX_RANDOM_HEX) }
+      )
     );
     expect(ulid).toBe(MAX_ULID);
   });
 
   test('rejects a timestamp beyond 48 bits or a bad clock reading', () => {
     expect(
-      errorOf(generateUlids({ count: 1, timestamp: MAX_TIMESTAMP + 1 }, { randomBytes: constantBytes(ZERO_RANDOM) }))
+      errorOf(
+        generateUlids(
+          { count: 1, timestamp: MAX_TIMESTAMP + 1 },
+          { randomBytes: constantBytes(ZERO_RANDOM) }
+        )
+      )
     ).toContain('48-bit maximum');
     expect(
-      errorOf(generateUlids({ count: 1, timestamp: -5 }, { randomBytes: constantBytes(ZERO_RANDOM) }))
+      errorOf(
+        generateUlids({ count: 1, timestamp: -5 }, { randomBytes: constantBytes(ZERO_RANDOM) })
+      )
     ).toContain('negative');
     expect(
       errorOf(
-        generateUlids({ count: 1 }, { now: () => MAX_TIMESTAMP + 1, randomBytes: constantBytes(ZERO_RANDOM) })
+        generateUlids(
+          { count: 1 },
+          { now: () => MAX_TIMESTAMP + 1, randomBytes: constantBytes(ZERO_RANDOM) }
+        )
       )
     ).toContain('48-bit maximum');
   });
 
   test('rejects a count outside 1 to 1000', () => {
     for (const count of [0, -3, 1001, 2.5, Number.NaN]) {
-      expect(errorOf(generateUlids({ count }, { randomBytes: constantBytes(ZERO_RANDOM) }))).toContain(
-        `1 to ${MAX_COUNT}`
-      );
+      expect(
+        errorOf(generateUlids({ count }, { randomBytes: constantBytes(ZERO_RANDOM) }))
+      ).toContain(`1 to ${MAX_COUNT}`);
     }
-    expect(valueOf(generateUlids({ count: MAX_COUNT }, { randomBytes: constantBytes(ZERO_RANDOM) }))).toHaveLength(
-      MAX_COUNT
-    );
+    expect(
+      valueOf(generateUlids({ count: MAX_COUNT }, { randomBytes: constantBytes(ZERO_RANDOM) }))
+    ).toHaveLength(MAX_COUNT);
   });
 
   test('works with the real clock and secure randomness', () => {
@@ -408,8 +421,12 @@ test.describe('ULID and UUID layout', () => {
 
   test('converts an ordinary random UUID', () => {
     // Worked out with Python integer arithmetic.
-    expect(valueOf(uuidToUlid('123e4567-e89b-12d3-a456-426614174000'))).toBe('0J7S2PFT4V2B9T8NJ2CRA1EG00');
-    expect(valueOf(ulidToUuid('0J7S2PFT4V2B9T8NJ2CRA1EG00'))).toBe('123e4567-e89b-12d3-a456-426614174000');
+    expect(valueOf(uuidToUlid('123e4567-e89b-12d3-a456-426614174000'))).toBe(
+      '0J7S2PFT4V2B9T8NJ2CRA1EG00'
+    );
+    expect(valueOf(ulidToUuid('0J7S2PFT4V2B9T8NJ2CRA1EG00'))).toBe(
+      '123e4567-e89b-12d3-a456-426614174000'
+    );
   });
 
   test('accepts upper case, no hyphens, braces and a urn prefix', () => {

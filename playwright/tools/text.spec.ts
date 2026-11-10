@@ -224,7 +224,9 @@ test.describe('Text tools', () => {
       await input.fill('crème brûlée');
       await expect(main).toContainText(card('camelCase', 'helloWorldExample', 'crèmeBrûlée'));
       await expect(main).toContainText(card('snake_case', 'hello_world_example', 'crème_brûlée'));
-      await expect(main).toContainText(card('CONSTANT_CASE', 'HELLO_WORLD_EXAMPLE', 'CRÈME_BRÛLÉE'));
+      await expect(main).toContainText(
+        card('CONSTANT_CASE', 'HELLO_WORLD_EXAMPLE', 'CRÈME_BRÛLÉE')
+      );
       await expect(main).toContainText(card('Title Case', 'Hello World Example', 'Crème Brûlée'));
 
       // The prose cases keep line breaks on screen.
@@ -1019,12 +1021,8 @@ test.describe('Text tools', () => {
 
       await expect(page.getByText('Items count: 3')).toBeVisible();
       await expect(output(page, 'Comma-separated output')).toHaveValue('apple, banana, cherry');
-      await expect(output(page, 'Single-quoted output')).toHaveValue(
-        "'apple', 'banana', 'cherry'"
-      );
-      await expect(output(page, 'Double-quoted output')).toHaveValue(
-        '"apple", "banana", "cherry"'
-      );
+      await expect(output(page, 'Single-quoted output')).toHaveValue("'apple', 'banana', 'cherry'");
+      await expect(output(page, 'Double-quoted output')).toHaveValue('"apple", "banana", "cherry"');
       await expect(output(page, 'JSON array output')).toHaveValue(
         '[\n  "apple",\n  "banana",\n  "cherry"\n]'
       );
@@ -1058,7 +1056,11 @@ test.describe('Text tools', () => {
       // "Apple" and "apple" are different until the case is unified.
       await page.getByRole('checkbox', { name: 'Remove Duplicates' }).click();
       await expect(page.getByText('Items count: 4')).toBeVisible();
-      await chooseOption(page, page.getByRole('combobox', { name: 'Case conversion' }), 'lowercase');
+      await chooseOption(
+        page,
+        page.getByRole('combobox', { name: 'Case conversion' }),
+        'lowercase'
+      );
       await expect(page.getByText('Items count: 3')).toBeVisible();
       await expect(csv).toHaveValue('pear, apple, banana');
 
@@ -1066,7 +1068,11 @@ test.describe('Text tools', () => {
       await expect(csv).toHaveValue('apple, banana, pear');
       await chooseOption(page, page.getByRole('combobox', { name: 'Sorting' }), 'Z - A');
       await expect(csv).toHaveValue('pear, banana, apple');
-      await chooseOption(page, page.getByRole('combobox', { name: 'Case conversion' }), 'UPPERCASE');
+      await chooseOption(
+        page,
+        page.getByRole('combobox', { name: 'Case conversion' }),
+        'UPPERCASE'
+      );
       await expect(csv).toHaveValue('PEAR, BANANA, APPLE');
 
       // Back to the raw items: untrimmed, then with the empty one kept.
@@ -1105,9 +1111,7 @@ test.describe('Text tools', () => {
     });
 
     test('escapes quotes and backslashes for each format', async ({ page }) => {
-      await page
-        .getByRole('textbox', { name: 'List items' })
-        .fill('O\'Brien\nsay "hi"\nC:\\new');
+      await page.getByRole('textbox', { name: 'List items' }).fill('O\'Brien\nsay "hi"\nC:\\new');
 
       await expect(page.getByText('Items count: 3')).toBeVisible();
       await expect(output(page, 'Single-quoted output')).toHaveValue(
@@ -1130,7 +1134,11 @@ test.describe('Text tools', () => {
       // Split on commas, the second item spans two lines: the quoted formats
       // write the line break as an escape instead of breaking the literal.
       await page.getByRole('textbox', { name: 'List items' }).fill('a,b\nc');
-      await chooseOption(page, page.getByRole('combobox', { name: 'Input Delimiter' }), 'Comma (,)');
+      await chooseOption(
+        page,
+        page.getByRole('combobox', { name: 'Input Delimiter' }),
+        'Comma (,)'
+      );
       await expect(page.getByText('Items count: 2')).toBeVisible();
       await expect(output(page, 'Single-quoted output')).toHaveValue("'a', 'b\\nc'");
       await expect(output(page, 'Double-quoted output')).toHaveValue('"a", "b\\nc"');
@@ -1213,9 +1221,9 @@ test.describe('Text tools', () => {
 
       const paragraphs = (await generated(page).innerText()).split('\n\n');
       expect(paragraphs).toHaveLength(3);
-      expect(paragraphs[0].startsWith(`${OPENING} `) || paragraphs[0].startsWith(`${OPENING}.`)).toBe(
-        true
-      );
+      expect(
+        paragraphs[0].startsWith(`${OPENING} `) || paragraphs[0].startsWith(`${OPENING}.`)
+      ).toBe(true);
       // Only the first paragraph gets the classic opening.
       expect(paragraphs.slice(1).filter((paragraph) => paragraph.startsWith(OPENING))).toEqual([]);
       for (const paragraph of paragraphs) {

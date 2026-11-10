@@ -244,7 +244,11 @@ interface ParseState {
   warnings: string[];
 }
 
-function parseBlock(tokens: Token[], state: ParseState, topLevel: boolean): { nodes: Node[]; closed: boolean } {
+function parseBlock(
+  tokens: Token[],
+  state: ParseState,
+  topLevel: boolean
+): { nodes: Node[]; closed: boolean } {
   const nodes: Node[] = [];
 
   while (state.pos < tokens.length) {
@@ -329,7 +333,11 @@ function parseBlock(tokens: Token[], state: ParseState, topLevel: boolean): { no
 
     const colon = findTopLevelColon(statement);
     if (colon > 0) {
-      nodes.push({ kind: 'decl', prop: statement.slice(0, colon), value: statement.slice(colon + 1) });
+      nodes.push({
+        kind: 'decl',
+        prop: statement.slice(0, colon),
+        value: statement.slice(colon + 1),
+      });
     } else {
       nodes.push({ kind: 'raw', tokens: statement });
     }
@@ -424,10 +432,16 @@ function renderTokens(tokens: Token[], options: RenderOptions): string {
       else if (is(previous, ',')) space = !(is(token, ')') || is(token, ']'));
       else if (is(previous, '(') || is(previous, '[')) space = false;
       else if (is(token, ')') || is(token, ']')) space = false;
-      else if (context === 'selector' && atTopLevel && (isCombinator(previous) || isCombinator(token))) space = true;
+      else if (
+        context === 'selector' &&
+        atTopLevel &&
+        (isCombinator(previous) || isCombinator(token))
+      )
+        space = true;
       else if (context === 'value' && is(token, '!')) space = true;
       else if (context === 'value' && is(previous, '!')) space = false;
-      else if (context === 'prelude' && previous.text.startsWith('@') && is(token, '(')) space = true;
+      else if (context === 'prelude' && previous.text.startsWith('@') && is(token, '('))
+        space = true;
       else if (inFeatureGroup && is(previous, ':')) space = true;
       else if (inFeatureGroup && is(token, ':')) space = false;
       else if (token.type === 'comment' || previous.type === 'comment') space = true;
@@ -459,7 +473,11 @@ function renderTokens(tokens: Token[], options: RenderOptions): string {
 
     if (token.type === 'punct') {
       if (token.text === '(') {
-        const isFunction = previous !== undefined && !token.sep && previous.type === 'word' && !previous.text.startsWith('@');
+        const isFunction =
+          previous !== undefined &&
+          !token.sep &&
+          previous.type === 'word' &&
+          !previous.text.startsWith('@');
         groups.push(!isFunction);
       } else if (token.text === ')') groups.pop();
       else if (token.text === '[') brackets++;
@@ -494,7 +512,13 @@ function propertyName(prop: Token[]): string {
 
 /** Blocks nested thousands deep overflow the recursion; the input comes back unchanged. */
 function tooDeep(input: string, warnings: string[]): CssResult {
-  return { output: input, warnings: [...warnings, 'Blocks are nested too deeply to process; the input is returned unchanged'] };
+  return {
+    output: input,
+    warnings: [
+      ...warnings,
+      'Blocks are nested too deeply to process; the input is returned unchanged',
+    ],
+  };
 }
 
 // ── Minify ────────────────────────────────────────────────────────────────────
@@ -521,7 +545,10 @@ function minifyNodes(nodes: Node[], options: MinifyOptions): string {
         pretty: false,
         shortenValues: !custom && name.toLowerCase() !== 'unicode-range',
       });
-      pieces.push({ text: custom && value === '' ? `${name}: ` : `${name}:${value}`, statement: true });
+      pieces.push({
+        text: custom && value === '' ? `${name}: ` : `${name}:${value}`,
+        statement: true,
+      });
     } else if (node.kind === 'rule') {
       const body = minifyNodes(node.children, options);
       if (body === '') continue; // an empty style rule does nothing
@@ -537,11 +564,18 @@ function minifyNodes(nodes: Node[], options: MinifyOptions): string {
         pieces.push({ text: `${head}{${minifyNodes(node.children, options)}}`, statement: false });
       }
     } else {
-      pieces.push({ text: renderTokens(node.tokens, { context: 'value', pretty: false }), statement: true });
+      pieces.push({
+        text: renderTokens(node.tokens, { context: 'value', pretty: false }),
+        statement: true,
+      });
     }
   }
 
-  return pieces.map((piece, index) => (piece.statement && index < pieces.length - 1 ? `${piece.text};` : piece.text)).join('');
+  return pieces
+    .map((piece, index) =>
+      piece.statement && index < pieces.length - 1 ? `${piece.text};` : piece.text
+    )
+    .join('');
 }
 
 /** Removes everything that does not change how the CSS is read. */

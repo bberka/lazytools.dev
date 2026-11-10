@@ -52,9 +52,7 @@ function ResultCard({ title, value }: { title: string; value: string }) {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">
-          {value || '-'}
-        </div>
+        <div className="p-3 rounded-md bg-muted font-mono text-sm break-all">{value || '-'}</div>
       </CardContent>
     </Card>
   );

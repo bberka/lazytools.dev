@@ -12,7 +12,10 @@ import {
 } from '@/lib/tools/mac-address-generator';
 
 /** A fill that writes the same six bytes every time. */
-const fillWith = (...values: number[]) => (bytes: Uint8Array) => bytes.set(values);
+const fillWith =
+  (...values: number[]) =>
+  (bytes: Uint8Array) =>
+    bytes.set(values);
 
 function info(text: string): MacInfo {
   const result = parseMac(text);
@@ -20,7 +23,10 @@ function info(text: string): MacInfo {
   return result.info;
 }
 
-const options = (overrides: Partial<MacOptions>): MacOptions => ({ ...DEFAULT_MAC_OPTIONS, ...overrides });
+const options = (overrides: Partial<MacOptions>): MacOptions => ({
+  ...DEFAULT_MAC_OPTIONS,
+  ...overrides,
+});
 
 test.describe('formatMac', () => {
   const bytes = [0x00, 0x1a, 0x2b, 0x3c, 0x4d, 0x5e];
@@ -69,12 +75,21 @@ test.describe('applyMacFlags', () => {
 test.describe('generateMacs', () => {
   test('applies the flags to the random first byte', () => {
     const fill = fillWith(0xff, 1, 2, 3, 4, 5);
-    expect(generateMacs(options({ count: 1, cast: 'unicast', scope: 'local' }), fill)).toEqual(['fe:01:02:03:04:05']);
-    expect(generateMacs(options({ count: 1, cast: 'unicast', scope: 'global' }), fill)).toEqual(['fc:01:02:03:04:05']);
-    expect(generateMacs(options({ count: 1, cast: 'multicast', scope: 'global' }), fillWith(0, 1, 2, 3, 4, 5))).toEqual([
-      '01:01:02:03:04:05',
+    expect(generateMacs(options({ count: 1, cast: 'unicast', scope: 'local' }), fill)).toEqual([
+      'fe:01:02:03:04:05',
     ]);
-    expect(generateMacs(options({ count: 1, cast: 'any', scope: 'any' }), fill)).toEqual(['ff:01:02:03:04:05']);
+    expect(generateMacs(options({ count: 1, cast: 'unicast', scope: 'global' }), fill)).toEqual([
+      'fc:01:02:03:04:05',
+    ]);
+    expect(
+      generateMacs(
+        options({ count: 1, cast: 'multicast', scope: 'global' }),
+        fillWith(0, 1, 2, 3, 4, 5)
+      )
+    ).toEqual(['01:01:02:03:04:05']);
+    expect(generateMacs(options({ count: 1, cast: 'any', scope: 'any' }), fill)).toEqual([
+      'ff:01:02:03:04:05',
+    ]);
   });
 
   test('formats the output', () => {
@@ -146,23 +161,43 @@ test.describe('parseMac', () => {
   });
 
   test('reads the multicast bit (the lowest bit of the first byte)', () => {
-    expect(info('01:00:5e:00:00:fb')).toMatchObject({ multicast: true, locallyAdministered: false });
+    expect(info('01:00:5e:00:00:fb')).toMatchObject({
+      multicast: true,
+      locallyAdministered: false,
+    });
     expect(info('03:00:00:00:00:00')).toMatchObject({ multicast: true, locallyAdministered: true });
   });
 
   test('reads the locally administered bit (the second-lowest bit)', () => {
-    expect(info('02:00:00:00:00:01')).toMatchObject({ multicast: false, locallyAdministered: true });
-    expect(info('fe:ff:ff:ff:ff:ff')).toMatchObject({ multicast: false, locallyAdministered: true });
-    expect(info('fc:00:00:00:00:00')).toMatchObject({ multicast: false, locallyAdministered: false });
+    expect(info('02:00:00:00:00:01')).toMatchObject({
+      multicast: false,
+      locallyAdministered: true,
+    });
+    expect(info('fe:ff:ff:ff:ff:ff')).toMatchObject({
+      multicast: false,
+      locallyAdministered: true,
+    });
+    expect(info('fc:00:00:00:00:00')).toMatchObject({
+      multicast: false,
+      locallyAdministered: false,
+    });
   });
 
   test('spots the broadcast address', () => {
-    expect(info('ff:ff:ff:ff:ff:ff')).toMatchObject({ multicast: true, locallyAdministered: true, broadcast: true });
+    expect(info('ff:ff:ff:ff:ff:ff')).toMatchObject({
+      multicast: true,
+      locallyAdministered: true,
+      broadcast: true,
+    });
     expect(info('ff:ff:ff:ff:ff:fe').broadcast).toBe(false);
   });
 
   test('handles the all-zero address', () => {
-    expect(info('00:00:00:00:00:00')).toMatchObject({ multicast: false, locallyAdministered: false, broadcast: false });
+    expect(info('00:00:00:00:00:00')).toMatchObject({
+      multicast: false,
+      locallyAdministered: false,
+      broadcast: false,
+    });
   });
 
   test('ignores surrounding space', () => {

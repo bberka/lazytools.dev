@@ -76,7 +76,8 @@ const IN_2026 = Date.UTC(2026, 5, 1);
 const NOT_A_CERTIFICATE = /not a valid X\.509 certificate/;
 
 const pemBody = (pem: string) => pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
-const pemToBytes = (pem: string) => Uint8Array.from(atob(pemBody(pem)), (char) => char.charCodeAt(0));
+const pemToBytes = (pem: string) =>
+  Uint8Array.from(atob(pemBody(pem)), (char) => char.charCodeAt(0));
 
 function extension(cert: CertInfo, name: string): ExtValue {
   const found = cert.extensions.find((ext) => ext.name === name);
@@ -84,7 +85,8 @@ function extension(cert: CertInfo, name: string): ExtValue {
   return found.value;
 }
 
-const nameText = (name: DistinguishedName) => name.map((attribute) => `${attribute.type}=${attribute.value}`);
+const nameText = (name: DistinguishedName) =>
+  name.map((attribute) => `${attribute.type}=${attribute.value}`);
 
 // ── A small DER writer, for certificates OpenSSL will not make ────────────────
 // The decoder never checks the signature, so a hand-built structure is enough
@@ -198,9 +200,19 @@ test.describe('decodeCertificate: an RSA certificate', () => {
       ['authorityInfoAccess', false],
       ['cRLDistributionPoints', false],
     ]);
-    expect(extension(cert, 'basicConstraints')).toEqual({ kind: 'bc', isCA: false, pathLen: undefined });
-    expect(extension(cert, 'keyUsage')).toEqual({ kind: 'list', items: ['Digital Signature', 'Key Encipherment'] });
-    expect(extension(cert, 'extKeyUsage')).toEqual({ kind: 'list', items: ['TLS Server Auth', 'TLS Client Auth'] });
+    expect(extension(cert, 'basicConstraints')).toEqual({
+      kind: 'bc',
+      isCA: false,
+      pathLen: undefined,
+    });
+    expect(extension(cert, 'keyUsage')).toEqual({
+      kind: 'list',
+      items: ['Digital Signature', 'Key Encipherment'],
+    });
+    expect(extension(cert, 'extKeyUsage')).toEqual({
+      kind: 'list',
+      items: ['TLS Server Auth', 'TLS Client Auth'],
+    });
     expect(extension(cert, 'subjectKeyIdentifier')).toEqual({
       kind: 'text',
       value: 'C8:F8:A9:0D:43:F1:B1:E8:A4:8F:E2:AC:ED:FE:13:96:20:0E:BC:A6',
@@ -248,7 +260,10 @@ test.describe('decodeCertificate: an EC certificate', () => {
     expect(cert.pkAlg).toBe('EC');
     expect(cert.pkCurve).toBe('P-521');
     expect(extension(cert, 'basicConstraints')).toEqual({ kind: 'bc', isCA: true, pathLen: 0 });
-    expect(extension(cert, 'keyUsage')).toEqual({ kind: 'list', items: ['Key Cert Sign', 'CRL Sign'] });
+    expect(extension(cert, 'keyUsage')).toEqual({
+      kind: 'list',
+      items: ['Key Cert Sign', 'CRL Sign'],
+    });
     expect(await fingerprintCertificate(der)).toEqual({ sha1: CA_SHA1, sha256: CA_SHA256 });
   });
 
@@ -292,7 +307,10 @@ test.describe('decodeCertificate: validity', () => {
 
   test('reads GeneralizedTime, including the "no expiry" date', () => {
     const { cert } = decodeCertificate(
-      buildCertificate({ notBefore: generalizedTime('20500228120000Z'), notAfter: generalizedTime('99991231235959Z') }),
+      buildCertificate({
+        notBefore: generalizedTime('20500228120000Z'),
+        notAfter: generalizedTime('99991231235959Z'),
+      }),
       IN_2026
     );
     expect(cert.validFrom.toISOString()).toBe('2050-02-28T12:00:00.000Z');
@@ -358,11 +376,17 @@ test.describe('decodeCertificate: input formats', () => {
     const chain = decodeCertificate(`${LEAF_PEM}\n${CA_PEM}\n`, IN_2026);
     expect(chain.certificateCount).toBe(2);
     expect(chain.cert.serialNumber).toBe('A1:B2:C3:D4:E5:F6:07:18');
-    expect(await fingerprintCertificate(chain.der)).toEqual({ sha1: LEAF_SHA1, sha256: LEAF_SHA256 });
+    expect(await fingerprintCertificate(chain.der)).toEqual({
+      sha1: LEAF_SHA1,
+      sha256: LEAF_SHA256,
+    });
 
     const reversed = decodeCertificate(`${CA_PEM}\n${LEAF_PEM}`, IN_2026);
     expect(reversed.certificateCount).toBe(2);
-    expect(await fingerprintCertificate(reversed.der)).toEqual({ sha1: CA_SHA1, sha256: CA_SHA256 });
+    expect(await fingerprintCertificate(reversed.der)).toEqual({
+      sha1: CA_SHA1,
+      sha256: CA_SHA256,
+    });
   });
 
   // Defect: text around the block went into the Base64 decoder with it.
@@ -409,7 +433,9 @@ test.describe('decodeCertificate: input formats', () => {
   // the BEGIN line.
   test('recognises a PEM file that starts with a byte-order mark or other text', () => {
     const withBom = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(LEAF_PEM)]);
-    const withPreamble = new TextEncoder().encode(`Bag Attributes\n    localKeyID: 01\n${LEAF_PEM}\n`);
+    const withPreamble = new TextEncoder().encode(
+      `Bag Attributes\n    localKeyID: 01\n${LEAF_PEM}\n`
+    );
     for (const bytes of [withBom, withPreamble]) {
       expect(pemFromBytes(bytes)).toContain('-----BEGIN CERTIFICATE-----');
       expect(decodeCertificate(bytes, IN_2026).cert.serialNumber).toBe('A1:B2:C3:D4:E5:F6:07:18');
@@ -430,14 +456,27 @@ test.describe('decodeCertificate: input that is not a certificate', () => {
   // Defect: other PEM objects were pushed through the certificate parser and
   // failed with messages such as "Cannot read properties of undefined".
   test('names the PEM object it was given instead', () => {
-    const block = (label: string) => `-----BEGIN ${label}-----\nMIIBVAIBADANBgkq\n-----END ${label}-----`;
-    expect(() => decodeCertificate(block('PRIVATE KEY'))).toThrow(/This is a private key, not a certificate/);
-    expect(() => decodeCertificate(block('RSA PRIVATE KEY'))).toThrow(/This is a private key, not a certificate/);
-    expect(() => decodeCertificate(block('CERTIFICATE REQUEST'))).toThrow(/certificate signing request \(CSR\)/);
-    expect(() => decodeCertificate(block('PUBLIC KEY'))).toThrow(/This is a public key, not a certificate/);
-    expect(() => decodeCertificate(block('PKCS7'))).toThrow(/This is a PKCS#7 bundle, not a certificate/);
+    const block = (label: string) =>
+      `-----BEGIN ${label}-----\nMIIBVAIBADANBgkq\n-----END ${label}-----`;
+    expect(() => decodeCertificate(block('PRIVATE KEY'))).toThrow(
+      /This is a private key, not a certificate/
+    );
+    expect(() => decodeCertificate(block('RSA PRIVATE KEY'))).toThrow(
+      /This is a private key, not a certificate/
+    );
+    expect(() => decodeCertificate(block('CERTIFICATE REQUEST'))).toThrow(
+      /certificate signing request \(CSR\)/
+    );
+    expect(() => decodeCertificate(block('PUBLIC KEY'))).toThrow(
+      /This is a public key, not a certificate/
+    );
+    expect(() => decodeCertificate(block('PKCS7'))).toThrow(
+      /This is a PKCS#7 bundle, not a certificate/
+    );
     expect(() => decodeCertificate(block('X509 CRL'))).toThrow(/certificate revocation list/);
-    expect(() => decodeCertificate(block('DH PARAMETERS'))).toThrow(/This is a "DH PARAMETERS" block/);
+    expect(() => decodeCertificate(block('DH PARAMETERS'))).toThrow(
+      /This is a "DH PARAMETERS" block/
+    );
   });
 
   test('finds the certificate among other PEM objects', () => {

@@ -55,7 +55,11 @@ export function HtmlEncoder() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={mode === 'encode' ? '<div>Hello & "World"</div>' : '&lt;div&gt;Hello &amp; &quot;World&quot;&lt;/div&gt;'}
+            placeholder={
+              mode === 'encode'
+                ? '<div>Hello & "World"</div>'
+                : '&lt;div&gt;Hello &amp; &quot;World&quot;&lt;/div&gt;'
+            }
             aria-label={mode === 'encode' ? 'HTML to encode' : 'HTML entities to decode'}
             rows={8}
             className="font-mono"
@@ -67,7 +71,9 @@ export function HtmlEncoder() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>

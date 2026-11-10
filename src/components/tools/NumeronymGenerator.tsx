@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   DEFAULT_OPTIONS,
@@ -24,7 +30,9 @@ export function NumeronymGenerator() {
   const [lowercase, setLowercase] = useState(DEFAULT_OPTIONS.lowercase);
 
   const parsed = Number.parseInt(minLengthInput, 10);
-  const minLength = Number.isFinite(parsed) ? Math.max(MIN_ALLOWED_LENGTH, parsed) : DEFAULT_OPTIONS.minLength;
+  const minLength = Number.isFinite(parsed)
+    ? Math.max(MIN_ALLOWED_LENGTH, parsed)
+    : DEFAULT_OPTIONS.minLength;
 
   const deferredText = useDeferredValue(text);
   const output = useMemo(
@@ -43,7 +51,8 @@ export function NumeronymGenerator() {
             Text to Abbreviate
           </CardTitle>
           <CardDescription>
-            Keep the first and last character and count the ones in between: internationalization becomes i18n.
+            Keep the first and last character and count the ones in between: internationalization
+            becomes i18n.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -105,7 +114,8 @@ export function NumeronymGenerator() {
               onChange={(e) => setMinLengthInput(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Shorter words stay as they are. The lowest useful value is {MIN_ALLOWED_LENGTH} (cat becomes c1t).
+              Shorter words stay as they are. The lowest useful value is {MIN_ALLOWED_LENGTH} (cat
+              becomes c1t).
             </p>
           </div>
 

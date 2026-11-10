@@ -3,14 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
-import {
-  Search,
-  Clock,
-  Star,
-  ArrowRight,
-  Settings,
-  type LucideIcon,
-} from 'lucide-react';
+import { Search, Clock, Star, ArrowRight, Settings, type LucideIcon } from 'lucide-react';
 import { toolCatalog } from '@/lib/catalog';
 import {
   APP_COMMANDS,
@@ -64,7 +57,7 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
         role="img"
         aria-label={tag.name}
         className={cn(
-          "inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105",
+          'inline-flex items-center justify-center rounded-md border h-6 w-6 p-1 transition-all duration-200 hover:scale-105',
           styles.bg,
           styles.text,
           styles.border
@@ -165,15 +158,9 @@ export function CommandPalette() {
     };
   }, [open, search, recentTools.length, favorites.length]);
 
-  const recentToolsData = useMemo(
-    () => toolCatalog.byIds(recentTools),
-    [recentTools]
-  );
+  const recentToolsData = useMemo(() => toolCatalog.byIds(recentTools), [recentTools]);
 
-  const favoriteToolsData = useMemo(
-    () => toolCatalog.byIds(favorites),
-    [favorites]
-  );
+  const favoriteToolsData = useMemo(() => toolCatalog.byIds(favorites), [favorites]);
 
   // Group remaining tools by tag
   const groupedTools = useMemo(() => {
@@ -243,9 +230,7 @@ export function CommandPalette() {
             <TagIconBadge key={tagId} tagId={tagId} />
           ))}
         </div>
-        {look.arrow && (
-          <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />
-        )}
+        {look.arrow && <ArrowRight className="ml-2 h-4 w-4 text-muted-foreground shrink-0" />}
       </>
     ),
     onSelect: () => openTool(tool.id),
@@ -479,16 +464,10 @@ export function CommandPalette() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex flex-wrap gap-3">
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    ↑↓
-                  </kbd>{' '}
-                  navigate
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↑↓</kbd> navigate
                 </span>
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    ↵
-                  </kbd>{' '}
-                  open
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">↵</kbd> open
                 </span>
                 <span className="hidden sm:inline">
                   <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
@@ -528,10 +507,7 @@ export function CommandPalette() {
                   </button>
                 </TooltipSimple>
                 <span>
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
-                    esc
-                  </kbd>{' '}
-                  close
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">esc</kbd> close
                 </span>
               </div>
             </div>

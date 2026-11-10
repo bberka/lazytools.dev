@@ -42,19 +42,35 @@ test.describe('expandRanges', () => {
   });
 
   test('lists a /32 as one address', () => {
-    expect(expanded('172.16.5.9/32')).toMatchObject({ count: 1, first: '172.16.5.9', last: '172.16.5.9' });
+    expect(expanded('172.16.5.9/32')).toMatchObject({
+      count: 1,
+      first: '172.16.5.9',
+      last: '172.16.5.9',
+    });
   });
 
   test('moves a host address in a CIDR block back to its network', () => {
-    expect(expanded('10.0.0.77/30').addresses).toEqual(['10.0.0.76', '10.0.0.77', '10.0.0.78', '10.0.0.79']);
+    expect(expanded('10.0.0.77/30').addresses).toEqual([
+      '10.0.0.76',
+      '10.0.0.77',
+      '10.0.0.78',
+      '10.0.0.79',
+    ]);
   });
 
   test('lists a start - end range across an octet boundary', () => {
     const result = expanded('10.0.0.250 - 10.0.1.2');
     expect(result.count).toBe(9);
     expect(result.addresses).toEqual([
-      '10.0.0.250', '10.0.0.251', '10.0.0.252', '10.0.0.253', '10.0.0.254', '10.0.0.255',
-      '10.0.1.0', '10.0.1.1', '10.0.1.2',
+      '10.0.0.250',
+      '10.0.0.251',
+      '10.0.0.252',
+      '10.0.0.253',
+      '10.0.0.254',
+      '10.0.0.255',
+      '10.0.1.0',
+      '10.0.1.1',
+      '10.0.1.2',
     ]);
   });
 
@@ -92,10 +108,18 @@ test.describe('expandRanges', () => {
 
   test('reports the size of a block far over the cap without listing it', () => {
     const everything = expandError('0.0.0.0/0');
-    expect(everything).toMatchObject({ count: 4294967296, first: '0.0.0.0', last: '255.255.255.255' });
+    expect(everything).toMatchObject({
+      count: 4294967296,
+      first: '0.0.0.0',
+      last: '255.255.255.255',
+    });
     expect(everything.error).toContain('4,294,967,296');
 
-    expect(expandError('10.0.0.0/15')).toMatchObject({ count: 131072, first: '10.0.0.0', last: '10.1.255.255' });
+    expect(expandError('10.0.0.0/15')).toMatchObject({
+      count: 131072,
+      first: '10.0.0.0',
+      last: '10.1.255.255',
+    });
   });
 
   test('honours a smaller cap', () => {
@@ -109,7 +133,9 @@ test.describe('expandRanges', () => {
     expect(expandError('10.0.0.0/33').error).toContain('"10.0.0.0/33" is not a valid CIDR block');
     expect(expandError('10.0.0/24').error).toContain('not a valid CIDR block');
     expect(expandError('10.0.0.1/').error).toContain('not a valid CIDR block');
-    expect(expandError('10.0.0.5 - 10.0.0.1').error).toBe('"10.0.0.5 - 10.0.0.1" starts after it ends.');
+    expect(expandError('10.0.0.5 - 10.0.0.1').error).toBe(
+      '"10.0.0.5 - 10.0.0.1" starts after it ends.'
+    );
     expect(expandError('10.0.0.1 - banana').error).toContain('not a valid address range');
     expect(expandError('10.0.0.1\n300.1.1.1').error).toBe(
       '"300.1.1.1" is not a valid IPv4 address, range or CIDR block.'

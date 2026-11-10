@@ -85,7 +85,10 @@ test.describe('decodeBasicAuth', () => {
   });
 
   test('reads the RFC example', () => {
-    expect(decoded(basicCredentials(ALADDIN))).toEqual({ username: 'Aladdin', password: 'open sesame' });
+    expect(decoded(basicCredentials(ALADDIN))).toEqual({
+      username: 'Aladdin',
+      password: 'open sesame',
+    });
   });
 
   test('decodes UTF-8 text', () => {
@@ -100,7 +103,10 @@ test.describe('decodeBasicAuth', () => {
   });
 
   test('accepts missing padding and URL-safe Base64', () => {
-    expect(decoded('QWxhZGRpbjpvcGVuIHNlc2FtZQ')).toEqual({ username: 'Aladdin', password: 'open sesame' });
+    expect(decoded('QWxhZGRpbjpvcGVuIHNlc2FtZQ')).toEqual({
+      username: 'Aladdin',
+      password: 'open sesame',
+    });
     // "u:>?>?" is dTo+Pz4/ in Base64 and dTo-Pz4_ in URL-safe Base64.
     expect(decoded('dTo+Pz4/')).toEqual({ username: 'u', password: '>?>?' });
     expect(decoded('dTo-Pz4_')).toEqual({ username: 'u', password: '>?>?' });
@@ -113,7 +119,9 @@ test.describe('decodeBasicAuth', () => {
 
   test('rejects other schemes and bad tokens', () => {
     expect(decodeError('')).toBe('Paste an Authorization header to decode.');
-    expect(decodeError('Bearer abc.def.ghi')).toBe('That header uses the Bearer scheme, not Basic.');
+    expect(decodeError('Bearer abc.def.ghi')).toBe(
+      'That header uses the Bearer scheme, not Basic.'
+    );
     expect(decodeError('Basic !!!')).toBe('The token is not valid Base64.');
     expect(decodeError('Basic A')).toBe('The token is not valid Base64.');
     expect(decodeError('Authorization: Basic')).toBe('The token is not valid Base64.');

@@ -14,7 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileJson, Trash2, CheckCircle2, AlertTriangle, Search, Info, ChevronRight, ChevronDown } from 'lucide-react';
+import {
+  FileJson,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  Search,
+  Info,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -38,7 +47,9 @@ function TreeNode({ name, value, depth }: { name?: string; value: unknown; depth
   const node = describeTreeNode(value, TREE_WORDS);
   const label =
     name === undefined ? null : (
-      <span className="text-purple-600 dark:text-purple-400 font-semibold">{name === '' ? '""' : name}:</span>
+      <span className="text-purple-600 dark:text-purple-400 font-semibold">
+        {name === '' ? '""' : name}:
+      </span>
     );
 
   if (node.kind === 'leaf') {
@@ -139,7 +150,9 @@ export function JsonFormatter() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Indentation configuration */}
               <div className="flex items-center gap-2">
-                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
+                <label htmlFor="indentation" className="text-sm font-medium">
+                  Indentation:
+                </label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -155,12 +168,23 @@ export function JsonFormatter() {
                 </Select>
               </div>
 
-              <Button onClick={handleMinify} variant="outline" size="sm" className="min-h-11 sm:min-h-9" disabled={!validation?.valid}>
+              <Button
+                onClick={handleMinify}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9"
+                disabled={!validation?.valid}
+              >
                 Minify JSON
               </Button>
             </div>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -204,7 +228,8 @@ export function JsonFormatter() {
               Filter / Query Output
             </CardTitle>
             <CardDescription className="text-xs">
-              Inspect nested fields using dot/bracket paths (e.g., <code>$.roles[0]</code> or <code>roles</code>). Leave empty for full JSON.
+              Inspect nested fields using dot/bracket paths (e.g., <code>$.roles[0]</code> or{' '}
+              <code>roles</code>). Leave empty for full JSON.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -229,7 +254,11 @@ export function JsonFormatter() {
             </CardDescription>
           </div>
           {validation?.valid && !outputResult.error && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
+            <div
+              className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
+              role="group"
+              aria-label="Output view"
+            >
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"

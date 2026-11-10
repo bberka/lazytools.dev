@@ -71,7 +71,9 @@ function DetailRow({
   return (
     <div className="flex items-start justify-between gap-2 py-2.5">
       <div className="min-w-0 space-y-0.5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
         <div className={`break-all text-sm ${mono ? 'font-mono' : ''}`}>{value}</div>
       </div>
       {copyLabel && <CopyValueButton text={value} label={copyLabel} />}
@@ -203,7 +205,9 @@ export function UlidGenerator() {
                   onChange={(e) => setCountText(e.target.value)}
                   aria-invalid={!countResult.ok}
                   aria-describedby={countResult.ok ? undefined : 'ulid-count-error'}
-                  className={countResult.ok ? '' : 'border-destructive focus-visible:ring-destructive'}
+                  className={
+                    countResult.ok ? '' : 'border-destructive focus-visible:ring-destructive'
+                  }
                 />
               </div>
 
@@ -211,7 +215,10 @@ export function UlidGenerator() {
                 <label htmlFor="ulid-case" className="text-sm font-medium">
                   Letter case
                 </label>
-                <Select value={letterCase} onValueChange={(value) => handleCaseChange(value as LetterCase)}>
+                <Select
+                  value={letterCase}
+                  onValueChange={(value) => handleCaseChange(value as LetterCase)}
+                >
                   <SelectTrigger id="ulid-case">
                     <SelectValue />
                   </SelectTrigger>
@@ -230,8 +237,8 @@ export function UlidGenerator() {
                   Monotonic mode
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  In the same millisecond the random part counts up by one, so a batch always sorts in
-                  creation order.
+                  In the same millisecond the random part counts up by one, so a batch always sorts
+                  in creation order.
                 </p>
               </div>
               <Switch id="ulid-monotonic" checked={monotonic} onCheckedChange={setMonotonic} />
@@ -335,7 +342,10 @@ export function UlidGenerator() {
                   className="max-h-96 divide-y overflow-y-auto rounded-md border bg-muted/30"
                 >
                   {ulids.map((ulid, index) => (
-                    <li key={index} className="flex items-center justify-between gap-2 py-1 pl-3 pr-1">
+                    <li
+                      key={index}
+                      className="flex items-center justify-between gap-2 py-1 pl-3 pr-1"
+                    >
                       <span className="min-w-0 break-all font-mono text-sm">
                         <span className="text-primary">{ulid.slice(0, 10)}</span>
                         {ulid.slice(10)}
@@ -376,7 +386,9 @@ export function UlidGenerator() {
                 autoComplete="off"
                 aria-invalid={decoded !== null && !decoded.ok}
                 className={`font-mono text-sm ${
-                  decoded !== null && !decoded.ok ? 'border-destructive focus-visible:ring-destructive' : ''
+                  decoded !== null && !decoded.ok
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : ''
                 }`}
               />
               <div className="flex flex-wrap gap-2">
@@ -458,7 +470,9 @@ export function UlidGenerator() {
               <ArrowLeftRight className="h-5 w-5 text-primary" />
               ULID and UUID
             </CardTitle>
-            <CardDescription>Both hold 128 bits. Type in either box to convert to the other.</CardDescription>
+            <CardDescription>
+              Both hold 128 bits. Type in either box to convert to the other.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -525,8 +539,8 @@ export function UlidGenerator() {
               <p className="flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
-                  The same bytes in UUID layout, with the timestamp in the first six. No UUID version or
-                  variant bits are set, so it is not a v4 or v7 UUID.
+                  The same bytes in UUID layout, with the timestamp in the first six. No UUID
+                  version or variant bits are set, so it is not a v4 or v7 UUID.
                 </span>
               </p>
               <Button

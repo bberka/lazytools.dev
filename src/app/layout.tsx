@@ -63,9 +63,7 @@ export const metadata: Metadata = {
     title: 'LazyTools',
     statusBarStyle: 'black-translucent',
   },
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://lazytools.dev'
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://lazytools.dev'),
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -104,11 +102,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={outfit.variable} suppressHydrationWarning>
       <head />

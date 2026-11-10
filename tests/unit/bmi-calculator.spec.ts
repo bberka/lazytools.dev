@@ -118,7 +118,9 @@ test.describe('calculateBmi', () => {
     expect(us('159', '5', '-1').error).toBe(
       'Weight and height values must be valid positive numbers.'
     );
-    expect(us('0', '5', '9').error).toBe('Weight and height values must be valid positive numbers.');
+    expect(us('0', '5', '9').error).toBe(
+      'Weight and height values must be valid positive numbers.'
+    );
     expect(us('159', '0', '0').error).toBe('Height must be greater than zero.');
   });
 

@@ -55,9 +55,7 @@ test.describe('naming cases', () => {
       'HELLO_WORLD_EXAMPLE',
     ];
 
-    for (const conversion of CASE_CONVERSIONS.filter((item) =>
-      NAMING_CASES.includes(item.label)
-    )) {
+    for (const conversion of CASE_CONVERSIONS.filter((item) => NAMING_CASES.includes(item.label))) {
       for (const spelling of spellings) {
         expect(conversion.convert(spelling), `${conversion.label} of ${spelling}`).toBe(
           conversion.example
@@ -136,7 +134,7 @@ test.describe('prose cases', () => {
 
   test('Title Case capitalises each word and lowers the rest', () => {
     expect(convert('the QUICK brown fox', 'Title Case')).toBe('The Quick Brown Fox');
-    expect(convert('hello-world and o\'neil', 'Title Case')).toBe("Hello-world And O'neil");
+    expect(convert("hello-world and o'neil", 'Title Case')).toBe("Hello-world And O'neil");
     expect(convert('line one\nline two', 'Title Case')).toBe('Line One\nLine Two');
   });
 

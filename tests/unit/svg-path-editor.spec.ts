@@ -67,8 +67,12 @@ test.describe('parsePath', () => {
   test('explains what is wrong with path data it cannot read', () => {
     // Defect: nothing was ever rejected, so plain prose was "analysed" as
     // commands (the h and two l of "hello" counted as three).
-    expect(parsePath('hello world').error).toBe('Path data must start with a move command (M or m).');
-    expect(parsePath('10 10 L 5 5').error).toBe('Expected a command letter but found "1" at character 1.');
+    expect(parsePath('hello world').error).toBe(
+      'Path data must start with a move command (M or m).'
+    );
+    expect(parsePath('10 10 L 5 5').error).toBe(
+      'Expected a command letter but found "1" at character 1.'
+    );
     expect(parsePath('L 10 10').error).toBe('Path data must start with a move command (M or m).');
     expect(parsePath('M 10 10 L 20').error).toBe(
       'Command "L" at character 9 takes 2 numbers at a time, but has 1.'
@@ -76,7 +80,9 @@ test.describe('parsePath', () => {
     expect(parsePath('M 10 10 L').error).toBe('Command "L" at character 9 needs 2 numbers.');
     expect(parsePath('M 10 10 H').error).toBe('Command "H" at character 9 needs 1 number.');
     expect(parsePath('M 10 10 X 5').error).toBe('Expected a number but found "X" at character 9.');
-    expect(parsePath('M 10 10 Z 5').error).toBe('Expected a command letter but found "5" at character 11.');
+    expect(parsePath('M 10 10 Z 5').error).toBe(
+      'Expected a command letter but found "5" at character 11.'
+    );
     expect(parsePath('M 10 10,').error).toBe(
       'Expected a number after the comma but found the end of the path.'
     );
@@ -107,7 +113,9 @@ test.describe('optimizePath', () => {
     // Defect: the old clean-up deleted every decimal point, so this path came
     // out as "M105 2025 L05 75" and drew something else entirely.
     expect(optimizePath('M 10.5 20.25 L 0.5 0.75')).toBe('M10.5 20.25L.5.75');
-    expect(values(optimizePath('M 10.5 20.25 L 0.5 0.75'))).toEqual(values('M 10.5 20.25 L 0.5 0.75'));
+    expect(values(optimizePath('M 10.5 20.25 L 0.5 0.75'))).toEqual(
+      values('M 10.5 20.25 L 0.5 0.75')
+    );
   });
 
   test('never leaves a dangling decimal point', () => {
@@ -194,7 +202,9 @@ test.describe('inspectPath', () => {
   test('reports a broken path with no optimised version', () => {
     const inspection = inspectPath('M 10 10 L 20');
 
-    expect(inspection.error).toBe('Command "L" at character 9 takes 2 numbers at a time, but has 1.');
+    expect(inspection.error).toBe(
+      'Command "L" at character 9 takes 2 numbers at a time, but has 1.'
+    );
     expect(inspection.optimized).toBe('');
     expect(inspection.savingsPercent).toBe('0.0');
     expect(inspection.analysis).toEqual({ commandCount: 1, length: 12, commands: { M: 1 } });
@@ -213,7 +223,15 @@ test.describe('isValidViewBox', () => {
   });
 
   test('rejects anything else', () => {
-    for (const viewBox of ['', '0 0 100', '0 0 100 100 5', '0 0 -1 100', '0 0 100 -1', 'a b c d', '0 0 100 100px']) {
+    for (const viewBox of [
+      '',
+      '0 0 100',
+      '0 0 100 100 5',
+      '0 0 -1 100',
+      '0 0 100 -1',
+      'a b c d',
+      '0 0 100 100px',
+    ]) {
       expect(isValidViewBox(viewBox), viewBox).toBe(false);
     }
   });

@@ -13,7 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileCode, Trash2, CheckCircle2, AlertTriangle, Info, ChevronRight, ChevronDown } from 'lucide-react';
+import {
+  FileCode,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import {
   describeLineCount,
   describeTreeNode,
@@ -22,7 +30,12 @@ import {
 } from '@/lib/tools/formatter-output';
 import { loadYamlTools, type YamlTools } from '@/lib/tools/yaml-validator';
 
-const TREE_WORDS: TreeVocabulary = { list: 'Sequence', map: 'Mapping', member: 'key', empty: 'null' };
+const TREE_WORDS: TreeVocabulary = {
+  list: 'Sequence',
+  map: 'Mapping',
+  member: 'key',
+  empty: 'null',
+};
 
 const LEAF_CLASSES: Record<TreeLeafType, string> = {
   empty: 'text-muted-foreground italic',
@@ -37,7 +50,9 @@ function TreeNode({ name, value, depth }: { name?: string; value: unknown; depth
   const node = describeTreeNode(value, TREE_WORDS);
   const label =
     name === undefined ? null : (
-      <span className="text-purple-600 dark:text-purple-400 font-semibold">{name === '' ? '""' : name}:</span>
+      <span className="text-purple-600 dark:text-purple-400 font-semibold">
+        {name === '' ? '""' : name}:
+      </span>
     );
 
   if (node.kind === 'leaf') {
@@ -82,7 +97,6 @@ export function YamlValidator() {
   const [viewMode, setViewMode] = useState<'text' | 'tree'>('text');
   const [yaml, setYaml] = useState<YamlTools | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-
 
   const hasInput = Boolean(input.trim());
 
@@ -167,7 +181,9 @@ export function YamlValidator() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Indentation configuration. YAML forbids tabs, so spaces only. */}
               <div className="flex items-center gap-2">
-                <label htmlFor="indentation" className="text-sm font-medium">Indentation:</label>
+                <label htmlFor="indentation" className="text-sm font-medium">
+                  Indentation:
+                </label>
                 <Select value={indentation} onValueChange={handleIndentationChange}>
                   <SelectTrigger id="indentation" className="w-28 sm:w-32">
                     <SelectValue placeholder="Select" />
@@ -182,12 +198,23 @@ export function YamlValidator() {
                 </Select>
               </div>
 
-              <Button onClick={handleMinify} variant="outline" size="sm" className="min-h-11 sm:min-h-9" disabled={!validation?.valid}>
+              <Button
+                onClick={handleMinify}
+                variant="outline"
+                size="sm"
+                className="min-h-11 sm:min-h-9"
+                disabled={!validation?.valid}
+              >
                 Minify YAML (JSON format)
               </Button>
             </div>
 
-            <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9">
+            <Button
+              onClick={handleClear}
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear
             </Button>
@@ -228,7 +255,8 @@ export function YamlValidator() {
             <div className="flex items-start gap-3 rounded-md bg-destructive/10 text-destructive border border-destructive/20 px-4 py-3 text-sm">
               <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
               <div>
-                <strong>Parser unavailable:</strong> The YAML parser could not be loaded. Check your connection, then edit the text to try again.
+                <strong>Parser unavailable:</strong> The YAML parser could not be loaded. Check your
+                connection, then edit the text to try again.
               </div>
             </div>
           )}
@@ -245,7 +273,11 @@ export function YamlValidator() {
             </CardDescription>
           </div>
           {validation?.valid && (
-            <div className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs" role="group" aria-label="Output view">
+            <div
+              className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
+              role="group"
+              aria-label="Output view"
+            >
               <Button
                 variant={viewMode === 'text' ? 'secondary' : 'ghost'}
                 size="sm"

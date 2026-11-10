@@ -5,7 +5,15 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-import { Trash2, ArrowLeftRight, Upload, FileText, X, Image as ImageIcon, Binary } from 'lucide-react';
+import {
+  Trash2,
+  ArrowLeftRight,
+  Upload,
+  FileText,
+  X,
+  Image as ImageIcon,
+  Binary,
+} from 'lucide-react';
 import { useFileIntake } from '@/hooks/useFileIntake';
 import { downloadBlob, formatBytes, readFileAsDataUrl, type FormatBytesOptions } from '@/lib/files';
 import { convertBase64, type Base64Mode } from '@/lib/tools/base64-converter';
@@ -37,10 +45,12 @@ export function Base64Converter() {
   // Identifies the read in progress, so a slower, older one cannot overwrite it.
   const readId = useRef(0);
   // A read still running when the tool is closed must not report back either.
-  useEffect(() => () => {
-    readId.current = -1;
-  }, []);
-
+  useEffect(
+    () => () => {
+      readId.current = -1;
+    },
+    []
+  );
 
   // ── Text mode ────────────────────────────────────────────────────────────────
 
@@ -134,7 +144,9 @@ export function Base64Converter() {
           <Card>
             <CardHeader>
               <CardTitle>Input</CardTitle>
-              <CardDescription>{mode === 'encode' ? 'Enter text to encode' : 'Enter Base64 to decode'}</CardDescription>
+              <CardDescription>
+                {mode === 'encode' ? 'Enter text to encode' : 'Enter Base64 to decode'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Textarea
@@ -149,7 +161,10 @@ export function Base64Converter() {
           </Card>
 
           {error && (
-            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}
@@ -157,7 +172,11 @@ export function Base64Converter() {
           <Card>
             <CardHeader>
               <CardTitle>Output</CardTitle>
-              <CardDescription>{output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result appears here automatically'}</CardDescription>
+              <CardDescription>
+                {output
+                  ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+                  : 'Result appears here automatically'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -178,10 +197,12 @@ export function Base64Converter() {
                     size="sm"
                   />
                   <Button onClick={handleSwap} disabled={!output} variant="outline" size="sm">
-                    <ArrowLeftRight className="h-4 w-4 mr-2" />Swap
+                    <ArrowLeftRight className="h-4 w-4 mr-2" />
+                    Swap
                   </Button>
                   <Button onClick={handleClear} variant="outline" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />Clear
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear
                   </Button>
                 </div>
               </div>
@@ -193,19 +214,27 @@ export function Base64Converter() {
           <Card>
             <CardHeader>
               <CardTitle>File</CardTitle>
-              <CardDescription>Any file type — images show a preview. Processed entirely in browser.</CardDescription>
+              <CardDescription>
+                Any file type — images show a preview. Processed entirely in browser.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {file ? (
                 <div className="flex items-center gap-3 p-4 rounded-md border bg-muted">
-                  {isImageType(file.type)
-                    ? <ImageIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
-                    : <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />}
+                  {isImageType(file.type) ? (
+                    <ImageIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">{file.type || 'unknown type'} · {formatBytes(file.size, SIZE_FORMAT)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {file.type || 'unknown type'} · {formatBytes(file.size, SIZE_FORMAT)}
+                    </p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={clearFile} aria-label="Remove file"><X className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={clearFile} aria-label="Remove file">
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               ) : (
                 <div
@@ -218,22 +247,33 @@ export function Base64Converter() {
                 </div>
               )}
               {isReading && (
-                <p role="status" className="mt-3 text-sm text-muted-foreground">Reading file...</p>
+                <p role="status" className="mt-3 text-sm text-muted-foreground">
+                  Reading file...
+                </p>
               )}
             </CardContent>
           </Card>
 
           {fileError && (
-            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {fileError}
             </div>
           )}
 
           {previewUrl && (
             <Card>
-              <CardHeader><CardTitle>Image Preview</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Image Preview</CardTitle>
+              </CardHeader>
               <CardContent>
-                <img src={previewUrl} alt="Preview" className="max-h-64 rounded-md object-contain mx-auto" />
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="max-h-64 rounded-md object-contain mx-auto"
+                />
               </CardContent>
             </Card>
           )}
@@ -246,7 +286,13 @@ export function Base64Converter() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Textarea value={fileBase64} readOnly aria-label="Base64 output" rows={8} className="font-mono text-xs" />
+                  <Textarea
+                    value={fileBase64}
+                    readOnly
+                    aria-label="Base64 output"
+                    rows={8}
+                    className="font-mono text-xs"
+                  />
                   <div className="flex flex-wrap gap-2">
                     <CopyButton text={fileBase64} label="Copy" copiedLabel="Copied!" size="sm" />
                     <Button onClick={handleDownload} variant="outline" size="sm">

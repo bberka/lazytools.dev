@@ -148,9 +148,18 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
           aria-label={`${name} colour`}
           className="min-w-0 flex-1 basis-32 sm:w-36 sm:flex-none"
         >
-          <ColorPicker label={`${name} colour`} value={stop.color} onChange={onColor} className="h-9" />
+          <ColorPicker
+            label={`${name} colour`}
+            value={stop.color}
+            onChange={onColor}
+            className="h-9"
+          />
         </div>
-        <PercentInput label={`${name} position in percent`} value={stop.position} onChange={onPosition} />
+        <PercentInput
+          label={`${name} position in percent`}
+          value={stop.position}
+          onChange={onPosition}
+        />
         <div className="ml-auto flex items-center gap-0.5">
           <TooltipSimple content="Move up">
             <Button
@@ -190,7 +199,14 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
           </TooltipSimple>
         </div>
       </div>
-      <Slider aria-label={`${name} position`} value={stop.position} min={0} max={100} step={1} onChange={onPosition} />
+      <Slider
+        aria-label={`${name} position`}
+        value={stop.position}
+        min={0}
+        max={100}
+        step={1}
+        onChange={onPosition}
+      />
     </li>
   );
 }
@@ -230,7 +246,8 @@ export function CssGradientGenerator() {
   const repeatId = useId();
   const shapeId = useId();
 
-  const patch = (changes: Partial<GradientModel>) => setModel((current) => ({ ...current, ...changes }));
+  const patch = (changes: Partial<GradientModel>) =>
+    setModel((current) => ({ ...current, ...changes }));
   const patchStops = (edit: (stops: ColorStop[]) => ColorStop[]) =>
     setModel((current) => ({ ...current, stops: edit(current.stops) }));
 
@@ -241,19 +258,20 @@ export function CssGradientGenerator() {
   const usesAngle = model.type !== 'radial';
   const usesPosition = model.type !== 'linear';
   const stopsInOrder = model.stops.every(
-    (stop, index) => index === 0 || model.stops[index - 1].position <= stop.position,
+    (stop, index) => index === 0 || model.stops[index - 1].position <= stop.position
   );
   const repeatNotice = model.repeating && !repeatsVisibly(model);
 
   const applyPreset = (preset: GradientPreset) => setModel(preset.model);
 
-  const copyStatus = cssCopy.isError || tailwindCopy.isError
-    ? 'Copy failed. Select the text and copy it by hand.'
-    : cssCopy.isCopied
-      ? 'CSS copied to the clipboard.'
-      : tailwindCopy.isCopied
-        ? 'Tailwind class copied to the clipboard.'
-        : '';
+  const copyStatus =
+    cssCopy.isError || tailwindCopy.isError
+      ? 'Copy failed. Select the text and copy it by hand.'
+      : cssCopy.isCopied
+        ? 'CSS copied to the clipboard.'
+        : tailwindCopy.isCopied
+          ? 'Tailwind class copied to the clipboard.'
+          : '';
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:items-start">
@@ -322,7 +340,10 @@ export function CssGradientGenerator() {
             <CardDescription>Pick a type, then set its direction and shape.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Tabs value={model.type} onValueChange={(next) => patch({ type: next as GradientType })}>
+            <Tabs
+              value={model.type}
+              onValueChange={(next) => patch({ type: next as GradientType })}
+            >
               <TabsList aria-label="Gradient type" className="grid h-auto w-full grid-cols-3">
                 <TabsTrigger value="linear">Linear</TabsTrigger>
                 <TabsTrigger value="radial">Radial</TabsTrigger>
@@ -373,7 +394,10 @@ export function CssGradientGenerator() {
                 <label htmlFor={shapeId} className={SECTION_LABEL}>
                   Shape
                 </label>
-                <Select value={model.shape} onValueChange={(next) => patch({ shape: next as RadialShape })}>
+                <Select
+                  value={model.shape}
+                  onValueChange={(next) => patch({ shape: next as RadialShape })}
+                >
                   <SelectTrigger id={shapeId} className="h-9">
                     <SelectValue placeholder="Select a shape" />
                   </SelectTrigger>

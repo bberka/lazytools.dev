@@ -138,7 +138,9 @@ test.describe('description', () => {
     expect(describe('0 0 1 1,4,7,10 *')).toBe(
       'at 00:00, on day 1 of the month, in January, April, July and October'
     );
-    expect(describe('0 0 1 1-6 *')).toBe('at 00:00, on day 1 of the month, in January through June');
+    expect(describe('0 0 1 1-6 *')).toBe(
+      'at 00:00, on day 1 of the month, in January through June'
+    );
     expect(describe('0 0 1 */3 *')).toBe('at 00:00, on day 1 of the month, in every 3rd month');
     expect(describe('0 0 * * 1-3')).toBe('at 00:00, from Monday through Wednesday');
     expect(describe('0 0 * * 0,6')).toBe('at 00:00, on Sunday and Saturday');
@@ -445,8 +447,8 @@ test.describe('buildCronExpression', () => {
     const expression = buildCronExpression('daily', { ...values, scheduleHour: '25' });
     expect(expression).toBe('5 25 * * *');
     expect(errorOf(expression)).toBe('Hour must stay between 0 and 23.');
-    expect(errorOf(buildCronExpression('every-minutes', { ...values, everyMinutesInterval: '-5' }))).toBe(
-      'Minute step must be a positive integer.'
-    );
+    expect(
+      errorOf(buildCronExpression('every-minutes', { ...values, everyMinutesInterval: '-5' }))
+    ).toBe('Minute step must be a positive integer.');
   });
 });

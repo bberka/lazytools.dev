@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('LazyTools Smoke Tests', () => {
-  
   test.beforeEach(async ({ page }) => {
     // Navigate to homepage before each test
     await page.goto('/');
@@ -52,9 +51,11 @@ test.describe('LazyTools Smoke Tests', () => {
     await expect(jsonFormatterCard).toBeVisible();
 
     // Find the favorite button on this card
-    const favoriteBtn = jsonFormatterCard.getByRole('button', { name: /add to favorites|remove from favorites/i });
+    const favoriteBtn = jsonFormatterCard.getByRole('button', {
+      name: /add to favorites|remove from favorites/i,
+    });
     await expect(favoriteBtn).toBeVisible();
-    
+
     // Ensure it starts as not favorited (default behavior)
     const labelBefore = await favoriteBtn.getAttribute('aria-label');
     expect(labelBefore).toBe('Add to favorites');
@@ -74,7 +75,7 @@ test.describe('LazyTools Smoke Tests', () => {
 
     // Verify only the favorited tool (JSON Formatter) is shown in the list
     await expect(jsonFormatterCard).toBeVisible();
-    
+
     // Unrelated tools (like Base64 Encoder/Decoder) should not be shown
     const otherCard = page.locator('a', { hasText: 'Base64 Encoder/Decoder' }).first();
     await expect(otherCard).not.toBeVisible();
@@ -105,7 +106,9 @@ test.describe('LazyTools Smoke Tests', () => {
     await searchInput.fill('JSON Formatter');
 
     // The list has filtered once unrelated tools drop out
-    await expect(dialog.locator('[cmdk-item]', { hasText: 'Base64 Encoder/Decoder' })).toHaveCount(0);
+    await expect(dialog.locator('[cmdk-item]', { hasText: 'Base64 Encoder/Decoder' })).toHaveCount(
+      0
+    );
 
     // Find the item in the list and click it directly
     const commandItem = dialog.locator('[cmdk-item]', { hasText: 'JSON Formatter' });
@@ -114,7 +117,7 @@ test.describe('LazyTools Smoke Tests', () => {
 
     // Verify navigation was successful
     await expect(page).toHaveURL(/\/tools\/json-formatter/);
-    
+
     // Verify heading on the page
     const pageHeading = page.getByRole('heading', { level: 1 });
     await expect(pageHeading).toContainText('JSON Formatter');
@@ -124,7 +127,9 @@ test.describe('LazyTools Smoke Tests', () => {
     // Navigate directly to the JSON Formatter page
     await page.goto('/tools/json-formatter');
     // Once hydrated the page records itself as a recent tool
-    await page.waitForFunction(() => (window.localStorage.getItem('dev-toolbox:recent') ?? '').includes('json-formatter'));
+    await page.waitForFunction(() =>
+      (window.localStorage.getItem('dev-toolbox:recent') ?? '').includes('json-formatter')
+    );
 
     // Wait for the tool inputs to render
     const inputArea = page.getByPlaceholder(/ada/i);

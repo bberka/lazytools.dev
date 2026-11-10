@@ -14,11 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  calculateBmi,
-  type BmiCategoryId,
-  type BmiUnitSystem,
-} from '@/lib/tools/bmi-calculator';
+import { calculateBmi, type BmiCategoryId, type BmiUnitSystem } from '@/lib/tools/bmi-calculator';
 import { cn } from '@/lib/utils';
 
 type UnitSystem = BmiUnitSystem;
@@ -86,7 +82,10 @@ export function BmiCalculator() {
             <label htmlFor="bmi-units" className="mb-2 block text-sm font-medium">
               Units
             </label>
-            <Select value={unitSystem} onValueChange={(value) => handleUnitChange(value as UnitSystem)}>
+            <Select
+              value={unitSystem}
+              onValueChange={(value) => handleUnitChange(value as UnitSystem)}
+            >
               <SelectTrigger id="bmi-units">
                 <SelectValue placeholder="Select units" />
               </SelectTrigger>
@@ -218,7 +217,9 @@ export function BmiCalculator() {
                   <Scale className="h-3.5 w-3.5" />
                   Category
                 </div>
-                <div className={cn('mt-1 text-lg font-semibold', categoryAccent[result.category.id])}>
+                <div
+                  className={cn('mt-1 text-lg font-semibold', categoryAccent[result.category.id])}
+                >
                   {result.category.label}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
@@ -230,7 +231,8 @@ export function BmiCalculator() {
                   Screening note
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  BMI is a screening measure for adults 20 and older and should be considered with other health factors.
+                  BMI is a screening measure for adults 20 and older and should be considered with
+                  other health factors.
                 </div>
               </div>
             </div>
@@ -240,7 +242,8 @@ export function BmiCalculator() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-4 text-sm text-muted-foreground sm:pt-6">
-          Adult BMI categories in this tool follow CDC thresholds: underweight below 18.5, healthy weight 18.5 to less than 25, overweight 25 to less than 30, and obesity 30 or greater.
+          Adult BMI categories in this tool follow CDC thresholds: underweight below 18.5, healthy
+          weight 18.5 to less than 25, overweight 25 to less than 30, and obesity 30 or greater.
         </CardContent>
       </Card>
     </div>

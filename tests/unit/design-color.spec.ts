@@ -23,7 +23,20 @@ test.describe('parseHexColor', () => {
   });
 
   test('rejects anything that is not a whole hex colour', () => {
-    for (const value of ['', '   ', '#', '#f', '#ff', '#ff00', '#ff000', '#ff00000', '#ggg', 'red', 'none', '#12345g']) {
+    for (const value of [
+      '',
+      '   ',
+      '#',
+      '#f',
+      '#ff',
+      '#ff00',
+      '#ff000',
+      '#ff00000',
+      '#ggg',
+      'red',
+      'none',
+      '#12345g',
+    ]) {
       expect(parseHexColor(value), value).toBeNull();
     }
   });

@@ -116,8 +116,25 @@ test.describe('constants and functions', () => {
   test('every documented function is listed', () => {
     expect([...FUNCTION_NAMES].sort()).toEqual(
       [
-        'abs', 'acos', 'asin', 'atan', 'cbrt', 'ceil', 'cos', 'exp', 'floor', 'ln',
-        'log', 'log2', 'max', 'min', 'pow', 'round', 'sin', 'sqrt', 'tan',
+        'abs',
+        'acos',
+        'asin',
+        'atan',
+        'cbrt',
+        'ceil',
+        'cos',
+        'exp',
+        'floor',
+        'ln',
+        'log',
+        'log2',
+        'max',
+        'min',
+        'pow',
+        'round',
+        'sin',
+        'sqrt',
+        'tan',
       ].sort()
     );
   });
@@ -177,7 +194,9 @@ test.describe('variables', () => {
   });
 
   test('constants, functions and ans cannot be assigned', () => {
-    expect(failure('pi = 3').message).toBe('"pi" is a constant and cannot be assigned at position 1');
+    expect(failure('pi = 3').message).toBe(
+      '"pi" is a constant and cannot be assigned at position 1'
+    );
     expect(failure('e = 1').message).toContain('constant');
     expect(failure('sqrt = 2').message).toContain('function');
     expect(failure('ans = 2').message).toContain('set automatically');
@@ -192,8 +211,16 @@ test.describe('variables', () => {
 
 test.describe('errors carry a position', () => {
   test('unknown names and functions', () => {
-    expect(failure('1 + foo')).toEqual({ message: 'Unknown name "foo" at position 5', index: 4, length: 3 });
-    expect(failure('2 * foo(3)')).toEqual({ message: 'Unknown function "foo" at position 5', index: 4, length: 3 });
+    expect(failure('1 + foo')).toEqual({
+      message: 'Unknown name "foo" at position 5',
+      index: 4,
+      length: 3,
+    });
+    expect(failure('2 * foo(3)')).toEqual({
+      message: 'Unknown function "foo" at position 5',
+      index: 4,
+      length: 3,
+    });
   });
 
   test('a function name without parentheses', () => {
@@ -201,16 +228,26 @@ test.describe('errors carry a position', () => {
   });
 
   test('unexpected characters', () => {
-    expect(failure('2 # 3')).toEqual({ message: 'Unexpected "#" at position 3', index: 2, length: 1 });
+    expect(failure('2 # 3')).toEqual({
+      message: 'Unexpected "#" at position 3',
+      index: 2,
+      length: 1,
+    });
     expect(failure('.')).toEqual({ message: 'Unexpected "." at position 1', index: 0, length: 1 });
   });
 
   test('parentheses', () => {
     expect(failure('(1 + 2').message).toBe('Missing ")" at position 7');
-    expect(failure('1 + 2)')).toEqual({ message: 'Unmatched ")" at position 6', index: 5, length: 1 });
+    expect(failure('1 + 2)')).toEqual({
+      message: 'Unmatched ")" at position 6',
+      index: 5,
+      length: 1,
+    });
     expect(failure('()').message).toBe('Empty parentheses at position 1');
     expect(failure('max(1, 2').message).toBe('Missing ")" at position 9');
-    expect(failure('max(1 2)').message).toContain('Expected "," or ")" but found "2" at position 7');
+    expect(failure('max(1 2)').message).toContain(
+      'Expected "," or ")" but found "2" at position 7'
+    );
   });
 
   test('missing operands', () => {
@@ -221,14 +258,18 @@ test.describe('errors carry a position', () => {
   });
 
   test('two operands in a row suggest an operator', () => {
-    expect(failure('2 3').message).toBe('Unexpected "3"; put an operator such as * before it at position 3');
+    expect(failure('2 3').message).toBe(
+      'Unexpected "3"; put an operator such as * before it at position 3'
+    );
     expect(failure('2x', 'rad', { x: 1 }).message).toContain('put an operator such as * before it');
     expect(failure('(1)(2)').message).toContain('put an operator');
     expect(failure('1.2.3').message).toContain('Unexpected ".3"');
   });
 
   test('a stray equals sign', () => {
-    expect(failure('1 = 2').message).toBe('Unexpected "="; only "name = expression" can assign at position 3');
+    expect(failure('1 = 2').message).toBe(
+      'Unexpected "="; only "name = expression" can assign at position 3'
+    );
     expect(failure('x = y = 2', 'rad', { y: 1 }).message).toContain('Unexpected "="');
   });
 
@@ -246,16 +287,25 @@ test.describe('errors carry a position', () => {
   });
 
   test('the position counts from the real start even after spaces', () => {
-    expect(failure('   4 / 0')).toMatchObject({ message: 'Division by zero at position 6', index: 5 });
+    expect(failure('   4 / 0')).toMatchObject({
+      message: 'Division by zero at position 6',
+      index: 5,
+    });
   });
 });
 
 test.describe('domain and range errors', () => {
   test('division and remainder by zero', () => {
-    expect(failure('1 / 0')).toEqual({ message: 'Division by zero at position 3', index: 2, length: 1 });
+    expect(failure('1 / 0')).toEqual({
+      message: 'Division by zero at position 3',
+      index: 2,
+      length: 1,
+    });
     expect(failure('1 / (2 - 2)').message).toBe('Division by zero at position 3');
     expect(failure('5 % 0').message).toBe('Remainder of division by zero at position 3');
-    expect(failure('0 ^ -1').message).toBe('Zero cannot be raised to a negative power at position 3');
+    expect(failure('0 ^ -1').message).toBe(
+      'Zero cannot be raised to a negative power at position 3'
+    );
   });
 
   test('square roots, logarithms and inverse trig outside their domain', () => {
@@ -269,7 +319,9 @@ test.describe('domain and range errors', () => {
   });
 
   test('a negative base with a fractional exponent', () => {
-    expect(failure('(-8) ^ 0.5').message).toBe('A negative number cannot be raised to a fractional power at position 6');
+    expect(failure('(-8) ^ 0.5').message).toBe(
+      'A negative number cannot be raised to a fractional power at position 6'
+    );
     expect(value('(-8) ^ 3')).toBe(-512);
   });
 
@@ -298,7 +350,9 @@ test.describe('safety limits', () => {
   });
 
   test('very long input is refused', () => {
-    expect(failure('1+'.repeat(MAX_SOURCE_LENGTH)).message).toContain('longer than 1000 characters');
+    expect(failure('1+'.repeat(MAX_SOURCE_LENGTH)).message).toContain(
+      'longer than 1000 characters'
+    );
     expect(value('1+'.repeat(400) + '1')).toBe(401);
   });
 });

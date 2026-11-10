@@ -184,10 +184,10 @@ test.describe('convertCurrency', () => {
     const { fetch, urls } = service(200, RATE);
 
     for (const date of ['yesterday', '2026-1', '2026-13-01', '2026-02-31', '2025-02-29']) {
-      expect(
-        await convertCurrency(request({ date }), { fetch, today: TODAY }),
-        date
-      ).toEqual({ status: 'failed', error: 'Enter a valid reference date as YYYY-MM-DD.' });
+      expect(await convertCurrency(request({ date }), { fetch, today: TODAY }), date).toEqual({
+        status: 'failed',
+        error: 'Enter a valid reference date as YYYY-MM-DD.',
+      });
     }
 
     expect(urls).toEqual([]);
@@ -207,18 +207,24 @@ test.describe('convertCurrency', () => {
     const notJson = service(500, new SyntaxError('Unexpected token <'));
     const noMessage = service(503, { status: 503 });
 
-    expect(await convertCurrency(request(), { fetch: notJson.fetch, today: TODAY })).toEqual(expected);
-    expect(await convertCurrency(request(), { fetch: noMessage.fetch, today: TODAY })).toEqual(expected);
+    expect(await convertCurrency(request(), { fetch: notJson.fetch, today: TODAY })).toEqual(
+      expected
+    );
+    expect(await convertCurrency(request(), { fetch: noMessage.fetch, today: TODAY })).toEqual(
+      expected
+    );
   });
 
   // The service's own text for this was shown as the whole error: "not found".
   test('explains a date the service has no rate for', async () => {
     const { fetch } = service(404, { status: 404, message: 'not found' });
 
-    expect(await convertCurrency(request({ date: '1990-01-01' }), { fetch, today: TODAY })).toEqual({
-      status: 'failed',
-      error: 'No exchange rate is available for January 1, 1990.',
-    });
+    expect(await convertCurrency(request({ date: '1990-01-01' }), { fetch, today: TODAY })).toEqual(
+      {
+        status: 'failed',
+        error: 'No exchange rate is available for January 1, 1990.',
+      }
+    );
     expect(await convertCurrency(request(), { fetch, today: TODAY })).toEqual({
       status: 'failed',
       error: 'No exchange rate is available for this currency pair.',
@@ -232,7 +238,13 @@ test.describe('convertCurrency', () => {
       error: 'The exchange rate service sent an unexpected response.',
     };
 
-    for (const body of [{}, null, { ...RATE, rate: '0.89' }, { ...RATE, rate: 0 }, { ...RATE, rate: null }]) {
+    for (const body of [
+      {},
+      null,
+      { ...RATE, rate: '0.89' },
+      { ...RATE, rate: 0 },
+      { ...RATE, rate: null },
+    ]) {
       const { fetch } = service(200, body);
 
       expect(

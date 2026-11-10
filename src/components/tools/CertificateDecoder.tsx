@@ -59,22 +59,31 @@ export function CertificateDecoder() {
       setCertificateCount(decoded.certificateCount);
       setError('');
       fingerprintCertificate(decoded.der)
-        .then((result) => { if (run === latestRun.current) setFps(result); })
-        .catch(() => { if (run === latestRun.current) setFps(null); });
+        .then((result) => {
+          if (run === latestRun.current) setFps(result);
+        })
+        .catch(() => {
+          if (run === latestRun.current) setFps(null);
+        });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Parse failed');
       setCert(null);
     }
   }, []);
 
-  const parseText = useCallback((text: string) => {
-    if (!text.trim()) {
-      latestRun.current += 1;
-      setCert(null); setError(''); setFps(null);
-      return;
-    }
-    showCertificate(text);
-  }, [showCertificate]);
+  const parseText = useCallback(
+    (text: string) => {
+      if (!text.trim()) {
+        latestRun.current += 1;
+        setCert(null);
+        setError('');
+        setFps(null);
+        return;
+      }
+      showCertificate(text);
+    },
+    [showCertificate]
+  );
 
   const handleInput = (text: string) => {
     setPemText(text);
@@ -99,10 +108,12 @@ export function CertificateDecoder() {
 
     const pem = pemFromBytes(bytes);
     if (pem !== null) {
-      setPemText(pem); setFileHint('');
+      setPemText(pem);
+      setFileHint('');
       parseText(pem);
     } else {
-      setPemText(''); setFileHint(`${file.name} (${file.size} bytes)`);
+      setPemText('');
+      setFileHint(`${file.name} (${file.size} bytes)`);
       showCertificate(bytes);
     }
   };
@@ -121,13 +132,21 @@ export function CertificateDecoder() {
 
   const handleClear = () => {
     latestRun.current += 1;
-    setPemText(''); setFileHint(''); setCert(null); setError(''); setFps(null);
+    setPemText('');
+    setFileHint('');
+    setCert(null);
+    setError('');
+    setFps(null);
   };
 
   const fmt = (d: Date) =>
     d.toLocaleString(undefined, {
-      year: 'numeric', month: 'short', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       timeZoneName: 'short',
     });
 
@@ -139,7 +158,9 @@ export function CertificateDecoder() {
             <Shield className="h-5 w-5" />
             Certificate Input
           </CardTitle>
-          <CardDescription>Paste a PEM certificate or upload a .pem / .crt / .cer / .der file</CardDescription>
+          <CardDescription>
+            Paste a PEM certificate or upload a .pem / .crt / .cer / .der file
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {fileHint ? (
@@ -150,7 +171,7 @@ export function CertificateDecoder() {
           ) : (
             <Textarea
               value={pemText}
-              onChange={e => handleInput((e.target as HTMLTextAreaElement).value)}
+              onChange={(e) => handleInput((e.target as HTMLTextAreaElement).value)}
               placeholder={'-----BEGIN CERTIFICATE-----\nMIIF...\n-----END CERTIFICATE-----'}
               aria-label="PEM certificate"
               rows={6}
@@ -171,7 +192,10 @@ export function CertificateDecoder() {
             />
           </div>
           {error && (
-            <div role="alert" className="bg-destructive/10 text-destructive px-3 py-2 rounded text-sm flex items-start gap-2">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive px-3 py-2 rounded text-sm flex items-start gap-2"
+            >
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
               {error}
             </div>
@@ -237,12 +261,22 @@ export function CertificateDecoder() {
               <Row
                 label="Not Before"
                 value={fmt(cert.validFrom)}
-                extra={cert.isNotYetValid ? <span className="text-destructive font-semibold text-xs ml-1">(NOT YET VALID)</span> : null}
+                extra={
+                  cert.isNotYetValid ? (
+                    <span className="text-destructive font-semibold text-xs ml-1">
+                      (NOT YET VALID)
+                    </span>
+                  ) : null
+                }
               />
               <Row
                 label="Not After"
                 value={fmt(cert.validTo)}
-                extra={cert.isExpired ? <span className="text-destructive font-semibold text-xs ml-1">(EXPIRED)</span> : null}
+                extra={
+                  cert.isExpired ? (
+                    <span className="text-destructive font-semibold text-xs ml-1">(EXPIRED)</span>
+                  ) : null
+                }
               />
               <div className="flex flex-wrap gap-x-4 gap-y-0.5 items-start pt-1">
                 <span className="text-muted-foreground w-32 shrink-0 text-sm">Serial Number</span>
@@ -281,12 +315,14 @@ export function CertificateDecoder() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {cert.extensions.map(ext => (
+                {cert.extensions.map((ext) => (
                   <div key={ext.oid}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium">{ext.name}</span>
                       {ext.critical && (
-                        <Badge variant="destructive" className="text-xs py-0 px-1 h-4">critical</Badge>
+                        <Badge variant="destructive" className="text-xs py-0 px-1 h-4">
+                          critical
+                        </Badge>
                       )}
                     </div>
                     <ExtValueView value={ext.value} />
@@ -341,13 +377,7 @@ export function CertificateDecoder() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Row({
-  label, value, extra,
-}: {
-  label: string;
-  value: string;
-  extra?: React.ReactNode;
-}) {
+function Row({ label, value, extra }: { label: string; value: string; extra?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-0.5">
       <span className="text-muted-foreground w-32 shrink-0 break-words">{label}</span>
@@ -376,7 +406,9 @@ function ExtValueView({ value }: { value: ExtValue }) {
     return (
       <ul className="space-y-0.5 pl-2">
         {value.items.map((item, i) => (
-          <li key={i} className="font-mono text-xs text-foreground">{item}</li>
+          <li key={i} className="font-mono text-xs text-foreground">
+            {item}
+          </li>
         ))}
       </ul>
     );
@@ -384,9 +416,15 @@ function ExtValueView({ value }: { value: ExtValue }) {
   if (value.kind === 'bc') {
     return (
       <div className="text-sm space-y-0.5">
-        <div><span className="text-muted-foreground">CA: </span>{value.isCA ? 'Yes' : 'No'}</div>
+        <div>
+          <span className="text-muted-foreground">CA: </span>
+          {value.isCA ? 'Yes' : 'No'}
+        </div>
         {value.pathLen !== undefined && (
-          <div><span className="text-muted-foreground">Path Length: </span>{value.pathLen}</div>
+          <div>
+            <span className="text-muted-foreground">Path Length: </span>
+            {value.pathLen}
+          </div>
         )}
       </div>
     );
@@ -394,8 +432,18 @@ function ExtValueView({ value }: { value: ExtValue }) {
   if (value.kind === 'aia') {
     return (
       <div className="text-sm space-y-0.5 break-all">
-        {value.ocsp && <div><span className="text-muted-foreground">OCSP: </span><span className="font-mono text-xs">{value.ocsp}</span></div>}
-        {value.caIssuers && <div><span className="text-muted-foreground">CA Issuers: </span><span className="font-mono text-xs">{value.caIssuers}</span></div>}
+        {value.ocsp && (
+          <div>
+            <span className="text-muted-foreground">OCSP: </span>
+            <span className="font-mono text-xs">{value.ocsp}</span>
+          </div>
+        )}
+        {value.caIssuers && (
+          <div>
+            <span className="text-muted-foreground">CA Issuers: </span>
+            <span className="font-mono text-xs">{value.caIssuers}</span>
+          </div>
+        )}
       </div>
     );
   }

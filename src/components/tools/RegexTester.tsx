@@ -155,7 +155,9 @@ export function RegexTester() {
             <SearchCode className="h-5 w-5" />
             Regular Expression
           </CardTitle>
-          <CardDescription>Enter a regex pattern or assemble one with guided snippets.</CardDescription>
+          <CardDescription>
+            Enter a regex pattern or assemble one with guided snippets.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -301,7 +303,10 @@ export function RegexTester() {
           <CardContent>
             <div className="overflow-x-auto border rounded-md divide-y max-h-[300px] overflow-y-auto scrollbar-thin bg-background">
               {explanations.map((exp, idx) => (
-                <div key={idx} className="grid grid-cols-[100px_minmax(0,1fr)] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors">
+                <div
+                  key={idx}
+                  className="grid grid-cols-[100px_minmax(0,1fr)] items-start p-3 gap-4 text-sm hover:bg-muted/40 transition-colors"
+                >
                   <div className="font-mono bg-muted px-1.5 py-0.5 rounded text-center break-all select-all font-semibold shrink-0 text-primary">
                     {exp.token}
                   </div>
@@ -403,21 +408,24 @@ export function RegexTester() {
                     <div className="break-all rounded bg-muted p-2 font-mono text-sm">
                       {match.text}
                     </div>
-                    {match.groups.length > 0 && match.groups.some((group) => group !== undefined) && (
-                      <div className="space-y-1">
-                        <div className="text-xs font-medium text-muted-foreground">
-                          Capture Groups
+                    {match.groups.length > 0 &&
+                      match.groups.some((group) => group !== undefined) && (
+                        <div className="space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Capture Groups
+                          </div>
+                          {match.groups.map((group, groupIndex) =>
+                            group !== undefined ? (
+                              <div key={groupIndex} className="pl-4 text-xs">
+                                <span className="text-muted-foreground">
+                                  Group {groupIndex + 1}:
+                                </span>{' '}
+                                <code className="rounded bg-muted px-1 py-0.5">{group}</code>
+                              </div>
+                            ) : null
+                          )}
                         </div>
-                        {match.groups.map((group, groupIndex) =>
-                          group !== undefined ? (
-                            <div key={groupIndex} className="pl-4 text-xs">
-                              <span className="text-muted-foreground">Group {groupIndex + 1}:</span>{' '}
-                              <code className="rounded bg-muted px-1 py-0.5">{group}</code>
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))}
               </div>

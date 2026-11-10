@@ -36,7 +36,8 @@ export interface TextCategoryInfo {
 export const TEXT_CATEGORY_INFO: Record<TextCategory, TextCategoryInfo> = {
   invisible: {
     label: 'Zero-width and invisible characters',
-    description: 'Zero-width space, joiner and non-joiner, word joiner, byte order mark, fillers and control codes.',
+    description:
+      'Zero-width space, joiner and non-joiner, word joiner, byte order mark, fillers and control codes.',
   },
   softHyphen: {
     label: 'Soft hyphens',
@@ -60,7 +61,8 @@ export const TEXT_CATEGORY_INFO: Record<TextCategory, TextCategoryInfo> = {
   },
   trackingParams: {
     label: 'Tracking parameters in URLs',
-    description: 'utm_* parameters and ref or source parameters naming an AI assistant, such as utm_source=chatgpt.com.',
+    description:
+      'utm_* parameters and ref or source parameters naming an AI assistant, such as utm_source=chatgpt.com.',
   },
 };
 
@@ -109,7 +111,11 @@ const CLASS_CATEGORY: Partial<Record<CharClass, TextCategory>> = {
   space: 'spaces',
 };
 
-function categoryOf(codePoints: readonly number[], index: number, members: ReadonlySet<number>): TextCategory | null {
+function categoryOf(
+  codePoints: readonly number[],
+  index: number,
+  members: ReadonlySet<number>
+): TextCategory | null {
   // Joiners, emoji presentation selectors and flag tags that belong to an emoji, and the joiners of Persian or Indic words.
   if (members.has(index) || isScriptJoiner(codePoints, index)) return null;
   const codePoint = codePoints[index];
@@ -123,7 +129,8 @@ function categoryOf(codePoints: readonly number[], index: number, members: Reado
 const URL_PATTERN = /https?:\/\/[^\s<>"'`]+/gi;
 // Characters that end a sentence or a Markdown link rather than the address. They are put back unchanged.
 const TRAILING_PUNCTUATION = /[.,;:!?)\]}>*_]+$/;
-const AI_REFERRER = /^(chatgpt(\.com)?|openai(\.com)?|claude(\.ai)?|anthropic|gemini|bard|perplexity(\.ai)?|copilot)$/i;
+const AI_REFERRER =
+  /^(chatgpt(\.com)?|openai(\.com)?|claude(\.ai)?|anthropic|gemini|bard|perplexity(\.ai)?|copilot)$/i;
 const REFERRER_KEYS = new Set(['ref', 'referrer', 'referer', 'source', 'src', 'from']);
 
 function safeDecode(value: string): string {
@@ -179,7 +186,10 @@ export function stripTrackingParamsInText(text: string): { text: string; removed
  * Characters go first, then URLs, so a URL with a zero-width character inside
  * is parsed as the address it really is.
  */
-export function cleanAiText(text: string, options: TextCleanOptions = DEFAULT_TEXT_OPTIONS): TextCleanResult {
+export function cleanAiText(
+  text: string,
+  options: TextCleanOptions = DEFAULT_TEXT_OPTIONS
+): TextCleanResult {
   const found = emptyCounts();
   const codePoints = Array.from(text, (char) => char.codePointAt(0) ?? 0);
   const members = findEmojiSequenceMembers(codePoints);
@@ -202,7 +212,8 @@ export function cleanAiText(text: string, options: TextCleanOptions = DEFAULT_TE
   const output = options.trackingParams ? urls.text : characters;
 
   const applied = emptyCounts();
-  for (const category of TEXT_CATEGORIES) applied[category] = options[category] ? found[category] : 0;
+  for (const category of TEXT_CATEGORIES)
+    applied[category] = options[category] ? found[category] : 0;
   const total = TEXT_CATEGORIES.reduce((sum, category) => sum + applied[category], 0);
 
   return { text: output, found, applied, total, changed: output !== text };

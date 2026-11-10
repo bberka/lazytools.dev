@@ -92,7 +92,10 @@ test.describe('readRecognitionResults', () => {
       { transcript: ' four', isFinal: false },
     ]);
 
-    expect(readRecognitionResults(event)).toEqual({ finalText: 'one two', interimText: 'three four' });
+    expect(readRecognitionResults(event)).toEqual({
+      finalText: 'one two',
+      interimText: 'three four',
+    });
   });
 
   test('joins results without spaces in an unspaced language', () => {
@@ -106,10 +109,12 @@ test.describe('readRecognitionResults', () => {
 
   test('gives empty text for an event without usable results', () => {
     expect(readRecognitionResults(resultEvent(0, []))).toEqual({ finalText: '', interimText: '' });
-    expect(readRecognitionResults(resultEvent(5, [{ transcript: 'late', isFinal: true }]))).toEqual({
-      finalText: '',
-      interimText: '',
-    });
+    expect(readRecognitionResults(resultEvent(5, [{ transcript: 'late', isFinal: true }]))).toEqual(
+      {
+        finalText: '',
+        interimText: '',
+      }
+    );
     expect(
       readRecognitionResults({ resultIndex: 0, results: { length: 1, 0: { isFinal: true } } })
     ).toEqual({ finalText: '', interimText: '' });
@@ -146,8 +151,12 @@ test.describe('transcriptFileName', () => {
   // The name used to carry the UTC date, which is the day before or after the
   // user's own date for part of every day outside UTC.
   test("is dated by the user's calendar day at any time of day", () => {
-    expect(transcriptFileName('txt', new Date(2026, 9, 11, 0, 5))).toBe('transcript-2026-10-11.txt');
-    expect(transcriptFileName('txt', new Date(2026, 9, 11, 23, 55))).toBe('transcript-2026-10-11.txt');
+    expect(transcriptFileName('txt', new Date(2026, 9, 11, 0, 5))).toBe(
+      'transcript-2026-10-11.txt'
+    );
+    expect(transcriptFileName('txt', new Date(2026, 9, 11, 23, 55))).toBe(
+      'transcript-2026-10-11.txt'
+    );
   });
 
   test('pads months and days and carries the format as the extension', () => {
@@ -158,7 +167,9 @@ test.describe('transcriptFileName', () => {
     expect(transcriptFileName('txt', new Date(2026, 11, 31, 23, 59, 59))).toBe(
       'transcript-2026-12-31.txt'
     );
-    expect(transcriptFileName('txt', new Date(2027, 0, 1, 0, 0, 0))).toBe('transcript-2027-01-01.txt');
+    expect(transcriptFileName('txt', new Date(2027, 0, 1, 0, 0, 0))).toBe(
+      'transcript-2027-01-01.txt'
+    );
     expect(transcriptFileName('md', new Date(2028, 1, 29, 8, 30))).toBe('transcript-2028-02-29.md');
   });
 });

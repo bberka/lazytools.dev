@@ -16,7 +16,6 @@ export interface AddressRange {
 
 type ParseResult = { ok: true; ranges: AddressRange[] } | { ok: false; error: string };
 
-
 function readAddress(text: string): number | null {
   const octets = parseIPv4(text);
   return octets ? ipv4ToNumber(octets) : null;
@@ -68,7 +67,8 @@ export function parseRanges(input: string): ParseResult {
     ranges.push(parsed);
   }
 
-  if (ranges.length === 0) return { ok: false, error: 'Enter a CIDR block, a range or a list of addresses.' };
+  if (ranges.length === 0)
+    return { ok: false, error: 'Enter a CIDR block, a range or a list of addresses.' };
   return { ok: true, ranges };
 }
 
@@ -147,4 +147,3 @@ export function collapseToCidrs(input: string): CollapseResult {
   const count = merged.reduce((total, range) => total + (range.end - range.start + 1), 0);
   return { ok: true, count, blocks: merged.flatMap(rangeToCidrs) };
 }
-

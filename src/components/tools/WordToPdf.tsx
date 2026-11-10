@@ -114,7 +114,10 @@ export function WordToPdf() {
           <CardDescription>
             Extract text from a Word (.docx) document and generate a PDF.
             <br />
-            <span className="text-xs text-muted-foreground">Note: This is a client-side tool. It extracts raw text and basic paragraphs, but does not preserve complex styling, fonts, tables, or images.</span>
+            <span className="text-xs text-muted-foreground">
+              Note: This is a client-side tool. It extracts raw text and basic paragraphs, but does
+              not preserve complex styling, fonts, tables, or images.
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -148,7 +151,10 @@ export function WordToPdf() {
           )}
 
           {error && (
-            <div role="alert" className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="mt-4 bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}

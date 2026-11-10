@@ -88,7 +88,9 @@ function readDotted(text: string): ReadResult {
 
   // Dotted hex: every part is written 0x..
   if (parts.every((part) => /^0x/i.test(part))) {
-    const values = parts.map((part) => (/^0x[0-9a-f]{1,2}$/i.test(part) ? parseInt(part, 16) : NaN));
+    const values = parts.map((part) =>
+      /^0x[0-9a-f]{1,2}$/i.test(part) ? parseInt(part, 16) : NaN
+    );
     if (values.some(Number.isNaN)) return fail('Each hex part must be 0x00 to 0xFF.');
     return {
       ok: true,
@@ -138,7 +140,8 @@ function readNumber(text: string): ReadResult {
   if (/^\d+$/.test(text)) {
     // A leading zero is the classic C spelling of octal (inet_aton).
     if (text.length > 1 && text.startsWith('0')) {
-      if (!/^[0-7]+$/.test(text)) return fail('A number with a leading 0 is octal and uses digits 0 to 7.');
+      if (!/^[0-7]+$/.test(text))
+        return fail('A number with a leading 0 is octal and uses digits 0 to 7.');
       const value = parseInt(text, 8);
       if (value > MAX_VALUE) return fail('That is larger than 32 bits (4294967295 / 0xFFFFFFFF).');
       return { ok: true, format: 'octal', value };
@@ -177,9 +180,17 @@ function formatIPv4(value: number): IPv4Form[] {
     { id: 'dotted-decimal', label: 'Dotted decimal', value: dotted },
     { id: 'integer', label: '32-bit integer', value: String(value) },
     { id: 'hex', label: 'Hexadecimal', value: `0x${hex(value, 8)}` },
-    { id: 'dotted-hex', label: 'Dotted hexadecimal', value: octets.map((o) => `0x${hex(o, 2)}`).join('.') },
+    {
+      id: 'dotted-hex',
+      label: 'Dotted hexadecimal',
+      value: octets.map((o) => `0x${hex(o, 2)}`).join('.'),
+    },
     { id: 'octal', label: 'Octal', value: `0${value.toString(8)}` },
-    { id: 'binary-dotted', label: 'Binary (dotted)', value: octets.map((o) => o.toString(2).padStart(8, '0')).join('.') },
+    {
+      id: 'binary-dotted',
+      label: 'Binary (dotted)',
+      value: octets.map((o) => o.toString(2).padStart(8, '0')).join('.'),
+    },
     { id: 'binary', label: 'Binary (32 bits)', value: bits },
     { id: 'mapped-ipv6', label: 'IPv4-mapped IPv6', value: `::ffff:${high}:${low}` },
     { id: 'mapped-ipv6-dotted', label: 'IPv4-mapped IPv6 (dotted)', value: `::ffff:${dotted}` },

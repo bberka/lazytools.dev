@@ -27,9 +27,7 @@ function pad(value: number): string {
 
 export type ParsedTimestamp =
   /** Nothing to convert yet: blank, or only a sign or decimal point so far. */
-  | { kind: 'empty' }
-  | { kind: 'invalid'; error: string }
-  | { kind: 'instant'; ms: number };
+  { kind: 'empty' } | { kind: 'invalid'; error: string } | { kind: 'instant'; ms: number };
 
 /**
  * Reads timestamp text as a moment in epoch milliseconds. The whole text has

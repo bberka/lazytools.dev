@@ -121,12 +121,19 @@ export function RomanNumeralConverter() {
                       aria-label={isDecimalCopied ? 'Decimal number copied' : 'Copy decimal number'}
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7"
                     >
-                      {isDecimalCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {isDecimalCopied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>
                 {decimalError && (
-                  <div role="alert" className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                  <div
+                    role="alert"
+                    className="flex items-center gap-1.5 text-xs text-destructive mt-1"
+                  >
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>{decimalError}</span>
                   </div>
@@ -164,7 +171,10 @@ export function RomanNumeralConverter() {
                   )}
                 </div>
                 {romanError && (
-                  <div role="alert" className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                  <div
+                    role="alert"
+                    className="flex items-center gap-1.5 text-xs text-destructive mt-1"
+                  >
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>{romanError}</span>
                   </div>

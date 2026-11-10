@@ -42,7 +42,13 @@ function secureRandomBytes(length: number): Uint8Array {
 
 /** 32 hex digits in the 8-4-4-4-12 layout. */
 function hyphenate(hex: string): string {
-  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20, 32)].join('-');
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20, 32),
+  ].join('-');
 }
 
 /** Stamps the RFC 9562 variant (binary 10) on the byte that starts the fourth group. */
@@ -79,7 +85,10 @@ function uuidV7Batch(count: number, source: IdSource): string[] {
     tail[0] = withVariant(tail[0]);
 
     return hyphenate(
-      time.toString(16).padStart(12, '0') + '7' + randA.toString(16).padStart(3, '0') + bytesToHex(tail)
+      time.toString(16).padStart(12, '0') +
+        '7' +
+        randA.toString(16).padStart(3, '0') +
+        bytesToHex(tail)
     );
   });
 }

@@ -104,7 +104,9 @@ export function WordCounter() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-semibold tracking-tight">{stat.value.toLocaleString()}</div>
+                <div className="text-3xl font-semibold tracking-tight">
+                  {stat.value.toLocaleString()}
+                </div>
               </CardContent>
             </Card>
           );

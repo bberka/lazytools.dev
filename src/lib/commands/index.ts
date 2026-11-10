@@ -104,9 +104,7 @@ export function shortcutLabel(shortcut: Shortcut, platform: Platform, separator 
  * Whether the user is typing into this element. Pass the focused one:
  * `document.activeElement`.
  */
-export function isTypingTarget(
-  element: Pick<Element, 'tagName' | 'getAttribute'> | null
-): boolean {
+export function isTypingTarget(element: Pick<Element, 'tagName' | 'getAttribute'> | null): boolean {
   if (!element) return false;
 
   return (

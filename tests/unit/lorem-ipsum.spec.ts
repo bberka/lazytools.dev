@@ -74,7 +74,9 @@ test.describe('sentences', () => {
     const sentences = sentencesOf(generate({ type: 'sentences', count: 8 }));
 
     expect(sentences[0]).toMatch(/^Lorem ipsum dolor sit amet/);
-    expect(sentences.slice(1).filter((sentence) => sentence.startsWith('Lorem ipsum dolor sit amet'))).toEqual([]);
+    expect(
+      sentences.slice(1).filter((sentence) => sentence.startsWith('Lorem ipsum dolor sit amet'))
+    ).toEqual([]);
   });
 });
 
@@ -99,7 +101,9 @@ test.describe('paragraphs', () => {
 
       expect(paragraphs[0]).toMatch(/^Lorem ipsum dolor sit amet/);
       expect(
-        paragraphs.slice(1).filter((paragraph) => paragraph.startsWith('Lorem ipsum dolor sit amet'))
+        paragraphs
+          .slice(1)
+          .filter((paragraph) => paragraph.startsWith('Lorem ipsum dolor sit amet'))
       ).toEqual([]);
     }
   });
@@ -152,13 +156,37 @@ test.describe('randomness', () => {
   });
 
   test('copes with a random source that returns its limits', () => {
-    expect(wordsOf(generateLoremIpsum({ type: 'words', count: 8, startWithLorem: false, htmlTags: false }, () => 0))).toHaveLength(8);
-    expect(wordsOf(generateLoremIpsum({ type: 'words', count: 8, startWithLorem: false, htmlTags: false }, () => 1))).toHaveLength(8);
-    expect(generateLoremIpsum({ type: 'sentences', count: 1, startWithLorem: false, htmlTags: false }, () => 1)).toMatch(/^[A-Z]/);
+    expect(
+      wordsOf(
+        generateLoremIpsum(
+          { type: 'words', count: 8, startWithLorem: false, htmlTags: false },
+          () => 0
+        )
+      )
+    ).toHaveLength(8);
+    expect(
+      wordsOf(
+        generateLoremIpsum(
+          { type: 'words', count: 8, startWithLorem: false, htmlTags: false },
+          () => 1
+        )
+      )
+    ).toHaveLength(8);
+    expect(
+      generateLoremIpsum(
+        { type: 'sentences', count: 1, startWithLorem: false, htmlTags: false },
+        () => 1
+      )
+    ).toMatch(/^[A-Z]/);
   });
 
   test('uses Math.random by default', () => {
-    const text = generateLoremIpsum({ type: 'paragraphs', count: 2, startWithLorem: true, htmlTags: false });
+    const text = generateLoremIpsum({
+      type: 'paragraphs',
+      count: 2,
+      startWithLorem: true,
+      htmlTags: false,
+    });
 
     expect(text.split('\n\n')).toHaveLength(2);
     expect(text).toMatch(/^Lorem ipsum dolor sit amet/);

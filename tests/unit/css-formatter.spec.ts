@@ -7,7 +7,8 @@ import {
   sizeChange,
 } from '@/lib/tools/css-formatter';
 
-const min = (css: string, keepImportantComments = false) => minifyCss(css, { keepImportantComments }).output;
+const min = (css: string, keepImportantComments = false) =>
+  minifyCss(css, { keepImportantComments }).output;
 
 test.describe('minifyCss basics', () => {
   test('strips comments, whitespace and the last semicolon', () => {
@@ -48,18 +49,22 @@ test.describe('minifyCss keeps strings, urls and comments inside them intact', (
       'a::after{content:"a  /* not a comment */ ; } b"}'
     );
     expect(min("a::after{content:'it\\'s  {x}'}")).toBe("a::after{content:'it\\'s  {x}'}");
-    expect(min('a::after{content:"say \\"hi\\" ;  }"}')).toBe('a::after{content:"say \\"hi\\" ;  }"}');
+    expect(min('a::after{content:"say \\"hi\\" ;  }"}')).toBe(
+      'a::after{content:"say \\"hi\\" ;  }"}'
+    );
   });
 
   test('comment markers in a url are not comments', () => {
-    expect(min('a{background:url(http://x.com/a//*b*/c.png)}')).toBe('a{background:url(http://x.com/a//*b*/c.png)}');
+    expect(min('a{background:url(http://x.com/a//*b*/c.png)}')).toBe(
+      'a{background:url(http://x.com/a//*b*/c.png)}'
+    );
     expect(min('a{background:url( "a b;c.png" )}')).toBe('a{background:url("a b;c.png")}');
   });
 
   test('unquoted urls keep their content, with semicolons, commas and spaces trimmed only at the ends', () => {
-    expect(min('a{background:url(  data:image/png;base64,iVBOR/+w==  ) no-repeat , url(b.png)}')).toBe(
-      'a{background:url(data:image/png;base64,iVBOR/+w==) no-repeat,url(b.png)}'
-    );
+    expect(
+      min('a{background:url(  data:image/png;base64,iVBOR/+w==  ) no-repeat , url(b.png)}')
+    ).toBe('a{background:url(data:image/png;base64,iVBOR/+w==) no-repeat,url(b.png)}');
     expect(min('a{b:url(x\\)y.png)}')).toBe('a{b:url(x\\)y.png)}');
   });
 
@@ -81,7 +86,9 @@ test.describe('minifyCss keeps strings, urls and comments inside them intact', (
 
 test.describe('minifyCss keeps the spacing CSS needs', () => {
   test('calc keeps the spaces around + and -', () => {
-    expect(min('a{width:calc( 100% - ( 2 * var( --gap , 4px ) ) )}')).toBe('a{width:calc(100% - (2 * var(--gap,4px)))}');
+    expect(min('a{width:calc( 100% - ( 2 * var( --gap , 4px ) ) )}')).toBe(
+      'a{width:calc(100% - (2 * var(--gap,4px)))}'
+    );
     expect(min('a{width:calc(1px + 2px)}')).toBe('a{width:calc(1px + 2px)}');
     expect(min('a{width:calc(-1 * 0.50px)}')).toBe('a{width:calc(-1 * .5px)}');
   });
@@ -108,17 +115,21 @@ test.describe('minifyCss keeps the spacing CSS needs', () => {
     expect(min('a{margin:0   auto  0 -1px;font:italic 12px / 1.5 "A B" , serif}')).toBe(
       'a{margin:0 auto 0 -1px;font:italic 12px / 1.5 "A B",serif}'
     );
-    expect(min('a{transition:opacity .3s ease , transform .3s ease}')).toBe('a{transition:opacity .3s ease,transform .3s ease}');
+    expect(min('a{transition:opacity .3s ease , transform .3s ease}')).toBe(
+      'a{transition:opacity .3s ease,transform .3s ease}'
+    );
   });
 
   test('!important loses its spaces', () => {
-    expect(min('a{color:red ! important;margin:0!important}')).toBe('a{color:red!important;margin:0!important}');
+    expect(min('a{color:red ! important;margin:0!important}')).toBe(
+      'a{color:red!important;margin:0!important}'
+    );
   });
 
   test('custom property values only have their whitespace collapsed', () => {
-    expect(min(':root{--shadow:  0 0 1px   red , 0 0 2px blue ;--n: 0.50; --c: #aabbcc ;--e: ;}')).toBe(
-      ':root{--shadow:0 0 1px red , 0 0 2px blue;--n:0.50;--c:#aabbcc;--e: }'
-    );
+    expect(
+      min(':root{--shadow:  0 0 1px   red , 0 0 2px blue ;--n: 0.50; --c: #aabbcc ;--e: ;}')
+    ).toBe(':root{--shadow:0 0 1px red , 0 0 2px blue;--n:0.50;--c:#aabbcc;--e: }');
     expect(min(':root{--obj: { a : b }}')).toBe(':root{--obj:{ a : b }}');
   });
 
@@ -151,14 +162,16 @@ test.describe('minifyCss shortens numbers and colours only where that is safe', 
   });
 
   test('numbers in declarations', () => {
-    expect(min('a{opacity:0.50;line-height:1.0;margin:-0.5em 0.0;width:50.0%;transition:all 0.30s}')).toBe(
-      'a{opacity:.5;line-height:1;margin:-.5em 0;width:50%;transition:all .3s}'
-    );
+    expect(
+      min('a{opacity:0.50;line-height:1.0;margin:-0.5em 0.0;width:50.0%;transition:all 0.30s}')
+    ).toBe('a{opacity:.5;line-height:1;margin:-.5em 0;width:50%;transition:all .3s}');
   });
 
   test('numbers in selectors, strings and urls are left alone', () => {
     expect(min('.col-0.5 , h1.a {b:c}')).toBe('.col-0.5,h1.a{b:c}');
-    expect(min('a{content:"0.50";background:url(0.50.png)}')).toBe('a{content:"0.50";background:url(0.50.png)}');
+    expect(min('a{content:"0.50";background:url(0.50.png)}')).toBe(
+      'a{content:"0.50";background:url(0.50.png)}'
+    );
     expect(min('@keyframes k{0.0%{a:b}50.5%{a:c}}')).toBe('@keyframes k{0.0%{a:b}50.5%{a:c}}');
   });
 
@@ -169,18 +182,24 @@ test.describe('minifyCss shortens numbers and colours only where that is safe', 
   });
 
   test('hex colours with repeated pairs are shortened, others are not', () => {
-    expect(min('a{color:#ffffff;background:#AABBCC;border-color:#aabbccdd;outline-color:#12345a}')).toBe(
-      'a{color:#fff;background:#ABC;border-color:#abcd;outline-color:#12345a}'
-    );
+    expect(
+      min('a{color:#ffffff;background:#AABBCC;border-color:#aabbccdd;outline-color:#12345a}')
+    ).toBe('a{color:#fff;background:#ABC;border-color:#abcd;outline-color:#12345a}');
   });
 
   test('hex-like words that are not colours are not shortened', () => {
-    expect(min('a{background:url(#aabbcc);content:"#aabbcc"}')).toBe('a{background:url(#aabbcc);content:"#aabbcc"}');
+    expect(min('a{background:url(#aabbcc);content:"#aabbcc"}')).toBe(
+      'a{background:url(#aabbcc);content:"#aabbcc"}'
+    );
     expect(min('#aabbcc , #112233 .x {a:b}')).toBe('#aabbcc,#112233 .x{a:b}');
   });
 
   test('IE progid filters keep their 8-digit colours', () => {
-    expect(min('a{filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#00000000,endColorstr=#ffffffff)}')).toBe(
+    expect(
+      min(
+        'a{filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#00000000,endColorstr=#ffffffff)}'
+      )
+    ).toBe(
       'a{filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#00000000,endColorstr=#ffffffff)}'
     );
   });
@@ -192,22 +211,28 @@ test.describe('minifyCss with at-rules and nesting', () => {
       '@media screen and (min-width:600px) and (max-width:900px){a{b:c}}'
     );
     expect(min('@media(min-width:600px){a{b:c}}')).toBe('@media(min-width:600px){a{b:c}}');
-    expect(min('@supports (display: grid) and (not (display: inline-grid)) { a{display:grid} }')).toBe(
-      '@supports (display:grid) and (not (display:inline-grid)){a{display:grid}}'
+    expect(
+      min('@supports (display: grid) and (not (display: inline-grid)) { a{display:grid} }')
+    ).toBe('@supports (display:grid) and (not (display:inline-grid)){a{display:grid}}');
+    expect(min('@container sidebar (min-width: 400px) { a{b:c} }')).toBe(
+      '@container sidebar (min-width:400px){a{b:c}}'
     );
-    expect(min('@container sidebar (min-width: 400px) { a{b:c} }')).toBe('@container sidebar (min-width:400px){a{b:c}}');
   });
 
   test('functions in preludes keep their colon spacing', () => {
-    expect(min('@supports selector( a:hover ) { a{b:c} }')).toBe('@supports selector(a:hover){a{b:c}}');
+    expect(min('@supports selector( a:hover ) { a{b:c} }')).toBe(
+      '@supports selector(a:hover){a{b:c}}'
+    );
     expect(min('@page :first { margin: 0 }')).toBe('@page :first{margin:0}');
   });
 
   test('@layer lists, @import and @keyframes', () => {
     expect(min('@layer reset , base , theme ;')).toBe('@layer reset,base,theme');
-    expect(min('@keyframes spin { from { transform : rotate( 0deg ) } to { transform : rotate( 360deg ) } }')).toBe(
-      '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}'
-    );
+    expect(
+      min(
+        '@keyframes spin { from { transform : rotate( 0deg ) } to { transform : rotate( 360deg ) } }'
+      )
+    ).toBe('@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}');
     expect(min('@keyframes k{0%,100%{a:b}50%{a:c}}')).toBe('@keyframes k{0%,100%{a:b}50%{a:c}}');
   });
 
@@ -228,11 +253,15 @@ test.describe('minifyCss with at-rules and nesting', () => {
           margin: 0;
         }
       `)
-    ).toBe('.card{color:red;&:hover{color:blue}.title{font-weight:bold}@media (min-width:600px){padding:1rem;& .x{margin:0}}margin:0}');
+    ).toBe(
+      '.card{color:red;&:hover{color:blue}.title{font-weight:bold}@media (min-width:600px){padding:1rem;& .x{margin:0}}margin:0}'
+    );
   });
 
   test('semicolons are kept between statements and only dropped at the very end', () => {
-    expect(min('@import "a.css"; @import "b.css"; a{b:c}')).toBe('@import "a.css";@import "b.css";a{b:c}');
+    expect(min('@import "a.css"; @import "b.css"; a{b:c}')).toBe(
+      '@import "a.css";@import "b.css";a{b:c}'
+    );
     expect(min('a{b:c} @import "z.css";')).toBe('a{b:c}@import "z.css"');
   });
 
@@ -264,8 +293,12 @@ test.describe('warnings', () => {
   });
 
   test('an unterminated comment, string and url', () => {
-    expect(minifyCss('a{b:c} /* open').warnings).toEqual(['Unterminated comment starting on line 1']);
-    expect(minifyCss('a{content:"open\n}b{c:d}').warnings).toEqual(['Unterminated string on line 1']);
+    expect(minifyCss('a{b:c} /* open').warnings).toEqual([
+      'Unterminated comment starting on line 1',
+    ]);
+    expect(minifyCss('a{content:"open\n}b{c:d}').warnings).toEqual([
+      'Unterminated string on line 1',
+    ]);
     expect(minifyCss('a{b:url(open').warnings[0]).toBe('Unterminated url( on line 1');
   });
 
@@ -284,13 +317,22 @@ test.describe('beautifyCss', () => {
 
   test('indent choices', () => {
     const css = '@media print{a{b:c}}';
-    expect(beautifyCss(css, { indent: 2 }).output).toBe('@media print {\n  a {\n    b: c;\n  }\n}\n');
-    expect(beautifyCss(css, { indent: 4 }).output).toBe('@media print {\n    a {\n        b: c;\n    }\n}\n');
-    expect(beautifyCss(css, { indent: 'tab' }).output).toBe('@media print {\n\ta {\n\t\tb: c;\n\t}\n}\n');
+    expect(beautifyCss(css, { indent: 2 }).output).toBe(
+      '@media print {\n  a {\n    b: c;\n  }\n}\n'
+    );
+    expect(beautifyCss(css, { indent: 4 }).output).toBe(
+      '@media print {\n    a {\n        b: c;\n    }\n}\n'
+    );
+    expect(beautifyCss(css, { indent: 'tab' }).output).toBe(
+      '@media print {\n\ta {\n\t\tb: c;\n\t}\n}\n'
+    );
   });
 
   test('spaces after commas and colons, not inside strings', () => {
-    expect(beautifyCss('a{font:12px/1.5 "A,B",serif;color:rgba(0,0,0,.5);background:url(a,b.png)}').output).toBe(
+    expect(
+      beautifyCss('a{font:12px/1.5 "A,B",serif;color:rgba(0,0,0,.5);background:url(a,b.png)}')
+        .output
+    ).toBe(
       'a {\n  font: 12px/1.5 "A,B", serif;\n  color: rgba(0, 0, 0, .5);\n  background: url(a,b.png);\n}\n'
     );
   });
@@ -308,15 +350,24 @@ test.describe('beautifyCss', () => {
   });
 
   test('@media and @supports preludes', () => {
-    expect(beautifyCss('@media screen and (min-width:600px) and (max-width:900px){a{b:c}}').output).toBe(
+    expect(
+      beautifyCss('@media screen and (min-width:600px) and (max-width:900px){a{b:c}}').output
+    ).toBe(
       '@media screen and (min-width: 600px) and (max-width: 900px) {\n  a {\n    b: c;\n  }\n}\n'
     );
-    expect(beautifyCss('@supports selector(a:hover){a{b:c}}').output).toContain('@supports selector(a:hover) {');
-    expect(beautifyCss('@media(min-width:600px){a{b:c}}').output).toContain('@media (min-width: 600px) {');
+    expect(beautifyCss('@supports selector(a:hover){a{b:c}}').output).toContain(
+      '@supports selector(a:hover) {'
+    );
+    expect(beautifyCss('@media(min-width:600px){a{b:c}}').output).toContain(
+      '@media (min-width: 600px) {'
+    );
   });
 
   test('nested rules, @media inside a rule and declarations after a nested rule', () => {
-    expect(beautifyCss('.a{color:red;&:hover{color:blue}@media (width>=600px){padding:1rem}margin:0}').output).toBe(
+    expect(
+      beautifyCss('.a{color:red;&:hover{color:blue}@media (width>=600px){padding:1rem}margin:0}')
+        .output
+    ).toBe(
       [
         '.a {',
         '  color: red;',
@@ -342,7 +393,10 @@ test.describe('beautifyCss', () => {
   });
 
   test('strings and urls with special characters are untouched', () => {
-    expect(beautifyCss('a::after{content:"}{;  /*x*/";background:url(data:image/svg+xml;utf8,<svg/>)}').output).toBe(
+    expect(
+      beautifyCss('a::after{content:"}{;  /*x*/";background:url(data:image/svg+xml;utf8,<svg/>)}')
+        .output
+    ).toBe(
       'a::after {\n  content: "}{;  /*x*/";\n  background: url(data:image/svg+xml;utf8,<svg/>);\n}\n'
     );
   });
@@ -389,7 +443,12 @@ test.describe('sizes', () => {
     const css = 'a {\n  color : red ;\n}\n';
     const out = min(css);
     expect(out).toBe('a{color:red}');
-    expect(sizeChange(byteLength(css), byteLength(out))).toEqual({ before: 22, after: 12, saved: 10, percent: 45.5 });
+    expect(sizeChange(byteLength(css), byteLength(out))).toEqual({
+      before: 22,
+      after: 12,
+      saved: 10,
+      percent: 45.5,
+    });
   });
 });
 
@@ -398,14 +457,18 @@ test.describe('limits', () => {
     const deep = `${'a{'.repeat(20000)}b:c${'}'.repeat(20000)}`;
     for (const result of [minifyCss(deep), beautifyCss(deep)]) {
       expect(result.output).toBe(deep);
-      expect(result.warnings.at(-1)).toBe('Blocks are nested too deeply to process; the input is returned unchanged');
+      expect(result.warnings.at(-1)).toBe(
+        'Blocks are nested too deeply to process; the input is returned unchanged'
+      );
     }
   });
 
   test('a large stylesheet is processed quickly', () => {
     const css = '.a-b:hover > .c { margin: 0.50em 0 0 -1px; color: #ffffff }\n'.repeat(5000);
     const started = Date.now();
-    expect(minifyCss(css).output.length).toBe('.a-b:hover>.c{margin:.5em 0 0 -1px;color:#fff}'.length * 5000);
+    expect(minifyCss(css).output.length).toBe(
+      '.a-b:hover>.c{margin:.5em 0 0 -1px;color:#fff}'.length * 5000
+    );
     expect(Date.now() - started).toBeLessThan(2000);
   });
 });

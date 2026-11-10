@@ -86,7 +86,10 @@ function TimeZonePicker({
     setSearch('');
     // Start on the current zone when it is in the list that opens.
     setHighlightedIndex(
-      Math.max(0, COMMON_TIME_ZONE_OPTIONS.findIndex((option) => option.value === value))
+      Math.max(
+        0,
+        COMMON_TIME_ZONE_OPTIONS.findIndex((option) => option.value === value)
+      )
     );
   };
 
@@ -194,7 +197,9 @@ function TimeZonePicker({
                 </button>
               ))}
               {filteredOptions.length === 0 && (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching time zones</div>
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No matching time zones
+                </div>
               )}
             </div>
           </ScrollArea>
@@ -303,7 +308,9 @@ function Converter({ defaults }: { defaults: Defaults }) {
                   <SelectContent className="max-h-60">
                     <SelectGroup>
                       {HOURS.map((h) => (
-                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
@@ -322,7 +329,9 @@ function Converter({ defaults }: { defaults: Defaults }) {
                   <SelectContent className="max-h-60">
                     <SelectGroup>
                       {MINUTES.map((m) => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
                       ))}
                     </SelectGroup>
                   </SelectContent>
@@ -386,7 +395,9 @@ function Converter({ defaults }: { defaults: Defaults }) {
       <Card>
         <CardHeader>
           <CardTitle>Converted Time</CardTitle>
-          <CardDescription>{error ? 'Adjust the date, time, or zone selection.' : detail}</CardDescription>
+          <CardDescription>
+            {error ? 'Adjust the date, time, or zone selection.' : detail}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md bg-muted p-4 font-mono text-xl font-semibold tracking-tight sm:text-2xl">

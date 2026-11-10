@@ -148,7 +148,9 @@ export function ColorBlindnessSimulator() {
             <Eye className="h-5 w-5" />
             Color Blindness Simulator
           </CardTitle>
-          <CardDescription>Visualize how images appear to individuals with different types of color blindness</CardDescription>
+          <CardDescription>
+            Visualize how images appear to individuals with different types of color blindness
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <FileDropzone
@@ -176,7 +178,9 @@ export function ColorBlindnessSimulator() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label id={`${id}-type-label`} className="text-sm font-medium">Type of Color Blindness</label>
+                <label id={`${id}-type-label`} className="text-sm font-medium">
+                  Type of Color Blindness
+                </label>
                 <Select value={type} onValueChange={(v) => setType(v as BlindnessType)}>
                   <SelectTrigger id={`${id}-type`} aria-labelledby={`${id}-type-label ${id}-type`}>
                     <SelectValue placeholder="Select type" />
@@ -196,7 +200,12 @@ export function ColorBlindnessSimulator() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={handleDownload} disabled={processing} variant="outline" className="flex-1">
+                <Button
+                  onClick={handleDownload}
+                  disabled={processing}
+                  variant="outline"
+                  className="flex-1"
+                >
                   {processing ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
@@ -225,11 +234,18 @@ export function ColorBlindnessSimulator() {
                 <div>
                   <p className="text-sm font-medium mb-2 text-center">Original</p>
                   <div className="border rounded-md overflow-hidden bg-muted/50">
-                    <img src={image} alt="Original" className="w-full h-auto" onError={handlePreviewError} />
+                    <img
+                      src={image}
+                      alt="Original"
+                      className="w-full h-auto"
+                      onError={handlePreviewError}
+                    />
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mb-2 text-center">{BLINDNESS_TYPES[type].name}</p>
+                  <p className="text-sm font-medium mb-2 text-center">
+                    {BLINDNESS_TYPES[type].name}
+                  </p>
                   <div className="border rounded-md overflow-hidden bg-muted/50">
                     <img
                       src={image}

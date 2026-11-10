@@ -401,17 +401,14 @@ export function MarkdownConverter() {
                     </Select>
                   </div>
 
-                  <div
-                    className="space-y-2"
-                    role="group"
-                    aria-labelledby="markdown-export-measure"
-                  >
+                  <div className="space-y-2" role="group" aria-labelledby="markdown-export-measure">
                     <label id="markdown-export-measure" className="text-sm font-medium">
                       {showPdfOptions ? 'Margins' : 'Render scale'}:{' '}
                       {showPdfOptions ? `${margin} mm` : `${scale}x`}
                     </label>
                     {showPdfOptions ? (
-                      <Slider aria-labelledby="markdown-export-measure"
+                      <Slider
+                        aria-labelledby="markdown-export-measure"
                         value={margin}
                         onChange={setMargin}
                         min={0}
@@ -420,7 +417,8 @@ export function MarkdownConverter() {
                         disabled={exporting}
                       />
                     ) : (
-                      <Slider aria-labelledby="markdown-export-measure"
+                      <Slider
+                        aria-labelledby="markdown-export-measure"
                         value={scale}
                         onChange={setScale}
                         min={1}

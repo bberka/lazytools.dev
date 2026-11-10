@@ -31,7 +31,10 @@ const CLEAR: Rgba = [0, 0, 0, 0];
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 // The smallest GIF there is: one transparent pixel.
-const ONE_PIXEL_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+const ONE_PIXEL_GIF = Buffer.from(
+  'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+  'base64'
+);
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
   let value = index;
@@ -94,9 +97,17 @@ function noisePng(width: number, height: number): Buffer {
 }
 
 const pngFile = (name: string, buffer: Buffer): Upload => ({ name, mimeType: 'image/png', buffer });
-const jpegFile = (name: string, buffer: Buffer): Upload => ({ name, mimeType: 'image/jpeg', buffer });
+const jpegFile = (name: string, buffer: Buffer): Upload => ({
+  name,
+  mimeType: 'image/jpeg',
+  buffer,
+});
 const BROKEN_PNG = pngFile('broken.png', Buffer.from('this is not a picture'));
-const TEXT_FILE: Upload = { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') };
+const TEXT_FILE: Upload = {
+  name: 'notes.txt',
+  mimeType: 'text/plain',
+  buffer: Buffer.from('hello'),
+};
 
 /** A 16x8 JPEG, blue on the left half and yellow on the right, encoded by the browser. */
 async function drawJpeg(page: Page): Promise<Buffer> {
@@ -142,7 +153,12 @@ function exifWriter(littleEndian: boolean) {
     else out.writeInt32BE(value);
     return out;
   };
-  const pointer = (tag: number, offset: number): ExifTag => ({ tag, type: 4, count: 1, data: u32(offset) });
+  const pointer = (tag: number, offset: number): ExifTag => ({
+    tag,
+    type: 4,
+    count: 1,
+    data: u32(offset),
+  });
 
   // A directory: entry count, 12 bytes per entry, the next-directory offset, then every value over 4 bytes.
   const directory = (tags: ExifTag[], offset: number): Buffer => {
@@ -156,7 +172,8 @@ function exifWriter(littleEndian: boolean) {
         field = Buffer.concat([entry.data, Buffer.alloc(4 - entry.data.length)]);
       } else {
         field = u32(valueOffset);
-        const value = entry.data.length % 2 === 1 ? Buffer.concat([entry.data, Buffer.alloc(1)]) : entry.data;
+        const value =
+          entry.data.length % 2 === 1 ? Buffer.concat([entry.data, Buffer.alloc(1)]) : entry.data;
         values.push(value);
         valueOffset += value.length;
       }
@@ -187,15 +204,24 @@ function exifWriter(littleEndian: boolean) {
       tag,
       type: 5,
       count: pairs.length,
-      data: Buffer.concat(pairs.flatMap(([numerator, denominator]) => [u32(numerator), u32(denominator)])),
+      data: Buffer.concat(
+        pairs.flatMap(([numerator, denominator]) => [u32(numerator), u32(denominator)])
+      ),
     }),
     signedRational: (tag: number, ...pairs: Array<[number, number]>): ExifTag => ({
       tag,
       type: 10,
       count: pairs.length,
-      data: Buffer.concat(pairs.flatMap(([numerator, denominator]) => [i32(numerator), i32(denominator)])),
+      data: Buffer.concat(
+        pairs.flatMap(([numerator, denominator]) => [i32(numerator), i32(denominator)])
+      ),
     }),
-    undefinedBytes: (tag: number, data: Buffer): ExifTag => ({ tag, type: 7, count: data.length, data }),
+    undefinedBytes: (tag: number, data: Buffer): ExifTag => ({
+      tag,
+      type: 7,
+      count: data.length,
+      data,
+    }),
     /** UTF-16 text in this block's byte order, for a UserComment marked UNICODE. */
     utf16(text: string): Buffer {
       const encoded = Buffer.from(text, 'utf16le');
@@ -203,7 +229,11 @@ function exifWriter(littleEndian: boolean) {
     },
     embed(jpeg: Buffer, image: ExifTag[], exif: ExifTag[], gps: ExifTag[]): Buffer {
       const firstDirectory = 8;
-      const imageTags = (exifAt: number, gpsAt: number) => [...image, pointer(0x8769, exifAt), pointer(0x8825, gpsAt)];
+      const imageTags = (exifAt: number, gpsAt: number) => [
+        ...image,
+        pointer(0x8769, exifAt),
+        pointer(0x8825, gpsAt),
+      ];
       const exifAt = firstDirectory + directory(imageTags(0, 0), firstDirectory).length;
       const exifDirectory = directory(exif, exifAt);
       const gpsAt = exifAt + exifDirectory.length;
@@ -273,7 +303,9 @@ async function dropFile(page: Page, dropzone: string, file: Upload): Promise<voi
     },
     { name: file.name, type: file.mimeType, base64: file.buffer.toString('base64') }
   );
-  await page.getByRole('button', { name: dropzone }).dispatchEvent('drop', { dataTransfer: transfer });
+  await page
+    .getByRole('button', { name: dropzone })
+    .dispatchEvent('drop', { dataTransfer: transfer });
 }
 
 interface SavedFile {
@@ -322,22 +354,29 @@ async function decodeImage(page: Page, bytes: Buffer, mimeType: string): Promise
   return {
     width: decoded.width,
     height: decoded.height,
-    pixel: (x, y) => Array.from(rgba.subarray((y * decoded.width + x) * 4, (y * decoded.width + x) * 4 + 4)),
+    pixel: (x, y) =>
+      Array.from(rgba.subarray((y * decoded.width + x) * 4, (y * decoded.width + x) * 4 + 4)),
   };
 }
 
 function expectColor(actual: number[], expected: readonly number[], tolerance = 0): void {
   const distance = Math.max(...expected.map((channel, index) => Math.abs(channel - actual[index])));
-  expect(distance, `[${actual.join(', ')}] should be within ${tolerance} of [${expected.join(', ')}]`).toBeLessThanOrEqual(
-    tolerance
-  );
+  expect(
+    distance,
+    `[${actual.join(', ')}] should be within ${tolerance} of [${expected.join(', ')}]`
+  ).toBeLessThanOrEqual(tolerance);
 }
 
 /** The four corners of an image: top-left, top-right, bottom-left, bottom-right. */
 function corners(image: DecodedImage): number[][] {
   const right = image.width - 3;
   const bottom = image.height - 3;
-  return [image.pixel(2, 2), image.pixel(right, 2), image.pixel(2, bottom), image.pixel(right, bottom)];
+  return [
+    image.pixel(2, 2),
+    image.pixel(right, 2),
+    image.pixel(2, bottom),
+    image.pixel(right, bottom),
+  ];
 }
 
 async function selectOption(page: Page, combobox: Locator, option: string): Promise<void> {
@@ -370,7 +409,11 @@ test.describe('Image tools', () => {
 
   test.describe('Image Converter & Editor', () => {
     // Red on the left half, blue on the right.
-    const twoTone = () => pngFile('two-tone.png', makePng(40, 20, (x) => (x < 20 ? RED : BLUE)));
+    const twoTone = () =>
+      pngFile(
+        'two-tone.png',
+        makePng(40, 20, (x) => (x < 20 ? RED : BLUE))
+      );
     // Red, blue / green, white, so every turn and flip puts a known colour in each corner.
     const quadrants = () =>
       pngFile(
@@ -379,11 +422,15 @@ test.describe('Image tools', () => {
       );
 
     const converted = (page: Page) => page.getByRole('img', { name: 'Converted' });
-    const downloadConverted = (page: Page) => page.getByRole('button', { name: 'Download Converted Image' });
-    const downloadCropped = (page: Page) => page.getByRole('button', { name: 'Download Cropped Image' });
-    const convertButton = (page: Page) => page.getByRole('button', { name: 'Convert', exact: true });
+    const downloadConverted = (page: Page) =>
+      page.getByRole('button', { name: 'Download Converted Image' });
+    const downloadCropped = (page: Page) =>
+      page.getByRole('button', { name: 'Download Cropped Image' });
+    const convertButton = (page: Page) =>
+      page.getByRole('button', { name: 'Convert', exact: true });
     const format = (page: Page) => page.getByRole('combobox', { name: /Output Format/ });
-    const slider = (page: Page, name: RegExp) => page.getByRole('group', { name }).getByRole('slider');
+    const slider = (page: Page, name: RegExp) =>
+      page.getByRole('group', { name }).getByRole('slider');
     const cropLabel = (page: Page) => page.getByText(/^Crop: /);
 
     async function open(page: Page, file: Upload): Promise<void> {
@@ -427,7 +474,10 @@ test.describe('Image tools', () => {
         `two-tone.png (${file.buffer.length} Bytes)`
       );
       await expect(format(page)).toContainText('PNG');
-      await expect(page.getByRole('img', { name: 'Original' })).toHaveJSProperty('naturalWidth', 40);
+      await expect(page.getByRole('img', { name: 'Original' })).toHaveJSProperty(
+        'naturalWidth',
+        40
+      );
       await expectPreviewSize(page, 40, 20);
 
       const saved = await save(page, downloadConverted(page));
@@ -441,7 +491,9 @@ test.describe('Image tools', () => {
       expect(elsewhere, 'the image must stay in the browser').toEqual([]);
     });
 
-    test('resizes inside the requested box and stretches only when the aspect ratio is released', async ({ page }) => {
+    test('resizes inside the requested box and stretches only when the aspect ratio is released', async ({
+      page,
+    }) => {
       await open(page, twoTone());
       const width = page.getByLabel('Width (px)');
       const height = page.getByLabel('Height (px)');
@@ -482,8 +534,16 @@ test.describe('Image tools', () => {
       await expectPreviewSize(page, 40, 20);
     });
 
-    test('writes JPEG on a white backdrop and names the download after what was converted', async ({ page }) => {
-      await open(page, pngFile('cutout.png', makePng(40, 20, (x) => (x < 20 ? CLEAR : BLUE))));
+    test('writes JPEG on a white backdrop and names the download after what was converted', async ({
+      page,
+    }) => {
+      await open(
+        page,
+        pngFile(
+          'cutout.png',
+          makePng(40, 20, (x) => (x < 20 ? CLEAR : BLUE))
+        )
+      );
 
       await selectOption(page, format(page), 'JPEG');
       await expect(page.getByText('Quality: 90%')).toBeVisible();
@@ -530,9 +590,10 @@ test.describe('Image tools', () => {
         await convert(page);
         const fine = await save(page, downloadConverted(page));
 
-        expect(fine.bytes.length, `${name} at 100% against ${rough.bytes.length} bytes at 1%`).toBeGreaterThan(
-          rough.bytes.length * 4
-        );
+        expect(
+          fine.bytes.length,
+          `${name} at 100% against ${rough.bytes.length} bytes at 1%`
+        ).toBeGreaterThan(rough.bytes.length * 4);
       }
     });
 
@@ -577,7 +638,13 @@ test.describe('Image tools', () => {
 
     test('applies the grayscale, sepia and brightness adjustments', async ({ page }) => {
       const BROWN: Rgba = [100, 50, 25, 255];
-      await open(page, pngFile('swatches.png', makePng(30, 30, (x) => (x < 15 ? BROWN : RED))));
+      await open(
+        page,
+        pngFile(
+          'swatches.png',
+          makePng(30, 30, (x) => (x < 15 ? BROWN : RED))
+        )
+      );
       const result = async () => {
         const saved = await save(page, downloadConverted(page));
         return decodeImage(page, saved.bytes, 'image/png');
@@ -632,24 +699,43 @@ test.describe('Image tools', () => {
       expect(image.pixel(35, 10)).toEqual([...BLUE]);
 
       // An icon entry holds at most 256 pixels a side, and writes 256 as 0.
-      await chooseFiles(page, IMAGE_DROPZONE, pngFile('banner.png', makePng(600, 300, (x) => (x < 300 ? RED : BLUE))));
+      await chooseFiles(
+        page,
+        IMAGE_DROPZONE,
+        pngFile(
+          'banner.png',
+          makePng(600, 300, (x) => (x < 300 ? RED : BLUE))
+        )
+      );
       await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('banner.png');
       await expectPreviewSize(page, 256, 128);
       const large = await save(page, downloadConverted(page));
       expect(large.name).toBe('converted.ico');
       expect([large.bytes[6], large.bytes[7]]).toEqual([0, 128]);
-      const largeImage = await decodeImage(page, large.bytes.subarray(large.bytes.readUInt32LE(18)), 'image/png');
+      const largeImage = await decodeImage(
+        page,
+        large.bytes.subarray(large.bytes.readUInt32LE(18)),
+        'image/png'
+      );
       expect([largeImage.width, largeImage.height]).toEqual([256, 128]);
     });
 
-    test('crops with a preset or a dragged selection and never offers an empty one', async ({ page }) => {
+    test('crops with a preset or a dragged selection and never offers an empty one', async ({
+      page,
+    }) => {
       await open(page, twoTone());
-      await expect(page.getByRole('button', { name: 'Free' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Free' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(downloadCropped(page)).toBeDisabled();
 
       // The largest centred square of a 40x20 image is 20x20, half red and half blue.
       await page.getByRole('button', { name: '1:1' }).click();
-      await expect(page.getByRole('button', { name: '1:1' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: '1:1' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(cropLabel(page)).toHaveText('Crop: 20×20px');
       const square = await save(page, downloadCropped(page));
       expect(square.name).toBe('cropped-two-tone.png');
@@ -686,7 +772,9 @@ test.describe('Image tools', () => {
       await expect(downloadCropped(page)).toBeDisabled();
     });
 
-    test('names a crop after the type it is written as and keeps a rotated photo upright', async ({ page }) => {
+    test('names a crop after the type it is written as and keeps a rotated photo upright', async ({
+      page,
+    }) => {
       // A canvas cannot write GIF, so the crop of a GIF is a PNG and has to be called one.
       await open(page, { name: 'pixel.gif', mimeType: 'image/gif', buffer: ONE_PIXEL_GIF });
       await page.getByRole('button', { name: '1:1' }).click();
@@ -699,7 +787,9 @@ test.describe('Image tools', () => {
       const exif = exifWriter(true);
       const sideways = exif.embed(await drawJpeg(page), [exif.short(0x0112, 6)], [], []);
       await chooseFiles(page, IMAGE_DROPZONE, jpegFile('portrait.jpg', sideways));
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('portrait.jpg');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText(
+        'portrait.jpg'
+      );
       await expectPreviewSize(page, 8, 16);
 
       // The 1:1 preset is still on and is applied to the new picture.
@@ -752,7 +842,9 @@ test.describe('Image tools', () => {
       // Wider than any canvas a browser will allocate.
       await page.getByLabel('Width (px)').fill('70000');
       await convertButton(page).click();
-      await expect(alerts(page)).toHaveText('The image could not be encoded. It may be too large for this browser.');
+      await expect(alerts(page)).toHaveText(
+        'The image could not be encoded. It may be too large for this browser.'
+      );
       await expect(convertButton(page)).toBeEnabled();
       await expect(downloadConverted(page)).toBeHidden();
 
@@ -760,7 +852,9 @@ test.describe('Image tools', () => {
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
       await expect(convertButton(page)).toBeHidden();
       await expect(alerts(page)).toHaveCount(0);
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText('two-tone.png');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText(
+        'two-tone.png'
+      );
     });
 
     test('keeps every colour when the output is PNG', async ({ page }) => {
@@ -783,7 +877,10 @@ test.describe('Image tools', () => {
         for (let x = 0; x < 128; x += 1) {
           const actual = image.pixel(x, y);
           colors.add(actual.join(','));
-          worst = Math.max(worst, ...colorAt(x, y).map((channel, index) => Math.abs(channel - actual[index])));
+          worst = Math.max(
+            worst,
+            ...colorAt(x, y).map((channel, index) => Math.abs(channel - actual[index]))
+          );
         }
       }
       expect(colors.size, 'distinct colours left in the PNG').toBe(128 * 128);
@@ -801,7 +898,8 @@ test.describe('Image tools', () => {
             super(url, options);
             report.started += 1;
             this.addEventListener('message', (event: MessageEvent<{ error?: string }>) => {
-              if (typeof event.data?.error === 'string') report.errors.push(event.data.error.split('\n')[0]);
+              if (typeof event.data?.error === 'string')
+                report.errors.push(event.data.error.split('\n')[0]);
             });
             this.addEventListener('error', (event) => report.errors.push(event.message));
           }
@@ -811,7 +909,9 @@ test.describe('Image tools', () => {
       await open(page, twoTone());
 
       const report = await page.evaluate(
-        () => (window as unknown as { compressionWorkers: { started: number; errors: string[] } }).compressionWorkers
+        () =>
+          (window as unknown as { compressionWorkers: { started: number; errors: string[] } })
+            .compressionWorkers
       );
       expect(report.started, 'compression workers started').toBeGreaterThan(0);
       expect(report.errors, 'errors reported by the compression worker').toEqual([]);
@@ -853,7 +953,9 @@ test.describe('Image tools', () => {
       await expect(result(page)).toHaveJSProperty('naturalHeight', height);
     }
 
-    test('rasterizes pasted SVG at the chosen scale and saves it as vector.png', async ({ page }) => {
+    test('rasterizes pasted SVG at the chosen scale and saves it as vector.png', async ({
+      page,
+    }) => {
       await openTool(page, 'svg-to-png', 'SVG to PNG Converter');
       await pasteSvg(page, TWO_RECTS);
 
@@ -877,12 +979,17 @@ test.describe('Image tools', () => {
       await expectResultSize(page, 60, 30);
     });
 
-    test('renders SVG copied out of a web page and keeps its background transparent', async ({ page }) => {
+    test('renders SVG copied out of a web page and keeps its background transparent', async ({
+      page,
+    }) => {
       await openTool(page, 'svg-to-png', 'SVG to PNG Converter');
       await scale(page).fill('1');
 
       // No xmlns and no size, only a viewBox: by the CSS rules a square shape gets 150x150.
-      await pasteSvg(page, '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#00ff00"/></svg>');
+      await pasteSvg(
+        page,
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#00ff00"/></svg>'
+      );
       await convertButton(page).click();
       await expectResultSize(page, 150, 150);
       const saved = await save(page, page.getByRole('button', { name: 'Download PNG' }));
@@ -910,18 +1017,25 @@ test.describe('Image tools', () => {
       await expectResultSize(page, 96, 48);
 
       // An XML declaration behind blank lines and a comment in front of the root.
-      await pasteSvg(page, `\n\n<?xml version="1.0" encoding="UTF-8"?>\n<!-- exported -->\n${TWO_RECTS}`);
+      await pasteSvg(
+        page,
+        `\n\n<?xml version="1.0" encoding="UTF-8"?>\n<!-- exported -->\n${TWO_RECTS}`
+      );
       await convertButton(page).click();
       await expectResultSize(page, 20, 10);
     });
 
-    test('explains text that is not SVG, SVG that is malformed and a PNG too large to make', async ({ page }) => {
+    test('explains text that is not SVG, SVG that is malformed and a PNG too large to make', async ({
+      page,
+    }) => {
       await openTool(page, 'svg-to-png', 'SVG to PNG Converter');
       await expect(convertButton(page)).toBeDisabled();
 
       await pasteSvg(page, 'hello world');
       await convertButton(page).click();
-      await expect(alerts(page)).toHaveText('This is not SVG: the code has to start with an <svg> element.');
+      await expect(alerts(page)).toHaveText(
+        'This is not SVG: the code has to start with an <svg> element.'
+      );
       await expect(result(page)).toBeHidden();
 
       // The rect is never closed.
@@ -979,7 +1093,11 @@ test.describe('Image tools', () => {
       await openTool(page, 'svg-to-png', 'SVG to PNG Converter');
       const markup =
         '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6"><rect width="12" height="6" fill="#ff00ff"/></svg>';
-      const file: Upload = { name: 'logo.svg', mimeType: 'image/svg+xml', buffer: Buffer.from(markup) };
+      const file: Upload = {
+        name: 'logo.svg',
+        mimeType: 'image/svg+xml',
+        buffer: Buffer.from(markup),
+      };
 
       await chooseFiles(page, SVG_DROPZONE, file);
       await expect(code(page)).toHaveValue(markup);
@@ -993,8 +1111,17 @@ test.describe('Image tools', () => {
       expect(image.pixel(12, 6)).toEqual([255, 0, 255, 255]);
 
       // A PNG is not SVG: it is refused and the loaded code stays.
-      await chooseFiles(page, SVG_DROPZONE, pngFile('photo.png', makePng(2, 2, () => RED)));
-      await expect(alerts(page)).toHaveText('"photo.png" is not a supported file type. Accepted: .svg.');
+      await chooseFiles(
+        page,
+        SVG_DROPZONE,
+        pngFile(
+          'photo.png',
+          makePng(2, 2, () => RED)
+        )
+      );
+      await expect(alerts(page)).toHaveText(
+        '"photo.png" is not a supported file type. Accepted: .svg.'
+      );
       await expect(code(page)).toHaveValue(markup);
 
       // Editing the code makes the PNG on screen out of date, so it goes.
@@ -1019,10 +1146,12 @@ test.describe('Image tools', () => {
     // One line of the metadata list: the tag's name, its value and its copy button.
     const field = (page: Page, label: string) =>
       page.getByRole('button', { name: `Copy ${label}`, exact: true }).locator('xpath=..');
-    const fieldCount = (page: Page) => page.getByText('EXIF fields', { exact: true }).locator('xpath=..');
+    const fieldCount = (page: Page) =>
+      page.getByText('EXIF fields', { exact: true }).locator('xpath=..');
     const outputFormat = (page: Page) => page.getByRole('combobox', { name: /Output format/ });
     const removeButton = (page: Page) => page.getByRole('button', { name: 'Remove metadata' });
-    const downloadCleaned = (page: Page) => page.getByRole('button', { name: 'Download cleaned image' });
+    const downloadCleaned = (page: Page) =>
+      page.getByRole('button', { name: 'Download cleaned image' });
     const cleanedNote = (page: Page) => page.getByText(/^Cleaned image ready: /);
 
     async function expectFields(page: Page, fields: Record<string, string>): Promise<void> {
@@ -1052,7 +1181,10 @@ test.describe('Image tools', () => {
           exif.undefinedBytes(0x927c, Buffer.from('MAKERNOTE-PRIVATE-BLOCK-0123456789', 'latin1')),
           exif.undefinedBytes(
             0x9286,
-            Buffer.concat([Buffer.from('ASCII\0\0\0', 'latin1'), Buffer.from('Sunset at the pier', 'latin1')])
+            Buffer.concat([
+              Buffer.from('ASCII\0\0\0', 'latin1'),
+              Buffer.from('Sunset at the pier', 'latin1'),
+            ])
           ),
         ],
         [
@@ -1066,7 +1198,10 @@ test.describe('Image tools', () => {
       );
     }
 
-    test('lists the camera, exposure and GPS tags of a JPEG and copies a value', async ({ page, context }) => {
+    test('lists the camera, exposure and GPS tags of a JPEG and copies a value', async ({
+      page,
+      context,
+    }) => {
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
       await openTool(page, 'exif-viewer-remover', 'EXIF Viewer & Remover');
       const photo = cameraPhoto(await drawJpeg(page));
@@ -1141,7 +1276,10 @@ test.describe('Image tools', () => {
           exif.short(0x8827, 125),
           exif.signedRational(0x9204, [-2, 6]),
           exif.rational(0x920a, [6765, 1000]),
-          exif.undefinedBytes(0x9286, Buffer.concat([Buffer.from('UNICODE\0', 'latin1'), exif.utf16('Grüße')])),
+          exif.undefinedBytes(
+            0x9286,
+            Buffer.concat([Buffer.from('UNICODE\0', 'latin1'), exif.utf16('Grüße')])
+          ),
           exif.long(0xa002, 4032),
           exif.long(0xa003, 3024),
           exif.short(0xa405, 24),
@@ -1185,7 +1323,9 @@ test.describe('Image tools', () => {
       });
     });
 
-    test('removes the metadata, keeps the picture upright and the cleaned copy reads back empty', async ({ page }) => {
+    test('removes the metadata, keeps the picture upright and the cleaned copy reads back empty', async ({
+      page,
+    }) => {
       await openTool(page, 'exif-viewer-remover', 'EXIF Viewer & Remover');
       // Stored 16x8 and flagged "rotate 90° clockwise to view": the stored left (blue) half is the top.
       const photo = cameraPhoto(await drawJpeg(page), 6);
@@ -1198,14 +1338,19 @@ test.describe('Image tools', () => {
 
       await removeButton(page).click();
       await expect(cleanedNote(page)).toContainText('portrait-clean.jpg');
-      await expect(page.getByRole('img', { name: 'Metadata removed' })).toHaveJSProperty('naturalWidth', 8);
+      await expect(page.getByRole('img', { name: 'Metadata removed' })).toHaveJSProperty(
+        'naturalWidth',
+        8
+      );
 
       const cleaned = await save(page, downloadCleaned(page));
       expect(cleaned.name).toBe('portrait-clean.jpg');
       expect(cleaned.bytes.subarray(0, 3)).toEqual(Buffer.from([0xff, 0xd8, 0xff]));
       expect(jpegMarkers(cleaned.bytes)).not.toContain(APP1);
       expect(cleaned.bytes.includes(Buffer.from('Canon'))).toBe(false);
-      await expect(cleanedNote(page)).toHaveText(`Cleaned image ready: portrait-clean.jpg (${cleaned.bytes.length} B)`);
+      await expect(cleanedNote(page)).toHaveText(
+        `Cleaned image ready: portrait-clean.jpg (${cleaned.bytes.length} B)`
+      );
 
       // With the orientation tag gone the pixels themselves have to be turned.
       const image = await decodeImage(page, cleaned.bytes, 'image/jpeg');
@@ -1215,16 +1360,23 @@ test.describe('Image tools', () => {
 
       // Fed back in, the cleaned copy has nothing left to show.
       await chooseFiles(page, IMAGE_DROPZONE, jpegFile(cleaned.name, cleaned.bytes));
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('portrait-clean.jpg');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText(
+        'portrait-clean.jpg'
+      );
       await expect(page.getByText(NO_EXIF)).toBeVisible();
       await expect(fieldCount(page)).toHaveText(/^EXIF fields\s*0$/);
       await expect(cleanedNote(page)).toBeHidden();
       await expect(downloadCleaned(page)).toBeDisabled();
     });
 
-    test('writes the cleaned copy in the chosen format and never leaves transparency black', async ({ page }) => {
+    test('writes the cleaned copy in the chosen format and never leaves transparency black', async ({
+      page,
+    }) => {
       await openTool(page, 'exif-viewer-remover', 'EXIF Viewer & Remover');
-      const cutout = pngFile('cutout.png', makePng(8, 8, (x) => (x < 4 ? CLEAR : RED)));
+      const cutout = pngFile(
+        'cutout.png',
+        makePng(8, 8, (x) => (x < 4 ? CLEAR : RED))
+      );
 
       await chooseFiles(page, IMAGE_DROPZONE, cutout);
       await expect(page.getByText(NO_EXIF)).toBeVisible();
@@ -1260,7 +1412,9 @@ test.describe('Image tools', () => {
 
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
       await expect(removeButton(page)).toBeHidden();
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText('cutout.png');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText(
+        'cutout.png'
+      );
     });
 
     test('survives damaged EXIF and reports a picture it cannot decode', async ({ page }) => {
@@ -1282,7 +1436,9 @@ test.describe('Image tools', () => {
 
       // Cut off in the middle of the EXIF block: nothing to list, but still a page that works.
       await chooseFiles(page, IMAGE_DROPZONE, jpegFile('cut-short.jpg', photo.subarray(0, 60)));
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('cut-short.jpg');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText(
+        'cut-short.jpg'
+      );
       await expect(page.getByText(NO_EXIF)).toBeVisible();
       await expect(fieldCount(page)).toHaveText(/^EXIF fields\s*0$/);
 
@@ -1303,7 +1459,9 @@ test.describe('Image tools', () => {
       const batchTab = page.getByRole('tab', { name: 'Batch Clean' });
       await expect(async () => {
         await batchTab.click();
-        await expect(page.getByRole('button', { name: BATCH_DROPZONE })).toBeVisible({ timeout: 1_000 });
+        await expect(page.getByRole('button', { name: BATCH_DROPZONE })).toBeVisible({
+          timeout: 1_000,
+        });
       }).toPass({ timeout: 20_000 });
 
       // Two photos that would both be called beach-clean.jpg, a PNG, and a file that is no image.
@@ -1315,7 +1473,8 @@ test.describe('Image tools', () => {
       ]);
       await expect(alerts(page)).toHaveText(NOT_AN_IMAGE);
       await expect(page.getByText('Selected Files (3)')).toBeVisible();
-      const row = (name: string) => page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
+      const row = (name: string) =>
+        page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
       await expect(row('beach.jpg')).toContainText('Waiting');
       await expect(row('beach.jpg').getByRole('cell').nth(2)).toHaveText('JPEG');
       await expect(row('logo.png').getByRole('cell').nth(2)).toHaveText('PNG');
@@ -1340,7 +1499,8 @@ test.describe('Image tools', () => {
       }
 
       await expect(page.getByText('Processed 3/3')).toBeVisible();
-      for (const name of ['beach.jpg', 'beach.jpeg', 'logo.png']) await expect(row(name)).toContainText('Cleaned');
+      for (const name of ['beach.jpg', 'beach.jpeg', 'logo.png'])
+        await expect(row(name)).toContainText('Cleaned');
 
       const again = await save(page, page.getByRole('button', { name: /^Download ZIP Again/ }));
       expect(again.name).toMatch(/^cleaned_images_\d+\.zip$/);
@@ -1356,7 +1516,9 @@ test.describe('Image tools', () => {
       await expect(alerts(page)).toHaveCount(0);
     });
 
-    test('converts a batch to WebP, marks what failed and says so when nothing could be cleaned', async ({ page }) => {
+    test('converts a batch to WebP, marks what failed and says so when nothing could be cleaned', async ({
+      page,
+    }) => {
       await openTool(page, 'exif-viewer-remover', 'EXIF Viewer & Remover');
       const photo = cameraPhoto(await drawJpeg(page));
       const downloads: string[] = [];
@@ -1364,16 +1526,26 @@ test.describe('Image tools', () => {
       const batchTab = page.getByRole('tab', { name: 'Batch Clean' });
       await expect(async () => {
         await batchTab.click();
-        await expect(page.getByRole('button', { name: BATCH_DROPZONE })).toBeVisible({ timeout: 1_000 });
+        await expect(page.getByRole('button', { name: BATCH_DROPZONE })).toBeVisible({
+          timeout: 1_000,
+        });
       }).toPass({ timeout: 20_000 });
-      const row = (name: string) => page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
+      const row = (name: string) =>
+        page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
 
       await chooseFiles(page, BATCH_DROPZONE, [
         jpegFile('one.jpg', photo),
-        pngFile('two.png', makePng(4, 4, () => RED)),
+        pngFile(
+          'two.png',
+          makePng(4, 4, () => RED)
+        ),
         BROKEN_PNG,
       ]);
-      await selectOption(page, page.getByRole('combobox', { name: /Batch Output Format/ }), 'Convert to WebP');
+      await selectOption(
+        page,
+        page.getByRole('combobox', { name: /Batch Output Format/ }),
+        'Convert to WebP'
+      );
 
       const archive = await save(page, page.getByRole('button', { name: 'Clean & Download ZIP' }));
       const zip = await JSZip.loadAsync(archive.bytes);
@@ -1394,7 +1566,9 @@ test.describe('Image tools', () => {
       await page.getByRole('button', { name: 'Remove one.jpg' }).click();
       await page.getByRole('button', { name: 'Remove two.png' }).click();
       await page.getByRole('button', { name: 'Clean & Download ZIP' }).click();
-      await expect(alerts(page)).toHaveText('None of the images could be cleaned, so there is no ZIP to download.');
+      await expect(alerts(page)).toHaveText(
+        'None of the images could be cleaned, so there is no ZIP to download.'
+      );
       await expect(page.getByRole('button', { name: 'Clean & Download ZIP' })).toBeEnabled();
       await expect(page.getByRole('button', { name: /^Download ZIP Again/ })).toBeHidden();
       expect(downloads).toHaveLength(1);
@@ -1411,7 +1585,11 @@ test.describe('Image tools', () => {
 
     // Half red, three tenths green, a fifth violet.
     const VIOLET: Rgba = [130, 60, 200, 255];
-    const bands = () => pngFile('bands.png', makePng(100, 100, (_x, y) => (y < 50 ? RED : y < 80 ? GREEN : VIOLET)));
+    const bands = () =>
+      pngFile(
+        'bands.png',
+        makePng(100, 100, (_x, y) => (y < 50 ? RED : y < 80 ? GREEN : VIOLET))
+      );
 
     async function expectPalette(page: Page, colors: string[]): Promise<void> {
       await expect(swatches(page)).toHaveCount(colors.length);
@@ -1435,7 +1613,14 @@ test.describe('Image tools', () => {
       await expectPalette(page, ['#ff0000', '#00ff00', '#823cc8']);
 
       // Pure white is #ffffff, not a colour one step off.
-      await chooseFiles(page, IMAGE_DROPZONE, pngFile('white.png', makePng(10, 10, () => WHITE)));
+      await chooseFiles(
+        page,
+        IMAGE_DROPZONE,
+        pngFile(
+          'white.png',
+          makePng(10, 10, () => WHITE)
+        )
+      );
       await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('white.png');
       await expectPalette(page, ['#ffffff']);
     });
@@ -1450,18 +1635,36 @@ test.describe('Image tools', () => {
         return heights.findIndex((height) => (bottom += height) > y);
       };
 
-      await chooseFiles(page, IMAGE_DROPZONE, pngFile('ten-bands.png', makePng(100, 100, (_x, y) => colors[bandAt(y)])));
+      await chooseFiles(
+        page,
+        IMAGE_DROPZONE,
+        pngFile(
+          'ten-bands.png',
+          makePng(100, 100, (_x, y) => colors[bandAt(y)])
+        )
+      );
 
       await expect(results(page)).toBeVisible();
       await expectPalette(page, colors.slice(0, 8).map(toHex));
     });
 
-    test('explains a transparent image, an unreadable one and a file that is not an image', async ({ page }) => {
+    test('explains a transparent image, an unreadable one and a file that is not an image', async ({
+      page,
+    }) => {
       await openTool(page, 'color-palette-extractor', 'Color Palette Extractor');
 
-      await chooseFiles(page, IMAGE_DROPZONE, pngFile('glass.png', makePng(10, 10, () => CLEAR)));
+      await chooseFiles(
+        page,
+        IMAGE_DROPZONE,
+        pngFile(
+          'glass.png',
+          makePng(10, 10, () => CLEAR)
+        )
+      );
       await expect(results(page)).toBeVisible();
-      await expect(page.getByText('No colors found: every part of this image is transparent.')).toBeVisible();
+      await expect(
+        page.getByText('No colors found: every part of this image is transparent.')
+      ).toBeVisible();
       await expect(swatches(page)).toHaveCount(0);
 
       await chooseFiles(page, IMAGE_DROPZONE, BROKEN_PNG);
@@ -1495,14 +1698,23 @@ test.describe('Image tools', () => {
       // Only the swatch that was pressed says so.
       await expect(page.getByRole('button', { name: 'Copy #ff0000' })).toBeVisible();
 
-      await dropFile(page, IMAGE_DROPZONE, pngFile('dropped.png', makePng(10, 10, () => BLUE)));
+      await dropFile(
+        page,
+        IMAGE_DROPZONE,
+        pngFile(
+          'dropped.png',
+          makePng(10, 10, () => BLUE)
+        )
+      );
       await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).toContainText('dropped.png');
       await expectPalette(page, ['#0000ff']);
 
       await page.getByRole('button', { name: 'Clear Image' }).click();
       await expect(results(page)).toBeHidden();
       await expect(swatches(page)).toHaveCount(0);
-      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText('dropped.png');
+      await expect(page.getByRole('button', { name: IMAGE_DROPZONE })).not.toContainText(
+        'dropped.png'
+      );
     });
   });
 
@@ -1511,17 +1723,25 @@ test.describe('Image tools', () => {
   test.describe('Color Blindness Simulator', () => {
     const type = (page: Page) => page.getByRole('combobox', { name: /Type of Color Blindness/ });
     const simulated = (page: Page) => page.getByRole('img', { name: 'Simulated' });
-    const downloadButton = (page: Page) => page.getByRole('button', { name: 'Download Simulation' });
+    const downloadButton = (page: Page) =>
+      page.getByRole('button', { name: 'Download Simulation' });
     const settings = (page: Page) => page.getByText('Simulation Settings');
 
     // Red on the left half, green on the right.
-    const redGreen = () => pngFile('red-green.png', makePng(60, 60, (x) => (x < 30 ? RED : GREEN)));
+    const redGreen = () =>
+      pngFile(
+        'red-green.png',
+        makePng(60, 60, (x) => (x < 30 ? RED : GREEN))
+      );
 
     /** What is painted at the middle of the left and right halves of an element. */
     async function paintedHalves(page: Page, element: Locator): Promise<number[][]> {
       const shot = await decodeImage(page, await element.screenshot(), 'image/png');
       const middle = Math.floor(shot.height / 2);
-      return [shot.pixel(Math.floor(shot.width / 4), middle), shot.pixel(Math.floor((shot.width * 3) / 4), middle)];
+      return [
+        shot.pixel(Math.floor(shot.width / 4), middle),
+        shot.pixel(Math.floor((shot.width * 3) / 4), middle),
+      ];
     }
 
     // The matrices mix the channels in linear light. For deuteranopia red becomes (0.625, 0.7, 0)
@@ -1532,7 +1752,9 @@ test.describe('Image tools', () => {
     const ACHROMATOPSIA_RED = [149, 149, 149];
     const ACHROMATOPSIA_GREEN = [201, 201, 201];
 
-    test('shows the simulation beside the original and saves the same picture', async ({ page }) => {
+    test('shows the simulation beside the original and saves the same picture', async ({
+      page,
+    }) => {
       await openTool(page, 'color-blindness-simulator', 'Color Blindness Simulator');
       const file = redGreen();
 
@@ -1547,7 +1769,10 @@ test.describe('Image tools', () => {
       await expect(page.getByRole('paragraph').filter({ hasText: /^Deuteranopia$/ })).toBeVisible();
 
       // The original is untouched, the preview is not.
-      const [originalRed, originalGreen] = await paintedHalves(page, page.getByRole('img', { name: 'Original' }));
+      const [originalRed, originalGreen] = await paintedHalves(
+        page,
+        page.getByRole('img', { name: 'Original' })
+      );
       expect(originalRed).toEqual([...RED]);
       expect(originalGreen).toEqual([...GREEN]);
       const [previewRed, previewGreen] = await paintedHalves(page, simulated(page));
@@ -1567,13 +1792,18 @@ test.describe('Image tools', () => {
       await expect(alerts(page)).toHaveCount(0);
     });
 
-    test('switches type with the mouse and the keyboard and leaves transparency alone', async ({ page }) => {
+    test('switches type with the mouse and the keyboard and leaves transparency alone', async ({
+      page,
+    }) => {
       await openTool(page, 'color-blindness-simulator', 'Color Blindness Simulator');
       // Half-transparent red on the left, solid green on the right.
       await chooseFiles(
         page,
         IMAGE_DROPZONE,
-        pngFile('veil.png', makePng(20, 20, (x) => (x < 10 ? [255, 0, 0, 128] : GREEN)))
+        pngFile(
+          'veil.png',
+          makePng(20, 20, (x) => (x < 10 ? [255, 0, 0, 128] : GREEN))
+        )
       );
       await expect(settings(page)).toBeVisible();
 
@@ -1605,7 +1835,10 @@ test.describe('Image tools', () => {
       await expect(page.getByText('Standard color vision')).toBeVisible();
 
       const [previewLeft, previewRight] = await paintedHalves(page, simulated(page));
-      const [originalLeft, originalRight] = await paintedHalves(page, page.getByRole('img', { name: 'Original' }));
+      const [originalLeft, originalRight] = await paintedHalves(
+        page,
+        page.getByRole('img', { name: 'Original' })
+      );
       expect(previewLeft).toEqual(originalLeft);
       expect(previewRight).toEqual(originalRight);
       expect(previewRight).toEqual([...GREEN]);
@@ -1629,14 +1862,18 @@ test.describe('Image tools', () => {
       await expect(page.getByText('Red-blind (1% of males)')).toBeVisible();
     });
 
-    test('opens the picker from the keyboard, reports an unreadable picture and clears', async ({ page }) => {
+    test('opens the picker from the keyboard, reports an unreadable picture and clears', async ({
+      page,
+    }) => {
       await openTool(page, 'color-blindness-simulator', 'Color Blindness Simulator');
       const area = page.getByRole('button', { name: IMAGE_DROPZONE });
 
       // The drop area is a button: Enter opens the file picker.
       await expect(async () => {
         await area.focus();
-        const chooser = await openFileChooser(page, () => page.keyboard.press('Enter'), { timeout: 2_000 });
+        const chooser = await openFileChooser(page, () => page.keyboard.press('Enter'), {
+          timeout: 2_000,
+        });
         await chooser.setFiles(BROKEN_PNG);
       }).toPass({ timeout: 20_000 });
       await expect(alerts(page)).toHaveText(UNREADABLE_IMAGE);

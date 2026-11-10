@@ -74,7 +74,8 @@ export function UnitConverter() {
         <CardHeader>
           <CardTitle>Unit Converter</CardTitle>
           <CardDescription>
-            Convert between common units for length, weight, temperature, area, volume, speed, time, and data.
+            Convert between common units for length, weight, temperature, area, volume, speed, time,
+            and data.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -82,7 +83,10 @@ export function UnitConverter() {
             <label htmlFor="unit-category" className="mb-2 block text-sm font-medium">
               Category
             </label>
-            <Select value={categoryId} onValueChange={(value) => handleCategoryChange(value as CategoryId)}>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => handleCategoryChange(value as CategoryId)}
+            >
               <SelectTrigger id="unit-category">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>

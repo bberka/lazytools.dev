@@ -37,7 +37,6 @@ try {
     fs.writeFileSync(cargoTomlPath, cargoToml);
     console.log('Updated src-tauri/Cargo.toml');
   }
-
 } catch (error) {
   console.error('Failed to sync version:', error);
   process.exit(1);

@@ -131,7 +131,10 @@ export function IpLookup() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -160,7 +163,11 @@ export function IpLookup() {
                         onClick={() => handleCopy(ipInfo.ip, 'ip')}
                         aria-label="Copy IP"
                       >
-                        {copiedField === 'ip' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'ip' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -181,7 +188,11 @@ export function IpLookup() {
                           onClick={() => handleCopy(ipInfo.hostname!, 'hostname')}
                           aria-label="Copy hostname"
                         >
-                          {copiedField === 'hostname' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copiedField === 'hostname' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
                         </Button>
                       </TooltipSimple>
                     </div>
@@ -192,9 +203,7 @@ export function IpLookup() {
                 {ipInfo.city && (
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">City</label>
-                    <div className="p-2 rounded-md bg-muted text-sm">
-                      {ipInfo.city}
-                    </div>
+                    <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.city}</div>
                   </div>
                 )}
 
@@ -202,9 +211,7 @@ export function IpLookup() {
                 {ipInfo.region && (
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Region</label>
-                    <div className="p-2 rounded-md bg-muted text-sm">
-                      {ipInfo.region}
-                    </div>
+                    <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.region}</div>
                   </div>
                 )}
 
@@ -212,9 +219,7 @@ export function IpLookup() {
                 {ipInfo.country && (
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Country</label>
-                    <div className="p-2 rounded-md bg-muted text-sm">
-                      {ipInfo.country}
-                    </div>
+                    <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.country}</div>
                   </div>
                 )}
 
@@ -222,9 +227,7 @@ export function IpLookup() {
                 {ipInfo.postal && (
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Postal Code</label>
-                    <div className="p-2 rounded-md bg-muted text-sm">
-                      {ipInfo.postal}
-                    </div>
+                    <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.postal}</div>
                   </div>
                 )}
 
@@ -243,7 +246,11 @@ export function IpLookup() {
                           onClick={() => handleCopy(ipInfo.loc!, 'location')}
                           aria-label="Copy coordinates"
                         >
-                          {copiedField === 'location' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copiedField === 'location' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
                         </Button>
                       </TooltipSimple>
                     </div>
@@ -254,16 +261,16 @@ export function IpLookup() {
                 {ipInfo.timezone && (
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-muted-foreground">Timezone</label>
-                    <div className="p-2 rounded-md bg-muted text-sm">
-                      {ipInfo.timezone}
-                    </div>
+                    <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.timezone}</div>
                   </div>
                 )}
 
                 {/* Organization/ISP */}
                 {ipInfo.org && (
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">Organization (ISP)</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Organization (ISP)
+                    </label>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm break-all">
                         {ipInfo.org}
@@ -275,7 +282,11 @@ export function IpLookup() {
                           onClick={() => handleCopy(ipInfo.org!, 'organization')}
                           aria-label="Copy organization"
                         >
-                          {copiedField === 'organization' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copiedField === 'organization' ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
                         </Button>
                       </TooltipSimple>
                     </div>
@@ -307,7 +318,13 @@ export function IpLookup() {
         <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
             <div className="text-primary">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -319,9 +336,14 @@ export function IpLookup() {
             <div className="text-sm space-y-2">
               <p className="font-medium">About IP Lookup</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Uses the ipinfo.io API for geolocation data, with freeipapi.com and ipapi.co as fallbacks</li>
+                <li>
+                  Uses the ipinfo.io API for geolocation data, with freeipapi.com and ipapi.co as
+                  fallbacks
+                </li>
                 <li>Leave the input empty to check your current public IP</li>
-                <li>Private IP addresses (10.x.x.x, 192.168.x.x, etc.) will show limited information</li>
+                <li>
+                  Private IP addresses (10.x.x.x, 192.168.x.x, etc.) will show limited information
+                </li>
                 <li>Supports both IPv4 and IPv6 addresses</li>
               </ul>
             </div>

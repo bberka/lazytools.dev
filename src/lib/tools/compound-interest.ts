@@ -369,7 +369,8 @@ function niceStep(max: number, count: number): number {
   const raw = max / count;
   const power = 10 ** Math.floor(Math.log10(raw));
   const fraction = raw / power;
-  const nice = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10;
+  const nice =
+    fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10;
   return nice * power;
 }
 
@@ -388,7 +389,10 @@ export function buildChartGeometry(
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const lastYear = points[points.length - 1]?.year ?? 0;
-  const maxCents = Math.max(1, ...points.map((point) => Math.max(point.balance, point.contributed)));
+  const maxCents = Math.max(
+    1,
+    ...points.map((point) => Math.max(point.balance, point.contributed))
+  );
   const stepCents = niceStep(maxCents, 4);
   const axisMax = Math.ceil(maxCents / stepCents) * stepCents;
 
@@ -396,7 +400,9 @@ export function buildChartGeometry(
   const y = (cents: number) => fixed(top + plotHeight - (cents / axisMax) * plotHeight);
 
   const line = (pick: (point: ChartPoint) => number) =>
-    points.map((point, index) => `${index === 0 ? 'M' : 'L'}${x(point.year)} ${y(pick(point))}`).join(' ');
+    points
+      .map((point, index) => `${index === 0 ? 'M' : 'L'}${x(point.year)} ${y(pick(point))}`)
+      .join(' ');
 
   const balanceLine = line((point) => point.balance);
   const baseline = fixed(top + plotHeight);

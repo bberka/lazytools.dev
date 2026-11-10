@@ -5,7 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,7 +31,6 @@ export function HexConverter() {
   const [prefixType, setPrefixType] = useState<PrefixType>('none');
   const [customPrefix, setCustomPrefix] = useState('');
   const [uppercase, setUppercase] = useState(false);
-
 
   const delimiterId = useId();
   const customDelimiterId = useId();
@@ -66,11 +72,7 @@ export function HexConverter() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Mode Toggle */}
-      <Tabs
-        value={mode}
-        onValueChange={(val) => handleModeChange(val as Mode)}
-        className="w-full"
-      >
+      <Tabs value={mode} onValueChange={(val) => handleModeChange(val as Mode)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-muted/60 p-1 rounded-lg h-auto">
           <TabsTrigger value="encode" className="flex items-center gap-2 whitespace-normal">
             <Binary className="h-4 w-4 shrink-0" />
@@ -98,7 +100,10 @@ export function HexConverter() {
               >
                 Hex Delimiter
               </label>
-              <Select value={delimiterType} onValueChange={(val) => setDelimiterType(val as DelimiterType)}>
+              <Select
+                value={delimiterType}
+                onValueChange={(val) => setDelimiterType(val as DelimiterType)}
+              >
                 <SelectTrigger id={delimiterId} className="bg-background">
                   <SelectValue placeholder="Delimiter" />
                 </SelectTrigger>

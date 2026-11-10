@@ -87,7 +87,14 @@ test.describe('morseToText', () => {
   });
 
   test('decodes what textToMorse wrote', () => {
-    for (const text of ['HELLO WORLD', 'SOS', 'A  B', '1, 2 & 3!', 'USER@EXAMPLE.COM', '"QUOTED" (X) $5 = A+B_C; D: E/F-G\'S?']) {
+    for (const text of [
+      'HELLO WORLD',
+      'SOS',
+      'A  B',
+      '1, 2 & 3!',
+      'USER@EXAMPLE.COM',
+      '"QUOTED" (X) $5 = A+B_C; D: E/F-G\'S?',
+    ]) {
       expect(morseToText(textToMorse(text)), text).toBe(text);
     }
   });
@@ -175,7 +182,9 @@ test.describe('textToBinary / binaryToText', () => {
   });
 
   test('rejects a bit count that is not a multiple of eight', () => {
-    expect(() => binaryToText('0100100', ' ')).toThrow('Binary data length must be a multiple of 8 bits.');
+    expect(() => binaryToText('0100100', ' ')).toThrow(
+      'Binary data length must be a multiple of 8 bits.'
+    );
   });
 
   // Defect: letters and other digits were dropped silently; text with no bits
@@ -206,8 +215,14 @@ test.describe('convertCode', () => {
   });
 
   test('uses the separator for binary in both directions', () => {
-    expect(convertCode('Hi', 'binary', 'encode', ',')).toEqual({ output: '01001000,01101001', error: '' });
-    expect(convertCode('01001000,01101001', 'binary', 'decode', ',')).toEqual({ output: 'Hi', error: '' });
+    expect(convertCode('Hi', 'binary', 'encode', ',')).toEqual({
+      output: '01001000,01101001',
+      error: '',
+    });
+    expect(convertCode('01001000,01101001', 'binary', 'decode', ',')).toEqual({
+      output: 'Hi',
+      error: '',
+    });
   });
 
   test('turns a failure into an error without output', () => {
@@ -226,7 +241,10 @@ test.describe('convertCode', () => {
     const text = 'Grüße, 世界 😀';
     for (const separator of [' ', '', ',']) {
       const binary = convertCode(text, 'binary', 'encode', separator).output;
-      expect(convertCode(binary, 'binary', 'decode', separator)).toEqual({ output: text, error: '' });
+      expect(convertCode(binary, 'binary', 'decode', separator)).toEqual({
+        output: text,
+        error: '',
+      });
     }
   });
 });

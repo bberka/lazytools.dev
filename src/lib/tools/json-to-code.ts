@@ -87,27 +87,31 @@ export function inspectJson(text: string): JsonInspection {
     return { valid: true, value, summary: `Array with ${count(value.length, 'item')}` };
   }
   if (value && typeof value === 'object') {
-    return { valid: true, value, summary: `Object with ${count(Object.keys(value).length, 'key')}` };
+    return {
+      valid: true,
+      value,
+      summary: `Object with ${count(Object.keys(value).length, 'key')}`,
+    };
   }
   return { valid: true, value, summary: `Primitive (${value === null ? 'null' : typeof value})` };
 }
 
 // ── The shape of a sample ─────────────────────────────────────────────────────
 
-type Shape = (
-  // Only null was seen, or nothing at all (the items of an empty array).
-  | { kind: 'unknown' }
-  | { kind: 'string' }
-  | { kind: 'boolean' }
-  | { kind: 'number'; integer: boolean }
-  | { kind: 'array'; items: Shape }
-  | { kind: 'object'; fields: Map<string, Field> }
-  // Values of different kinds in one place; at most one member per kind.
-  | { kind: 'union'; members: Shape[] }
-) & {
-  /** Null was seen here, alongside the value or instead of it. */
-  nullable: boolean;
-};
+type Shape = // Only null was seen, or nothing at all (the items of an empty array).
+  (
+    | { kind: 'unknown' }
+    | { kind: 'string' }
+    | { kind: 'boolean' }
+    | { kind: 'number'; integer: boolean }
+    | { kind: 'array'; items: Shape }
+    | { kind: 'object'; fields: Map<string, Field> }
+    // Values of different kinds in one place; at most one member per kind.
+    | { kind: 'union'; members: Shape[] }
+  ) & {
+    /** Null was seen here, alongside the value or instead of it. */
+    nullable: boolean;
+  };
 
 type ObjectShape = Extract<Shape, { kind: 'object' }>;
 
@@ -240,12 +244,7 @@ function itemKeyOf(key: string): string {
 function pascalOf(key: string, style: NameStyle): string {
   const letters = style.ascii ? 'a-zA-Z0-9' : '\\p{L}\\p{Nd}';
   const unusable = new RegExp(`[^${letters}_${style.dollar ? '$' : ''}]+`, 'gu');
-  return key
-    .replace(unusable, ' ')
-    .trim()
-    .split(' ')
-    .map(upperFirst)
-    .join('');
+  return key.replace(unusable, ' ').trim().split(' ').map(upperFirst).join('');
 }
 
 function typeNameOf(key: string, style: NameStyle): string {
@@ -1094,9 +1093,7 @@ function generateDart(root: Shape, rootName: string): string {
     const fromJsonLines = members.map(
       (member) => `      ${member.name}: ${member.type.decode(`json[${dartString(member.key)}]`)},`
     );
-    const toJsonLines = members.map(
-      (member) => `      ${dartString(member.key)}: ${member.name},`
-    );
+    const toJsonLines = members.map((member) => `      ${dartString(member.key)}: ${member.name},`);
 
     return `class ${name} {\n${fields.join('\n')}\n\n  ${name}({\n${ctorParams.join('\n')}\n  });\n\n  factory ${name}.fromJson(Map<String, dynamic> json) {\n    return ${name}(\n${fromJsonLines.join('\n')}\n    );\n  }\n\n  Map<String, dynamic> toJson() {\n    return {\n${toJsonLines.join('\n')}\n    };\n  }\n}`;
   };

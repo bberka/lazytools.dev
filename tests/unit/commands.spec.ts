@@ -76,15 +76,23 @@ test.describe('shortcut matching', () => {
     const shortcut: Shortcut = { key: 'k', mod: 'either' };
 
     for (const platform of PLATFORMS) {
-      expect(matchesShortcut(press('k', { ctrlKey: true }), shortcut, platform), platform).toBe(true);
-      expect(matchesShortcut(press('k', { metaKey: true }), shortcut, platform), platform).toBe(true);
+      expect(matchesShortcut(press('k', { ctrlKey: true }), shortcut, platform), platform).toBe(
+        true
+      );
+      expect(matchesShortcut(press('k', { metaKey: true }), shortcut, platform), platform).toBe(
+        true
+      );
       expect(matchesShortcut(press('k'), shortcut, platform), platform).toBe(false);
     }
   });
 
   test('needs every modifier that is set', () => {
-    expect(matchesShortcut(press('Delete', { ctrlKey: true }), modShiftDelete, 'other')).toBe(false);
-    expect(matchesShortcut(press('Delete', { shiftKey: true }), modShiftDelete, 'other')).toBe(false);
+    expect(matchesShortcut(press('Delete', { ctrlKey: true }), modShiftDelete, 'other')).toBe(
+      false
+    );
+    expect(matchesShortcut(press('Delete', { shiftKey: true }), modShiftDelete, 'other')).toBe(
+      false
+    );
     expect(matchesShortcut(press('c'), { key: 'c', alt: true }, 'other')).toBe(false);
   });
 
@@ -106,7 +114,9 @@ test.describe('shortcut matching', () => {
 
   test('ignores letter case', () => {
     // Caps Lock and Shift both turn the reported key into a capital
-    expect(matchesShortcut(press('C', { altKey: true }), { key: 'c', alt: true }, 'other')).toBe(true);
+    expect(matchesShortcut(press('C', { altKey: true }), { key: 'c', alt: true }, 'other')).toBe(
+      true
+    );
     expect(matchesShortcut(press('delete'), { key: 'Delete' }, 'other')).toBe(true);
   });
 
@@ -120,13 +130,18 @@ test.describe('shortcut matching', () => {
   });
 
   test('does not match another key', () => {
-    expect(matchesShortcut(press('x', { altKey: true }), { key: 'c', alt: true }, 'other')).toBe(false);
+    expect(matchesShortcut(press('x', { altKey: true }), { key: 'c', alt: true }, 'other')).toBe(
+      false
+    );
     expect(matchesShortcut(press('Backspace'), { key: 'Delete' }, 'other')).toBe(false);
   });
 
   test('does not match an event that carries no key', () => {
     // Chrome's autofill dispatches such keydown events
-    const keyless = { ...press('k', { ctrlKey: true }), key: undefined } as unknown as ShortcutEvent;
+    const keyless = {
+      ...press('k', { ctrlKey: true }),
+      key: undefined,
+    } as unknown as ShortcutEvent;
 
     expect(matchesShortcut(keyless, PALETTE_SHORTCUTS.toggle, 'other')).toBe(false);
   });
@@ -218,7 +233,9 @@ test.describe('shortcut labels', () => {
 
   test('read as the settings dialog shows them, the same on every platform', () => {
     for (const platform of PLATFORMS) {
-      expect(shortcutLabel(APP_COMMANDS.toggleCompactMode.shortcut, platform, ' + ')).toBe('Alt + C');
+      expect(shortcutLabel(APP_COMMANDS.toggleCompactMode.shortcut, platform, ' + ')).toBe(
+        'Alt + C'
+      );
       expect(shortcutLabel(APP_COMMANDS.toggleFullWidth.shortcut, platform, ' + ')).toBe('Alt + W');
     }
   });
@@ -227,7 +244,9 @@ test.describe('shortcut labels', () => {
     const everything: Shortcut = { key: 'x', mod: true, alt: true, shift: true };
 
     expect(shortcutKeys(everything, 'other')).toEqual(['Ctrl', 'Alt', '⇧', 'X']);
-    expect(shortcutKeys({ key: 'x', mod: false, alt: false, shift: false }, 'other')).toEqual(['X']);
+    expect(shortcutKeys({ key: 'x', mod: false, alt: false, shift: false }, 'other')).toEqual([
+      'X',
+    ]);
     expect(shortcutKeys({ key: 'Escape' }, 'mac')).toEqual(['Escape']);
   });
 });

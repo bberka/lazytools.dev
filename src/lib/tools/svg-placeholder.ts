@@ -126,8 +126,12 @@ export function effectiveFontSize(config: PlaceholderConfig): number {
 /** The SVG markup for a placeholder. */
 export function buildPlaceholderSvg(config: PlaceholderConfig): string {
   const { width, height } = config;
-  const background = (normalizeHexColor(config.background) ?? DEFAULT_PLACEHOLDER.background).toLowerCase();
-  const textColor = (normalizeHexColor(config.textColor) ?? DEFAULT_PLACEHOLDER.textColor).toLowerCase();
+  const background = (
+    normalizeHexColor(config.background) ?? DEFAULT_PLACEHOLDER.background
+  ).toLowerCase();
+  const textColor = (
+    normalizeHexColor(config.textColor) ?? DEFAULT_PLACEHOLDER.textColor
+  ).toLowerCase();
   const radius = Math.min(Math.max(0, config.radius), maxRadius(width, height));
   const label = escapeXml(resolveLabel(config));
 

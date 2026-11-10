@@ -88,7 +88,7 @@ export function DatePicker({
             onMonthChange={setMonth}
             onSelect={handleSelect}
             disabled={disabled}
-            className='w-72'
+            className="w-72"
           />
         </PopoverContent>
       </Popover>

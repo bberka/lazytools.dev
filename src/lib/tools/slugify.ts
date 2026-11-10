@@ -37,24 +37,60 @@ export const DEFAULT_OPTIONS: SlugOptions = {
 };
 
 const STOPWORDS: ReadonlySet<string> = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'for', 'from', 'in',
-  'into', 'is', 'it', 'of', 'on', 'or', 'the', 'to', 'with',
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'but',
+  'by',
+  'for',
+  'from',
+  'in',
+  'into',
+  'is',
+  'it',
+  'of',
+  'on',
+  'or',
+  'the',
+  'to',
+  'with',
 ]);
 
 // Letters that Unicode decomposition cannot split into base letter plus mark.
 const BASIC_MAP: Readonly<Record<string, string>> = {
-  'ß': 'ss', 'ẞ': 'SS',
-  'ı': 'i', 'İ': 'I',
-  'æ': 'ae', 'Æ': 'AE', 'œ': 'oe', 'Œ': 'OE',
-  'ø': 'o', 'Ø': 'O',
-  'đ': 'd', 'Đ': 'D', 'ð': 'd', 'Ð': 'D',
-  'ł': 'l', 'Ł': 'L',
-  'þ': 'th', 'Þ': 'TH',
-  'ħ': 'h', 'Ħ': 'H',
+  ß: 'ss',
+  ẞ: 'SS',
+  ı: 'i',
+  İ: 'I',
+  æ: 'ae',
+  Æ: 'AE',
+  œ: 'oe',
+  Œ: 'OE',
+  ø: 'o',
+  Ø: 'O',
+  đ: 'd',
+  Đ: 'D',
+  ð: 'd',
+  Ð: 'D',
+  ł: 'l',
+  Ł: 'L',
+  þ: 'th',
+  Þ: 'TH',
+  ħ: 'h',
+  Ħ: 'H',
 };
 
 const GERMAN_MAP: Readonly<Record<string, string>> = {
-  'ä': 'ae', 'Ä': 'Ae', 'ö': 'oe', 'Ö': 'Oe', 'ü': 'ue', 'Ü': 'Ue',
+  ä: 'ae',
+  Ä: 'Ae',
+  ö: 'oe',
+  Ö: 'Oe',
+  ü: 'ue',
+  Ü: 'Ue',
 };
 
 function transliterate(text: string, mode: Transliteration): string {
@@ -71,7 +107,10 @@ function transliterate(text: string, mode: Transliteration): string {
 }
 
 /** The words of a text: runs of letters, marks and digits. Apostrophes vanish, so "don't" is one word. */
-function slugWords(text: string, options: Pick<SlugOptions, 'transliteration' | 'lowercase'>): string[] {
+function slugWords(
+  text: string,
+  options: Pick<SlugOptions, 'transliteration' | 'lowercase'>
+): string[] {
   let value = transliterate(text, options.transliteration).replace(/['‘’ʼ`]/g, '');
   if (options.lowercase) {
     // Lower-casing İ gives i plus a combining dot; Turkish writes plain i.
@@ -95,7 +134,8 @@ function truncateWords(words: string[], separator: string, maxLength: number): s
     length = next;
   }
   // A first word longer than the limit is cut inside the word.
-  if (kept.length === 0 && words.length > 0) return [codePoints(words[0]).slice(0, maxLength).join('')];
+  if (kept.length === 0 && words.length > 0)
+    return [codePoints(words[0]).slice(0, maxLength).join('')];
   return kept;
 }
 

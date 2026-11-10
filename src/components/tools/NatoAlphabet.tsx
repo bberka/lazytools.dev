@@ -6,7 +6,13 @@ import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -49,7 +55,9 @@ function ReferenceTable({ caption, entries }: { caption: string; entries: readon
             <tr key={entry.symbol} className="border-t">
               <td className="px-3 py-1.5 font-mono font-semibold">{entry.symbol}</td>
               <td className="px-3 py-1.5">{entry.word}</td>
-              <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">{entry.pronunciation}</td>
+              <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                {entry.pronunciation}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -108,7 +116,11 @@ export function NatoAlphabet() {
             spellCheck={false}
           />
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => setText(encoding ? EXAMPLE_TEXT : ENCODED_EXAMPLE)} variant="outline" size="sm">
+            <Button
+              onClick={() => setText(encoding ? EXAMPLE_TEXT : ENCODED_EXAMPLE)}
+              variant="outline"
+              size="sm"
+            >
               Load Example
             </Button>
             <Button onClick={() => setText('')} variant="outline" size="sm" disabled={!hasText}>
@@ -130,7 +142,10 @@ export function NatoAlphabet() {
                 <label htmlFor="nato-digits" className="text-sm font-medium">
                   Digits
                 </label>
-                <Select value={digitStyle} onValueChange={(value) => setDigitStyle(value as DigitStyle)}>
+                <Select
+                  value={digitStyle}
+                  onValueChange={(value) => setDigitStyle(value as DigitStyle)}
+                >
                   <SelectTrigger id="nato-digits">
                     <SelectValue placeholder="Select a digit style" />
                   </SelectTrigger>
@@ -157,10 +172,18 @@ export function NatoAlphabet() {
               </div>
             </>
           ) : (
-            <Checkbox label="Lower-case result" checked={lowercase} onCheckedChange={setLowercase} />
+            <Checkbox
+              label="Lower-case result"
+              checked={lowercase}
+              onCheckedChange={setLowercase}
+            />
           )}
           <Checkbox
-            label={encoding ? 'Keep characters without a code word' : 'Keep words that are not code words'}
+            label={
+              encoding
+                ? 'Keep characters without a code word'
+                : 'Keep words that are not code words'
+            }
             checked={keepUnknown}
             onCheckedChange={setKeepUnknown}
           />
@@ -203,7 +226,8 @@ export function NatoAlphabet() {
         <CardHeader>
           <CardTitle className="text-base">Reference</CardTitle>
           <CardDescription>
-            The ICAO code words. Digits have their own pronunciations so they cannot be mistaken on a bad line.
+            The ICAO code words. Digits have their own pronunciations so they cannot be mistaken on
+            a bad line.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-6">

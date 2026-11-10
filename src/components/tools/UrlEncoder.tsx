@@ -54,7 +54,11 @@ export function UrlEncoder() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={mode === 'encode' ? 'https://example.com/search?q=hello world' : 'https%3A%2F%2Fexample.com'}
+            placeholder={
+              mode === 'encode'
+                ? 'https://example.com/search?q=hello world'
+                : 'https%3A%2F%2Fexample.com'
+            }
             aria-label={mode === 'encode' ? 'URL to encode' : 'Encoded URL to decode'}
             rows={8}
             className="font-mono"
@@ -63,7 +67,10 @@ export function UrlEncoder() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -73,7 +80,9 @@ export function UrlEncoder() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>

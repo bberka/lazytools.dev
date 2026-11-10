@@ -99,11 +99,7 @@ export function LoremIpsumGenerator() {
           />
 
           {type === 'paragraphs' && (
-            <Checkbox
-              checked={htmlTags}
-              onChange={setHtmlTags}
-              label="Wrap in HTML <p> tags"
-            />
+            <Checkbox checked={htmlTags} onChange={setHtmlTags} label="Wrap in HTML <p> tags" />
           )}
         </CardContent>
       </Card>
@@ -119,12 +115,12 @@ export function LoremIpsumGenerator() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Output</CardTitle>
             <div className="flex items-center gap-1">
-              <TooltipSimple content={isCopied ? "Copied!" : "Copy output"}>
+              <TooltipSimple content={isCopied ? 'Copied!' : 'Copy output'}>
                 <Button
-                  variant={isCopied ? "default" : "ghost"}
+                  variant={isCopied ? 'default' : 'ghost'}
                   size="icon"
                   onClick={() => copyToClipboard(output)}
-                  aria-label={isCopied ? "Copied!" : "Copy output"}
+                  aria-label={isCopied ? 'Copied!' : 'Copy output'}
                 >
                   {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>

@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   ALIGNMENTS,
@@ -57,7 +63,10 @@ export function MarkdownTableGenerator() {
   const handleImport = () => {
     const result = tableFromRows(parseDelimited(importText, delimiter), firstRowHeader);
     if (!result) {
-      setImportMessage({ text: 'There is no data to import. Paste CSV or TSV text first.', error: true });
+      setImportMessage({
+        text: 'There is no data to import. Paste CSV or TSV text first.',
+        error: true,
+      });
       return;
     }
     setTable(result.table);
@@ -77,8 +86,8 @@ export function MarkdownTableGenerator() {
             Table
           </CardTitle>
           <CardDescription>
-            Edit the cells, choose how each column is aligned, and add or remove rows and columns. The first row is the
-            header.
+            Edit the cells, choose how each column is aligned, and add or remove rows and columns.
+            The first row is the header.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -88,7 +97,11 @@ export function MarkdownTableGenerator() {
               <thead>
                 <tr className="bg-muted/40 align-top">
                   {table.alignments.map((alignment, column) => (
-                    <th key={column} scope="col" className="min-w-[9rem] space-y-1 p-2 text-left font-normal">
+                    <th
+                      key={column}
+                      scope="col"
+                      className="min-w-[9rem] space-y-1 p-2 text-left font-normal"
+                    >
                       <Input
                         value={table.cells[0][column]}
                         onChange={(e) => setTable(setCell(table, 0, column, e.target.value))}
@@ -100,9 +113,14 @@ export function MarkdownTableGenerator() {
                         <div className="min-w-0 flex-1">
                           <Select
                             value={alignment}
-                            onValueChange={(value) => setTable(setAlignment(table, column, value as Alignment))}
+                            onValueChange={(value) =>
+                              setTable(setAlignment(table, column, value as Alignment))
+                            }
                           >
-                            <SelectTrigger aria-label={`Column ${column + 1} alignment`} className="h-8 text-xs">
+                            <SelectTrigger
+                              aria-label={`Column ${column + 1} alignment`}
+                              className="h-8 text-xs"
+                            >
                               <SelectValue placeholder="Alignment" />
                             </SelectTrigger>
                             <SelectContent>
@@ -141,7 +159,9 @@ export function MarkdownTableGenerator() {
                         <td key={column} className="p-2">
                           <Input
                             value={cell}
-                            onChange={(e) => setTable(setCell(table, rowNumber, column, e.target.value))}
+                            onChange={(e) =>
+                              setTable(setCell(table, rowNumber, column, e.target.value))
+                            }
                             aria-label={`Row ${rowNumber} column ${column + 1}`}
                             className="h-8"
                           />
@@ -166,11 +186,21 @@ export function MarkdownTableGenerator() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setTable(addRow(table))} disabled={!canAddRow}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTable(addRow(table))}
+              disabled={!canAddRow}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add row
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setTable(addColumn(table))} disabled={!canAddColumn}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTable(addColumn(table))}
+              disabled={!canAddColumn}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add column
             </Button>
@@ -180,8 +210,8 @@ export function MarkdownTableGenerator() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground" role="status">
-            {columnCount} {columnCount === 1 ? 'column' : 'columns'}, {bodyRowCount} {bodyRowCount === 1 ? 'row' : 'rows'}{' '}
-            below the header.
+            {columnCount} {columnCount === 1 ? 'column' : 'columns'}, {bodyRowCount}{' '}
+            {bodyRowCount === 1 ? 'row' : 'rows'} below the header.
           </p>
         </CardContent>
       </Card>
@@ -225,7 +255,11 @@ export function MarkdownTableGenerator() {
               </Select>
             </div>
             <div className="sm:pt-7">
-              <Checkbox label="First row is the header" checked={firstRowHeader} onCheckedChange={setFirstRowHeader} />
+              <Checkbox
+                label="First row is the header"
+                checked={firstRowHeader}
+                onCheckedChange={setFirstRowHeader}
+              />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -250,7 +284,9 @@ export function MarkdownTableGenerator() {
           {importMessage && (
             <p
               role="status"
-              className={importMessage.error ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'}
+              className={
+                importMessage.error ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'
+              }
             >
               {importMessage.text}
             </p>
@@ -261,7 +297,9 @@ export function MarkdownTableGenerator() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Markdown</CardTitle>
-          <CardDescription>Updates as you edit. Works on GitHub, GitLab and most Markdown editors.</CardDescription>
+          <CardDescription>
+            Updates as you edit. Works on GitHub, GitLab and most Markdown editors.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
@@ -273,7 +311,9 @@ export function MarkdownTableGenerator() {
             <Checkbox
               label="Escape pipes inside cells"
               checked={options.escapePipes}
-              onCheckedChange={(checked) => setOptions((current) => ({ ...current, escapePipes: checked }))}
+              onCheckedChange={(checked) =>
+                setOptions((current) => ({ ...current, escapePipes: checked }))
+              }
             />
           </div>
           <Textarea

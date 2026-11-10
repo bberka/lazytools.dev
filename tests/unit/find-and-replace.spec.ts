@@ -87,7 +87,11 @@ test.describe('literal search', () => {
 
 test.describe('whole word', () => {
   test('skips matches inside longer words', () => {
-    const result = run('cat concat cats cat_1 Cat.', { find: 'cat', replace: 'dog', wholeWord: true });
+    const result = run('cat concat cats cat_1 Cat.', {
+      find: 'cat',
+      replace: 'dog',
+      wholeWord: true,
+    });
 
     expect(result.output).toBe('dog concat cats cat_1 dog.');
     expect(result.replacements).toBe(2);
@@ -109,13 +113,9 @@ test.describe('whole word', () => {
 
   // Defect: an ASCII word glued to an accented letter counted as a whole word.
   test('does not match part of a word that continues with a non-ASCII letter', () => {
-    expect(run('caféine cafe', { find: 'caf', replace: 'X', wholeWord: true }).matches).toEqual(
-      []
-    );
+    expect(run('caféine cafe', { find: 'caf', replace: 'X', wholeWord: true }).matches).toEqual([]);
     expect(run('élan lan', { find: 'lan', replace: 'X', wholeWord: true }).output).toBe('élan X');
-    expect(
-      run('café cafe', { find: 'cafe', replace: 'X', wholeWord: true }).output
-    ).toBe('café X');
+    expect(run('café cafe', { find: 'cafe', replace: 'X', wholeWord: true }).output).toBe('café X');
   });
 
   test('matches a search that ends in punctuation', () => {
@@ -136,7 +136,12 @@ test.describe('whole word', () => {
   });
 
   test('still works for a regex that is only valid outside Unicode mode', () => {
-    const result = run('a-b xa-b', { find: 'a\\-b', replace: '#', wholeWord: true, useRegex: true });
+    const result = run('a-b xa-b', {
+      find: 'a\\-b',
+      replace: '#',
+      wholeWord: true,
+      useRegex: true,
+    });
 
     expect(result.error).toBe('');
     expect(result.output).toBe('# xa-b');
@@ -160,8 +165,7 @@ test.describe('regex search', () => {
       '<oo> <oo>'
     );
     expect(
-      run('Foo foo', { find: 'f(o+)', replace: '<$1>', useRegex: true, caseSensitive: true })
-        .output
+      run('Foo foo', { find: 'f(o+)', replace: '<$1>', useRegex: true, caseSensitive: true }).output
     ).toBe('Foo <oo>');
   });
 
@@ -199,7 +203,12 @@ test.describe('regex search', () => {
   });
 
   test('replaces only the first regex match without replace all', () => {
-    const result = run('a1 b2 c3', { find: '\\d', replace: '#', useRegex: true, replaceAll: false });
+    const result = run('a1 b2 c3', {
+      find: '\\d',
+      replace: '#',
+      useRegex: true,
+      replaceAll: false,
+    });
 
     expect(result.output).toBe('a# b2 c3');
     expect(result.matches).toHaveLength(3);

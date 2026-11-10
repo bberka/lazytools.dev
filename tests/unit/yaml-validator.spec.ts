@@ -31,13 +31,18 @@ test.describe('validate', () => {
       error: '',
     });
     expect(yaml.validate('only: 1')).toMatchObject({ summary: 'Top-level mapping with 1 key' });
-    expect(yaml.validate('- a\n- b\n- c')).toMatchObject({ summary: 'Top-level sequence with 3 items' });
+    expect(yaml.validate('- a\n- b\n- c')).toMatchObject({
+      summary: 'Top-level sequence with 3 items',
+    });
     expect(yaml.validate('- a')).toMatchObject({ summary: 'Top-level sequence with 1 item' });
     expect(yaml.validate('hello')).toMatchObject({ summary: 'Top-level string value' });
     expect(yaml.validate('0')).toMatchObject({ summary: 'Top-level number value', documents: [0] });
     expect(yaml.validate('-3.5')).toMatchObject({ summary: 'Top-level number value' });
     expect(yaml.validate('false')).toMatchObject({ summary: 'Top-level boolean value' });
-    expect(yaml.validate('~')).toMatchObject({ summary: 'Top-level null value', documents: [null] });
+    expect(yaml.validate('~')).toMatchObject({
+      summary: 'Top-level null value',
+      documents: [null],
+    });
   });
 
   test('treats a document of only comments as null', () => {
@@ -49,7 +54,10 @@ test.describe('validate', () => {
   });
 
   test('names a bare timestamp instead of calling it an empty mapping', () => {
-    expect(yaml.validate('2024-01-01')).toMatchObject({ valid: true, summary: 'Top-level timestamp value' });
+    expect(yaml.validate('2024-01-01')).toMatchObject({
+      valid: true,
+      summary: 'Top-level timestamp value',
+    });
   });
 
   // js-yaml's load() rejects a stream with more than one document, so every
@@ -97,7 +105,9 @@ test.describe('describeError', () => {
 
 test.describe('large integers', () => {
   test('keeps an integer too large for a double', () => {
-    const [document] = yaml.parseDocuments(`id: ${UNSAFE}\nneg: -${UNSAFE}\nhex: 0xFFFFFFFFFFFFFFFF`);
+    const [document] = yaml.parseDocuments(
+      `id: ${UNSAFE}\nneg: -${UNSAFE}\nhex: 0xFFFFFFFFFFFFFFFF`
+    );
 
     expect(document).toEqual({
       id: BigInt(UNSAFE),
@@ -116,8 +126,12 @@ test.describe('large integers', () => {
   test('writes a large integer back digit for digit', () => {
     const documents = yaml.parseDocuments(`id: ${UNSAFE}\nlist:\n  - -${UNSAFE}`);
 
-    expect(yaml.render(documents, { indent: 2 }).text).toBe(`id: ${UNSAFE}\nlist:\n  - -${UNSAFE}\n`);
-    expect(yaml.render(documents, { minify: true }).text).toBe(`{"id":${UNSAFE},"list":[-${UNSAFE}]}`);
+    expect(yaml.render(documents, { indent: 2 }).text).toBe(
+      `id: ${UNSAFE}\nlist:\n  - -${UNSAFE}\n`
+    );
+    expect(yaml.render(documents, { minify: true }).text).toBe(
+      `{"id":${UNSAFE},"list":[-${UNSAFE}]}`
+    );
   });
 
   test('still quotes a string of digits so it stays a string', () => {
@@ -167,7 +181,8 @@ test.describe('render', () => {
   });
 
   test('output parses back to the same documents', () => {
-    const source = 'a: 1\nb:\n  - x\n  - y: [1, 2]\n---\nc: "text: with colon"\nd: 2024-01-01T00:00:00Z';
+    const source =
+      'a: 1\nb:\n  - x\n  - y: [1, 2]\n---\nc: "text: with colon"\nd: 2024-01-01T00:00:00Z';
     const parsed = yaml.parseDocuments(source);
 
     expect(yaml.parseDocuments(yaml.render(parsed, { indent: 4 }).text)).toEqual(parsed);
@@ -203,7 +218,9 @@ test.describe('render', () => {
   });
 
   test('writes a timestamp that was not typed in YAML as ISO text', () => {
-    expect(yaml.dump({ at: new Date('2024-01-01T10:00:00Z') })).toBe('at: 2024-01-01T10:00:00.000Z\n');
+    expect(yaml.dump({ at: new Date('2024-01-01T10:00:00Z') })).toBe(
+      'at: 2024-01-01T10:00:00.000Z\n'
+    );
   });
 
   test('does not treat a quoted date as a timestamp', () => {

@@ -67,7 +67,10 @@ export function JwtDecoder() {
           </Button>
 
           {error && (
-            <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}

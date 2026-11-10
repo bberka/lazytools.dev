@@ -61,7 +61,9 @@ test.describe('sorting', () => {
     expect(run('ccc\na\nbb\ndd', { sort: 'length-asc' }).text).toBe('a\nbb\ndd\nccc');
     expect(run('ccc\na\nbb\ndd', { sort: 'length-desc' }).text).toBe('ccc\nbb\ndd\na');
     // Two astral letters are 2 code points (4 UTF-16 units), shorter than "abc".
-    expect(run('abc\n\u{1D49C}\u{1D49C}', { sort: 'length-asc' }).text).toBe('\u{1D49C}\u{1D49C}\nabc');
+    expect(run('abc\n\u{1D49C}\u{1D49C}', { sort: 'length-asc' }).text).toBe(
+      '\u{1D49C}\u{1D49C}\nabc'
+    );
   });
 
   test('numeric sorting orders by the leading number and leaves lines without one last', () => {
@@ -92,7 +94,12 @@ test.describe('processLines', () => {
   test('removes duplicates and counts them; the first occurrence stays', () => {
     const result = run('a\nA\na\nb', { removeDuplicates: true });
     expect(result.text).toBe('a\nA\nb');
-    expect(result.stats).toEqual({ inputLines: 4, outputLines: 3, removedEmpty: 0, removedDuplicates: 1 });
+    expect(result.stats).toEqual({
+      inputLines: 4,
+      outputLines: 3,
+      removedEmpty: 0,
+      removedDuplicates: 1,
+    });
   });
 
   test('ignoring case keeps the first spelling', () => {
@@ -128,7 +135,12 @@ test.describe('processLines', () => {
     const result = processLines('', DEFAULT_OPTIONS);
     expect(result.text).toBe('');
     expect(result.lines).toEqual([]);
-    expect(result.stats).toEqual({ inputLines: 0, outputLines: 0, removedEmpty: 0, removedDuplicates: 0 });
+    expect(result.stats).toEqual({
+      inputLines: 0,
+      outputLines: 0,
+      removedEmpty: 0,
+      removedDuplicates: 0,
+    });
   });
 
   test('unicode lines are compared as written and decomposed text is a different line', () => {
@@ -139,7 +151,14 @@ test.describe('processLines', () => {
   test('the defaults on the example text', () => {
     // banana twice and one empty line go; the rest is in dictionary order.
     const result = processLines(EXAMPLE_TEXT, DEFAULT_OPTIONS);
-    expect(result.text).toBe(['apple', 'Apple', 'banana', 'cherry', 'Cherry', 'file10.txt', 'file2.txt'].join('\n'));
-    expect(result.stats).toEqual({ inputLines: 9, outputLines: 7, removedEmpty: 1, removedDuplicates: 1 });
+    expect(result.text).toBe(
+      ['apple', 'Apple', 'banana', 'cherry', 'Cherry', 'file10.txt', 'file2.txt'].join('\n')
+    );
+    expect(result.stats).toEqual({
+      inputLines: 9,
+      outputLines: 7,
+      removedEmpty: 1,
+      removedDuplicates: 1,
+    });
   });
 });

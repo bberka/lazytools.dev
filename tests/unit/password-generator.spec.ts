@@ -78,7 +78,9 @@ test.describe('createRandomInt', () => {
 
   test('returns 0 without drawing for a range of one or less', () => {
     const randomInt = createRandomInt(replay([]));
-    expect([randomInt(1), randomInt(0), randomInt(-5), randomInt(Number.NaN)]).toEqual([0, 0, 0, 0]);
+    expect([randomInt(1), randomInt(0), randomInt(-5), randomInt(Number.NaN)]).toEqual([
+      0, 0, 0, 0,
+    ]);
   });
 
   test('the secure generator stays inside the range and reaches all of it', () => {
@@ -93,18 +95,25 @@ test.describe('generatePassword: random passwords', () => {
     for (const length of [4, 16, 64, 256]) {
       const password = valueOf(generatePassword({ ...ALL_SETS, length }, seededRandomInt(length)));
       expect(password).toHaveLength(length);
-      expect(Array.from(password).every((char) => /[A-Za-z0-9]/.test(char) || SPECIAL.includes(char))).toBe(true);
+      expect(
+        Array.from(password).every((char) => /[A-Za-z0-9]/.test(char) || SPECIAL.includes(char))
+      ).toBe(true);
     }
 
     const lettersOnly = valueOf(
-      generatePassword({ ...ALL_SETS, numbers: false, special: false, length: 200 }, seededRandomInt(1))
+      generatePassword(
+        { ...ALL_SETS, numbers: false, special: false, length: 200 },
+        seededRandomInt(1)
+      )
     );
     expect(lettersOnly).toMatch(/^[A-Za-z]{200}$/);
   });
 
   test('contains every enabled set when asked to, even at the shortest length', () => {
     for (let seed = 0; seed < 200; seed++) {
-      const counts = countCharacterTypes(valueOf(generatePassword({ ...ALL_SETS, length: 4 }, seededRandomInt(seed))));
+      const counts = countCharacterTypes(
+        valueOf(generatePassword({ ...ALL_SETS, length: 4 }, seededRandomInt(seed)))
+      );
       expect(counts).toEqual({ uppercase: 1, lowercase: 1, numbers: 1, special: 1 });
     }
   });
@@ -112,7 +121,10 @@ test.describe('generatePassword: random passwords', () => {
   test('never uses the look-alike characters when they are excluded', () => {
     for (let seed = 0; seed < 50; seed++) {
       const password = valueOf(
-        generatePassword({ ...ALL_SETS, length: 256, excludeAmbiguous: true }, seededRandomInt(seed))
+        generatePassword(
+          { ...ALL_SETS, length: 256, excludeAmbiguous: true },
+          seededRandomInt(seed)
+        )
       );
       expect(password).not.toMatch(/[0Ol1iI]/);
     }
@@ -142,37 +154,80 @@ test.describe('generatePassword: random passwords', () => {
         seededRandomInt(3)
       )
     );
-    expect(countCharacterTypes(password)).toEqual({ uppercase: 2, lowercase: 2, numbers: 2, special: 2 });
+    expect(countCharacterTypes(password)).toEqual({
+      uppercase: 2,
+      lowercase: 2,
+      numbers: 2,
+      special: 2,
+    });
   });
 
   test('a maximum of zero switches the set off; one above the length means no limit', () => {
-    const noDigits = valueOf(generatePassword({ ...ALL_SETS, length: 100, maxNumbers: 0 }, seededRandomInt(5)));
+    const noDigits = valueOf(
+      generatePassword({ ...ALL_SETS, length: 100, maxNumbers: 0 }, seededRandomInt(5))
+    );
     expect(noDigits).not.toMatch(/\d/);
-    expect(valueOf(generatePassword({ ...ALL_SETS, length: 8, maxLowercase: 500 }, seededRandomInt(5)))).toHaveLength(8);
+    expect(
+      valueOf(generatePassword({ ...ALL_SETS, length: 8, maxLowercase: 500 }, seededRandomInt(5)))
+    ).toHaveLength(8);
   });
 
   test('explains settings that cannot produce a password', () => {
-    const none = { ...ALL_SETS, uppercase: false, lowercase: false, numbers: false, special: false };
-    expect(errorOf(generatePassword(none))).toBe('Enable at least one character set with a max count above zero.');
-    expect(errorOf(generatePassword({ ...ALL_SETS, lowercase: false, numbers: false, special: false, maxUppercase: 0 }))).toBe(
+    const none = {
+      ...ALL_SETS,
+      uppercase: false,
+      lowercase: false,
+      numbers: false,
+      special: false,
+    };
+    expect(errorOf(generatePassword(none))).toBe(
       'Enable at least one character set with a max count above zero.'
     );
+    expect(
+      errorOf(
+        generatePassword({
+          ...ALL_SETS,
+          lowercase: false,
+          numbers: false,
+          special: false,
+          maxUppercase: 0,
+        })
+      )
+    ).toBe('Enable at least one character set with a max count above zero.');
     expect(errorOf(generatePassword({ ...ALL_SETS, length: 3 }))).toBe(
       'Length is too short to include every enabled character set.'
     );
     expect(
-      errorOf(generatePassword({ ...ALL_SETS, length: 20, maxUppercase: 2, maxLowercase: 2, maxNumbers: 2, maxSpecial: 2 }))
+      errorOf(
+        generatePassword({
+          ...ALL_SETS,
+          length: 20,
+          maxUppercase: 2,
+          maxLowercase: 2,
+          maxNumbers: 2,
+          maxSpecial: 2,
+        })
+      )
     ).toBe('Increase the max counts or reduce the password length.');
   });
 
   // Hardening: an error used to be told apart from a password by looking for
   // words such as "Enable" in the text, so nothing may leak between the two.
   test('a password is reported as a value whatever characters it holds', () => {
-    const lettersOnly = { ...ALL_SETS, numbers: false, special: false, requireEachSet: false, length: 6 };
+    const lettersOnly = {
+      ...ALL_SETS,
+      numbers: false,
+      special: false,
+      requireEachSet: false,
+      length: 6,
+    };
     // Picks the upper-case set, then E, then the lower-case set for n, a, b, l, e.
     const letters = [0, 4, 1, 13, 1, 0, 1, 1, 1, 11, 1, 4];
     const noShuffle = [5, 4, 3, 2, 1];
-    const password = generatePassword(lettersOnly, createRandomInt(replay([...letters, ...noShuffle])));
+    const password = generatePassword(
+      lettersOnly,
+      createRandomInt(replay([...letters, ...noShuffle]))
+    );
     expect(password).toEqual({ ok: true, value: 'Enable' });
   });
 
@@ -187,21 +242,31 @@ test.describe('generatePassword: random passwords', () => {
 test.describe('generatePassword: PIN codes', () => {
   test('groups the digits with hyphens and keeps the digit count', () => {
     const random = seededRandomInt(11);
-    expect(valueOf(generatePassword({ mode: 'pin', length: 6, groupSize: 3 }, random))).toMatch(/^\d{3}-\d{3}$/);
-    expect(valueOf(generatePassword({ mode: 'pin', length: 4, groupSize: 3 }, random))).toMatch(/^\d{3}-\d$/);
-    expect(valueOf(generatePassword({ mode: 'pin', length: 4, groupSize: 6 }, random))).toMatch(/^\d{4}$/);
-    expect(valueOf(generatePassword({ mode: 'pin', length: 24, groupSize: 2 }, random))).toMatch(/^\d{2}(-\d{2}){11}$/);
+    expect(valueOf(generatePassword({ mode: 'pin', length: 6, groupSize: 3 }, random))).toMatch(
+      /^\d{3}-\d{3}$/
+    );
+    expect(valueOf(generatePassword({ mode: 'pin', length: 4, groupSize: 3 }, random))).toMatch(
+      /^\d{3}-\d$/
+    );
+    expect(valueOf(generatePassword({ mode: 'pin', length: 4, groupSize: 6 }, random))).toMatch(
+      /^\d{4}$/
+    );
+    expect(valueOf(generatePassword({ mode: 'pin', length: 24, groupSize: 2 }, random))).toMatch(
+      /^\d{2}(-\d{2}){11}$/
+    );
   });
 
   test('uses every digit', () => {
-    const digits = new Set(valueOf(generatePassword({ mode: 'pin', length: 600, groupSize: 600 }, seededRandomInt(2))));
+    const digits = new Set(
+      valueOf(generatePassword({ mode: 'pin', length: 600, groupSize: 600 }, seededRandomInt(2)))
+    );
     expect(digits.size).toBe(10);
   });
 
   test('does not hang on a group size of zero', () => {
-    expect(valueOf(generatePassword({ mode: 'pin', length: 3, groupSize: 0 }, seededRandomInt(2)))).toMatch(
-      /^\d-\d-\d$/
-    );
+    expect(
+      valueOf(generatePassword({ mode: 'pin', length: 3, groupSize: 0 }, seededRandomInt(2)))
+    ).toMatch(/^\d-\d-\d$/);
   });
 });
 
@@ -217,39 +282,52 @@ test.describe('generatePassword: passphrases', () => {
 
   test('joins capitalized words and a three-digit number', () => {
     for (let seed = 0; seed < 50; seed++) {
-      expect(valueOf(generatePassword(base, seededRandomInt(seed)))).toMatch(/^([A-Z][a-z]+-){4}[1-9]\d{2}$/);
+      expect(valueOf(generatePassword(base, seededRandomInt(seed)))).toMatch(
+        /^([A-Z][a-z]+-){4}[1-9]\d{2}$/
+      );
     }
   });
 
   test('applies the separator, the case and the suffixes that were chosen', () => {
     const random = seededRandomInt(9);
     expect(
-      valueOf(generatePassword({ ...base, separator: 'space', capitalize: false, appendNumber: false }, random))
+      valueOf(
+        generatePassword(
+          { ...base, separator: 'space', capitalize: false, appendNumber: false },
+          random
+        )
+      )
     ).toMatch(/^[a-z]+( [a-z]+){3}$/);
-    expect(valueOf(generatePassword({ ...base, separator: 'dot', appendSymbol: true }, random))).toMatch(
-      /^([A-Z][a-z]+\.){4}\d{3}\.[!@#$%&]$/
-    );
     expect(
-      valueOf(generatePassword({ ...base, wordCount: 12, separator: 'underscore', appendNumber: false }, random))
+      valueOf(generatePassword({ ...base, separator: 'dot', appendSymbol: true }, random))
+    ).toMatch(/^([A-Z][a-z]+\.){4}\d{3}\.[!@#$%&]$/);
+    expect(
+      valueOf(
+        generatePassword(
+          { ...base, wordCount: 12, separator: 'underscore', appendNumber: false },
+          random
+        )
+      )
     ).toMatch(/^[A-Z][a-z]+(_[A-Z][a-z]+){11}$/);
   });
 });
 
 test.describe('helpers', () => {
   test('countCharacterTypes counts each kind and ignores whitespace', () => {
-    expect(countCharacterTypes('Ab1! cD2?')).toEqual({ uppercase: 2, lowercase: 2, numbers: 2, special: 2 });
+    expect(countCharacterTypes('Ab1! cD2?')).toEqual({
+      uppercase: 2,
+      lowercase: 2,
+      numbers: 2,
+      special: 2,
+    });
     expect(countCharacterTypes('')).toEqual({ uppercase: 0, lowercase: 0, numbers: 0, special: 0 });
     expect(countCharacterTypes('é🙂').special).toBeGreaterThan(0);
   });
 
   test('separatorCharacter maps the separator names', () => {
-    expect(['hyphen', 'space', 'dot', 'underscore', 'anything else'].map(separatorCharacter)).toEqual([
-      '-',
-      ' ',
-      '.',
-      '_',
-      '-',
-    ]);
+    expect(
+      ['hyphen', 'space', 'dot', 'underscore', 'anything else'].map(separatorCharacter)
+    ).toEqual(['-', ' ', '.', '_', '-']);
   });
 
   test('clampInteger floors, bounds and survives non-numbers', () => {

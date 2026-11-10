@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-animate";
 
@@ -135,10 +135,20 @@ html {
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-feature-settings: 'rlig' 1, 'calt' 1;
-  background-image: 
-    radial-gradient(at 0% 0%, color-mix(in srgb, var(--color-primary) 7%, transparent) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, color-mix(in srgb, var(--color-primary) 7%, transparent) 0px, transparent 50%);
+  font-feature-settings:
+    'rlig' 1,
+    'calt' 1;
+  background-image:
+    radial-gradient(
+      at 0% 0%,
+      color-mix(in srgb, var(--color-primary) 7%, transparent) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at 100% 100%,
+      color-mix(in srgb, var(--color-primary) 7%, transparent) 0px,
+      transparent 50%
+    );
   background-attachment: fixed;
 }
 

@@ -84,7 +84,8 @@ const DOMAIN_LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 function localProblem(local: string): string | null {
   if (local === '') return 'Empty local part';
   if (Array.from(local).length > 64) return 'Local part is longer than 64 characters';
-  if (!local.split('.').every((atom) => LOCAL_ATOM.test(atom))) return 'Invalid characters or dots in local part';
+  if (!local.split('.').every((atom) => LOCAL_ATOM.test(atom)))
+    return 'Invalid characters or dots in local part';
   return null;
 }
 
@@ -123,7 +124,10 @@ export function emailProblem(address: string): string | null {
 export function normalizeAddress(address: string, options: EmailOptions): string {
   const at = address.lastIndexOf('@');
   let local = address.slice(0, at);
-  let domain = address.slice(at + 1).normalize('NFC').toLowerCase();
+  let domain = address
+    .slice(at + 1)
+    .normalize('NFC')
+    .toLowerCase();
 
   if (options.idnToAscii) domain = encodeDomain(domain);
   if (options.lowercaseLocal) local = local.toLowerCase();
@@ -153,7 +157,14 @@ export function normalizeEmails(text: string, options: EmailOptions): EmailResul
       if (problem) normalized = '';
     }
     if (problem) {
-      return { position, original, normalized: '', valid: false, reason: problem, duplicateOf: null };
+      return {
+        position,
+        original,
+        normalized: '',
+        valid: false,
+        reason: problem,
+        duplicateOf: null,
+      };
     }
     const first = firstSeen.get(normalized);
     if (first === undefined) firstSeen.set(normalized, position);
@@ -162,7 +173,9 @@ export function normalizeEmails(text: string, options: EmailOptions): EmailResul
 
   const valid = entries.filter((entry) => entry.valid);
   const duplicates = valid.filter((entry) => entry.duplicateOf !== null).length;
-  const listed = options.removeDuplicates ? valid.filter((entry) => entry.duplicateOf === null) : valid;
+  const listed = options.removeDuplicates
+    ? valid.filter((entry) => entry.duplicateOf === null)
+    : valid;
 
   return {
     entries,

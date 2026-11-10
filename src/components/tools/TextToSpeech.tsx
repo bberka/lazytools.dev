@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  type KeyboardEvent,
-} from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type KeyboardEvent } from 'react';
 import { Button } from '../ui/button';
 import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
@@ -168,78 +161,81 @@ export function TextToSpeech() {
   }, []);
 
   // Play a specific sentence in the sequence
-  const playSentence = useCallback((index: number) => {
-    const synth = getSynthesis();
-    if (!synth) return;
+  const playSentence = useCallback(
+    (index: number) => {
+      const synth = getSynthesis();
+      if (!synth) return;
 
-    currentUtteranceRef.current = null;
-    synth.cancel(); // Stop any currently speaking speech
+      currentUtteranceRef.current = null;
+      synth.cancel(); // Stop any currently speaking speech
 
-    if (index >= sentences.length) {
-      // Completed playback
-      resetPlayback();
-      return;
-    }
+      if (index >= sentences.length) {
+        // Completed playback
+        resetPlayback();
+        return;
+      }
 
-    setCurrentSentenceIndex(index);
-    setWordBoundary(null);
+      setCurrentSentenceIndex(index);
+      setWordBoundary(null);
 
-    const utteranceText = sentences[index];
-    const utterance = new SpeechSynthesisUtterance(utteranceText);
+      const utteranceText = sentences[index];
+      const utterance = new SpeechSynthesisUtterance(utteranceText);
 
-    // Holding on to the utterance also keeps it from being garbage-collected
-    // while it is spoken, which in Chrome loses its `end` event.
-    currentUtteranceRef.current = utterance;
-    const isCurrent = () => currentUtteranceRef.current === utterance;
+      // Holding on to the utterance also keeps it from being garbage-collected
+      // while it is spoken, which in Chrome loses its `end` event.
+      currentUtteranceRef.current = utterance;
+      const isCurrent = () => currentUtteranceRef.current === utterance;
 
-    // Find and set selected voice
-    const activeVoice = voicesRef.current.find((v) => v.name === selectedVoiceNameRef.current);
-    if (activeVoice) utterance.voice = activeVoice;
+      // Find and set selected voice
+      const activeVoice = voicesRef.current.find((v) => v.name === selectedVoiceNameRef.current);
+      if (activeVoice) utterance.voice = activeVoice;
 
-    utterance.rate = rateRef.current;
-    utterance.pitch = pitchRef.current;
-    utterance.volume = volumeRef.current;
+      utterance.rate = rateRef.current;
+      utterance.pitch = pitchRef.current;
+      utterance.volume = volumeRef.current;
 
-    utterance.onstart = () => {
-      if (!isCurrent()) return;
-      setIsPlaying(true);
-      setIsPaused(false);
-    };
+      utterance.onstart = () => {
+        if (!isCurrent()) return;
+        setIsPlaying(true);
+        setIsPaused(false);
+      };
 
-    utterance.onend = () => {
-      // Only a sentence that was not cancelled leads on to the next one
-      if (isCurrent()) {
+      utterance.onend = () => {
+        // Only a sentence that was not cancelled leads on to the next one
+        if (isCurrent()) {
+          playSentenceRef.current(index + 1);
+        }
+      };
+
+      utterance.onerror = (e) => {
+        if (!isCurrent()) return;
+
+        const message = describeSpeechError(e.error);
+        if (message) {
+          console.error('SpeechSynthesis error:', e.error || e);
+          setError(message);
+        }
+        // One sentence that fails does not end the reading
         playSentenceRef.current(index + 1);
-      }
-    };
+      };
 
-    utterance.onerror = (e) => {
-      if (!isCurrent()) return;
+      utterance.onboundary = (event) => {
+        if (event.name === 'word' && isCurrent()) {
+          setWordBoundary({
+            charIndex: event.charIndex,
+            charLength: event.charLength,
+          });
+        }
+      };
 
-      const message = describeSpeechError(e.error);
-      if (message) {
-        console.error('SpeechSynthesis error:', e.error || e);
-        setError(message);
-      }
-      // One sentence that fails does not end the reading
-      playSentenceRef.current(index + 1);
-    };
+      synth.speak(utterance);
 
-    utterance.onboundary = (event) => {
-      if (event.name === 'word' && isCurrent()) {
-        setWordBoundary({
-          charIndex: event.charIndex,
-          charLength: event.charLength,
-        });
-      }
-    };
-
-    synth.speak(utterance);
-
-    // cancel() does not end a pause: after Pause and then Stop, or a jump to
-    // another sentence, the new utterance would wait in silence.
-    if (synth.paused) synth.resume();
-  }, [sentences, resetPlayback]);
+      // cancel() does not end a pause: after Pause and then Stop, or a jump to
+      // another sentence, the new utterance would wait in silence.
+      if (synth.paused) synth.resume();
+    },
+    [sentences, resetPlayback]
+  );
 
   // Set the ref to the current play function to enable circular/recursive callback
   useEffect(() => {
@@ -360,7 +356,8 @@ export function TextToSpeech() {
                   role="alert"
                   className="text-xs text-destructive bg-destructive/10 p-2.5 rounded-md border border-destructive/20"
                 >
-                  Speech synthesis is not available in this browser, so text cannot be read aloud here.
+                  Speech synthesis is not available in this browser, so text cannot be read aloud
+                  here.
                 </div>
               ) : voices.length === 0 ? (
                 <div className="text-xs text-muted-foreground bg-muted p-2.5 rounded-md border">
@@ -392,10 +389,13 @@ export function TextToSpeech() {
             {/* Speed (Rate) Slider */}
             <div className="space-y-2" role="group" aria-labelledby="tts-rate-label">
               <div className="flex justify-between text-sm">
-                <span id="tts-rate-label" className="font-medium">Speed (Rate)</span>
+                <span id="tts-rate-label" className="font-medium">
+                  Speed (Rate)
+                </span>
                 <span className="font-mono text-xs text-muted-foreground">{rate.toFixed(2)}x</span>
               </div>
-              <Slider aria-labelledby="tts-rate-label"
+              <Slider
+                aria-labelledby="tts-rate-label"
                 value={rate}
                 onChange={setRate}
                 min={0.5}
@@ -409,10 +409,13 @@ export function TextToSpeech() {
             {/* Pitch Slider */}
             <div className="space-y-2" role="group" aria-labelledby="tts-pitch-label">
               <div className="flex justify-between text-sm">
-                <span id="tts-pitch-label" className="font-medium">Pitch</span>
+                <span id="tts-pitch-label" className="font-medium">
+                  Pitch
+                </span>
                 <span className="font-mono text-xs text-muted-foreground">{pitch.toFixed(2)}</span>
               </div>
-              <Slider aria-labelledby="tts-pitch-label"
+              <Slider
+                aria-labelledby="tts-pitch-label"
                 value={pitch}
                 onChange={setPitch}
                 min={0.5}
@@ -420,16 +423,23 @@ export function TextToSpeech() {
                 step={0.1}
                 className="py-2"
               />
-              <p className="text-[10px] text-muted-foreground">Adjust the voice tone higher or lower.</p>
+              <p className="text-[10px] text-muted-foreground">
+                Adjust the voice tone higher or lower.
+              </p>
             </div>
 
             {/* Volume Slider */}
             <div className="space-y-2" role="group" aria-labelledby="tts-volume-label">
               <div className="flex justify-between text-sm">
-                <span id="tts-volume-label" className="font-medium">Volume</span>
-                <span className="font-mono text-xs text-muted-foreground">{Math.round(volume * 100)}%</span>
+                <span id="tts-volume-label" className="font-medium">
+                  Volume
+                </span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {Math.round(volume * 100)}%
+                </span>
               </div>
-              <Slider aria-labelledby="tts-volume-label"
+              <Slider
+                aria-labelledby="tts-volume-label"
                 value={volume}
                 onChange={setVolume}
                 min={0.0}
@@ -481,10 +491,17 @@ export function TextToSpeech() {
             {/* Reader Mode Toggle */}
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="tts-reader-mode" className="text-xs font-semibold text-muted-foreground">
+              <label
+                htmlFor="tts-reader-mode"
+                className="text-xs font-semibold text-muted-foreground"
+              >
                 Reader Mode
               </label>
-              <Switch id="tts-reader-mode" checked={isReaderMode} onCheckedChange={setIsReaderMode} />
+              <Switch
+                id="tts-reader-mode"
+                checked={isReaderMode}
+                onCheckedChange={setIsReaderMode}
+              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -547,7 +564,9 @@ export function TextToSpeech() {
                           onKeyDown={(event) => handleSentenceKeyDown(event, idx)}
                           className={cn(
                             'inline pl-4 py-1 my-0.5 border-l-4 border-transparent cursor-pointer hover:bg-muted/60 hover:text-foreground rounded-r-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                            isPlaying ? 'opacity-40 hover:opacity-100 focus-visible:opacity-100' : 'opacity-100'
+                            isPlaying
+                              ? 'opacity-40 hover:opacity-100 focus-visible:opacity-100'
+                              : 'opacity-100'
                           )}
                         >
                           {sentence}
@@ -557,7 +576,8 @@ export function TextToSpeech() {
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground italic">
-                  💡 Tip: You can click on any sentence above to start playing directly from that line.
+                  💡 Tip: You can click on any sentence above to start playing directly from that
+                  line.
                 </p>
               </div>
             ) : (

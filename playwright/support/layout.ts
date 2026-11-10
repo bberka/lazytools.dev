@@ -5,7 +5,10 @@ import type { Page } from '@playwright/test';
 //     request. Tools that fetch from public APIs (the network and lookup tools)
 //     fail in the sandboxed test run, which has no network, and handle it in
 //     their own error state, so it says nothing about the layout.
-const BENIGN_CONSOLE = [/Failed to load resource/i, /ERR_(INTERNET_DISCONNECTED|NAME_NOT_RESOLVED|CONNECTION|BLOCKED)/i];
+const BENIGN_CONSOLE = [
+  /Failed to load resource/i,
+  /ERR_(INTERNET_DISCONNECTED|NAME_NOT_RESOLVED|CONNECTION|BLOCKED)/i,
+];
 
 export interface Offender {
   selector: string;
@@ -40,7 +43,10 @@ export async function findHorizontalOverflow(page: Page): Promise<Offender[]> {
 
     const describe = (el: Element) => {
       const id = el.id ? `#${el.id}` : '';
-      const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 3).join('.') : '';
+      const cls =
+        typeof el.className === 'string'
+          ? el.className.trim().split(/\s+/).slice(0, 3).join('.')
+          : '';
       const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
       return `${el.tagName.toLowerCase()}${id}${cls ? '.' + cls : ''} "${text}"`;
     };
@@ -65,7 +71,11 @@ export async function findHorizontalOverflow(page: Page): Promise<Offender[]> {
       if (style.position === 'fixed') continue;
 
       let held = false;
-      for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      for (
+        let parent = el.parentElement;
+        parent && parent !== document.body;
+        parent = parent.parentElement
+      ) {
         if (isScroller(parent)) {
           held = true;
           break;
@@ -120,8 +130,10 @@ export async function findSmallTargets(page: Page, rootSelector: string): Promis
 
     const isVisible = (el: Element) => {
       const style = getComputedStyle(el);
-      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
-      if (el.closest('[aria-hidden=true], [inert], [data-sonner-toaster], nextjs-portal')) return false;
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0)
+        return false;
+      if (el.closest('[aria-hidden=true], [inert], [data-sonner-toaster], nextjs-portal'))
+        return false;
       const rect = el.getBoundingClientRect();
       // sr-only and offscreen helper inputs
       if (rect.width <= 1 || rect.height <= 1) return false;
@@ -148,8 +160,13 @@ export async function findSmallTargets(page: Page, rootSelector: string): Promis
     };
 
     const describe = (el: Element) => {
-      const label = el.getAttribute('aria-label') ?? (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
-      const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 3).join('.') : '';
+      const label =
+        el.getAttribute('aria-label') ??
+        (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
+      const cls =
+        typeof el.className === 'string'
+          ? el.className.trim().split(/\s+/).slice(0, 3).join('.')
+          : '';
       const type = el.getAttribute('type') ?? el.getAttribute('role') ?? '';
       return `${el.tagName.toLowerCase()}${type ? `[${type}]` : ''}.${cls} "${label}"`;
     };
@@ -157,7 +174,10 @@ export async function findSmallTargets(page: Page, rootSelector: string): Promis
     // The clickable area of a control may be its <label>.
     const effectiveRect = (target: Target) => {
       const label = target.el.closest('label');
-      if (label && (target.el.tagName === 'INPUT' || target.el.getAttribute('role') === 'checkbox')) {
+      if (
+        label &&
+        (target.el.tagName === 'INPUT' || target.el.getAttribute('role') === 'checkbox')
+      ) {
         const lr = label.getBoundingClientRect();
         if (lr.width >= MIN && lr.height >= MIN) return lr;
       }
@@ -208,7 +228,8 @@ export async function findHoverOnlyControls(page: Page, rootSelector: string): P
     const root = document.querySelector(rootSel);
     if (!root) return [];
     const out: { selector: string; detail: string }[] = [];
-    const selector = 'a[href], button, input:not([type=hidden]):not([type=file]), select, textarea, [role=button], [role=checkbox], [role=switch], [role=tab]';
+    const selector =
+      'a[href], button, input:not([type=hidden]):not([type=file]), select, textarea, [role=button], [role=checkbox], [role=switch], [role=tab]';
     for (const el of Array.from(root.querySelectorAll(selector))) {
       if (el.closest('[aria-hidden=true], [inert]')) continue;
       if ((el as HTMLButtonElement).disabled) continue;
@@ -217,12 +238,21 @@ export async function findHoverOnlyControls(page: Page, rootSelector: string): P
       const rect = el.getBoundingClientRect();
       if (rect.width <= 1 || rect.height <= 1) continue;
       let opacity = 1;
-      for (let node: Element | null = el; node && node !== document.body; node = node.parentElement) {
+      for (
+        let node: Element | null = el;
+        node && node !== document.body;
+        node = node.parentElement
+      ) {
         opacity *= Number(getComputedStyle(node).opacity);
       }
       if (opacity >= 0.1) continue;
-      const label = el.getAttribute('aria-label') ?? (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
-      out.push({ selector: `${el.tagName.toLowerCase()} "${label}"`, detail: `opacity ${opacity.toFixed(2)}` });
+      const label =
+        el.getAttribute('aria-label') ??
+        (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
+      out.push({
+        selector: `${el.tagName.toLowerCase()} "${label}"`,
+        detail: `opacity ${opacity.toFixed(2)}`,
+      });
     }
     return out.slice(0, 8);
   }, rootSelector);
@@ -232,7 +262,6 @@ export function format(offenders: Offender[]) {
   return offenders.map((o) => `${o.selector} (${o.detail})`).join('\n');
 }
 
-
 // A long word with no break opportunity, as pasted tokens, URLs and hashes are.
 // Layouts that survive an empty page often break on this.
 const LONG_TOKEN = 'Lorem'.padEnd(220, 'x');
@@ -240,7 +269,8 @@ const LONG_TEXT = `${LONG_TOKEN}\nhttps://example.com/${'path'.padEnd(160, 'y')}
 
 // Buttons that run a tool's main action. Clicking only these keeps the walk
 // away from downloads, deletions and navigation.
-const ACTION_BUTTON = /^(generate|calculate|convert|format|encode|decode|parse|analy[sz]e|run|test|hash|validate|minify|beautify|compare|check|build|simulate|extract|preview|sort|transform|evaluate|escape|unescape|inspect|lookup|look up|diff|decrypt|encrypt|sign|verify|apply|add|new|try)\b/i;
+const ACTION_BUTTON =
+  /^(generate|calculate|convert|format|encode|decode|parse|analy[sz]e|run|test|hash|validate|minify|beautify|compare|check|build|simulate|extract|preview|sort|transform|evaluate|escape|unescape|inspect|lookup|look up|diff|decrypt|encrypt|sign|verify|apply|add|new|try)\b/i;
 
 /**
  * Puts long content into a tool and walks its main controls, so the layout is

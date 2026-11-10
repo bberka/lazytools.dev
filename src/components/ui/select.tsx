@@ -27,7 +27,9 @@ interface SelectItemProps {
   children: React.ReactNode;
 }
 
-const isSelectItem = (element: React.ReactElement): element is React.ReactElement<SelectItemProps> => {
+const isSelectItem = (
+  element: React.ReactElement
+): element is React.ReactElement<SelectItemProps> => {
   const type: unknown = element.type;
   if (typeof type !== 'function' && (typeof type !== 'object' || type === null)) return false;
   const { displayName, name } = type as { displayName?: string; name?: string };
@@ -104,9 +106,7 @@ function Select<T extends string = string>({
   const filteredItems = React.useMemo(() => {
     return Array.from(items.entries())
       .map(([value, label]) => ({ value, label }))
-      .filter((item) =>
-        !search || item.label.toLowerCase().includes(search.toLowerCase())
-      );
+      .filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
   }, [items, search]);
 
   React.useEffect(() => {
@@ -138,35 +138,38 @@ function Select<T extends string = string>({
     }
   }, [open, activeValue, filteredItems]);
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (filteredItems.length === 0) return;
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (filteredItems.length === 0) return;
 
-    const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
+      const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
 
-    switch (e.key) {
-      case 'ArrowDown': {
-        e.preventDefault();
-        const nextIndex = currentIndex + 1 >= filteredItems.length ? 0 : currentIndex + 1;
-        setHighlightedValue(filteredItems[nextIndex].value);
-        break;
-      }
-      case 'ArrowUp': {
-        e.preventDefault();
-        const prevIndex = currentIndex - 1 < 0 ? filteredItems.length - 1 : currentIndex - 1;
-        setHighlightedValue(filteredItems[prevIndex].value);
-        break;
-      }
-      case 'Enter': {
-        e.preventDefault();
-        if (currentIndex !== -1) {
-          handleValueChange(filteredItems[currentIndex].value);
+      switch (e.key) {
+        case 'ArrowDown': {
+          e.preventDefault();
+          const nextIndex = currentIndex + 1 >= filteredItems.length ? 0 : currentIndex + 1;
+          setHighlightedValue(filteredItems[nextIndex].value);
+          break;
         }
-        break;
+        case 'ArrowUp': {
+          e.preventDefault();
+          const prevIndex = currentIndex - 1 < 0 ? filteredItems.length - 1 : currentIndex - 1;
+          setHighlightedValue(filteredItems[prevIndex].value);
+          break;
+        }
+        case 'Enter': {
+          e.preventDefault();
+          if (currentIndex !== -1) {
+            handleValueChange(filteredItems[currentIndex].value);
+          }
+          break;
+        }
+        default:
+          break;
       }
-      default:
-        break;
-    }
-  }, [filteredItems, highlightedValue]);
+    },
+    [filteredItems, highlightedValue]
+  );
 
   return (
     <SelectContext.Provider
@@ -326,7 +329,8 @@ const SelectItem = React.forwardRef<
       });
       // Focus the button if search input is not focused
       const activeEl = document.activeElement;
-      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const isInputFocused =
+        activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
       if (!isInputFocused) {
         buttonRef.current.focus();
       }
@@ -374,7 +378,10 @@ SelectGroup.displayName = 'SelectGroup';
 
 function SelectLabel({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('px-2 py-1.5 text-xs font-semibold text-muted-foreground', className)} {...props}>
+    <div
+      className={cn('px-2 py-1.5 text-xs font-semibold text-muted-foreground', className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -382,9 +389,7 @@ function SelectLabel({ children, className, ...props }: React.HTMLAttributes<HTM
 SelectLabel.displayName = 'SelectLabel';
 
 function SelectSeparator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />
-  );
+  return <div className={cn('-mx-1 my-1 h-px bg-muted', className)} {...props} />;
 }
 SelectSeparator.displayName = 'SelectSeparator';
 

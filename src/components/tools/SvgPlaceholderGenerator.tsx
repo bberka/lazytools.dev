@@ -64,7 +64,10 @@ export function SvgPlaceholderGenerator() {
   const widthNumber = Number(fields.width);
   const heightNumber = Number(fields.height);
   const radiusLimit =
-    Number.isInteger(widthNumber) && Number.isInteger(heightNumber) && widthNumber > 0 && heightNumber > 0
+    Number.isInteger(widthNumber) &&
+    Number.isInteger(heightNumber) &&
+    widthNumber > 0 &&
+    heightNumber > 0
       ? maxRadius(widthNumber, heightNumber)
       : null;
   const labelPlaceholder =
@@ -94,7 +97,9 @@ export function SvgPlaceholderGenerator() {
             <ImageIcon className="h-5 w-5 text-primary" />
             Placeholder
           </CardTitle>
-          <CardDescription>Size, colours and label. The preview updates as you type.</CardDescription>
+          <CardDescription>
+            Size, colours and label. The preview updates as you type.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -263,7 +268,12 @@ export function SvgPlaceholderGenerator() {
             <FieldError id="svgp-radius-error" message={errors.radius} />
           </div>
 
-          <Button type="button" variant="outline" size="sm" onClick={() => setFields(INITIAL_FIELDS)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFields(INITIAL_FIELDS)}
+          >
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset
           </Button>

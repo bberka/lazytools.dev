@@ -142,7 +142,10 @@ export interface TextPdf {
  * Writes plain text into a PDF: A4 pages, 12 pt, set in the given TrueType or
  * OpenType font, which is embedded. Long text continues on further pages.
  */
-export async function textToPdf(text: string, fontBytes: ArrayBuffer | Uint8Array): Promise<TextPdf> {
+export async function textToPdf(
+  text: string,
+  fontBytes: ArrayBuffer | Uint8Array
+): Promise<TextPdf> {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
   const font = await pdfDoc.embedFont(fontBytes);

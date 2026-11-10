@@ -97,7 +97,8 @@ test.describe('data integrity', () => {
         expect(entry.type.startsWith(topLevel[entry.category]), entry.ext).toBe(true);
       }
     }
-    for (const entry of MIME_ENTRIES.filter((e) => e.type.startsWith('font/'))) expect(entry.category).toBe('font');
+    for (const entry of MIME_ENTRIES.filter((e) => e.type.startsWith('font/')))
+      expect(entry.category).toBe('font');
   });
 
   test('notes are short sentences', () => {
@@ -148,7 +149,11 @@ test.describe('lookups', () => {
 
   test('by type returns every extension, in table order', () => {
     expect(lookupByType('image/jpeg').map((entry) => entry.ext)).toEqual(['jpe', 'jpeg', 'jpg']);
-    expect(lookupByType('TEXT/JAVASCRIPT; charset=utf-8').map((entry) => entry.ext)).toEqual(['cjs', 'js', 'mjs']);
+    expect(lookupByType('TEXT/JAVASCRIPT; charset=utf-8').map((entry) => entry.ext)).toEqual([
+      'cjs',
+      'js',
+      'mjs',
+    ]);
     expect(lookupByType('application/x-nothing')).toEqual([]);
     expect(lookupByType('')).toEqual([]);
   });

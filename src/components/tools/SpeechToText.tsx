@@ -6,16 +6,7 @@ import { TooltipSimple } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
-import {
-  Mic,
-  MicOff,
-  Copy,
-  Check,
-  Trash2,
-  Download,
-  AlertCircle,
-  FileDown,
-} from 'lucide-react';
+import { Mic, MicOff, Copy, Check, Trash2, Download, AlertCircle, FileDown } from 'lucide-react';
 import { useBrowserFeature, useCopyToClipboard } from '@/hooks';
 import { cn } from '@/lib/utils';
 import { downloadText } from '@/lib/files';
@@ -137,7 +128,7 @@ export function SpeechToText() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  
+
   // UI HTML element refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -159,7 +150,7 @@ export function SpeechToText() {
       audioCtxRef.current = null;
     }
     analyserRef.current = null;
-    
+
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -434,11 +425,10 @@ export function SpeechToText() {
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-muted-foreground">
           <p>
-            The Speech Recognition API is not natively supported or enabled by default in your current browser.
+            The Speech Recognition API is not natively supported or enabled by default in your
+            current browser.
           </p>
-          <p className="font-semibold text-foreground">
-            Recommended Browsers for transcription:
-          </p>
+          <p className="font-semibold text-foreground">Recommended Browsers for transcription:</p>
           <ul className="list-disc list-inside space-y-1.5 pl-2">
             <li>Google Chrome (Desktop & Mobile)</li>
             <li>Microsoft Edge (Desktop)</li>
@@ -595,7 +585,7 @@ export function SpeechToText() {
                     </>
                   )}
                 </Button>
-                
+
                 {isListening && (
                   <span className="flex items-center gap-2.5 text-xs text-red-500 font-semibold uppercase tracking-wider animate-pulse ml-1">
                     <span className="h-2.5 w-2.5 rounded-full bg-red-600 shadow-[0_0_8px_#dc2626]" />

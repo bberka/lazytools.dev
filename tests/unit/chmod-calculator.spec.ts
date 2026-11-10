@@ -184,7 +184,8 @@ test.describe('round trips', () => {
       if (!viaOctal.ok || viaOctal.mode !== mode) failures.push(`octal ${mode.toString(8)}`);
 
       const viaSymbolic = parseSymbolic(formatSymbolic(mode));
-      if (!viaSymbolic.ok || viaSymbolic.mode !== mode) failures.push(`symbolic ${mode.toString(8)}`);
+      if (!viaSymbolic.ok || viaSymbolic.mode !== mode)
+        failures.push(`symbolic ${mode.toString(8)}`);
 
       let rebuilt = 0;
       for (const who of PERMISSION_CLASSES) {
@@ -350,7 +351,8 @@ test.describe('commands', () => {
     const failures: string[] = [];
     for (let mode = 0; mode <= MODE_MASK; mode++) {
       const commands = chmodCommands(mode);
-      if (parseInt(commands.numeric.split(' ')[1], 8) !== mode) failures.push(`numeric ${mode.toString(8)}`);
+      if (parseInt(commands.numeric.split(' ')[1], 8) !== mode)
+        failures.push(`numeric ${mode.toString(8)}`);
       const [, clauses] = commands.symbolic.split(' ');
       let rebuilt = 0;
       for (const clause of clauses.split(',')) {
@@ -457,7 +459,8 @@ test.describe('explanation', () => {
     for (let mode = 0; mode <= MODE_MASK; mode++) {
       const explained = explainMode(mode);
       const complete =
-        explained.classes.length === 3 && explained.classes.every((entry) => entry.summary.length > 0);
+        explained.classes.length === 3 &&
+        explained.classes.every((entry) => entry.summary.length > 0);
       if (!complete) failures.push(mode.toString(8));
     }
     expect(failures).toEqual([]);

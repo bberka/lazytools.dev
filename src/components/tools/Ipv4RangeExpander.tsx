@@ -34,8 +34,14 @@ export function Ipv4RangeExpander() {
   const [input, setInput] = useState('');
 
   const hasInput = input.trim() !== '';
-  const expanded = useMemo(() => (hasInput && mode === 'expand' ? expandRanges(input) : null), [hasInput, mode, input]);
-  const collapsed = useMemo(() => (hasInput && mode === 'collapse' ? collapseToCidrs(input) : null), [hasInput, mode, input]);
+  const expanded = useMemo(
+    () => (hasInput && mode === 'expand' ? expandRanges(input) : null),
+    [hasInput, mode, input]
+  );
+  const collapsed = useMemo(
+    () => (hasInput && mode === 'collapse' ? collapseToCidrs(input) : null),
+    [hasInput, mode, input]
+  );
 
   const listText = expanded?.ok ? expanded.addresses.join('\n') : '';
   const blocksText = collapsed?.ok ? collapsed.blocks.join('\n') : '';
@@ -49,8 +55,8 @@ export function Ipv4RangeExpander() {
             Ranges
           </CardTitle>
           <CardDescription>
-            One entry per line (or comma separated): a CIDR block such as 192.168.1.0/24, a range such as
-            10.0.0.1 - 10.0.0.20, or a single address.
+            One entry per line (or comma separated): a CIDR block such as 192.168.1.0/24, a range
+            such as 10.0.0.1 - 10.0.0.20, or a single address.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -78,7 +84,13 @@ export function Ipv4RangeExpander() {
                 ? `Lists up to ${MAX_EXPANDED_ADDRESSES.toLocaleString('en-US')} addresses (a /16). A CIDR block lists its whole network, including the network and broadcast addresses.`
                 : 'Merges overlapping and touching entries, then writes the fewest CIDR blocks that cover them.'}
             </p>
-            <Button type="button" variant="outline" size="sm" onClick={() => setInput('')} disabled={!hasInput}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setInput('')}
+              disabled={!hasInput}
+            >
               <Trash2 className="h-4 w-4" />
               Clear
             </Button>
@@ -137,8 +149,8 @@ export function Ipv4RangeExpander() {
             />
             {expanded.count > PREVIEW_LIMIT && (
               <p className="text-xs text-muted-foreground">
-                Showing the first {PREVIEW_LIMIT.toLocaleString('en-US')} addresses. Copy and download include all{' '}
-                {expanded.count.toLocaleString('en-US')}.
+                Showing the first {PREVIEW_LIMIT.toLocaleString('en-US')} addresses. Copy and
+                download include all {expanded.count.toLocaleString('en-US')}.
               </p>
             )}
           </CardContent>

@@ -35,7 +35,13 @@ const MORTGAGE: LoanInput = {
   termUnit: 'years',
 };
 
-const FIELDS: LoanFields = { amount: '200000', rate: '6', term: '30', termUnit: 'years', extra: '' };
+const FIELDS: LoanFields = {
+  amount: '200000',
+  rate: '6',
+  term: '30',
+  termUnit: 'years',
+  extra: '',
+};
 
 /** Every loan the invariants below are checked on, including awkward ones. */
 const LOANS: LoanInput[] = [
@@ -130,7 +136,9 @@ test.describe('zero interest', () => {
     expect(result.totalInterest).toBe(0);
     expect(result.totalPaid).toBe(1_200_000);
     expect(result.paymentCount).toBe(12);
-    expect(result.schedule.every((row) => row.interest === 0 && row.payment === 100_000)).toBe(true);
+    expect(result.schedule.every((row) => row.interest === 0 && row.payment === 100_000)).toBe(
+      true
+    );
   });
 
   test('an amount that does not divide evenly puts the odd cents in the last payment', () => {
@@ -294,7 +302,9 @@ test.describe('whole-unit currencies', () => {
     expect(result.amount).toBe(1_500_000);
     expect(Number.isInteger(result.monthlyPayment)).toBe(true);
     const asDollars = ready({ ...yen, fractionDigits: 2 });
-    expect(Math.abs(result.monthlyPayment * 100 - asDollars.monthlyPayment)).toBeLessThanOrEqual(50);
+    expect(Math.abs(result.monthlyPayment * 100 - asDollars.monthlyPayment)).toBeLessThanOrEqual(
+      50
+    );
   });
 
   test('evaluateLoan picks the digits from the currency', () => {
@@ -313,13 +323,17 @@ test.describe('validation', () => {
   });
 
   test('rejects an amount above the limit', () => {
-    expect(errorsOf({ ...MORTGAGE, amount: 10_000_000_001 }).amount).toMatch(/at most 10,000,000,000/);
+    expect(errorsOf({ ...MORTGAGE, amount: 10_000_000_001 }).amount).toMatch(
+      /at most 10,000,000,000/
+    );
   });
 
   test('rejects a rate below 0 or above 100', () => {
     expect(errorsOf({ ...MORTGAGE, annualRatePercent: -0.1 }).rate).toMatch(/between 0 and 100/);
     expect(errorsOf({ ...MORTGAGE, annualRatePercent: 100.5 }).rate).toMatch(/between 0 and 100/);
-    expect(errorsOf({ ...MORTGAGE, annualRatePercent: Number.POSITIVE_INFINITY }).rate).toBeDefined();
+    expect(
+      errorsOf({ ...MORTGAGE, annualRatePercent: Number.POSITIVE_INFINITY }).rate
+    ).toBeDefined();
   });
 
   test('rejects a term that is zero, negative, fractional in months, or too long', () => {
@@ -328,7 +342,9 @@ test.describe('validation', () => {
     expect(errorsOf({ ...MORTGAGE, term: 2.1 }).term).toMatch(/whole number of months/);
     expect(errorsOf({ ...MORTGAGE, term: 18.5, termUnit: 'months' }).term).toMatch(/whole number/);
     expect(errorsOf({ ...MORTGAGE, term: 101 }).term).toMatch(/at most 100 years/);
-    expect(errorsOf({ ...MORTGAGE, term: 1201, termUnit: 'months' }).term).toMatch(/at most 100 years/);
+    expect(errorsOf({ ...MORTGAGE, term: 1201, termUnit: 'months' }).term).toMatch(
+      /at most 100 years/
+    );
   });
 
   test('accepts the limits themselves', () => {
@@ -450,7 +466,12 @@ test.describe('schedule by year', () => {
   });
 
   test('the last year is short when the term is not a whole number of years', () => {
-    const { schedule } = ready({ amount: 20_000, annualRatePercent: 5, term: 30, termUnit: 'months' });
+    const { schedule } = ready({
+      amount: 20_000,
+      annualRatePercent: 5,
+      term: 30,
+      termUnit: 'months',
+    });
     const years = groupScheduleByYear(schedule);
     expect(years.map((year) => year.months)).toEqual([12, 12, 6]);
     expect(years[2].balance).toBe(0);
@@ -483,7 +504,13 @@ test.describe('CSV export', () => {
 
   test('whole-unit currencies are written without decimals', () => {
     const csv = scheduleToCsv(
-      ready({ amount: 1_200, annualRatePercent: 0, term: 12, termUnit: 'months', fractionDigits: 0 })
+      ready({
+        amount: 1_200,
+        annualRatePercent: 0,
+        term: 12,
+        termUnit: 'months',
+        fractionDigits: 0,
+      })
     );
     const lines = csv.trimEnd().split('\r\n');
     expect(lines[1]).toBe('1,100,100,0,1100');

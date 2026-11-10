@@ -77,9 +77,30 @@ test.describe('calculateCompoundInterest, no contributions', () => {
   test('annual compounding builds an exact year by year table', () => {
     const result = ready({ principal: 100, annualRatePercent: 10, years: 3, compoundsPerYear: 1 });
     expect(result.rows).toEqual([
-      { year: 1, months: 12, startBalance: 10000, contributions: 0, interest: 1000, endBalance: 11000 },
-      { year: 2, months: 12, startBalance: 11000, contributions: 0, interest: 1100, endBalance: 12100 },
-      { year: 3, months: 12, startBalance: 12100, contributions: 0, interest: 1210, endBalance: 13310 },
+      {
+        year: 1,
+        months: 12,
+        startBalance: 10000,
+        contributions: 0,
+        interest: 1000,
+        endBalance: 11000,
+      },
+      {
+        year: 2,
+        months: 12,
+        startBalance: 11000,
+        contributions: 0,
+        interest: 1100,
+        endBalance: 12100,
+      },
+      {
+        year: 3,
+        months: 12,
+        startBalance: 12100,
+        contributions: 0,
+        interest: 1210,
+        endBalance: 13310,
+      },
     ]);
     expect(result.finalBalance).toBe(13310);
   });
@@ -114,7 +135,13 @@ test.describe('calculateCompoundInterest, with contributions', () => {
   });
 
   test('1 year of 100 a month at 12% compounded monthly: 1268.25 at the end, 1280.93 at the start', () => {
-    const input = { principal: 0, annualRatePercent: 12, years: 1, compoundsPerYear: 12, monthlyContribution: 100 };
+    const input = {
+      principal: 0,
+      annualRatePercent: 12,
+      years: 1,
+      compoundsPerYear: 12,
+      monthlyContribution: 100,
+    };
     expect(ready(input).finalBalance).toBe(126825); // 100 * (1.01 ^ 12 - 1) / 0.01 = 1268.2503
     expect(ready({ ...input, timing: 'start' }).finalBalance).toBe(128093); // 1268.2503 * 1.01
   });
@@ -133,7 +160,13 @@ test.describe('calculateCompoundInterest, with contributions', () => {
   });
 
   test('contributions are rounded to whole cents', () => {
-    const result = ready({ ...base, annualRatePercent: 0, years: 1, principal: 0, monthlyContribution: 10.005 });
+    const result = ready({
+      ...base,
+      annualRatePercent: 0,
+      years: 1,
+      principal: 0,
+      monthlyContribution: 10.005,
+    });
     expect(result.monthlyContribution).toBe(1001);
     expect(result.totalContributed).toBe(12012);
   });
@@ -172,7 +205,12 @@ test.describe('table and chart', () => {
   });
 
   test('a partial last year is reported with its months', () => {
-    const partial = ready({ principal: 1000, annualRatePercent: 12, years: 1.5, compoundsPerYear: 12 });
+    const partial = ready({
+      principal: 1000,
+      annualRatePercent: 12,
+      years: 1.5,
+      compoundsPerYear: 12,
+    });
     expect(partial.months).toBe(18);
     expect(partial.rows).toHaveLength(2);
     expect(partial.rows[1].months).toBe(6);
@@ -219,12 +257,16 @@ test.describe('chart geometry', () => {
 
 test.describe('validation', () => {
   test('rejects negative and out-of-range numbers per field', () => {
-    expect(errorsOf({ ...base, principal: -1 }).principal).toBe('Starting amount cannot be negative.');
+    expect(errorsOf({ ...base, principal: -1 }).principal).toBe(
+      'Starting amount cannot be negative.'
+    );
     expect(errorsOf({ ...base, annualRatePercent: 101 }).rate).toBe(
       'Interest rate must be between 0 and 100 percent.'
     );
     expect(errorsOf({ ...base, annualRatePercent: -0.1 }).rate).toBeDefined();
-    expect(errorsOf({ ...base, years: 0 }).years).toBe('Number of years must be greater than zero.');
+    expect(errorsOf({ ...base, years: 0 }).years).toBe(
+      'Number of years must be greater than zero.'
+    );
     expect(errorsOf({ ...base, years: 101 }).years).toBe('Number of years can be at most 100.');
     expect(errorsOf({ ...base, monthlyContribution: -5 }).contribution).toBe(
       'Monthly contribution cannot be negative.'
@@ -239,8 +281,12 @@ test.describe('validation', () => {
   });
 
   test('needs a starting amount or a contribution', () => {
-    expect(errorsOf({ ...base, principal: 0 }).inputs).toBe('Enter a starting amount or a monthly contribution.');
-    expect(ready({ ...base, principal: 0, monthlyContribution: 1 }).finalBalance).toBeGreaterThan(0);
+    expect(errorsOf({ ...base, principal: 0 }).inputs).toBe(
+      'Enter a starting amount or a monthly contribution.'
+    );
+    expect(ready({ ...base, principal: 0, monthlyContribution: 1 }).finalBalance).toBeGreaterThan(
+      0
+    );
   });
 
   test('the longest term of 100 years completes', () => {
@@ -319,7 +365,9 @@ test.describe('output', () => {
   });
 
   test('csv has a header and one line per year', () => {
-    const csv = rowsToCsv(ready({ principal: 100, annualRatePercent: 10, years: 2, compoundsPerYear: 1 })).split('\n');
+    const csv = rowsToCsv(
+      ready({ principal: 100, annualRatePercent: 10, years: 2, compoundsPerYear: 1 })
+    ).split('\n');
     expect(csv).toEqual([
       'Year,Start balance,Contributions,Interest,End balance',
       '1,100.00,0.00,10.00,110.00',

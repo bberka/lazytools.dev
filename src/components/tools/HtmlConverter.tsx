@@ -1,13 +1,7 @@
 'use client';
 
 import { type CSSProperties, useMemo, useRef, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -269,7 +263,10 @@ function splitHtmlDocument(html: string): { readonly head: string; readonly body
 function buildPreviewDocument(options: PreviewDocumentOptions): string {
   const documentParts = splitHtmlDocument(options.html);
   const pageStyles = Object.entries(options.pageStyle)
-    .map(([property, value]) => `${property.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}: ${value};`)
+    .map(
+      ([property, value]) =>
+        `${property.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}: ${value};`
+    )
     .join('\n');
 
   return `<!DOCTYPE html>
@@ -516,12 +513,7 @@ export function HtmlConverter() {
                 accept=".html,.htm,text/html"
                 aria-label="Import HTML file"
               />
-              <Button
-                onClick={intake.open}
-                variant="outline"
-                size="sm"
-                disabled={exporting}
-              >
+              <Button onClick={intake.open} variant="outline" size="sm" disabled={exporting}>
                 <FileUp className="h-4 w-4" />
                 Import HTML
               </Button>
@@ -638,7 +630,8 @@ export function HtmlConverter() {
                   <label id="html-export-margins" className="text-sm font-medium">
                     Margins: {margin} mm
                   </label>
-                  <Slider aria-labelledby="html-export-margins"
+                  <Slider
+                    aria-labelledby="html-export-margins"
                     value={margin}
                     onChange={setMargin}
                     min={0}
@@ -652,7 +645,8 @@ export function HtmlConverter() {
                   <label id="html-export-scale" className="text-sm font-medium">
                     Render scale: {scale}x
                   </label>
-                  <Slider aria-labelledby="html-export-scale"
+                  <Slider
+                    aria-labelledby="html-export-scale"
                     value={scale}
                     onChange={setScale}
                     min={1}
@@ -688,11 +682,7 @@ export function HtmlConverter() {
                     </Select>
                   </div>
 
-                  <div
-                    className="space-y-2"
-                    role="group"
-                    aria-labelledby="html-export-background"
-                  >
+                  <div className="space-y-2" role="group" aria-labelledby="html-export-background">
                     <label id="html-export-background" className="text-sm font-medium">
                       PDF background
                     </label>

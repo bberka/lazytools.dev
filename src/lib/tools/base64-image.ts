@@ -118,7 +118,10 @@ function binaryToBytes(binary: string): Uint8Array {
  */
 export function decodeBase64(text: string): DecodeResult {
   if (text.length > MAX_INPUT_CHARS) {
-    return { ok: false, error: 'The input is too large to decode here (over 40 million characters).' };
+    return {
+      ok: false,
+      error: 'The input is too large to decode here (over 40 million characters).',
+    };
   }
   const notes: string[] = [];
   const compact = text.replace(/\s+/g, '');
@@ -164,7 +167,9 @@ export function decodeBase64(text: string): DecodeResult {
 
   const wanted = (4 - (body.length % 4)) % 4;
   if (padding.length !== wanted) {
-    notes.push(padding === '' ? 'Missing "=" padding was added.' : 'The "=" padding was corrected.');
+    notes.push(
+      padding === '' ? 'Missing "=" padding was added.' : 'The "=" padding was corrected.'
+    );
   }
 
   const canonical = body.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(wanted);
@@ -194,7 +199,13 @@ export function buildDataUrl(mime: string, base64: string): string {
 export type InputSource = 'data-url' | 'base64';
 
 export type ParsedInput =
-  | { ok: true; bytes: Uint8Array; declaredMime: string | null; source: InputSource; notes: string[] }
+  | {
+      ok: true;
+      bytes: Uint8Array;
+      declaredMime: string | null;
+      source: InputSource;
+      notes: string[];
+    }
   | { ok: false; error: string };
 
 /** One layer of wrapping removed: quotes, `<img src="...">` or `url(...)`. Null when there is none. */
@@ -250,7 +261,10 @@ function percentDecode(text: string): Uint8Array | null {
 export function parseImageInput(text: string): ParsedInput {
   if (text.trim() === '') return { ok: false, error: 'There is nothing to decode.' };
   if (text.length > MAX_INPUT_CHARS) {
-    return { ok: false, error: 'The input is too large to decode here (over 40 million characters).' };
+    return {
+      ok: false,
+      error: 'The input is too large to decode here (over 40 million characters).',
+    };
   }
 
   const { text: candidate, unwrapped } = unwrap(text);
@@ -269,26 +283,46 @@ export function parseImageInput(text: string): ParsedInput {
 
     if (isBase64) {
       // Browsers percent-decode a data URL before they read the Base64, so "%3D" stands for "=".
-      const decoded = decodeBase64(payload.replace(/%([0-9A-Fa-f]{2})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16))));
+      const decoded = decodeBase64(
+        payload.replace(/%([0-9A-Fa-f]{2})/g, (_, hex: string) =>
+          String.fromCharCode(parseInt(hex, 16))
+        )
+      );
       if (!decoded.ok) return decoded;
-      return { ok: true, bytes: decoded.bytes, declaredMime: declared, source: 'data-url', notes: [...notes, ...decoded.notes] };
+      return {
+        ok: true,
+        bytes: decoded.bytes,
+        declaredMime: declared,
+        source: 'data-url',
+        notes: [...notes, ...decoded.notes],
+      };
     }
 
     if (payload === '') return { ok: false, error: 'The data URL has no data after the comma.' };
     const bytes = percentDecode(payload);
-    if (!bytes) return { ok: false, error: 'The data URL contains an invalid percent escape (%XX).' };
+    if (!bytes)
+      return { ok: false, error: 'The data URL contains an invalid percent escape (%XX).' };
     return {
       ok: true,
       bytes,
       declaredMime: declared,
       source: 'data-url',
-      notes: [...notes, 'The data URL is not Base64; its percent-encoded text was decoded instead.'],
+      notes: [
+        ...notes,
+        'The data URL is not Base64; its percent-encoded text was decoded instead.',
+      ],
     };
   }
 
   const decoded = decodeBase64(candidate);
   if (!decoded.ok) return decoded;
-  return { ok: true, bytes: decoded.bytes, declaredMime: null, source: 'base64', notes: [...notes, ...decoded.notes] };
+  return {
+    ok: true,
+    bytes: decoded.bytes,
+    declaredMime: null,
+    source: 'base64',
+    notes: [...notes, ...decoded.notes],
+  };
 }
 
 // ── Analysis ──────────────────────────────────────────────────────────────────
@@ -304,13 +338,16 @@ export interface ImageAnalysis {
 
 export function analyzeImage(bytes: Uint8Array, declaredMime: string | null): ImageAnalysis {
   const type = detectImageType(bytes);
-  const mismatch = type !== null && declaredMime !== null && normalizeMime(declaredMime) !== type.mime;
+  const mismatch =
+    type !== null && declaredMime !== null && normalizeMime(declaredMime) !== type.mime;
   return { type, declaredMime, mismatch };
 }
 
 /** "89 50 4e 47", for showing what unrecognised data starts with. */
 export function hexPreview(bytes: Uint8Array, count = 8): string {
-  return Array.from(bytes.subarray(0, count), (byte) => byte.toString(16).padStart(2, '0')).join(' ');
+  return Array.from(bytes.subarray(0, count), (byte) => byte.toString(16).padStart(2, '0')).join(
+    ' '
+  );
 }
 
 /** `decoded-image.png` for the download. */

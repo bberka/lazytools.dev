@@ -72,8 +72,8 @@ export function EmailNormalizer() {
             Email Addresses
           </CardTitle>
           <CardDescription>
-            One address per line, or separated by commas or semicolons. A name in front, like Ada &lt;ada@example.com&gt;,
-            is fine. Nothing leaves your browser.
+            One address per line, or separated by commas or semicolons. A name in front, like Ada
+            &lt;ada@example.com&gt;, is fine. Nothing leaves your browser.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -101,7 +101,9 @@ export function EmailNormalizer() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Rules</CardTitle>
-          <CardDescription>The domain is always lower-cased, because domain names ignore case.</CardDescription>
+          <CardDescription>
+            The domain is always lower-cased, because domain names ignore case.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <Checkbox
@@ -143,14 +145,25 @@ export function EmailNormalizer() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Result</CardTitle>
-              <CardDescription>Valid addresses in their normalized form, one per line.</CardDescription>
+              <CardDescription>
+                Valid addresses in their normalized form, one per line.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3" role="group" aria-label="Summary">
+              <div
+                className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3"
+                role="group"
+                aria-label="Summary"
+              >
                 {statTiles.map((tile) => (
                   <div key={tile.label} className="rounded-md border p-3">
                     <div className="text-xs text-muted-foreground">{tile.label}</div>
-                    <div className={cn('text-xl font-semibold tabular-nums', tile.alert && 'text-destructive')}>
+                    <div
+                      className={cn(
+                        'text-xl font-semibold tabular-nums',
+                        tile.alert && 'text-destructive'
+                      )}
+                    >
                       {tile.value.toLocaleString()}
                     </div>
                   </div>
@@ -179,16 +192,24 @@ export function EmailNormalizer() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Details</CardTitle>
-                <CardDescription>Each address with its normalized form and what was found.</CardDescription>
+                <CardDescription>
+                  Each address with its normalized form and what was found.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="overflow-x-auto rounded-md border">
                   <table className="w-full min-w-[36rem] border-collapse text-left text-xs">
-                    <caption className="sr-only">Addresses with their normalized form and status</caption>
+                    <caption className="sr-only">
+                      Addresses with their normalized form and status
+                    </caption>
                     <thead className="bg-muted/50 text-muted-foreground">
                       <tr>
                         {['#', 'Address', 'Normalized', 'Status'].map((heading) => (
-                          <th key={heading} scope="col" className="whitespace-nowrap px-3 py-2 font-medium">
+                          <th
+                            key={heading}
+                            scope="col"
+                            className="whitespace-nowrap px-3 py-2 font-medium"
+                          >
                             {heading}
                           </th>
                         ))}
@@ -197,9 +218,13 @@ export function EmailNormalizer() {
                     <tbody>
                       {shown.map((entry) => (
                         <tr key={entry.position} className="border-t align-top">
-                          <td className="px-3 py-1.5 tabular-nums text-muted-foreground">{entry.position}</td>
+                          <td className="px-3 py-1.5 tabular-nums text-muted-foreground">
+                            {entry.position}
+                          </td>
                           <td className="break-all px-3 py-1.5 font-mono">{entry.original}</td>
-                          <td className="break-all px-3 py-1.5 font-mono">{entry.valid ? entry.normalized : ''}</td>
+                          <td className="break-all px-3 py-1.5 font-mono">
+                            {entry.valid ? entry.normalized : ''}
+                          </td>
                           <td className="px-3 py-1.5">
                             <StatusBadge entry={entry} />
                           </td>
@@ -210,8 +235,9 @@ export function EmailNormalizer() {
                 </div>
                 {result.entries.length > MAX_ROWS && (
                   <p className="text-xs text-muted-foreground" role="status">
-                    Showing the first {MAX_ROWS.toLocaleString()} of {result.entries.length.toLocaleString()} rows. The result
-                    above covers all of them.
+                    Showing the first {MAX_ROWS.toLocaleString()} of{' '}
+                    {result.entries.length.toLocaleString()} rows. The result above covers all of
+                    them.
                   </p>
                 )}
               </CardContent>

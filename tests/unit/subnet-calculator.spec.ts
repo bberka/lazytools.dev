@@ -97,7 +97,10 @@ test.describe('calculateSubnet', () => {
       totalHosts: 2,
       usableHosts: 2,
     });
-    expect(subnet('10.0.0.1', 31)).toMatchObject({ firstUsableIP: '10.0.0.0', lastUsableIP: '10.0.0.1' });
+    expect(subnet('10.0.0.1', 31)).toMatchObject({
+      firstUsableIP: '10.0.0.0',
+      lastUsableIP: '10.0.0.1',
+    });
   });
 
   // Regression: for a /32 the range pointed at the two neighbours of the host
@@ -117,7 +120,10 @@ test.describe('calculateSubnet', () => {
       firstUsableIP: '255.255.255.255',
       lastUsableIP: '255.255.255.255',
     });
-    expect(subnet('0.0.0.0', 32)).toMatchObject({ firstUsableIP: '0.0.0.0', lastUsableIP: '0.0.0.0' });
+    expect(subnet('0.0.0.0', 32)).toMatchObject({
+      firstUsableIP: '0.0.0.0',
+      lastUsableIP: '0.0.0.0',
+    });
   });
 
   test('accepts the prefix as a number or as typed text', () => {
@@ -142,7 +148,10 @@ test.describe('calculateSubnet', () => {
   });
 
   test('reports the address without leading zeros', () => {
-    expect(subnet('192.168.001.010', 24)).toMatchObject({ ipAddress: '192.168.1.10', networkAddress: '192.168.1.0' });
+    expect(subnet('192.168.001.010', 24)).toMatchObject({
+      ipAddress: '192.168.1.10',
+      networkAddress: '192.168.1.0',
+    });
   });
 
   test('asks for an address when the input is empty or blank', () => {
@@ -171,7 +180,9 @@ test.describe('calculateSubnet', () => {
 
   test('rejects a prefix that is not a whole number from 0 to 32', () => {
     for (const cidr of ['', ' ', 'abc', '33', '-1', '24.5', '1e1', '0x10', '+8']) {
-      expect(errorOf('192.168.1.10', cidr), JSON.stringify(cidr)).toBe('CIDR must be between 0 and 32');
+      expect(errorOf('192.168.1.10', cidr), JSON.stringify(cidr)).toBe(
+        'CIDR must be between 0 and 32'
+      );
     }
     expect(errorOf('192.168.1.10', 33)).toBe('CIDR must be between 0 and 32');
     expect(errorOf('192.168.1.10', -1)).toBe('CIDR must be between 0 and 32');

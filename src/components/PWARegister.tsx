@@ -22,11 +22,8 @@ export function PWARegister() {
       return;
     }
 
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      window.location.hostname
-    );
-    const canRegister =
-      window.location.protocol === 'https:' || isLocalhost;
+    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+    const canRegister = window.location.protocol === 'https:' || isLocalhost;
 
     if (!canRegister) {
       return;

@@ -189,7 +189,10 @@ export function sizeAtViewport(
   const linear =
     minSizePx +
     ((viewportPx - minViewportPx) / (maxViewportPx - minViewportPx)) * (maxSizePx - minSizePx);
-  const px = Math.max(Math.min(minSizePx, maxSizePx), Math.min(Math.max(minSizePx, maxSizePx), linear));
+  const px = Math.max(
+    Math.min(minSizePx, maxSizePx),
+    Math.min(Math.max(minSizePx, maxSizePx), linear)
+  );
 
   return { px: roundTo(px, 2), rem: roundTo(px / basePx, 3) };
 }

@@ -116,7 +116,10 @@ export function SubnetCalculator() {
 
       {/* Error */}
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -143,10 +146,16 @@ export function SubnetCalculator() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleCopy(`${subnetInfo.ipAddress}/${subnetInfo.cidr}`, 'ip-cidr')}
+                        onClick={() =>
+                          handleCopy(`${subnetInfo.ipAddress}/${subnetInfo.cidr}`, 'ip-cidr')
+                        }
                         aria-label="Copy IP/CIDR"
                       >
-                        {copiedField === 'ip-cidr' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'ip-cidr' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -166,7 +175,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.subnetMask, 'subnet-mask')}
                         aria-label="Copy subnet mask"
                       >
-                        {copiedField === 'subnet-mask' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'subnet-mask' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -186,7 +199,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.wildcardMask, 'wildcard-mask')}
                         aria-label="Copy wildcard mask"
                       >
-                        {copiedField === 'wildcard-mask' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'wildcard-mask' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -208,7 +225,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.binarySubnetMask, 'binary-mask')}
                         aria-label="Copy binary mask"
                       >
-                        {copiedField === 'binary-mask' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'binary-mask' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -241,7 +262,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.networkAddress, 'network-address')}
                         aria-label="Copy network address"
                       >
-                        {copiedField === 'network-address' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'network-address' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -263,7 +288,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.broadcastAddress, 'broadcast-address')}
                         aria-label="Copy broadcast address"
                       >
-                        {copiedField === 'broadcast-address' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'broadcast-address' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -285,7 +314,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.firstUsableIP, 'first-ip')}
                         aria-label="Copy first IP"
                       >
-                        {copiedField === 'first-ip' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'first-ip' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -307,7 +340,11 @@ export function SubnetCalculator() {
                         onClick={() => handleCopy(subnetInfo.lastUsableIP, 'last-ip')}
                         aria-label="Copy last IP"
                       >
-                        {copiedField === 'last-ip' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copiedField === 'last-ip' ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </TooltipSimple>
                   </div>
@@ -351,7 +388,13 @@ export function SubnetCalculator() {
         <CardContent className="pt-4 sm:pt-6">
           <div className="flex items-start gap-3">
             <div className="text-primary">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

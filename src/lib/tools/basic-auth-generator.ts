@@ -21,11 +21,19 @@ export function encodeBasicAuth(username: string, password: string): BasicAuthRe
     return { ok: false, error: 'Enter a username and password.' };
   }
   if (username.includes(':')) {
-    return { ok: false, error: 'A username cannot contain a colon (:); it separates the username from the password.' };
+    return {
+      ok: false,
+      error: 'A username cannot contain a colon (:); it separates the username from the password.',
+    };
   }
 
   const token = toBase64(`${username}:${password}`);
-  return { ok: true, token, headerValue: `Basic ${token}`, header: `Authorization: Basic ${token}` };
+  return {
+    ok: true,
+    token,
+    headerValue: `Basic ${token}`,
+    header: `Authorization: Basic ${token}`,
+  };
 }
 
 export type BasicAuthDecodeResult =

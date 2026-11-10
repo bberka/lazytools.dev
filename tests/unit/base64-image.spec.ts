@@ -20,7 +20,8 @@ const GIF_B64 = 'R0lGODlh'; // "GIF89a"
 
 const ascii = (text: string) => Array.from(text, (char) => char.charCodeAt(0));
 const u8 = (...values: number[]) => Uint8Array.from(values);
-const pad = (head: number[], length: number) => Uint8Array.from([...head, ...new Array(Math.max(0, length - head.length)).fill(0)]);
+const pad = (head: number[], length: number) =>
+  Uint8Array.from([...head, ...new Array(Math.max(0, length - head.length)).fill(0)]);
 
 function okParse(text: string) {
   const result = parseImageInput(text);
@@ -76,9 +77,15 @@ test.describe('detectImageType', () => {
     const svg = (text: string) => detectImageType(new TextEncoder().encode(text))?.kind;
     expect(svg('<svg xmlns="http://www.w3.org/2000/svg"/>')).toBe('svg');
     expect(svg('  \n<svg\n width="1">')).toBe('svg');
-    expect(svg('<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg"></svg>')).toBe('svg');
+    expect(
+      svg('<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg"></svg>')
+    ).toBe('svg');
     expect(svg('﻿<svg/>')).toBe('svg');
-    expect(svg('<?xml version="1.0"?><!-- c --><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg/>')).toBe('svg');
+    expect(
+      svg(
+        '<?xml version="1.0"?><!-- c --><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg/>'
+      )
+    ).toBe('svg');
     expect(svg('<SVG viewBox="0 0 1 1"/>')).toBe('svg');
   });
 
@@ -98,9 +105,11 @@ test.describe('detectImageType', () => {
   });
 
   test('type table is consistent', () => {
-    expect(Object.values(IMAGE_TYPES).map((type) => type.kind).sort()).toEqual(
-      ['avif', 'bmp', 'gif', 'ico', 'jpeg', 'png', 'svg', 'webp']
-    );
+    expect(
+      Object.values(IMAGE_TYPES)
+        .map((type) => type.kind)
+        .sort()
+    ).toEqual(['avif', 'bmp', 'gif', 'ico', 'jpeg', 'png', 'svg', 'webp']);
     expect(IMAGE_TYPES.jpeg.extension).toBe('jpg');
     expect(IMAGE_TYPES.svg.mime).toBe('image/svg+xml');
   });
@@ -116,19 +125,43 @@ test.describe('decodeBase64', () => {
   });
 
   test('adds missing padding and says so', () => {
-    expect(decodeBase64('QQ')).toEqual({ ok: true, bytes: u8(0x41), notes: ['Missing "=" padding was added.'] });
-    expect(decodeBase64('QUI')).toEqual({ ok: true, bytes: u8(0x41, 0x42), notes: ['Missing "=" padding was added.'] });
-    expect(decodeBase64('iVBORw0KGgo')).toEqual({ ok: true, bytes: u8(...PNG_HEAD), notes: ['Missing "=" padding was added.'] });
+    expect(decodeBase64('QQ')).toEqual({
+      ok: true,
+      bytes: u8(0x41),
+      notes: ['Missing "=" padding was added.'],
+    });
+    expect(decodeBase64('QUI')).toEqual({
+      ok: true,
+      bytes: u8(0x41, 0x42),
+      notes: ['Missing "=" padding was added.'],
+    });
+    expect(decodeBase64('iVBORw0KGgo')).toEqual({
+      ok: true,
+      bytes: u8(...PNG_HEAD),
+      notes: ['Missing "=" padding was added.'],
+    });
   });
 
   test('corrects wrong padding', () => {
-    expect(decodeBase64('QQ=')).toEqual({ ok: true, bytes: u8(0x41), notes: ['The "=" padding was corrected.'] });
-    expect(decodeBase64('QUJD==')).toEqual({ ok: true, bytes: u8(0x41, 0x42, 0x43), notes: ['The "=" padding was corrected.'] });
+    expect(decodeBase64('QQ=')).toEqual({
+      ok: true,
+      bytes: u8(0x41),
+      notes: ['The "=" padding was corrected.'],
+    });
+    expect(decodeBase64('QUJD==')).toEqual({
+      ok: true,
+      bytes: u8(0x41, 0x42, 0x43),
+      notes: ['The "=" padding was corrected.'],
+    });
   });
 
   test('ignores whitespace and line breaks', () => {
     const result = decodeBase64('iVBO\r\nRw0K\n  Ggo=\t');
-    expect(result).toEqual({ ok: true, bytes: u8(...PNG_HEAD), notes: ['Whitespace and line breaks were ignored.'] });
+    expect(result).toEqual({
+      ok: true,
+      bytes: u8(...PNG_HEAD),
+      notes: ['Whitespace and line breaks were ignored.'],
+    });
   });
 
   test('accepts the URL-safe alphabet', () => {
@@ -148,14 +181,29 @@ test.describe('decodeBase64', () => {
   });
 
   test('names the first bad character and its position', () => {
-    expect(decodeBase64('QUJD!A==')).toEqual({ ok: false, error: '"!" is not a Base64 character (position 5).' });
-    expect(decodeBase64('QU JD\n$')).toEqual({ ok: false, error: '"$" is not a Base64 character (position 5).' });
-    expect(decodeBase64('café')).toEqual({ ok: false, error: '"é" is not a Base64 character (position 4).' });
+    expect(decodeBase64('QUJD!A==')).toEqual({
+      ok: false,
+      error: '"!" is not a Base64 character (position 5).',
+    });
+    expect(decodeBase64('QU JD\n$')).toEqual({
+      ok: false,
+      error: '"$" is not a Base64 character (position 5).',
+    });
+    expect(decodeBase64('café')).toEqual({
+      ok: false,
+      error: '"é" is not a Base64 character (position 4).',
+    });
   });
 
   test('padding problems', () => {
-    expect(decodeBase64('QQ=Q')).toEqual({ ok: false, error: '"=" may only appear at the end of Base64 text.' });
-    expect(decodeBase64('QQ===')).toEqual({ ok: false, error: 'Base64 can end with at most two "=" characters.' });
+    expect(decodeBase64('QQ=Q')).toEqual({
+      ok: false,
+      error: '"=" may only appear at the end of Base64 text.',
+    });
+    expect(decodeBase64('QQ===')).toEqual({
+      ok: false,
+      error: 'Base64 can end with at most two "=" characters.',
+    });
   });
 
   test('a single leftover character is not decodable', () => {
@@ -218,7 +266,8 @@ test.describe('parseImageInput with data URLs', () => {
   });
 
   test('a percent-encoded SVG without base64', () => {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect fill="#f00" width="2" height="2"/></svg>';
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect fill="#f00" width="2" height="2"/></svg>';
     const result = okParse(`data:image/svg+xml,${encodeURIComponent(svg)}`);
     expect(new TextDecoder().decode(result.bytes)).toBe(svg);
     expect(result.declaredMime).toBe('image/svg+xml');
@@ -232,10 +281,16 @@ test.describe('parseImageInput with data URLs', () => {
   });
 
   test('errors in the data URL itself', () => {
-    expect(errorOf('data:image/png;base64')).toBe('A data URL needs a comma between its header and its data.');
+    expect(errorOf('data:image/png;base64')).toBe(
+      'A data URL needs a comma between its header and its data.'
+    );
     expect(errorOf('data:image/svg+xml,')).toBe('The data URL has no data after the comma.');
-    expect(errorOf('data:image/svg+xml,%ZZ')).toBe('The data URL contains an invalid percent escape (%XX).');
-    expect(errorOf('data:image/png;base64,@@@')).toBe('"@" is not a Base64 character (position 1).');
+    expect(errorOf('data:image/svg+xml,%ZZ')).toBe(
+      'The data URL contains an invalid percent escape (%XX).'
+    );
+    expect(errorOf('data:image/png;base64,@@@')).toBe(
+      '"@" is not a Base64 character (position 1).'
+    );
   });
 
   test('wrappers: url(), quotes, an img tag and CSS', () => {
@@ -254,7 +309,9 @@ test.describe('parseImageInput with data URLs', () => {
       expect(result.bytes, wrapped).toEqual(u8(...PNG_HEAD));
       expect(result.declaredMime, wrapped).toBe('image/png');
     }
-    expect(okParse(`url("${url}")`).notes).toEqual(['The data URL was taken out of the surrounding text.']);
+    expect(okParse(`url("${url}")`).notes).toEqual([
+      'The data URL was taken out of the surrounding text.',
+    ]);
     expect(okParse(url).notes).toEqual([]);
   });
 
@@ -278,7 +335,10 @@ test.describe('parseImageInput with raw Base64', () => {
 
   test('repairs are reported', () => {
     expect(okParse('/9j/4A').notes).toEqual(['Missing "=" padding was added.']);
-    expect(okParse('_9j_4A').notes).toEqual(['Converted from the URL-safe alphabet.', 'Missing "=" padding was added.']);
+    expect(okParse('_9j_4A').notes).toEqual([
+      'Converted from the URL-safe alphabet.',
+      'Missing "=" padding was added.',
+    ]);
   });
 
   test('errors', () => {
@@ -312,7 +372,9 @@ test.describe('analyzeImage', () => {
     expect(analyzeImage(u8(0xff, 0xd8, 0xff), 'image/jpg').mismatch).toBe(false);
     expect(analyzeImage(u8(0xff, 0xd8, 0xff), 'IMAGE/PJPEG').mismatch).toBe(false);
     expect(analyzeImage(pad([0, 0, 1, 0, 1, 0], 30), 'image/x-icon').mismatch).toBe(false);
-    expect(analyzeImage(pad([...ascii('BM'), 0, 0, 0, 0, 0, 0, 0, 0], 30), 'image/x-ms-bmp').mismatch).toBe(false);
+    expect(
+      analyzeImage(pad([...ascii('BM'), 0, 0, 0, 0, 0, 0, 0, 0], 30), 'image/x-ms-bmp').mismatch
+    ).toBe(false);
   });
 
   test('not an image', () => {
@@ -349,7 +411,11 @@ test.describe('helpers', () => {
   });
 
   test('the sample constants decode to the right types', () => {
-    for (const [b64, kind] of [[PNG_B64, 'png'], [JPEG_B64, 'jpeg'], [GIF_B64, 'gif']] as const) {
+    for (const [b64, kind] of [
+      [PNG_B64, 'png'],
+      [JPEG_B64, 'jpeg'],
+      [GIF_B64, 'gif'],
+    ] as const) {
       const decoded = decodeBase64(b64);
       expect(decoded.ok && detectImageType(decoded.bytes)?.kind).toBe(kind);
     }

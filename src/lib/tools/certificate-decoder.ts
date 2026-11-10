@@ -141,12 +141,23 @@ const OID_RSA_PSS = '1.2.840.113549.1.1.10';
 const OID_EC = '1.2.840.10045.2.1';
 
 const OID_MAP: Record<string, string> = {
-  '2.5.4.3': 'CN', '2.5.4.4': 'SN', '2.5.4.5': 'serialNumber',
-  '2.5.4.6': 'C', '2.5.4.7': 'L', '2.5.4.8': 'ST', '2.5.4.9': 'street',
-  '2.5.4.10': 'O', '2.5.4.11': 'OU', '2.5.4.12': 'title',
-  '2.5.4.15': 'businessCategory', '2.5.4.17': 'postalCode',
-  '2.5.4.41': 'name', '2.5.4.42': 'givenName', '2.5.4.97': 'organizationIdentifier',
-  '0.9.2342.19200300.100.1.1': 'UID', '0.9.2342.19200300.100.1.25': 'DC',
+  '2.5.4.3': 'CN',
+  '2.5.4.4': 'SN',
+  '2.5.4.5': 'serialNumber',
+  '2.5.4.6': 'C',
+  '2.5.4.7': 'L',
+  '2.5.4.8': 'ST',
+  '2.5.4.9': 'street',
+  '2.5.4.10': 'O',
+  '2.5.4.11': 'OU',
+  '2.5.4.12': 'title',
+  '2.5.4.15': 'businessCategory',
+  '2.5.4.17': 'postalCode',
+  '2.5.4.41': 'name',
+  '2.5.4.42': 'givenName',
+  '2.5.4.97': 'organizationIdentifier',
+  '0.9.2342.19200300.100.1.1': 'UID',
+  '0.9.2342.19200300.100.1.25': 'DC',
   '1.2.840.113549.1.9.1': 'emailAddress',
   [OID_RSA]: 'RSA',
   '1.2.840.113549.1.1.5': 'sha1WithRSAEncryption',
@@ -160,9 +171,12 @@ const OID_MAP: Record<string, string> = {
   '1.2.840.10045.4.3.2': 'ecdsa-with-SHA256',
   '1.2.840.10045.4.3.3': 'ecdsa-with-SHA384',
   '1.2.840.10045.4.3.4': 'ecdsa-with-SHA512',
-  '1.3.101.112': 'Ed25519', '1.3.101.113': 'Ed448',
-  '1.2.840.10045.3.1.7': 'P-256', '1.3.132.0.34': 'P-384',
-  '1.3.132.0.35': 'P-521', '1.3.132.0.10': 'secp256k1',
+  '1.3.101.112': 'Ed25519',
+  '1.3.101.113': 'Ed448',
+  '1.2.840.10045.3.1.7': 'P-256',
+  '1.3.132.0.34': 'P-384',
+  '1.3.132.0.35': 'P-521',
+  '1.3.132.0.10': 'secp256k1',
   '2.5.29.14': 'subjectKeyIdentifier',
   '2.5.29.15': 'keyUsage',
   '2.5.29.17': 'subjectAltName',
@@ -250,14 +264,22 @@ const GENERALIZED_TIME = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?(?:[.,]\d+
 
 function decodeTime(node: Asn1Node): Date {
   const text = latin1(node.bytes);
-  const match = node.tagByte === 0x17 ? UTC_TIME.exec(text) : node.tagByte === 0x18 ? GENERALIZED_TIME.exec(text) : null;
-  if (!match) throw new CertificateError('The certificate has a validity date that cannot be read.');
+  const match =
+    node.tagByte === 0x17
+      ? UTC_TIME.exec(text)
+      : node.tagByte === 0x18
+        ? GENERALIZED_TIME.exec(text)
+        : null;
+  if (!match)
+    throw new CertificateError('The certificate has a validity date that cannot be read.');
 
   let year = Number(match[1]);
   // UTCTime has a two-digit year: 50-99 are 19xx, 00-49 are 20xx (RFC 5280).
   if (node.tagByte === 0x17) year += year >= 50 ? 1900 : 2000;
 
-  const date = new Date(Date.UTC(2000, 0, 1, Number(match[4]), Number(match[5]), Number(match[6] ?? 0)));
+  const date = new Date(
+    Date.UTC(2000, 0, 1, Number(match[4]), Number(match[5]), Number(match[6] ?? 0))
+  );
   date.setUTCFullYear(year, Number(match[2]) - 1, Number(match[3]));
   return date;
 }
@@ -287,7 +309,10 @@ function parseName(node: Asn1Node): DistinguishedName {
   for (const rdn of node.children) {
     for (const atv of rdn.children) {
       if (atv.children.length >= 2) {
-        name.push({ type: oidName(decodeOid(atv.children[0].bytes)), value: decodeString(atv.children[1]) });
+        name.push({
+          type: oidName(decodeOid(atv.children[0].bytes)),
+          value: decodeString(atv.children[1]),
+        });
       }
     }
   }
@@ -300,7 +325,8 @@ const NAME_ORDER = ['CN', 'O', 'OU', 'L', 'ST', 'C'];
 function nameToStr(name: DistinguishedName): string {
   const parts: string[] = [];
   for (const type of NAME_ORDER) {
-    for (const attribute of name) if (attribute.type === type) parts.push(`${type}=${attribute.value}`);
+    for (const attribute of name)
+      if (attribute.type === type) parts.push(`${type}=${attribute.value}`);
   }
   for (const attribute of name) {
     if (!NAME_ORDER.includes(attribute.type)) parts.push(`${attribute.type}=${attribute.value}`);
@@ -311,9 +337,15 @@ function nameToStr(name: DistinguishedName): string {
 // ── Extensions ────────────────────────────────────────────────────────────────
 
 const KEY_USAGE_BITS = [
-  'Digital Signature', 'Non-Repudiation', 'Key Encipherment',
-  'Data Encipherment', 'Key Agreement', 'Key Cert Sign',
-  'CRL Sign', 'Encipher Only', 'Decipher Only',
+  'Digital Signature',
+  'Non-Repudiation',
+  'Key Encipherment',
+  'Data Encipherment',
+  'Key Agreement',
+  'Key Cert Sign',
+  'CRL Sign',
+  'Encipher Only',
+  'Decipher Only',
 ];
 
 function parseKeyUsage(bitStrBytes: Uint8Array): ExtValue {
@@ -324,7 +356,7 @@ function parseKeyUsage(bitStrBytes: Uint8Array): ExtValue {
     for (let bit = 7; bit >= 0; bit--) {
       if (bi === bitStrBytes.length - 1 && bit < unused) continue;
       const pos = (bi - 1) * 8 + (7 - bit);
-      if ((bitStrBytes[bi] & (1 << bit)) && pos < KEY_USAGE_BITS.length) {
+      if (bitStrBytes[bi] & (1 << bit) && pos < KEY_USAGE_BITS.length) {
         items.push(KEY_USAGE_BITS[pos]);
       }
     }
@@ -338,11 +370,19 @@ function parseSan(extBytes: Uint8Array): ExtValue {
   for (const gn of seq.children) {
     if (gn.cls !== 2) continue;
     switch (gn.tag) {
-      case 1: items.push(`email: ${utf8(gn.bytes)}`); break;
-      case 2: items.push(`DNS: ${utf8(gn.bytes)}`); break;
+      case 1:
+        items.push(`email: ${utf8(gn.bytes)}`);
+        break;
+      case 2:
+        items.push(`DNS: ${utf8(gn.bytes)}`);
+        break;
       // directoryName is explicitly tagged: the Name sits one level down.
-      case 4: items.push(`dir: ${gn.children[0] ? nameToStr(parseName(gn.children[0])) : ''}`); break;
-      case 6: items.push(`URI: ${utf8(gn.bytes)}`); break;
+      case 4:
+        items.push(`dir: ${gn.children[0] ? nameToStr(parseName(gn.children[0])) : ''}`);
+        break;
+      case 6:
+        items.push(`URI: ${utf8(gn.bytes)}`);
+        break;
       case 7:
         if (gn.bytes.length === 4) items.push(`IP: ${gn.bytes.join('.')}`);
         else if (gn.bytes.length === 16) {
@@ -350,7 +390,8 @@ function parseSan(extBytes: Uint8Array): ExtValue {
           items.push(`IP: ${(h.match(/.{4}/g) ?? []).join(':')}`);
         }
         break;
-      default: items.push(`[${gn.tag}]: ${toHex(gn.bytes, '').slice(0, 40)}`);
+      default:
+        items.push(`[${gn.tag}]: ${toHex(gn.bytes, '').slice(0, 40)}`);
     }
   }
   return { kind: 'list', items };
@@ -362,7 +403,10 @@ function parseBasicConstraints(extBytes: Uint8Array): ExtValue {
   let pathLen: number | undefined;
   for (const c of seq.children) {
     if (c.tagByte === 0x01) isCA = c.bytes[0] !== 0;
-    else if (c.tagByte === 0x02) { pathLen = 0; for (const b of c.bytes) pathLen = pathLen * 256 + b; }
+    else if (c.tagByte === 0x02) {
+      pathLen = 0;
+      for (const b of c.bytes) pathLen = pathLen * 256 + b;
+    }
   }
   return { kind: 'bc', isCA, pathLen };
 }
@@ -417,15 +461,29 @@ function parseCrlDp(extBytes: Uint8Array): ExtValue {
 function parseExtensionValue(oid: string, extBytes: Uint8Array): ExtValue {
   try {
     switch (oid) {
-      case '2.5.29.15': { const [bs] = readNode(extBytes, 0); return parseKeyUsage(bs.bytes); }
-      case '2.5.29.17': return parseSan(extBytes);
-      case '2.5.29.19': return parseBasicConstraints(extBytes);
-      case '2.5.29.37': return parseEku(extBytes);
-      case '1.3.6.1.5.5.7.1.1': return parseAia(extBytes);
-      case '2.5.29.14': return parseSkid(extBytes);
-      case '2.5.29.35': return parseAkid(extBytes);
-      case '2.5.29.31': return parseCrlDp(extBytes);
-      default: return { kind: 'raw', hex: toHex(extBytes, '').slice(0, 80) + (extBytes.length > 40 ? '…' : '') };
+      case '2.5.29.15': {
+        const [bs] = readNode(extBytes, 0);
+        return parseKeyUsage(bs.bytes);
+      }
+      case '2.5.29.17':
+        return parseSan(extBytes);
+      case '2.5.29.19':
+        return parseBasicConstraints(extBytes);
+      case '2.5.29.37':
+        return parseEku(extBytes);
+      case '1.3.6.1.5.5.7.1.1':
+        return parseAia(extBytes);
+      case '2.5.29.14':
+        return parseSkid(extBytes);
+      case '2.5.29.35':
+        return parseAkid(extBytes);
+      case '2.5.29.31':
+        return parseCrlDp(extBytes);
+      default:
+        return {
+          kind: 'raw',
+          hex: toHex(extBytes, '').slice(0, 80) + (extBytes.length > 40 ? '…' : ''),
+        };
     }
   } catch {
     return { kind: 'raw', hex: toHex(extBytes, '').slice(0, 80) };
@@ -435,7 +493,8 @@ function parseExtensionValue(oid: string, extBytes: Uint8Array): ExtValue {
 // ── Certificate ───────────────────────────────────────────────────────────────
 
 function parseCert(cert: Asn1Node, now: number): CertInfo {
-  if (cert.tagByte !== 0x30 || cert.children.length < 3) throw new CertificateError(NOT_A_CERTIFICATE);
+  if (cert.tagByte !== 0x30 || cert.children.length < 3)
+    throw new CertificateError(NOT_A_CERTIFICATE);
 
   const tbs = cert.children[0];
   const sigAlgNode = cert.children[1];
@@ -472,7 +531,9 @@ function parseCert(cert: Asn1Node, now: number): CertInfo {
       // BIT STRING content: one byte of unused-bit count, then RSAPublicKey.
       const [rsaSeq] = readNode(pkBytes.subarray(1), 0);
       pkBits = bitLength(rsaSeq.children[0].bytes) || undefined;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   } else if (pkOid === OID_EC) {
     const curveOid = pkAlgSeq.children[1] ? decodeOid(pkAlgSeq.children[1].bytes) : '';
     if (curveOid) pkCurve = oidName(curveOid);
@@ -497,15 +558,27 @@ function parseCert(cert: Asn1Node, now: number): CertInfo {
         critical = extNode.children[ei++].bytes[0] !== 0;
       }
       const extBytes = child(extNode, ei).bytes;
-      extensions.push({ oid, name: oidName(oid), critical, value: parseExtensionValue(oid, extBytes) });
+      extensions.push({
+        oid,
+        name: oidName(oid),
+        critical,
+        value: parseExtensionValue(oid, extBytes),
+      });
     }
     break;
   }
 
   return {
-    version, serialNumber, sigAlg,
-    issuer, validFrom, validTo, subject,
-    pkAlg: oidName(pkOid), pkBits, pkCurve,
+    version,
+    serialNumber,
+    sigAlg,
+    issuer,
+    validFrom,
+    validTo,
+    subject,
+    pkAlg: oidName(pkOid),
+    pkBits,
+    pkCurve,
     extensions,
     isExpired: validTo.getTime() < now,
     isNotYetValid: validFrom.getTime() > now,
@@ -531,9 +604,14 @@ function describeBlock(label: string): string {
 
 /** The DER bytes of the first certificate block in `pem`, and how many certificate blocks there are. */
 function pemToDer(pem: string): { der: Uint8Array; certificateCount: number } {
-  const blocks = Array.from(pem.matchAll(PEM_BLOCK), (match) => ({ label: match[1].trim(), body: match[2] }));
+  const blocks = Array.from(pem.matchAll(PEM_BLOCK), (match) => ({
+    label: match[1].trim(),
+    body: match[2],
+  }));
   if (blocks.length === 0) {
-    throw new CertificateError('Expected a PEM certificate starting with -----BEGIN CERTIFICATE-----');
+    throw new CertificateError(
+      'Expected a PEM certificate starting with -----BEGIN CERTIFICATE-----'
+    );
   }
 
   const certificates = blocks.filter((block) => CERTIFICATE_LABELS.includes(block.label));
@@ -547,7 +625,9 @@ function pemToDer(pem: string): { der: Uint8Array; certificateCount: number } {
   try {
     binary = atob(certificates[0].body.replace(/\s+/g, ''));
   } catch {
-    throw new CertificateError('The certificate is not valid Base64. It may be incomplete or damaged.');
+    throw new CertificateError(
+      'The certificate is not valid Base64. It may be incomplete or damaged.'
+    );
   }
 
   const der = new Uint8Array(binary.length);
@@ -579,7 +659,10 @@ export function pemFromBytes(bytes: Uint8Array): string | null {
  * Throws an `Error` with a message for the user when the input is not a
  * certificate.
  */
-export function decodeCertificate(input: string | Uint8Array, now: number = Date.now()): DecodedCertificate {
+export function decodeCertificate(
+  input: string | Uint8Array,
+  now: number = Date.now()
+): DecodedCertificate {
   const pem = typeof input === 'string' ? input : pemFromBytes(input);
   const source = pem === null ? { der: input as Uint8Array, certificateCount: 1 } : pemToDer(pem);
 

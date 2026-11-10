@@ -290,7 +290,10 @@ export function ResumeAtsAnalyzer() {
       </Card>
 
       {error && (
-        <div role="alert" className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}

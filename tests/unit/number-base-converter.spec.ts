@@ -114,12 +114,7 @@ test.describe('convertNumberBase', () => {
   // Numbers went through a double, so anything above 2^53 came out wrong.
   test('converts numbers beyond 2^53 exactly', () => {
     expect(convertNumberBase('9007199254740993', 'decimal')).toEqual(
-      ok(
-        `1${'0'.repeat(52)}1`,
-        `4${'0'.repeat(16)}1`,
-        '9007199254740993',
-        '20000000000001'
-      )
+      ok(`1${'0'.repeat(52)}1`, `4${'0'.repeat(16)}1`, '9007199254740993', '20000000000001')
     );
     expect(convertNumberBase('FFFFFFFFFFFFFFFF', 'hex')).toEqual(
       ok('1'.repeat(64), `1${'7'.repeat(21)}`, '18446744073709551615', 'FFFFFFFFFFFFFFFF')

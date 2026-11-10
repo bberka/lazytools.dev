@@ -6,7 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { downloadText } from '@/lib/files';
 import {
@@ -44,7 +50,10 @@ export function MacAddressGenerator() {
   const [checkInput, setCheckInput] = useState('');
 
   const count = parseMacCount(countText);
-  const check = useMemo(() => (checkInput.trim() === '' ? null : parseMac(checkInput, uppercase)), [checkInput, uppercase]);
+  const check = useMemo(
+    () => (checkInput.trim() === '' ? null : parseMac(checkInput, uppercase)),
+    [checkInput, uppercase]
+  );
 
   const handleGenerate = () => {
     if (count === null) return;
@@ -88,7 +97,9 @@ export function MacAddressGenerator() {
                 value={countText}
                 onChange={(event) => setCountText(event.target.value)}
                 aria-invalid={count === null}
-                className={count === null ? 'border-destructive focus-visible:ring-destructive' : ''}
+                className={
+                  count === null ? 'border-destructive focus-visible:ring-destructive' : ''
+                }
               />
             </Field>
             <Field id="mac-format" label="Format">
@@ -152,9 +163,9 @@ export function MacAddressGenerator() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Locally administered unicast addresses (the default) are the ones meant for virtual machines, containers
-            and tests. A &quot;global&quot; address is only a random one in the universal range: its first three bytes
-            are not a registered vendor prefix.
+            Locally administered unicast addresses (the default) are the ones meant for virtual
+            machines, containers and tests. A &quot;global&quot; address is only a random one in the
+            universal range: its first three bytes are not a registered vendor prefix.
           </p>
 
           {count === null && (
@@ -203,7 +214,10 @@ export function MacAddressGenerator() {
                   Clear
                 </Button>
               </div>
-              <ul aria-label="Generated MAC addresses" className="max-h-80 divide-y overflow-auto rounded-lg border">
+              <ul
+                aria-label="Generated MAC addresses"
+                className="max-h-80 divide-y overflow-auto rounded-lg border"
+              >
                 {macs.map((mac, index) => (
                   <li key={`${index}-${mac}`} className="flex items-center gap-2 px-3 py-1.5">
                     <code className="min-w-0 flex-1 break-all font-mono text-sm">{mac}</code>
@@ -239,7 +253,12 @@ export function MacAddressGenerator() {
               autoCapitalize="none"
               className="flex-1 font-mono"
             />
-            <Button type="button" variant="outline" onClick={() => setCheckInput('')} disabled={checkInput === ''}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCheckInput('')}
+              disabled={checkInput === ''}
+            >
               <Trash2 className="h-4 w-4" />
               Clear
             </Button>
@@ -260,9 +279,13 @@ export function MacAddressGenerator() {
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">Valid MAC address</Badge>
                 <Badge variant="outline">{MAC_FORMAT_LABELS[check.info.format]}</Badge>
-                <Badge variant="outline">{check.info.multicast ? 'Multicast (group bit 1)' : 'Unicast (group bit 0)'}</Badge>
                 <Badge variant="outline">
-                  {check.info.locallyAdministered ? 'Locally administered (bit 1)' : 'Universally administered (bit 0)'}
+                  {check.info.multicast ? 'Multicast (group bit 1)' : 'Unicast (group bit 0)'}
+                </Badge>
+                <Badge variant="outline">
+                  {check.info.locallyAdministered
+                    ? 'Locally administered (bit 1)'
+                    : 'Universally administered (bit 0)'}
                 </Badge>
                 {check.info.broadcast && <Badge variant="outline">Broadcast address</Badge>}
               </div>
@@ -270,15 +293,21 @@ export function MacAddressGenerator() {
                 {(Object.keys(MAC_FORMAT_LABELS) as MacFormat[]).map((id) => (
                   <li key={id} className="flex items-center gap-2 px-3 py-1.5">
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-muted-foreground">{MAC_FORMAT_LABELS[id].split(' (')[0]}</div>
+                      <div className="text-xs font-medium text-muted-foreground">
+                        {MAC_FORMAT_LABELS[id].split(' (')[0]}
+                      </div>
                       <div className="break-all font-mono text-sm">{check.info.formats[id]}</div>
                     </div>
-                    <CopyValueButton text={check.info.formats[id]} label={`Copy ${MAC_FORMAT_LABELS[id].split(' (')[0]} form`} />
+                    <CopyValueButton
+                      text={check.info.formats[id]}
+                      label={`Copy ${MAC_FORMAT_LABELS[id].split(' (')[0]} form`}
+                    />
                   </li>
                 ))}
               </ul>
               <p className="text-xs text-muted-foreground">
-                The vendor is not looked up: that needs a large registry, and this tool stays small and offline.
+                The vendor is not looked up: that needs a large registry, and this tool stays small
+                and offline.
               </p>
             </div>
           )}

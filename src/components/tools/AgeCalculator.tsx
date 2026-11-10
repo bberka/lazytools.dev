@@ -143,7 +143,9 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
       <Card>
         <CardHeader>
           <CardTitle>Result</CardTitle>
-          <CardDescription>{result.error ? 'Fix the selected dates to continue.' : result.detail}</CardDescription>
+          <CardDescription>
+            {result.error ? 'Fix the selected dates to continue.' : result.detail}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-md bg-muted p-4 font-mono text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -183,7 +185,8 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 </div>
                 <div className="mt-1 font-semibold">{result.breakdown.nextBirthdayLabel}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  Turns {result.breakdown.nextBirthdayAge} in {formatCount(result.breakdown.nextBirthdayDaysAway)} day
+                  Turns {result.breakdown.nextBirthdayAge} in{' '}
+                  {formatCount(result.breakdown.nextBirthdayDaysAway)} day
                   {result.breakdown.nextBirthdayDaysAway === 1 ? '' : 's'}
                 </div>
               </div>

@@ -109,15 +109,9 @@ export function FindAndReplace() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">
-              Matches: {result.matches.length.toLocaleString()}
-            </Badge>
-            <Badge variant="outline">
-              Replacements: {result.replacements.toLocaleString()}
-            </Badge>
-            <Badge variant="outline">
-              Output chars: {outputCharacters.toLocaleString()}
-            </Badge>
+            <Badge variant="outline">Matches: {result.matches.length.toLocaleString()}</Badge>
+            <Badge variant="outline">Replacements: {result.replacements.toLocaleString()}</Badge>
+            <Badge variant="outline">Output chars: {outputCharacters.toLocaleString()}</Badge>
           </div>
         </CardContent>
       </Card>
@@ -179,7 +173,9 @@ export function FindAndReplace() {
             <Replace className="h-5 w-5" />
             Result
           </CardTitle>
-          <CardDescription>Preview the replaced text before copying or applying it.</CardDescription>
+          <CardDescription>
+            Preview the replaced text before copying or applying it.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea

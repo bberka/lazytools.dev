@@ -14,13 +14,20 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
  * Opens a tool page and waits until React has hydrated `control`. The page is
  * prerendered, so its controls are on screen before they respond to input.
  */
-async function openTool(page: Page, slug: string, heading: string, control: Locator): Promise<void> {
+async function openTool(
+  page: Page,
+  slug: string,
+  heading: string,
+  control: Locator
+): Promise<void> {
   const response = await page.goto(`/tools/${slug}/`);
   expect(response?.status()).toBe(200);
   await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
   await expect
     .poll(() =>
-      control.evaluate((element) => Object.keys(element).some((key) => key.startsWith('__reactProps$')))
+      control.evaluate((element) =>
+        Object.keys(element).some((key) => key.startsWith('__reactProps$'))
+      )
     )
     .toBe(true);
 }
@@ -30,7 +37,11 @@ async function openTool(page: Page, slug: string, heading: string, control: Loca
  * accessible name: the innermost block that holds both. Several captions are
  * upper-cased or carry a value, which a name match would have to allow for.
  */
-function sliderBeside(page: Page, caption: string, within: Locator = page.locator('main')): Locator {
+function sliderBeside(
+  page: Page,
+  caption: string,
+  within: Locator = page.locator('main')
+): Locator {
   return within
     .locator('div')
     .filter({ has: page.getByText(caption, { exact: true }) })
@@ -145,7 +156,9 @@ test.describe('Design tools', () => {
       await open(page);
     });
 
-    test('a HEX typed by hand drives the copy values, the tints and shades and the theme', async ({ page }) => {
+    test('a HEX typed by hand drives the copy values, the tints and shades and the theme', async ({
+      page,
+    }) => {
       const hex = hexField(page);
       await hex.press('ControlOrMeta+a');
       await hex.pressSequentially('#336699');
@@ -172,8 +185,16 @@ test.describe('Design tools', () => {
         await expect(page.getByRole('button', { name: swatch, exact: true })).toBeVisible();
       }
 
-      await expectCopies(page, page.getByRole('button', { name: 'Copy HEX', exact: true }), '#336699');
-      await expectCopies(page, page.getByRole('button', { name: 'Copy RGB', exact: true }), 'rgb(51, 102, 153)');
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy HEX', exact: true }),
+        '#336699'
+      );
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy RGB', exact: true }),
+        'rgb(51, 102, 153)'
+      );
 
       // The theme is exported as space-separated HSL; its primary is the picked colour.
       await expectCopies(
@@ -181,10 +202,14 @@ test.describe('Design tools', () => {
         page.getByRole('button', { name: 'Copy --primary', exact: true }),
         '--primary: 210 50% 40%;'
       );
-      await expectCopies(page, page.getByRole('button', { name: 'Copy CSS', exact: true }), (css) => {
-        expect(css).toMatch(/^:root \{\n(?: {2}--[a-z-]+: \d+ \d+% \d+%;\n){12}\}$/);
-        expect(css).toContain('\n  --primary: 210 50% 40%;\n');
-      });
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy CSS', exact: true }),
+        (css) => {
+          expect(css).toMatch(/^:root \{\n(?: {2}--[a-z-]+: \d+ \d+% \d+%;\n){12}\}$/);
+          expect(css).toContain('\n  --primary: 210 50% 40%;\n');
+        }
+      );
       await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
 
       // Three-digit shorthand is read as typed and written out in full on leaving the field.
@@ -245,7 +270,9 @@ test.describe('Design tools', () => {
       const hex = hexField(page);
 
       await hex.fill('#12');
-      await expect(page.getByRole('status')).toHaveText('Enter a valid HEX color, such as #3B82F6 or #0AF.');
+      await expect(page.getByRole('status')).toHaveText(
+        'Enter a valid HEX color, such as #3B82F6 or #0AF.'
+      );
       await expect(hex).toHaveAttribute('aria-invalid', 'true');
       // Still the starting blue.
       await expect(selected(page)).toHaveText('#3B82F6');
@@ -276,7 +303,9 @@ test.describe('Design tools', () => {
       await expect(page.getByText('Saved Swatches', { exact: true })).toHaveCount(0);
     });
 
-    test('Pick From Screen applies the EyeDropper colour and reports a cancelled pick', async ({ page }) => {
+    test('Pick From Screen applies the EyeDropper colour and reports a cancelled pick', async ({
+      page,
+    }) => {
       // Headless Chromium cannot show the real screen picker, so the API is stood
       // in for: the first pick returns orange, the second is cancelled.
       await page.addInitScript(() => {
@@ -287,7 +316,9 @@ test.describe('Design tools', () => {
               picks += 1;
               return picks === 1
                 ? Promise.resolve({ sRGBHex: '#ff8800' })
-                : Promise.reject(new DOMException('The user canceled the selection.', 'AbortError'));
+                : Promise.reject(
+                    new DOMException('The user canceled the selection.', 'AbortError')
+                  );
             }
           },
         });
@@ -301,11 +332,15 @@ test.describe('Design tools', () => {
       await expect(page.getByText('rgb(255, 136, 0)', { exact: true })).toBeVisible();
 
       await pick.click();
-      await expect(page.getByRole('status')).toHaveText('Color picking was canceled or blocked by the browser.');
+      await expect(page.getByRole('status')).toHaveText(
+        'Color picking was canceled or blocked by the browser.'
+      );
       await expect(hexField(page)).toHaveValue('#FF8800');
     });
 
-    test('letters typed into the middle of the HEX field go where the caret is', async ({ page }) => {
+    test('letters typed into the middle of the HEX field go where the caret is', async ({
+      page,
+    }) => {
       const hex = hexField(page);
 
       // Select the "3B" of #3B82F6 and type over it.
@@ -320,11 +355,15 @@ test.describe('Design tools', () => {
       await expect(selected(page)).toHaveText('#AB82F6');
     });
 
-    test('on a desktop-width screen the picker sits beside the selected colour', async ({ page }) => {
+    test('on a desktop-width screen the picker sits beside the selected colour', async ({
+      page,
+    }) => {
       await page.setViewportSize({ width: 1440, height: 900 });
 
       const swatch = await page.getByText('Selected color', { exact: true }).boundingBox();
-      const square = await page.getByRole('slider', { name: 'Saturation and brightness' }).boundingBox();
+      const square = await page
+        .getByRole('slider', { name: 'Saturation and brightness' })
+        .boundingBox();
       if (!swatch || !square) throw new Error('The picker card is not on screen');
 
       // The first column is at least 290px wide, so the square starts well to the right of it.
@@ -389,7 +428,10 @@ test.describe('Design tools', () => {
         largeAAA: true,
       });
       await expect(sample(page)).toHaveCSS('color', 'rgb(0, 102, 204)');
-      await expect(sample(page).locator('xpath=..')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+      await expect(sample(page).locator('xpath=..')).toHaveCSS(
+        'background-color',
+        'rgb(255, 255, 255)'
+      );
 
       // The well-known pair either side of AA on white: #767676 is 4.54, #777777 is 4.48.
       await foreground(page).fill('#767676');
@@ -430,7 +472,10 @@ test.describe('Design tools', () => {
       await expect(background(page)).toHaveValue('#0066CC');
       await expect(ratio(page)).toHaveText('5.57:1');
       await expect(sample(page)).toHaveCSS('color', 'rgb(255, 255, 255)');
-      await expect(sample(page).locator('xpath=..')).toHaveCSS('background-color', 'rgb(0, 102, 204)');
+      await expect(sample(page).locator('xpath=..')).toHaveCSS(
+        'background-color',
+        'rgb(0, 102, 204)'
+      );
 
       await page.getByRole('button', { name: 'Reset to Default' }).click();
       await expect(foreground(page)).toHaveValue('#000000');
@@ -486,7 +531,10 @@ test.describe('Design tools', () => {
       await background(page).fill('fff');
       await expect(ratio(page)).toHaveText('5.57:1');
       await expect(sample(page)).toHaveCSS('color', 'rgb(0, 102, 204)');
-      await expect(sample(page).locator('xpath=..')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+      await expect(sample(page).locator('xpath=..')).toHaveCSS(
+        'background-color',
+        'rgb(255, 255, 255)'
+      );
 
       await foreground(page).fill('#12');
       await expect(page.getByRole('status')).toHaveText(
@@ -508,7 +556,9 @@ test.describe('Design tools', () => {
       await expect(ratio(page)).toHaveText('5.57:1');
     });
 
-    test('the colour popover feeds the checker from a preset swatch and from typed RGB', async ({ page }) => {
+    test('the colour popover feeds the checker from a preset swatch and from typed RGB', async ({
+      page,
+    }) => {
       // The popover trigger has no name of its own: it is announced as the colour it shows.
       await page.getByRole('button', { name: '#000000' }).click();
       const popover = page.getByRole('dialog');
@@ -556,7 +606,8 @@ test.describe('Design tools', () => {
     // The preview card is the nearest styled block around the mock credit card.
     const card = (page: Page) =>
       page.getByText('Premium Platinum', { exact: true }).locator('xpath=ancestor::div[@style][1]');
-    const overlayHex = (page: Page) => page.getByRole('textbox', { name: 'Background overlay color HEX' });
+    const overlayHex = (page: Page) =>
+      page.getByRole('textbox', { name: 'Background overlay color HEX' });
     const preset = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 
     // "Frosted Light", the starting point, as its controls read: 15% white,
@@ -577,7 +628,9 @@ test.describe('Design tools', () => {
       await openTool(page, 'glassmorphism-generator', 'Glassmorphism Generator', overlayHex(page));
     });
 
-    test('the controls drive the CSS, Tailwind and React code and the preview card', async ({ page }) => {
+    test('the controls drive the CSS, Tailwind and React code and the preview card', async ({
+      page,
+    }) => {
       await expectExactText(code(page), FROSTED_CSS);
       await expect(card(page)).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.15)');
 
@@ -589,7 +642,14 @@ test.describe('Design tools', () => {
         .locator('div')
         .filter({ has: page.getByRole('heading', { name: 'Background Overlay', exact: true }) })
         .last();
-      await pressOn(sliderBeside(page, 'OPACITY', overlaySection), 'Home', 'PageUp', 'PageUp', 'PageUp', 'PageUp');
+      await pressOn(
+        sliderBeside(page, 'OPACITY', overlaySection),
+        'Home',
+        'PageUp',
+        'PageUp',
+        'PageUp',
+        'PageUp'
+      );
       await expect(overlaySection.getByText('40%', { exact: true })).toBeVisible();
 
       // Filters to their maximum: 40px blur, 200% saturation.
@@ -723,11 +783,19 @@ test.describe('Design tools', () => {
       await page.getByRole('button', { name: 'Login form mockup' }).click();
       await expect(page.getByText('Welcome Back', { exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'sunset gradient' }).click();
-      await expect(page.getByRole('button', { name: 'sunset gradient' })).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.getByRole('button', { name: 'drifting blobs' })).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.getByRole('button', { name: 'sunset gradient' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      await expect(page.getByRole('button', { name: 'drifting blobs' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
     });
 
-    test('a half-typed or unreadable colour never reaches the preview or the code', async ({ page }) => {
+    test('a half-typed or unreadable colour never reaches the preview or the code', async ({
+      page,
+    }) => {
       const overlay = overlayHex(page);
 
       // "#ff00" is not a colour yet (as CSS it would be a transparent yellow).
@@ -751,7 +819,10 @@ test.describe('Design tools', () => {
       // A swatch from the popover does land: #ef4444 is (239, 68, 68).
       await popover.getByRole('button', { name: '#ef4444' }).click();
       await expect(overlay).toHaveValue(/^#ef4444$/i);
-      await expectExactText(code(page), FROSTED_CSS.replace('rgba(255, 255, 255, 0.15)', 'rgba(239, 68, 68, 0.15)'));
+      await expectExactText(
+        code(page),
+        FROSTED_CSS.replace('rgba(255, 255, 255, 0.15)', 'rgba(239, 68, 68, 0.15)')
+      );
       await expect(card(page)).toHaveCSS('background-color', 'rgba(239, 68, 68, 0.15)');
     });
 
@@ -786,7 +857,8 @@ test.describe('Design tools', () => {
     const MAIN = '0px 8px 16px -4px rgba(0, 0, 0, 0.15)';
     const AMBIENT = '0px 2px 4px -2px rgba(0, 0, 0, 0.1)';
     const DEFAULT_CSS = `box-shadow: ${MAIN},\n  ${AMBIENT};`;
-    const DEFAULT_UTILITY = 'shadow-[0px_8px_16px_-4px_rgba(0,0,0,0.15),0px_2px_4px_-2px_rgba(0,0,0,0.1)]';
+    const DEFAULT_UTILITY =
+      'shadow-[0px_8px_16px_-4px_rgba(0,0,0,0.15),0px_2px_4px_-2px_rgba(0,0,0,0.1)]';
 
     test.beforeEach(async ({ page }) => {
       await openTool(page, 'box-shadow-generator', 'CSS Box Shadow Generator', shadowHex(page));
@@ -886,7 +958,10 @@ test.describe('Design tools', () => {
       // A new layer goes to the end of the list, selected: 0 / 4 / 8 / 0 at 15% black.
       const ADDED = '0px 4px 8px 0px rgba(0, 0, 0, 0.15)';
       await page.getByRole('button', { name: 'Add Layer' }).click();
-      await expect(layer(page, /^Shadow Layer 3 0px 4px 8px 0px$/)).toHaveAttribute('aria-pressed', 'true');
+      await expect(layer(page, /^Shadow Layer 3 0px 4px 8px 0px$/)).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expectExactText(css(page), `box-shadow: ${MAIN},\n  ${AMBIENT},\n  ${ADDED};`);
 
       // Moved up twice it is painted first.
@@ -949,7 +1024,10 @@ test.describe('Design tools', () => {
 
       // The canvas backdrop buttons are on the canvas but do not drag.
       await page.getByRole('button', { name: 'Canvas: Dark' }).click();
-      await expect(page.getByRole('button', { name: 'Canvas: Dark' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Canvas: Dark' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(canvas(page)).toHaveCSS('background-color', 'rgb(15, 23, 42)');
       await expectExactText(css(page), clamped);
 
@@ -958,7 +1036,10 @@ test.describe('Design tools', () => {
       const popover = page.getByRole('dialog');
       await popover.getByRole('button', { name: '#22c55e' }).click();
       await expect(canvas(page)).toHaveCSS('background-color', 'rgb(34, 197, 94)');
-      await expect(page.getByRole('button', { name: 'Canvas: Dark' })).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.getByRole('button', { name: 'Canvas: Dark' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
       // The popover's colour square has no role or name; its crosshair cursor is the only handle on it.
       await dragBy(page, popover.locator('.cursor-crosshair'), 30, 20);
       await expectExactText(css(page), clamped);
@@ -970,7 +1051,10 @@ test.describe('Design tools', () => {
       await expectExactText(css(page), DEFAULT_CSS);
       await expect(utility(page)).toHaveText(DEFAULT_UTILITY);
       await expect(canvas(page)).toHaveCSS('background-color', 'rgb(248, 250, 252)');
-      await expect(page.getByRole('button', { name: 'Canvas: Light' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Canvas: Light' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(page.getByRole('button', { name: '#E2E8F0' })).toBeVisible();
     });
 
@@ -1007,7 +1091,10 @@ test.describe('Design tools', () => {
         page.waitForEvent('download'),
         page.getByRole('button', { name: 'Download SVG' }).click(),
       ]);
-      return { name: download.suggestedFilename(), text: await readFile(await download.path(), 'utf8') };
+      return {
+        name: download.suggestedFilename(),
+        text: await readFile(await download.path(), 'utf8'),
+      };
     }
 
     test.beforeEach(async ({ page }) => {
@@ -1066,7 +1153,9 @@ test.describe('Design tools', () => {
       await expect(figure(page, 'Command Types')).toHaveText('7');
     });
 
-    test('downloads the path as a standalone SVG with the chosen viewBox, stroke and fill', async ({ page }) => {
+    test('downloads the path as a standalone SVG with the chosen viewBox, stroke and fill', async ({
+      page,
+    }) => {
       const viewBox = page.getByRole('textbox', { name: 'ViewBox' });
       const stroke = page.getByRole('textbox', { name: 'Stroke Color' });
 
@@ -1106,7 +1195,9 @@ test.describe('Design tools', () => {
       // A viewBox that is not four numbers is called out and left out of the file.
       await stroke.fill('#000000');
       await viewBox.fill('0 0 100');
-      await expect(page.getByText('ViewBox needs four numbers: min-x min-y width height.')).toBeVisible();
+      await expect(
+        page.getByText('ViewBox needs four numbers: min-x min-y width height.')
+      ).toBeVisible();
       await expect(viewBox).toHaveAttribute('aria-invalid', 'true');
       const noViewBox = await downloadSvg(page);
       expect(noViewBox.text).toBe(
@@ -1116,7 +1207,9 @@ test.describe('Design tools', () => {
       );
     });
 
-    test('unreadable path data is reported, and an empty editor offers nothing to download', async ({ page }) => {
+    test('unreadable path data is reported, and an empty editor offers nothing to download', async ({
+      page,
+    }) => {
       const error = page.getByRole('status');
 
       await pathData(page).fill('hello world');
@@ -1127,11 +1220,15 @@ test.describe('Design tools', () => {
 
       // The "L" is the 9th character and has one number where it needs two.
       await pathData(page).fill('M 10 10 L 20');
-      await expect(error).toHaveText('Error: Command "L" at character 9 takes 2 numbers at a time, but has 1.');
+      await expect(error).toHaveText(
+        'Error: Command "L" at character 9 takes 2 numbers at a time, but has 1.'
+      );
 
       // The "2" is the 17th character, where an arc's large-arc flag goes.
       await pathData(page).fill('M 10 10 A 5 5 0 2 1 20 20');
-      await expect(error).toHaveText('Error: Arc flags must be 0 or 1, but found "2" at character 17.');
+      await expect(error).toHaveText(
+        'Error: Arc flags must be 0 or 1, but found "2" at character 17.'
+      );
       await expect(optimized(page)).toHaveCount(0);
 
       // Corrected, the error goes and the path is optimized again.
@@ -1160,7 +1257,9 @@ test.describe('Design tools', () => {
     const field = (page: Page, name: string) => page.getByRole('textbox', { name, exact: true });
     // The value of one "Generated Outputs" box is the block after its header row.
     const output = (page: Page, label: string) =>
-      page.getByRole('button', { name: `Copy ${label}`, exact: true }).locator('xpath=../following-sibling::div');
+      page
+        .getByRole('button', { name: `Copy ${label}`, exact: true })
+        .locator('xpath=../following-sibling::div');
     const graph = (page: Page) =>
       page.getByRole('img', { name: 'Graph of the computed size across viewport widths' });
     // The simulator slider is the only slider on the page.
@@ -1190,7 +1289,13 @@ test.describe('Design tools', () => {
       await expect(output(page, 'SCSS / Sass')).toHaveText(expected.scss);
     }
 
-    async function setRange(page: Page, minSize: string, maxSize: string, minViewport: string, maxViewport: string) {
+    async function setRange(
+      page: Page,
+      minSize: string,
+      maxSize: string,
+      minViewport: string,
+      maxViewport: string
+    ) {
       await field(page, 'Min size').fill(minSize);
       await field(page, 'Max size').fill(maxSize);
       await field(page, 'Min viewport width').fill(minViewport);
@@ -1232,23 +1337,45 @@ test.describe('Design tools', () => {
       // The simulator follows the same line and stops at both ends:
       // 800px gives 10 + 20 = 30px, 200px is held at 20px, 2000px at 40px.
       await expect(page.getByText('30px / 1.875rem', { exact: true })).toBeVisible();
-      await expect(page.getByText('Fluid Typography', { exact: true })).toHaveCSS('font-size', '30px');
+      await expect(page.getByText('Fluid Typography', { exact: true })).toHaveCSS(
+        'font-size',
+        '30px'
+      );
       await pressOn(simulator(page), 'Home');
       await expect(page.getByText('200px', { exact: true })).toBeVisible();
       await expect(page.getByText('20px / 1.25rem', { exact: true })).toBeVisible();
       await pressOn(simulator(page), 'End');
       await expect(page.getByText('2000px', { exact: true })).toBeVisible();
       await expect(page.getByText('40px / 2.5rem', { exact: true })).toBeVisible();
-      await expect(page.getByText('Fluid Typography', { exact: true })).toHaveCSS('font-size', '40px');
+      await expect(page.getByText('Fluid Typography', { exact: true })).toHaveCSS(
+        'font-size',
+        '40px'
+      );
 
       // The same range in rem: every px figure divided by 16.
       await choose(page, 'Output unit', 'rem (Recommended)');
       const inRem = forms('clamp(1.25rem, 0.625rem + 2.5vw, 2.5rem)');
       await expectOutputs(page, inRem);
-      await expectCopies(page, page.getByRole('button', { name: 'Copy Clamp Function', exact: true }), inRem.clamp);
-      await expectCopies(page, page.getByRole('button', { name: 'Copy Full CSS Rule', exact: true }), inRem.css);
-      await expectCopies(page, page.getByRole('button', { name: 'Copy Tailwind Class', exact: true }), inRem.tailwind);
-      await expectCopies(page, page.getByRole('button', { name: 'Copy SCSS / Sass', exact: true }), inRem.scss);
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy Clamp Function', exact: true }),
+        inRem.clamp
+      );
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy Full CSS Rule', exact: true }),
+        inRem.css
+      );
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy Tailwind Class', exact: true }),
+        inRem.tailwind
+      );
+      await expectCopies(
+        page,
+        page.getByRole('button', { name: 'Copy SCSS / Sass', exact: true }),
+        inRem.scss
+      );
 
       // The graph spans 200px to 1400px (a quarter of the range on each side)
       // across 420 of its 500 units, starting 60 in. A click a quarter of the
@@ -1259,13 +1386,20 @@ test.describe('Design tools', () => {
       if (!area) throw new Error('The graph is not on screen');
       await chart.click({ position: { x: (area.width * (60 + 105)) / 500, y: area.height / 2 } });
       const width = Number(
-        (await page.getByText('Simulated Screen Width', { exact: true }).locator('xpath=following-sibling::*').innerText()).replace('px', '')
+        (
+          await page
+            .getByText('Simulated Screen Width', { exact: true })
+            .locator('xpath=following-sibling::*')
+            .innerText()
+        ).replace('px', '')
       );
       // Allow a pixel or two for where the click lands.
       expect(width).toBeGreaterThanOrEqual(497);
       expect(width).toBeLessThanOrEqual(503);
       const size = Math.round((10 + width * 0.025) * 100) / 100;
-      await expect(page.getByText(new RegExp(`^${String(size).replace('.', '\\.')}px / `))).toBeVisible();
+      await expect(
+        page.getByText(new RegExp(`^${String(size).replace('.', '\\.')}px / `))
+      ).toBeVisible();
     });
 
     test('reads rem inputs, a decimal comma and a custom base size, and names the property in every output', async ({
@@ -1274,7 +1408,12 @@ test.describe('Design tools', () => {
       // 1rem to 3rem between 20rem and 80rem with a 10px root is 10px to 30px
       // over 200px to 800px: 20 / 600 = 3.3333vw, and 10 - 200 / 30 = 3.3333px,
       // which is 0.3333rem of that root.
-      for (const unit of ['Min size unit', 'Max size unit', 'Min viewport width unit', 'Max viewport width unit']) {
+      for (const unit of [
+        'Min size unit',
+        'Max size unit',
+        'Min viewport width unit',
+        'Max viewport width unit',
+      ]) {
         await choose(page, unit, 'rem');
       }
       await setRange(page, '1', '3', '20', '80');
@@ -1288,7 +1427,9 @@ test.describe('Design tools', () => {
 
       await page.getByRole('button', { name: 'Reset Defaults' }).click();
       await expectOutputs(page, DEFAULTS);
-      await expect(page.getByRole('combobox', { name: 'Min size unit', exact: true })).toHaveText('px');
+      await expect(page.getByRole('combobox', { name: 'Min size unit', exact: true })).toHaveText(
+        'px'
+      );
       await expect(field(page, 'Base font size in px')).toHaveValue('16');
 
       // "1,5" is one and a half: 24px to 48px over 320px to 1280px is 2.5vw,
@@ -1338,7 +1479,9 @@ test.describe('Design tools', () => {
       await field(page, 'Min size').fill('16px');
       await expect(error).toHaveText('Please enter valid numbers in all fields to compute.');
       await expectOutputs(page, blank);
-      await expect(page.getByRole('button', { name: 'Copy Clamp Function', exact: true })).toBeDisabled();
+      await expect(
+        page.getByRole('button', { name: 'Copy Clamp Function', exact: true })
+      ).toBeDisabled();
       await expect(graph(page)).toHaveCount(0);
       await expect(simulator(page)).toHaveCount(0);
 

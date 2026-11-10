@@ -157,7 +157,12 @@ export function describeCodePoint(codePoint: number): CharEntry | null {
 
   const char = String.fromCodePoint(codePoint);
   if (SPACE_SEPARATOR.test(char)) {
-    return { codePoint, short: formatCodePoint(codePoint), name: 'Space separator', className: 'space' };
+    return {
+      codePoint,
+      short: formatCodePoint(codePoint),
+      name: 'Space separator',
+      className: 'space',
+    };
   }
   if (DEFAULT_IGNORABLE.test(char)) {
     return {
@@ -189,7 +194,9 @@ function isTagSpec(codePoint: number | undefined): boolean {
 
 function isExtendedPictographic(codePoint: number | undefined): boolean {
   return (
-    codePoint !== undefined && codePoint >= 0xa9 && EXTENDED_PICTOGRAPHIC.test(String.fromCodePoint(codePoint))
+    codePoint !== undefined &&
+    codePoint >= 0xa9 &&
+    EXTENDED_PICTOGRAPHIC.test(String.fromCodePoint(codePoint))
   );
 }
 
@@ -206,7 +213,9 @@ function emojiBaseBefore(codePoints: readonly number[], index: number): boolean 
   let position = index - 1;
   while (
     position >= 0 &&
-    (codePoints[position] === VS16 || codePoints[position] === VS15 || isEmojiModifier(codePoints[position]))
+    (codePoints[position] === VS16 ||
+      codePoints[position] === VS15 ||
+      isEmojiModifier(codePoints[position]))
   ) {
     position--;
   }
@@ -499,7 +508,12 @@ export function inspectText(text: string, options: InspectOptions = {}): Inspect
       }
     }
 
-    if (info && className && !highlightTruncated && (isFlagged || (markWhitespace && className === 'whitespace'))) {
+    if (
+      info &&
+      className &&
+      !highlightTruncated &&
+      (isFlagged || (markWhitespace && className === 'whitespace'))
+    ) {
       if (marks >= maxMarks) {
         highlightTruncated = true;
         if (offset > runStart) highlight.push({ kind: 'text', text: text.slice(runStart, offset) });
@@ -642,7 +656,12 @@ export interface CleanResult {
  * block reordering).
  */
 export function cleanText(text: string, options: CleanOptions = {}): CleanResult {
-  const { removeInvisible = false, replaceSpaces = false, normalization = 'none', keepScriptJoiners } = options;
+  const {
+    removeInvisible = false,
+    replaceSpaces = false,
+    normalization = 'none',
+    keepScriptJoiners,
+  } = options;
   let current = text;
   let removed = 0;
   let replaced = 0;

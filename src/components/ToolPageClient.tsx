@@ -10,13 +10,7 @@ import type { Tool } from '@/lib/types';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { cn } from '@/lib/utils';
 
-export function ToolPageClient({
-  children,
-  tool,
-}: {
-  children: ReactNode;
-  tool: Tool;
-}) {
+export function ToolPageClient({ children, tool }: { children: ReactNode; tool: Tool }) {
   const { addRecentTool } = useRecentTools();
   const lastTrackedToolIdRef = useRef<string | null>(null);
 
@@ -46,12 +40,8 @@ export function ToolPageClient({
             </Button>
           </Link>
           <div className="min-w-0">
-            <h1 className="break-words text-xl font-bold sm:text-3xl">
-              {tool.name}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-              {tool.description}
-            </p>
+            <h1 className="break-words text-xl font-bold sm:text-3xl">{tool.name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">{tool.description}</p>
           </div>
         </div>
         <div className="flex shrink-0 justify-end pb-1 sm:pb-0">

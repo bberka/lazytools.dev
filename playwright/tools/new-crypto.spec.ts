@@ -91,7 +91,9 @@ async function expectFitsPhone(page: Page) {
           if (box.left >= -1 && box.right <= limit + 1) continue;
           if (scrollsSideways(element.parentElement)) continue;
           const text = (element.textContent ?? '').trim().slice(0, 40);
-          sticking.push(`<${element.tagName.toLowerCase()}> "${text}" spans ${Math.round(box.left)}..${Math.round(box.right)}`);
+          sticking.push(
+            `<${element.tagName.toLowerCase()}> "${text}" spans ${Math.round(box.left)}..${Math.round(box.right)}`
+          );
         }
         return sticking;
       })
@@ -133,7 +135,8 @@ const EMPTY_KEY_ABC_SHA256 = 'fd7adb152c05ef80dccf50a1fa4c05d5a3ec6da95575fc312a
 const KEY_EMPTY_MESSAGE_SHA256 = '5d5d139563c95b5967b9bd9a8c9b233a9dedb45072794cd232dc1b74832607d0';
 
 // RFC 7515 appendix A.1.
-const RFC7515_KEY = 'AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow';
+const RFC7515_KEY =
+  'AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow';
 const RFC7515_TOKEN =
   'eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9' +
   '.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ' +
@@ -203,7 +206,9 @@ test.describe('New crypto tools', () => {
       await message(page).pressSequentially(JEFE_MESSAGE);
       await key(page).pressSequentially('Jefe');
       await expect(main.getByText('Key: 4 bytes', { exact: true })).toBeVisible();
-      await expect(page.getByRole('combobox', { name: 'Hash algorithm' })).toHaveText('HMAC-SHA-256');
+      await expect(page.getByRole('combobox', { name: 'Hash algorithm' })).toHaveText(
+        'HMAC-SHA-256'
+      );
 
       for (const algorithm of ['SHA-256', 'SHA-1', 'SHA-384', 'SHA-512'] as const) {
         if (algorithm !== 'SHA-256') await choose(page, 'Hash algorithm', `HMAC-${algorithm}`);
@@ -246,11 +251,15 @@ test.describe('New crypto tools', () => {
       await page.getByRole('switch', { name: 'Uppercase hex' }).click();
       await expect(main.getByText(sha256.toUpperCase(), { exact: true })).toBeVisible();
       await expect(main.getByText(sha256, { exact: true })).toHaveCount(0);
-      await expect(main.getByText('W9zBRr9gdU5qBCQmCJV1x1oAPwidJzmDnexYuWTsOEM=', { exact: true })).toBeVisible();
+      await expect(
+        main.getByText('W9zBRr9gdU5qBCQmCJV1x1oAPwidJzmDnexYuWTsOEM=', { exact: true })
+      ).toBeVisible();
       await expectCopies(page, copyHex, sha256.toUpperCase());
     });
 
-    test('reads hex, Base64, oversized and empty keys, and explains a bad key', async ({ page }) => {
+    test('reads hex, Base64, oversized and empty keys, and explains a bad key', async ({
+      page,
+    }) => {
       await open(page);
       const main = page.getByRole('main');
       const keyError = main.getByRole('alert');
@@ -268,7 +277,9 @@ test.describe('New crypto tools', () => {
       await expect(key(page)).toHaveAttribute('aria-invalid', 'true');
       await expect(key(page)).toHaveAccessibleDescription('Invalid hex: "J" is not a hex digit.');
       await expect(main.getByText('Fix the key to see the HMAC.')).toBeVisible();
-      await expect(main.getByText('Compute an HMAC first, then paste a signature to compare.')).toBeVisible();
+      await expect(
+        main.getByText('Compute an HMAC first, then paste a signature to compare.')
+      ).toBeVisible();
       await expect(main.getByRole('button', { name: 'Copy Hex HMAC' })).toHaveCount(0);
 
       await key(page).fill('0b0b0');
@@ -320,36 +331,52 @@ test.describe('New crypto tools', () => {
       await expect(main.getByText(KEY_EMPTY_MESSAGE_SHA256, { exact: true })).toBeVisible();
     });
 
-    test('checks a pasted signature in hex, Base64 and Base64URL, then clears', async ({ page }) => {
+    test('checks a pasted signature in hex, Base64 and Base64URL, then clears', async ({
+      page,
+    }) => {
       await open(page);
       const main = page.getByRole('main');
       const expected = page.getByRole('textbox', { name: 'Expected signature' });
       const sha256 = JEFE_HMAC['SHA-256'];
 
-      await expect(main.getByText('Compute an HMAC first, then paste a signature to compare.')).toBeVisible();
+      await expect(
+        main.getByText('Compute an HMAC first, then paste a signature to compare.')
+      ).toBeVisible();
 
       await message(page).fill(JEFE_MESSAGE);
       await key(page).fill('Jefe');
-      await expect(main.getByText('Paste a signature to compare it with the HMAC above.')).toBeVisible();
+      await expect(
+        main.getByText('Paste a signature to compare it with the HMAC above.')
+      ).toBeVisible();
 
       await expected.fill(sha256);
-      await expect(main.getByText('Match. The signature equals the HMAC (read as hex).')).toBeVisible();
+      await expect(
+        main.getByText('Match. The signature equals the HMAC (read as hex).')
+      ).toBeVisible();
 
       // One hex digit off.
       await expected.fill(`${sha256.slice(0, -1)}4`);
-      await expect(main.getByText('Mismatch. The signature does not equal the HMAC.')).toBeVisible();
+      await expect(
+        main.getByText('Mismatch. The signature does not equal the HMAC.')
+      ).toBeVisible();
       await expect(main.getByText(/Decoded to/)).toHaveCount(0);
 
       // Upper case and grouped the way a terminal might print it.
       await expected.fill(sha256.toUpperCase().replace(/(.{8})/g, '$1 '));
-      await expect(main.getByText('Match. The signature equals the HMAC (read as hex).')).toBeVisible();
+      await expect(
+        main.getByText('Match. The signature equals the HMAC (read as hex).')
+      ).toBeVisible();
 
       await expected.fill('W9zBRr9gdU5qBCQmCJV1x1oAPwidJzmDnexYuWTsOEM=');
-      await expect(main.getByText('Match. The signature equals the HMAC (read as Base64).')).toBeVisible();
+      await expect(
+        main.getByText('Match. The signature equals the HMAC (read as Base64).')
+      ).toBeVisible();
 
       // A SHA-1 signature against a SHA-256 HMAC: the size is the giveaway.
       await expected.fill(JEFE_HMAC['SHA-1']);
-      await expect(main.getByText('Mismatch. The signature does not equal the HMAC.')).toBeVisible();
+      await expect(
+        main.getByText('Mismatch. The signature does not equal the HMAC.')
+      ).toBeVisible();
       await expect(main.getByText('Decoded to 20 bytes, but this HMAC is 32 bytes.')).toBeVisible();
 
       await expected.fill('not a signature!');
@@ -357,18 +384,26 @@ test.describe('New crypto tools', () => {
 
       // The verdict follows the HMAC: the SHA-1 signature matches once SHA-1 is chosen.
       await expected.fill('7_zfauXrL6LSdBbV8YTfnCWafHk');
-      await expect(main.getByText('Mismatch. The signature does not equal the HMAC.')).toBeVisible();
+      await expect(
+        main.getByText('Mismatch. The signature does not equal the HMAC.')
+      ).toBeVisible();
       await choose(page, 'Hash algorithm', 'HMAC-SHA-1');
-      await expect(main.getByText('Match. The signature equals the HMAC (read as Base64URL).')).toBeVisible();
+      await expect(
+        main.getByText('Match. The signature equals the HMAC (read as Base64URL).')
+      ).toBeVisible();
       await key(page).fill('Jefe!');
-      await expect(main.getByText('Mismatch. The signature does not equal the HMAC.')).toBeVisible();
+      await expect(
+        main.getByText('Mismatch. The signature does not equal the HMAC.')
+      ).toBeVisible();
 
       await main.getByRole('button', { name: 'Clear' }).click();
       await expect(message(page)).toHaveValue('');
       await expect(key(page)).toHaveValue('');
       await expect(expected).toHaveValue('');
       await expect(main.getByText('Enter a message and a key to compute the HMAC.')).toBeVisible();
-      await expect(main.getByText('Compute an HMAC first, then paste a signature to compare.')).toBeVisible();
+      await expect(
+        main.getByText('Compute an HMAC first, then paste a signature to compare.')
+      ).toBeVisible();
       await expect(main.getByRole('button', { name: 'Clear' })).toBeDisabled();
     });
 
@@ -378,7 +413,9 @@ test.describe('New crypto tools', () => {
       await message(page).fill(JEFE_MESSAGE);
       await key(page).fill('Jefe');
       await page.getByRole('textbox', { name: 'Expected signature' }).fill('ab');
-      await expect(main.getByText('Mismatch. The signature does not equal the HMAC.')).toBeVisible();
+      await expect(
+        main.getByText('Mismatch. The signature does not equal the HMAC.')
+      ).toBeVisible();
       await expect(main.getByText('Decoded to 1 byte, but this HMAC is 32 bytes.')).toBeVisible();
     });
   });
@@ -397,7 +434,9 @@ test.describe('New crypto tools', () => {
     const INVALID_SIGNATURE =
       'The signature does not match this token and secret. Check the secret, its encoding, and that the token is unchanged.';
 
-    test('signs the jwt.io sample token, HS384 and HS512, and with the RFC 7515 key', async ({ page }) => {
+    test('signs the jwt.io sample token, HS384 and HS512, and with the RFC 7515 key', async ({
+      page,
+    }) => {
       await open(page);
       const main = page.getByRole('main');
       const copyToken = main.getByRole('button', { name: 'Copy token' });
@@ -409,7 +448,9 @@ test.describe('New crypto tools', () => {
       // The starting header and payload, under each algorithm. The header follows the menu.
       await secret(page).fill(JWT_IO_SECRET);
       await expect(main.getByText(STARTING_TOKENS.HS256, { exact: true })).toBeVisible();
-      await expect(main.getByText('Key length: 19 bytes. RFC 7518 requires at least 32 for HS256.')).toBeVisible();
+      await expect(
+        main.getByText('Key length: 19 bytes. RFC 7518 requires at least 32 for HS256.')
+      ).toBeVisible();
       await expect(main.getByRole('list', { name: 'Warnings' }).getByRole('listitem')).toHaveText([
         'Warning: The secret is 19 bytes. RFC 7518 requires at least 32 bytes for HS256.',
       ]);
@@ -421,18 +462,26 @@ test.describe('New crypto tools', () => {
         await choose(page, 'Algorithm', algorithm);
         expect(JSON.parse(await header(page).inputValue())).toEqual({ alg: algorithm, typ: 'JWT' });
         await expect(main.getByText(STARTING_TOKENS[algorithm], { exact: true })).toBeVisible();
-        await expect(main.getByRole('list', { name: 'Warnings' }).getByRole('listitem')).toHaveText([
-          `Warning: The secret is 19 bytes. RFC 7518 requires at least ${minimum} bytes for ${algorithm}.`,
-        ]);
+        await expect(main.getByRole('list', { name: 'Warnings' }).getByRole('listitem')).toHaveText(
+          [
+            `Warning: The secret is 19 bytes. RFC 7518 requires at least ${minimum} bytes for ${algorithm}.`,
+          ]
+        );
       }
 
       // The jwt.io sample.
       await choose(page, 'Algorithm', 'HS256');
       await payload(page).fill(JWT_IO_PAYLOAD);
       await expect(main.getByText(JWT_IO_TOKEN, { exact: true })).toBeVisible();
-      await expect(main.getByRole('listitem').filter({ hasText: 'Header' })).toContainText('36 chars');
-      await expect(main.getByRole('listitem').filter({ hasText: 'Payload' })).toContainText('74 chars');
-      await expect(main.getByRole('listitem').filter({ hasText: 'Signature' })).toContainText('43 chars');
+      await expect(main.getByRole('listitem').filter({ hasText: 'Header' })).toContainText(
+        '36 chars'
+      );
+      await expect(main.getByRole('listitem').filter({ hasText: 'Payload' })).toContainText(
+        '74 chars'
+      );
+      await expect(main.getByRole('listitem').filter({ hasText: 'Signature' })).toContainText(
+        '43 chars'
+      );
       await expect(main.getByRole('definition')).toHaveText(['2018-01-18T01:30:22.000Z (UTC)']);
 
       await expectCopies(page, copyToken, JWT_IO_TOKEN);
@@ -444,16 +493,25 @@ test.describe('New crypto tools', () => {
       // claims: member order kept, whitespace gone.
       await pickTab(page, 'Base64');
       await secret(page).fill(RFC7515_KEY);
-      await expect(main.getByText('Key length: 64 bytes. RFC 7518 requires at least 32 for HS256.')).toBeVisible();
+      await expect(
+        main.getByText('Key length: 64 bytes. RFC 7518 requires at least 32 for HS256.')
+      ).toBeVisible();
       await header(page).fill('{"typ":"JWT",\n "alg":"HS256"}');
-      await payload(page).fill('{"iss":"joe",\n "exp":1300819380,\n "http://example.com/is_root":true}');
+      await payload(page).fill(
+        '{"iss":"joe",\n "exp":1300819380,\n "http://example.com/is_root":true}'
+      );
 
       const compactHeader = base64Url('{"typ":"JWT","alg":"HS256"}');
-      const compactPayload = base64Url('{"iss":"joe","exp":1300819380,"http://example.com/is_root":true}');
+      const compactPayload = base64Url(
+        '{"iss":"joe","exp":1300819380,"http://example.com/is_root":true}'
+      );
       await expect(
-        main.getByText(`${compactHeader}.${compactPayload}.lliDzOlRAdGUCfCHCPx_uisb6ZfZ1LRQa0OJLeYTTpY`, {
-          exact: true,
-        })
+        main.getByText(
+          `${compactHeader}.${compactPayload}.lliDzOlRAdGUCfCHCPx_uisb6ZfZ1LRQa0OJLeYTTpY`,
+          {
+            exact: true,
+          }
+        )
       ).toBeVisible();
       // 2011 is long gone, and a 64-byte key is long enough.
       await expect(main.getByRole('list', { name: 'Warnings' }).getByRole('listitem')).toHaveText([
@@ -475,7 +533,9 @@ test.describe('New crypto tools', () => {
       const main = page.getByRole('main');
       const verdict = (label: string) => main.getByText(label, { exact: true });
 
-      await expect(main.getByText('Paste a token above to check its signature and expiry.')).toBeVisible();
+      await expect(
+        main.getByText('Paste a token above to check its signature and expiry.')
+      ).toBeVisible();
 
       // No secret yet.
       await pasted(page).fill(RFC7515_TOKEN);
@@ -485,7 +545,9 @@ test.describe('New crypto tools', () => {
       await pickTab(page, 'Base64');
       await secret(page).fill(RFC7515_KEY);
       await expect(verdict('Valid')).toBeVisible();
-      await expect(main.getByText('The signature is valid (HS256). It expires in 10 minutes.')).toBeVisible();
+      await expect(
+        main.getByText('The signature is valid (HS256). It expires in 10 minutes.')
+      ).toBeVisible();
 
       // The same characters taken as text are a different key.
       await pickTab(page, 'UTF-8 text');
@@ -496,7 +558,9 @@ test.describe('New crypto tools', () => {
 
       // A token whose payload was edited after signing.
       const [headerSegment, , signatureSegment] = RFC7515_TOKEN.split('.');
-      const forgedPayload = base64Url('{"iss":"mallory","exp":1300819380,"http://example.com/is_root":true}');
+      const forgedPayload = base64Url(
+        '{"iss":"mallory","exp":1300819380,"http://example.com/is_root":true}'
+      );
       await pasted(page).fill(`${headerSegment}.${forgedPayload}.${signatureSegment}`);
       await expect(verdict('Invalid signature')).toBeVisible();
 
@@ -506,24 +570,32 @@ test.describe('New crypto tools', () => {
       await pasted(page).fill(`Bearer ${RFC7515_TOKEN}`);
       await expect(verdict('Expired')).toBeVisible();
       await expect(
-        main.getByText('The signature is valid, but the token expired 1 hour ago (2011-03-22T18:43:00.000Z).')
+        main.getByText(
+          'The signature is valid, but the token expired 1 hour ago (2011-03-22T18:43:00.000Z).'
+        )
       ).toBeVisible();
 
       // Not a JWT at all.
       await pasted(page).fill('eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0');
       await expect(verdict('Malformed token')).toBeVisible();
-      await expect(main.getByText('A JWT has 3 parts separated by dots, but this has 2.')).toBeVisible();
+      await expect(
+        main.getByText('A JWT has 3 parts separated by dots, but this has 2.')
+      ).toBeVisible();
 
       // {"alg":"none"} must never verify.
       await pasted(page).fill(`${base64Url('{"alg":"none"}')}.${base64Url('{"sub":"1"}')}.`);
       await expect(verdict('Unsupported algorithm')).toBeVisible();
       await expect(
-        main.getByText('The algorithm "none" is not supported here. This tool checks HS256, HS384 and HS512 only.')
+        main.getByText(
+          'The algorithm "none" is not supported here. This tool checks HS256, HS384 and HS512 only.'
+        )
       ).toBeVisible();
 
       await main.getByRole('button', { name: 'Clear' }).click();
       await expect(pasted(page)).toHaveValue('');
-      await expect(main.getByText('Paste a token above to check its signature and expiry.')).toBeVisible();
+      await expect(
+        main.getByText('Paste a token above to check its signature and expiry.')
+      ).toBeVisible();
     });
 
     test('names the broken field instead of signing', async ({ page }) => {
@@ -562,9 +634,16 @@ test.describe('New crypto tools', () => {
       await payload(page).fill('[1, 2]');
       await expect(status).toHaveText('Fix the payload JSON to create a token.');
       await expect(payload(page)).toHaveAttribute('aria-invalid', 'true');
-      await expect(payload(page)).toHaveAccessibleDescription('Must be a JSON object, like {"key": "value"}.');
+      await expect(payload(page)).toHaveAccessibleDescription(
+        'Must be a JSON object, like {"key": "value"}.'
+      );
       await expect(main.getByText('Fix the payload JSON to use these buttons.')).toBeVisible();
-      for (const name of ['Set iat (now)', 'Set nbf (now)', 'Set jti (random)', 'Set exp (now + duration)']) {
+      for (const name of [
+        'Set iat (now)',
+        'Set nbf (now)',
+        'Set jti (random)',
+        'Set exp (now + duration)',
+      ]) {
         await expect(main.getByRole('button', { name })).toBeDisabled();
       }
 
@@ -611,7 +690,9 @@ test.describe('New crypto tools', () => {
         iat: NOW,
         nbf: NOW,
         exp: NOW + 300,
-        jti: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
+        jti: expect.stringMatching(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+        ),
       };
       await expect.poll(async () => JSON.parse(await payload(page).inputValue())).toEqual(claims);
       await expect(main.getByRole('term')).toHaveText(['iat', 'nbf', 'exp']);
@@ -633,22 +714,33 @@ test.describe('New crypto tools', () => {
       const segments = token.split('.');
       expect(segments).toHaveLength(3);
       expect(fromBase64Url(segments[0])).toBe('{"alg":"HS256","typ":"JWT"}');
-      expect(fromBase64Url(segments[1])).toBe(JSON.stringify(JSON.parse(await payload(page).inputValue())));
+      expect(fromBase64Url(segments[1])).toBe(
+        JSON.stringify(JSON.parse(await payload(page).inputValue()))
+      );
       expect(segments[2]).toBe(
-        createHmac('sha256', 'quick-claims-secret').update(`${segments[0]}.${segments[1]}`).digest('base64url')
+        createHmac('sha256', 'quick-claims-secret')
+          .update(`${segments[0]}.${segments[1]}`)
+          .digest('base64url')
       );
 
       await main.getByRole('button', { name: 'Use signed token' }).click();
       await expect(pasted(page)).toHaveValue(token);
       await expect(main.getByText('Valid', { exact: true })).toBeVisible();
-      await expect(main.getByText('The signature is valid (HS256). It expires in 5 minutes.')).toBeVisible();
+      await expect(
+        main.getByText('The signature is valid (HS256). It expires in 5 minutes.')
+      ).toBeVisible();
 
       // A random secret is 32 bytes of Base64 for HS256, and the token signed
       // with the old secret no longer verifies.
       await main.getByRole('button', { name: 'Generate random secret' }).click();
       await expect(secret(page)).toHaveValue(/^[A-Za-z0-9+/]{43}=$/);
-      await expect(page.getByRole('tab', { name: 'Base64', exact: true })).toHaveAttribute('aria-selected', 'true');
-      await expect(main.getByText('Key length: 32 bytes. RFC 7518 requires at least 32 for HS256.')).toBeVisible();
+      await expect(page.getByRole('tab', { name: 'Base64', exact: true })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(
+        main.getByText('Key length: 32 bytes. RFC 7518 requires at least 32 for HS256.')
+      ).toBeVisible();
       await expect(main.getByText('Invalid signature', { exact: true })).toBeVisible();
 
       await main.getByRole('button', { name: 'Reset all' }).click();
@@ -657,12 +749,17 @@ test.describe('New crypto tools', () => {
         'aria-selected',
         'true'
       );
-      expect(JSON.parse(await payload(page).inputValue())).toEqual({ sub: '1234567890', name: 'Test User' });
+      expect(JSON.parse(await payload(page).inputValue())).toEqual({
+        sub: '1234567890',
+        name: 'Test User',
+      });
       expect(JSON.parse(await header(page).inputValue())).toEqual({ alg: 'HS256', typ: 'JWT' });
       await expect(page.getByRole('combobox', { name: 'Expiry duration' })).toHaveText('1 hour');
       await expect(pasted(page)).toHaveValue('');
       await expect(main.getByRole('status')).toHaveText('Enter a secret to sign the token.');
-      await expect(main.getByText('Paste a token above to check its signature and expiry.')).toBeVisible();
+      await expect(
+        main.getByText('Paste a token above to check its signature and expiry.')
+      ).toBeVisible();
       await expect(main.getByRole('definition')).toHaveCount(0);
     });
 
@@ -683,7 +780,9 @@ test.describe('New crypto tools', () => {
       await expect(payload(page)).toHaveValue(/12345678901234567890/);
     });
 
-    test('a token that expires while it is on screen stops being reported as valid', async ({ page }) => {
+    test('a token that expires while it is on screen stops being reported as valid', async ({
+      page,
+    }) => {
       await page.clock.setFixedTime(new Date((RFC7515_EXP - 600) * 1000));
       await open(page);
       const main = page.getByRole('main');
@@ -692,7 +791,9 @@ test.describe('New crypto tools', () => {
       await secret(page).fill(RFC7515_KEY);
       await pasted(page).fill(RFC7515_TOKEN);
       await expect(main.getByText('Valid', { exact: true })).toBeVisible();
-      await expect(main.getByText('The signature is valid (HS256). It expires in 10 minutes.')).toBeVisible();
+      await expect(
+        main.getByText('The signature is valid (HS256). It expires in 10 minutes.')
+      ).toBeVisible();
 
       // Nothing is edited; only the device clock moves past exp.
       await page.clock.setFixedTime(new Date((RFC7515_EXP + 3600) * 1000));
@@ -710,16 +811,24 @@ test.describe('New crypto tools', () => {
     const secret = (page: Page) => page.getByRole('textbox', { name: 'Base32 secret' });
 
     /** "287082" as the page shows it: "287 082", or "0708 1804" for eight digits. */
-    const spaced = (code: string) => `${code.slice(0, code.length / 2)} ${code.slice(code.length / 2)}`;
+    const spaced = (code: string) =>
+      `${code.slice(0, code.length / 2)} ${code.slice(code.length / 2)}`;
 
     /**
      * Checks the codes on screen and which slot each one is in. The slots are
      * told apart by their copy buttons, which copy the code without the space.
      */
-    async function expectCodes(page: Page, codes: { previous?: string | null; current: string; next?: string }) {
+    async function expectCodes(
+      page: Page,
+      codes: { previous?: string | null; current: string; next?: string }
+    ) {
       const main = page.getByRole('main');
       await expect(main.getByText(spaced(codes.current), { exact: true })).toBeVisible();
-      await expectCopies(page, main.getByRole('button', { name: 'Copy current code' }), codes.current);
+      await expectCopies(
+        page,
+        main.getByRole('button', { name: 'Copy current code' }),
+        codes.current
+      );
       if (codes.next !== undefined) {
         await expect(main.getByText(spaced(codes.next), { exact: true })).toBeVisible();
         await expectCopies(page, main.getByRole('button', { name: 'Copy next code' }), codes.next);
@@ -728,7 +837,11 @@ test.describe('New crypto tools', () => {
         await expect(main.getByRole('button', { name: 'Copy previous code' })).toBeDisabled();
       } else if (codes.previous !== undefined) {
         await expect(main.getByText(spaced(codes.previous), { exact: true })).toBeVisible();
-        await expectCopies(page, main.getByRole('button', { name: 'Copy previous code' }), codes.previous);
+        await expectCopies(
+          page,
+          main.getByRole('button', { name: 'Copy previous code' }),
+          codes.previous
+        );
       }
     }
 
@@ -792,14 +905,18 @@ test.describe('New crypto tools', () => {
       return fewest;
     }
 
-    test('shows the RFC 4226 codes for the RFC seed and moves on when the window ends', async ({ page }) => {
+    test('shows the RFC 4226 codes for the RFC seed and moves on when the window ends', async ({
+      page,
+    }) => {
       // Five seconds after the epoch: the very first 30 second window (counter 0).
       await page.clock.setFixedTime(new Date(5_000));
       await open(page);
       const main = page.getByRole('main');
       const countdown = main.getByRole('progressbar', { name: 'Time until the code changes' });
 
-      await expect(main.getByText('Enter a Base32 secret or generate a random one to see codes.')).toBeVisible();
+      await expect(
+        main.getByText('Enter a Base32 secret or generate a random one to see codes.')
+      ).toBeVisible();
       await expect(main.getByText('Enter a secret to build the link and QR code.')).toBeVisible();
       await expect(main.getByRole('button', { name: 'Copy secret' })).toBeDisabled();
 
@@ -836,7 +953,9 @@ test.describe('New crypto tools', () => {
       await secret(page).fill(TOTP_SEED_SHA1);
       await choose(page, 'Code length', '8 digits');
       await expect(
-        main.getByText(/Many authenticator apps, including Google Authenticator, ignore these settings/)
+        main.getByText(
+          /Many authenticator apps, including Google Authenticator, ignore these settings/
+        )
       ).toBeVisible();
       // The RFC's next row, 1111111111, is the following window.
       await expectCodes(page, { current: '07081804', next: '14050471' });
@@ -866,11 +985,12 @@ test.describe('New crypto tools', () => {
       await choose(page, 'Period', '60 seconds');
       await page.clock.setFixedTime(new Date(2222222219 * 1000));
       await expect(main.getByText('Changes in 1 second', { exact: true })).toBeVisible();
-      await expect(main.getByText('The code refreshes by itself when its 60 second window ends.')).toBeVisible();
-      await expect(main.getByRole('progressbar', { name: 'Time until the code changes' })).toHaveAttribute(
-        'aria-valuemax',
-        '60'
-      );
+      await expect(
+        main.getByText('The code refreshes by itself when its 60 second window ends.')
+      ).toBeVisible();
+      await expect(
+        main.getByRole('progressbar', { name: 'Time until the code changes' })
+      ).toHaveAttribute('aria-valuemax', '60');
       await expectCodes(page, { current: '07081804', next: '14050471' });
     });
 
@@ -890,7 +1010,8 @@ test.describe('New crypto tools', () => {
         )
       ).toBeVisible();
 
-      const bareLink = 'otpauth://totp/Account?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=6&period=30';
+      const bareLink =
+        'otpauth://totp/Account?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&digits=6&period=30';
       await expect(main.getByText(bareLink, { exact: true })).toBeVisible();
       await expect(qr).toBeVisible();
       await expect.poll(() => qrDifferences(page, bareLink)).toBe(0);
@@ -961,12 +1082,16 @@ test.describe('New crypto tools', () => {
       );
 
       await secret(page).fill('GEZD=GNB');
-      await expect(secretError).toHaveText('Padding "=" is only allowed at the end of a Base32 secret.');
+      await expect(secretError).toHaveText(
+        'Padding "=" is only allowed at the end of a Base32 secret.'
+      );
 
       // Only spaces is the same as nothing: no error, the empty state.
       await secret(page).fill('   ');
       await expect(secretError).toHaveCount(0);
-      await expect(main.getByText('Enter a Base32 secret or generate a random one to see codes.')).toBeVisible();
+      await expect(
+        main.getByText('Enter a Base32 secret or generate a random one to see codes.')
+      ).toBeVisible();
       await expect(main.getByRole('button', { name: 'Copy secret' })).toBeDisabled();
 
       // A random secret is 20 bytes: 32 Base32 characters, new each time.
@@ -974,7 +1099,9 @@ test.describe('New crypto tools', () => {
       await expect(secret(page)).toHaveValue(/^[A-Z2-7]{32}$/);
       const first = await secret(page).inputValue();
       await expect(
-        main.getByText(`otpauth://totp/Account?secret=${first}&algorithm=SHA1&digits=6&period=30`, { exact: true })
+        main.getByText(`otpauth://totp/Account?secret=${first}&algorithm=SHA1&digits=6&period=30`, {
+          exact: true,
+        })
       ).toBeVisible();
       await expect(main.getByText(/^\d{3} \d{3}$/)).toHaveCount(3);
       await expect(main.getByText(/This secret is only/)).toHaveCount(0);
@@ -996,7 +1123,9 @@ test.describe('New crypto tools', () => {
       await expect(page.getByRole('textbox', { name: 'Issuer (optional)' })).toHaveValue('');
       await expect(page.getByRole('combobox', { name: 'Period' })).toHaveText('30 seconds');
       await expect(page.getByRole('combobox', { name: 'Code length' })).toHaveText('6 digits');
-      await expect(main.getByText('Enter a Base32 secret or generate a random one to see codes.')).toBeVisible();
+      await expect(
+        main.getByText('Enter a Base32 secret or generate a random one to see codes.')
+      ).toBeVisible();
       await expect(main.getByText('Enter a secret to build the link and QR code.')).toBeVisible();
     });
   });

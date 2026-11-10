@@ -293,7 +293,9 @@ export function explainMode(mode: number): ModeExplanation {
   const sticky = hasSpecial(mode, 'sticky');
 
   if (hasPermission(mode, 'others', 'write') && !sticky) {
-    warnings.push('World-writable: any user on the system can change this. That is rarely what you want.');
+    warnings.push(
+      'World-writable: any user on the system can change this. That is rarely what you want.'
+    );
   }
   if (setuid && !hasPermission(mode, 'owner', 'execute')) {
     warnings.push(

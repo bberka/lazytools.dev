@@ -21,13 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipSimple } from '@/components/ui/tooltip';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -44,7 +38,12 @@ import {
 } from '@/lib/tools/glassmorphism-generator';
 
 // Type definitions
-type PreviewBgType = 'drifting-blobs' | 'sunset-gradient' | 'mesh-gradient' | 'space-grid' | 'solid-dark';
+type PreviewBgType =
+  | 'drifting-blobs'
+  | 'sunset-gradient'
+  | 'mesh-gradient'
+  | 'space-grid'
+  | 'solid-dark';
 type MockupType = 'credit-card' | 'login-form' | 'dashboard';
 type ExportTabType = 'css' | 'tailwind' | 'react';
 
@@ -163,21 +162,44 @@ export function GlassmorphismGenerator() {
       {/* Global CSS Stylesheet inject for keyframe blobs */}
       <style jsx global>{`
         @keyframes float-blob-1 {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(60px, -80px) scale(1.15); }
-          66% { transform: translate(-40px, 40px) scale(0.85); }
+          0%,
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(60px, -80px) scale(1.15);
+          }
+          66% {
+            transform: translate(-40px, 40px) scale(0.85);
+          }
         }
         @keyframes float-blob-2 {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          50% { transform: translate(-80px, 60px) scale(1.1); }
+          0%,
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          50% {
+            transform: translate(-80px, 60px) scale(1.1);
+          }
         }
         @keyframes float-blob-3 {
-          0%, 100% { transform: translate(0px, 0px) scale(1); }
-          40% { transform: translate(80px, 40px) scale(0.9); }
+          0%,
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          40% {
+            transform: translate(80px, 40px) scale(0.9);
+          }
         }
-        .animate-blob-1 { animation: float-blob-1 16s infinite ease-in-out; }
-        .animate-blob-2 { animation: float-blob-2 20s infinite ease-in-out; }
-        .animate-blob-3 { animation: float-blob-3 14s infinite ease-in-out; }
+        .animate-blob-1 {
+          animation: float-blob-1 16s infinite ease-in-out;
+        }
+        .animate-blob-2 {
+          animation: float-blob-2 20s infinite ease-in-out;
+        }
+        .animate-blob-3 {
+          animation: float-blob-3 14s infinite ease-in-out;
+        }
       `}</style>
 
       {/* Hero Header */}
@@ -188,12 +210,15 @@ export function GlassmorphismGenerator() {
             Glassmorphism Generator
           </CardTitle>
           <CardDescription>
-            Design premium CSS and Tailwind frosted glass filters with fluid drift background previews and responsive code generation.
+            Design premium CSS and Tailwind frosted glass filters with fluid drift background
+            previews and responsive code generation.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Quick Presets</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Quick Presets
+            </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               {Object.entries(GLASS_PRESETS).map(([key, preset]) => (
                 <button
@@ -214,7 +239,9 @@ export function GlassmorphismGenerator() {
                       background: preset.settings.bgColor,
                       opacity: preset.settings.bgOpacity / 100 + 0.1,
                       backdropFilter: `blur(${preset.settings.blur}px)`,
-                      boxShadow: preset.settings.enableShadow ? '0 4px 8px rgba(0,0,0,0.1)' : 'none',
+                      boxShadow: preset.settings.enableShadow
+                        ? '0 4px 8px rgba(0,0,0,0.1)'
+                        : 'none',
                     }}
                   />
                 </button>
@@ -227,7 +254,6 @@ export function GlassmorphismGenerator() {
       {/* Main Interactive Grid */}
       {/* grid-cols-1 keeps the column as wide as the page: without it a long line of generated code widens the column instead of scrolling inside its box */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)]">
-        
         {/* Left Side: Interactive Live Preview Playground */}
         <div className="flex flex-col gap-4 sm:gap-6">
           <Card className="flex flex-1 flex-col overflow-hidden">
@@ -237,10 +263,14 @@ export function GlassmorphismGenerator() {
                   <Maximize2 className="h-4 w-4" />
                   Live Playground
                 </CardTitle>
-                <CardDescription>Drag sliders on the right and watch the glass refract shapes in real-time.</CardDescription>
+                <CardDescription>
+                  Drag sliders on the right and watch the glass refract shapes in real-time.
+                </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-muted-foreground mr-1">Preview Card Content:</span>
+                <span className="text-xs font-semibold text-muted-foreground mr-1">
+                  Preview Card Content:
+                </span>
                 <div className="flex rounded-lg border border-border/70 bg-muted/30 p-0.5">
                   <TooltipSimple content="Credit Card mockup">
                     <Button
@@ -285,7 +315,6 @@ export function GlassmorphismGenerator() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-1 items-center justify-center p-4 sm:p-6 bg-muted/10 relative min-h-[420px] rounded-b-xl overflow-hidden">
-              
               {/* --- BACKGROUND PATTERNS --- */}
 
               {/* Pattern 1: Animated Drifting Blobs */}
@@ -296,7 +325,7 @@ export function GlassmorphismGenerator() {
                   <div className="absolute -top-12 -left-12 h-64 w-64 rounded-full bg-gradient-to-tr from-purple-500/40 to-pink-500/40 blur-3xl animate-blob-1" />
                   <div className="absolute -bottom-16 -right-16 h-72 w-72 rounded-full bg-gradient-to-tr from-blue-500/40 to-teal-500/40 blur-3xl animate-blob-2" />
                   <div className="absolute top-1/3 left-1/3 h-52 w-52 rounded-full bg-gradient-to-tr from-amber-500/35 to-rose-500/35 blur-3xl animate-blob-3" />
-                  
+
                   {/* Background grid overlay */}
                   <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:32px_32px] opacity-20" />
                 </div>
@@ -335,17 +364,18 @@ export function GlassmorphismGenerator() {
               )}
 
               {/* --- PREVIEW GLASS CARD --- */}
-              <div 
+              <div
                 style={output.style}
                 className="w-full max-w-sm relative z-10 transition-all duration-300 p-6 flex flex-col justify-between"
               >
-                
                 {/* Mockup 1: CREDIT CARD */}
                 {mockup === 'credit-card' && (
                   <div className="space-y-8 select-none text-white font-sans">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-[0.2em] opacity-65">Glass Card</span>
+                        <span className="text-[10px] uppercase tracking-[0.2em] opacity-65">
+                          Glass Card
+                        </span>
                         <span className="text-xs font-semibold mt-0.5">Premium Platinum</span>
                       </div>
                       <Cpu className="h-8 w-8 text-amber-300/80 stroke-[1.5]" />
@@ -363,7 +393,9 @@ export function GlassmorphismGenerator() {
 
                     <div className="flex items-end justify-between">
                       <div>
-                        <p className="text-[9px] uppercase tracking-wider opacity-60">Cardholder Name</p>
+                        <p className="text-[9px] uppercase tracking-wider opacity-60">
+                          Cardholder Name
+                        </p>
                         <p className="text-sm font-semibold tracking-wide mt-0.5">BERKAY BAYAR</p>
                       </div>
                       {/* Mastercard logo mockup */}
@@ -385,14 +417,18 @@ export function GlassmorphismGenerator() {
 
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase tracking-wider text-white/60">Email</label>
+                        <label className="text-[10px] uppercase tracking-wider text-white/60">
+                          Email
+                        </label>
                         <div className="h-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 flex items-center text-xs text-white/70">
                           user@lazytools.dev
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase tracking-wider text-white/60">Password</label>
+                        <label className="text-[10px] uppercase tracking-wider text-white/60">
+                          Password
+                        </label>
                         <div className="h-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 flex items-center justify-between text-xs text-white/70">
                           ••••••••••••
                           <Lock className="h-3.5 w-3.5 opacity-50" />
@@ -400,7 +436,7 @@ export function GlassmorphismGenerator() {
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       type="button"
                       className="w-full h-9 rounded-lg bg-white text-black font-semibold text-xs tracking-wide hover:bg-white/90 transition shadow-md flex items-center justify-center"
                     >
@@ -417,17 +453,23 @@ export function GlassmorphismGenerator() {
                         <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
                         <span className="text-xs font-semibold">Real-Time Metrics</span>
                       </div>
-                      <span className="text-[9px] uppercase tracking-widest bg-white/10 px-1.5 py-0.5 rounded">Live</span>
+                      <span className="text-[9px] uppercase tracking-widest bg-white/10 px-1.5 py-0.5 rounded">
+                        Live
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-white/5 border border-white/10 p-2.5 space-y-0.5">
-                        <span className="text-[9px] uppercase text-white/50 tracking-wider">Conversion</span>
+                        <span className="text-[9px] uppercase text-white/50 tracking-wider">
+                          Conversion
+                        </span>
                         <p className="text-base font-bold">14.82%</p>
                         <p className="text-[9px] text-green-400 font-medium">+2.4% today</p>
                       </div>
                       <div className="rounded-lg bg-white/5 border border-white/10 p-2.5 space-y-0.5">
-                        <span className="text-[9px] uppercase text-white/50 tracking-wider">Pageviews</span>
+                        <span className="text-[9px] uppercase text-white/50 tracking-wider">
+                          Pageviews
+                        </span>
                         <p className="text-base font-bold">8.4K</p>
                         <p className="text-[9px] text-indigo-300 font-medium">94 active now</p>
                       </div>
@@ -439,16 +481,17 @@ export function GlassmorphismGenerator() {
                         <span>64%</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full" style={{ width: '64%' }} />
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full"
+                          style={{ width: '64%' }}
+                        />
                       </div>
                     </div>
                   </div>
                 )}
-
               </div>
-
             </CardContent>
-            
+
             {/* Preview Background Switcher */}
             <div className="border-t border-border/70 p-3 bg-muted/20 flex flex-wrap items-center justify-between gap-3">
               <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
@@ -456,7 +499,15 @@ export function GlassmorphismGenerator() {
                 Change background under glass:
               </span>
               <div className="flex gap-1.5 flex-wrap">
-                {(['drifting-blobs', 'sunset-gradient', 'mesh-gradient', 'space-grid', 'solid-dark'] as PreviewBgType[]).map((bg) => (
+                {(
+                  [
+                    'drifting-blobs',
+                    'sunset-gradient',
+                    'mesh-gradient',
+                    'space-grid',
+                    'solid-dark',
+                  ] as PreviewBgType[]
+                ).map((bg) => (
                   <button
                     key={bg}
                     type="button"
@@ -483,19 +534,34 @@ export function GlassmorphismGenerator() {
                   <Code className="h-4 w-4" />
                   Generated Code
                 </CardTitle>
-                <CardDescription>Copy standard CSS rules or Tailwind utilities for your components.</CardDescription>
+                <CardDescription>
+                  Copy standard CSS rules or Tailwind utilities for your components.
+                </CardDescription>
               </div>
-              <Tabs value={exportTab} onValueChange={(val) => setExportTab(val as ExportTabType)} className="w-full sm:w-auto">
+              <Tabs
+                value={exportTab}
+                onValueChange={(val) => setExportTab(val as ExportTabType)}
+                className="w-full sm:w-auto"
+              >
                 <TabsList className="grid grid-cols-3 w-full sm:w-64 h-auto p-0.5 bg-muted/30 border border-border/70 rounded-lg">
-                  <TabsTrigger value="css" className="flex items-center gap-1.5 text-xs py-1.5 h-auto">
+                  <TabsTrigger
+                    value="css"
+                    className="flex items-center gap-1.5 text-xs py-1.5 h-auto"
+                  >
                     <Code className="h-3.5 w-3.5" />
                     CSS
                   </TabsTrigger>
-                  <TabsTrigger value="tailwind" className="flex items-center gap-1.5 text-xs py-1.5 h-auto">
+                  <TabsTrigger
+                    value="tailwind"
+                    className="flex items-center gap-1.5 text-xs py-1.5 h-auto"
+                  >
                     <Wind className="h-3.5 w-3.5" />
                     Tailwind
                   </TabsTrigger>
-                  <TabsTrigger value="react" className="flex items-center gap-1.5 text-xs py-1.5 h-auto">
+                  <TabsTrigger
+                    value="react"
+                    className="flex items-center gap-1.5 text-xs py-1.5 h-auto"
+                  >
                     <Atom className="h-3.5 w-3.5" />
                     React
                   </TabsTrigger>
@@ -525,9 +591,12 @@ export function GlassmorphismGenerator() {
               <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="leading-normal">
-                  {exportTab === 'css' && "Backdrop-filter is fully supported by all modern browsers. Make sure your parent container has a colorful background for the blur effect to be visible."}
-                  {exportTab === 'tailwind' && "The inline arbitrary values syntax (e.g. backdrop-blur-[16px]) allows you to copy-paste exact CSS values directly without editing your tailwind.config.js."}
-                  {exportTab === 'react' && "React style objects are clean inline replacements. Note that WebkitBackdropFilter is included specifically for Safari browser compliance."}
+                  {exportTab === 'css' &&
+                    'Backdrop-filter is fully supported by all modern browsers. Make sure your parent container has a colorful background for the blur effect to be visible.'}
+                  {exportTab === 'tailwind' &&
+                    'The inline arbitrary values syntax (e.g. backdrop-blur-[16px]) allows you to copy-paste exact CSS values directly without editing your tailwind.config.js.'}
+                  {exportTab === 'react' &&
+                    'React style objects are clean inline replacements. Note that WebkitBackdropFilter is included specifically for Safari browser compliance.'}
                 </p>
               </div>
             </CardContent>
@@ -544,13 +613,12 @@ export function GlassmorphismGenerator() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 space-y-6">
-              
               {/* SECTION: Color & Transparency */}
               <div className="space-y-4">
                 <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-1.5">
                   Background Overlay
                 </h3>
-                
+
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
                   <ColorPicker
                     label="Background overlay color"
@@ -560,7 +628,9 @@ export function GlassmorphismGenerator() {
                     className="relative h-10 w-10 shrink-0 rounded-lg border border-border/80"
                   />
                   <div className="min-w-0 flex-1">
-                    <label className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">HEX Code</label>
+                    <label className="text-xs font-semibold text-muted-foreground block uppercase tracking-wider">
+                      HEX Code
+                    </label>
                     <HexColorInput
                       value={bgColor}
                       onChange={setColor('bgColor')}
@@ -576,7 +646,8 @@ export function GlassmorphismGenerator() {
                     <span>OPACITY</span>
                     <span className="font-mono text-foreground">{bgOpacity}%</span>
                   </div>
-                  <Slider aria-label="Overlay opacity"
+                  <Slider
+                    aria-label="Overlay opacity"
                     value={bgOpacity}
                     min={0}
                     max={100}
@@ -598,7 +669,8 @@ export function GlassmorphismGenerator() {
                       <span>BACKDROP BLUR</span>
                       <span className="font-mono text-foreground">{blur}px</span>
                     </div>
-                    <Slider aria-label="Backdrop blur"
+                    <Slider
+                      aria-label="Backdrop blur"
                       value={blur}
                       min={0}
                       max={40}
@@ -612,7 +684,8 @@ export function GlassmorphismGenerator() {
                       <span>SATURATION</span>
                       <span className="font-mono text-foreground">{saturate}%</span>
                     </div>
-                    <Slider aria-label="Saturation"
+                    <Slider
+                      aria-label="Saturation"
                       value={saturate}
                       min={50}
                       max={200}
@@ -630,7 +703,9 @@ export function GlassmorphismGenerator() {
                     Glass Border
                   </h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">Enable</span>
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                      Enable
+                    </span>
                     <Switch
                       checked={borderWidth > 0}
                       onCheckedChange={(checked) => update('borderWidth', checked ? 1 : 0)}
@@ -665,7 +740,8 @@ export function GlassmorphismGenerator() {
                         <span>BORDER WIDTH</span>
                         <span className="font-mono text-foreground">{borderWidth}px</span>
                       </div>
-                      <Slider aria-label="Border width"
+                      <Slider
+                        aria-label="Border width"
                         value={borderWidth}
                         min={1}
                         max={5}
@@ -679,7 +755,8 @@ export function GlassmorphismGenerator() {
                         <span>BORDER OPACITY</span>
                         <span className="font-mono text-foreground">{borderOpacity}%</span>
                       </div>
-                      <Slider aria-label="Border opacity"
+                      <Slider
+                        aria-label="Border opacity"
                         value={borderOpacity}
                         min={0}
                         max={100}
@@ -710,7 +787,8 @@ export function GlassmorphismGenerator() {
                       <span>BORDER RADIUS</span>
                       <span className="font-mono text-foreground">{borderRadius}px</span>
                     </div>
-                    <Slider aria-label="Border radius"
+                    <Slider
+                      aria-label="Border radius"
                       value={borderRadius}
                       min={0}
                       max={60}
@@ -722,7 +800,9 @@ export function GlassmorphismGenerator() {
                   <div className="grid grid-cols-2 gap-3.5 rounded-xl border border-border bg-muted/10 p-4">
                     {CORNER_LABELS.map((label, index) => (
                       <div key={label} className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          {label}
+                        </span>
                         <Input
                           type="number"
                           value={corners[index]}
@@ -743,7 +823,9 @@ export function GlassmorphismGenerator() {
                     Drop Shadow
                   </h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">Enable</span>
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                      Enable
+                    </span>
                     <Switch
                       checked={enableShadow}
                       onCheckedChange={set('enableShadow')}
@@ -778,7 +860,8 @@ export function GlassmorphismGenerator() {
                         <span>BLUR RADIUS</span>
                         <span className="font-mono text-foreground">{shadowBlur}px</span>
                       </div>
-                      <Slider aria-label="Shadow blur radius"
+                      <Slider
+                        aria-label="Shadow blur radius"
                         value={shadowBlur}
                         min={0}
                         max={100}
@@ -792,7 +875,8 @@ export function GlassmorphismGenerator() {
                         <span>SPREAD RADIUS</span>
                         <span className="font-mono text-foreground">{shadowSpread}px</span>
                       </div>
-                      <Slider aria-label="Shadow spread radius"
+                      <Slider
+                        aria-label="Shadow spread radius"
                         value={shadowSpread}
                         min={0}
                         max={20}
@@ -806,7 +890,8 @@ export function GlassmorphismGenerator() {
                         <span>OPACITY</span>
                         <span className="font-mono text-foreground">{shadowOpacity}%</span>
                       </div>
-                      <Slider aria-label="Shadow opacity"
+                      <Slider
+                        aria-label="Shadow opacity"
                         value={shadowOpacity}
                         min={0}
                         max={100}
@@ -817,7 +902,9 @@ export function GlassmorphismGenerator() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">Offset X</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Offset X
+                        </span>
                         <Input
                           type="number"
                           value={shadowX}
@@ -827,7 +914,9 @@ export function GlassmorphismGenerator() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">Offset Y</span>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Offset Y
+                        </span>
                         <Input
                           type="number"
                           value={shadowY}
@@ -850,11 +939,9 @@ export function GlassmorphismGenerator() {
                 <RefreshCw className="h-4 w-4" />
                 Reset Styles to Frosted Light
               </Button>
-
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   );

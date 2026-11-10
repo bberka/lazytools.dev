@@ -130,7 +130,9 @@ function decodeText(bytes: Uint8Array): string {
 
   for (let trim = 0; trim <= spare; trim += 1) {
     try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(0, bytes.length - trim));
+      return new TextDecoder('utf-8', { fatal: true }).decode(
+        bytes.subarray(0, bytes.length - trim)
+      );
     } catch {
       // Not UTF-8 at this length.
     }
@@ -172,7 +174,12 @@ function listValues(values: Array<number | string>, count: number): string {
  * The text of a UserComment: eight bytes naming the character set, then the
  * comment itself. Returns null for a character set that cannot be read here.
  */
-function readUserComment(view: DataView, start: number, count: number, littleEndian: boolean): string | null {
+function readUserComment(
+  view: DataView,
+  start: number,
+  count: number,
+  littleEndian: boolean
+): string | null {
   if (count <= 8) return 'Empty';
 
   const body = readBytes(view, start + 8, count - 8);
@@ -180,7 +187,9 @@ function readUserComment(view: DataView, start: number, count: number, littleEnd
 
   if (hasAscii(view, start, 'UNICODE')) {
     const evenLength = body.length - (body.length % 2);
-    text = new TextDecoder(littleEndian ? 'utf-16le' : 'utf-16be').decode(body.subarray(0, evenLength));
+    text = new TextDecoder(littleEndian ? 'utf-16le' : 'utf-16be').decode(
+      body.subarray(0, evenLength)
+    );
   } else if (hasAscii(view, start, 'JIS')) {
     return null;
   } else {
@@ -229,7 +238,11 @@ function readValue(
 
     // Version stamps such as "0232" are stored as untyped bytes but are text.
     const bytes = readBytes(view, valueStart, count);
-    if (count >= 4 && bytes.length === count && bytes.every((byte) => byte >= 0x20 && byte <= 0x7e)) {
+    if (
+      count >= 4 &&
+      bytes.length === count &&
+      bytes.every((byte) => byte >= 0x20 && byte <= 0x7e)
+    ) {
       return clampText(decodeText(bytes).trim()) || 'Empty';
     }
   }
@@ -329,15 +342,11 @@ function parseIfd(
   const sections: ExifSection[] = fields.length > 0 ? [{ title, fields }] : [];
 
   if (exifPointer !== null) {
-    sections.push(
-      ...parseIfd(view, tiffStart, exifPointer, littleEndian, 'EXIF', visited)
-    );
+    sections.push(...parseIfd(view, tiffStart, exifPointer, littleEndian, 'EXIF', visited));
   }
 
   if (gpsPointer !== null) {
-    sections.push(
-      ...parseIfd(view, tiffStart, gpsPointer, littleEndian, 'GPS', visited)
-    );
+    sections.push(...parseIfd(view, tiffStart, gpsPointer, littleEndian, 'GPS', visited));
   }
 
   return sections;
@@ -360,7 +369,14 @@ function parseTiff(view: DataView, tiffStart: number): ExifSection[] {
   }
 
   const firstIfdOffset = view.getUint32(tiffStart + 4, littleEndian);
-  const sections = parseIfd(view, tiffStart, firstIfdOffset, littleEndian, 'Image', new Set<number>());
+  const sections = parseIfd(
+    view,
+    tiffStart,
+    firstIfdOffset,
+    littleEndian,
+    'Image',
+    new Set<number>()
+  );
 
   return sections
     .map((section) => ({

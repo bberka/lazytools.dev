@@ -59,7 +59,18 @@ export const NATO_DIGITS: readonly NatoEntry[] = [
   { symbol: '9', word: 'Niner', pronunciation: 'NIN-ER' },
 ];
 
-const PLAIN_DIGIT_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+const PLAIN_DIGIT_WORDS = [
+  'Zero',
+  'One',
+  'Two',
+  'Three',
+  'Four',
+  'Five',
+  'Six',
+  'Seven',
+  'Eight',
+  'Nine',
+];
 
 export type DigitStyle = 'icao' | 'plain';
 export type WordCase = 'title' | 'upper' | 'lower';
@@ -79,11 +90,24 @@ export interface DecodeOptions {
 
 const WORD_BREAK = '/';
 
-export const DEFAULT_ENCODE_OPTIONS: EncodeOptions = { digitStyle: 'icao', wordCase: 'title', keepUnknown: true };
+export const DEFAULT_ENCODE_OPTIONS: EncodeOptions = {
+  digitStyle: 'icao',
+  wordCase: 'title',
+  keepUnknown: true,
+};
 export const DEFAULT_DECODE_OPTIONS: DecodeOptions = { keepUnknown: true, lowercase: false };
 
 // Letters Unicode cannot take apart, folded to the base letter a speller would say.
-const EXTRA_FOLDS: Readonly<Record<string, string>> = { 'ı': 'I', 'İ': 'I', 'ø': 'O', 'Ø': 'O', 'ł': 'L', 'Ł': 'L', 'đ': 'D', 'Đ': 'D' };
+const EXTRA_FOLDS: Readonly<Record<string, string>> = {
+  ı: 'I',
+  İ: 'I',
+  ø: 'O',
+  Ø: 'O',
+  ł: 'L',
+  Ł: 'L',
+  đ: 'D',
+  Đ: 'D',
+};
 
 const LETTER_WORD = new Map(NATO_LETTERS.map((entry) => [entry.symbol, entry.word]));
 
@@ -117,8 +141,10 @@ function encodeLine(line: string, options: EncodeOptions): string {
     }
     const letter = baseLetter(char);
     let part: string | undefined;
-    if (LETTER_WORD.has(letter)) part = applyCase(LETTER_WORD.get(letter) as string, options.wordCase);
-    else if (/^[0-9]$/.test(char)) part = applyCase(digitWord(char, options.digitStyle), options.wordCase);
+    if (LETTER_WORD.has(letter))
+      part = applyCase(LETTER_WORD.get(letter) as string, options.wordCase);
+    else if (/^[0-9]$/.test(char))
+      part = applyCase(digitWord(char, options.digitStyle), options.wordCase);
     else if (options.keepUnknown) part = char;
     if (part === undefined) continue;
     if (pendingBreak) parts.push(WORD_BREAK);
@@ -139,12 +165,28 @@ export function encodeNato(text: string, options: EncodeOptions): string {
 // Code words and common variants, lower case without hyphens or spaces.
 const DECODE_TABLE: ReadonlyMap<string, string> = (() => {
   const table = new Map<string, string>();
-  for (const entry of NATO_LETTERS) table.set(entry.word.toLowerCase().replace(/-/g, ''), entry.symbol);
+  for (const entry of NATO_LETTERS)
+    table.set(entry.word.toLowerCase().replace(/-/g, ''), entry.symbol);
   for (const entry of NATO_DIGITS) table.set(entry.word.toLowerCase(), entry.symbol);
   const variants: Record<string, string> = {
-    alpha: 'A', juliet: 'J', whisky: 'W', zero: '0',
-    one: '1', two: '2', three: '3', four: '4', five: '5', eight: '8', nine: '9',
-    niner: '9', fower: '4', fife: '5', tree: '3', too: '2', wun: '1', ait: '8',
+    alpha: 'A',
+    juliet: 'J',
+    whisky: 'W',
+    zero: '0',
+    one: '1',
+    two: '2',
+    three: '3',
+    four: '4',
+    five: '5',
+    eight: '8',
+    nine: '9',
+    niner: '9',
+    fower: '4',
+    fife: '5',
+    tree: '3',
+    too: '2',
+    wun: '1',
+    ait: '8',
   };
   for (const [word, symbol] of Object.entries(variants)) table.set(word, symbol);
   return table;
@@ -155,7 +197,11 @@ function lookupWord(token: string): string | undefined {
 }
 
 function decodeLine(line: string, options: DecodeOptions): string {
-  const tokens = line.replace(/\s*\/\s*/g, ' / ').trim().split(/\s+/).filter(Boolean);
+  const tokens = line
+    .replace(/\s*\/\s*/g, ' / ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   let result = '';
   // A multi-character leftover is a whole word, so it gets spaces around it.
   let lastWasWord = false;

@@ -226,8 +226,8 @@ export function DockerRunToCompose() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        The conversion runs entirely in your browser. Your command, including any passwords in it, is
-        never sent anywhere.
+        The conversion runs entirely in your browser. Your command, including any passwords in it,
+        is never sent anywhere.
       </p>
     </div>
   );

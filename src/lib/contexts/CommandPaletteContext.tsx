@@ -8,15 +8,9 @@ interface CommandPaletteContextType {
   toggle: () => void;
 }
 
-const CommandPaletteContext = createContext<
-  CommandPaletteContextType | undefined
->(undefined);
+const CommandPaletteContext = createContext<CommandPaletteContextType | undefined>(undefined);
 
-export function CommandPaletteProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   // The shortcut that calls this is dispatched by the keydown listener in
@@ -35,9 +29,7 @@ export function CommandPaletteProvider({
 export function useCommandPalette() {
   const context = useContext(CommandPaletteContext);
   if (!context) {
-    throw new Error(
-      'useCommandPalette must be used within CommandPaletteProvider'
-    );
+    throw new Error('useCommandPalette must be used within CommandPaletteProvider');
   }
   return context;
 }

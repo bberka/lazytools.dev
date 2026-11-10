@@ -24,7 +24,9 @@ export function createRandomInt(nextUint32: () => number): RandomInt {
 }
 
 /** `RandomInt` backed by the cryptographically secure generator of the platform. */
-export const secureRandomInt: RandomInt = createRandomInt(() => crypto.getRandomValues(new Uint32Array(1))[0]);
+export const secureRandomInt: RandomInt = createRandomInt(
+  () => crypto.getRandomValues(new Uint32Array(1))[0]
+);
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
@@ -89,16 +91,101 @@ const AMBIGUOUS_PATTERN = /[0Ol1iI]/g;
 const PASSPHRASE_SYMBOLS = ['!', '@', '#', '$', '%', '&'];
 
 const PASSPHRASE_WORDS = [
-  'anchor', 'april', 'arrow', 'atom', 'autumn', 'beacon', 'berry', 'beyond', 'binary', 'breeze',
-  'cactus', 'cannon', 'carbon', 'castle', 'cedar', 'circle', 'cloud', 'cobalt', 'coffee', 'comet',
-  'coral', 'cosmos', 'crystal', 'dawn', 'delta', 'desert', 'drift', 'echo', 'ember', 'falcon',
-  'feather', 'forest', 'fossil', 'galaxy', 'garden', 'glacier', 'golden', 'harbor', 'hazel', 'helium',
-  'horizon', 'island', 'jungle', 'lantern', 'legend', 'lilac', 'lotus', 'lunar', 'marble', 'matrix',
-  'meadow', 'meteor', 'mint', 'monsoon', 'nebula', 'nickel', 'nova', 'oasis', 'ocean', 'onyx',
-  'orchid', 'paper', 'pearl', 'pepper', 'phoenix', 'pioneer', 'planet', 'prism', 'quantum', 'quartz',
-  'radar', 'raven', 'rocket', 'saffron', 'sailor', 'shadow', 'signal', 'silver', 'solar', 'sonic',
-  'spruce', 'summit', 'sunset', 'thunder', 'timber', 'topaz', 'torrent', 'valley', 'velvet', 'violet',
-  'voyage', 'willow', 'winter', 'wisdom', 'zenith',
+  'anchor',
+  'april',
+  'arrow',
+  'atom',
+  'autumn',
+  'beacon',
+  'berry',
+  'beyond',
+  'binary',
+  'breeze',
+  'cactus',
+  'cannon',
+  'carbon',
+  'castle',
+  'cedar',
+  'circle',
+  'cloud',
+  'cobalt',
+  'coffee',
+  'comet',
+  'coral',
+  'cosmos',
+  'crystal',
+  'dawn',
+  'delta',
+  'desert',
+  'drift',
+  'echo',
+  'ember',
+  'falcon',
+  'feather',
+  'forest',
+  'fossil',
+  'galaxy',
+  'garden',
+  'glacier',
+  'golden',
+  'harbor',
+  'hazel',
+  'helium',
+  'horizon',
+  'island',
+  'jungle',
+  'lantern',
+  'legend',
+  'lilac',
+  'lotus',
+  'lunar',
+  'marble',
+  'matrix',
+  'meadow',
+  'meteor',
+  'mint',
+  'monsoon',
+  'nebula',
+  'nickel',
+  'nova',
+  'oasis',
+  'ocean',
+  'onyx',
+  'orchid',
+  'paper',
+  'pearl',
+  'pepper',
+  'phoenix',
+  'pioneer',
+  'planet',
+  'prism',
+  'quantum',
+  'quartz',
+  'radar',
+  'raven',
+  'rocket',
+  'saffron',
+  'sailor',
+  'shadow',
+  'signal',
+  'silver',
+  'solar',
+  'sonic',
+  'spruce',
+  'summit',
+  'sunset',
+  'thunder',
+  'timber',
+  'topaz',
+  'torrent',
+  'valley',
+  'velvet',
+  'violet',
+  'voyage',
+  'willow',
+  'winter',
+  'wisdom',
+  'zenith',
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -144,7 +231,8 @@ function shuffle<T>(items: T[], randomInt: RandomInt): T[] {
 
 function generateRandomPassword(settings: RandomPasswordSettings, randomInt: RandomInt): Generated {
   const length = clampInteger(settings.length, 0, Number.MAX_SAFE_INTEGER);
-  const limit = (max: number | undefined) => (max === undefined ? length : clampInteger(max, 0, length));
+  const limit = (max: number | undefined) =>
+    max === undefined ? length : clampInteger(max, 0, length);
   const withoutAmbiguous = (chars: string) =>
     settings.excludeAmbiguous ? chars.replace(AMBIGUOUS_PATTERN, '') : chars;
 
@@ -231,10 +319,13 @@ function generatePin(settings: PinSettings, randomInt: RandomInt): Generated {
 }
 
 function generatePassphrase(settings: PassphraseSettings, randomInt: RandomInt): Generated {
-  const words = Array.from({ length: clampInteger(settings.wordCount, 0, Number.MAX_SAFE_INTEGER) }, () => {
-    const word = pick(PASSPHRASE_WORDS, randomInt);
-    return settings.capitalize ? `${word[0].toUpperCase()}${word.slice(1)}` : word;
-  });
+  const words = Array.from(
+    { length: clampInteger(settings.wordCount, 0, Number.MAX_SAFE_INTEGER) },
+    () => {
+      const word = pick(PASSPHRASE_WORDS, randomInt);
+      return settings.capitalize ? `${word[0].toUpperCase()}${word.slice(1)}` : word;
+    }
+  );
 
   const separator = separatorCharacter(settings.separator);
   let value = words.join(separator);
@@ -258,7 +349,10 @@ function generatePassphrase(settings: PassphraseSettings, randomInt: RandomInt):
  * rather than a value. `randomInt` is the source of randomness; the default is
  * cryptographically secure.
  */
-export function generatePassword(settings: GeneratorSettings, randomInt: RandomInt = secureRandomInt): Generated {
+export function generatePassword(
+  settings: GeneratorSettings,
+  randomInt: RandomInt = secureRandomInt
+): Generated {
   if (settings.mode === 'pin') return generatePin(settings, randomInt);
   if (settings.mode === 'passphrase') return generatePassphrase(settings, randomInt);
   return generateRandomPassword(settings, randomInt);

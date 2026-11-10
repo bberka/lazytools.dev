@@ -65,7 +65,9 @@ test.describe('base64ToBytes', () => {
     expect(Array.from(base64ToBytes('-_8'))).toEqual([0xfb, 0xff]);
     expect(Array.from(base64ToBytes('+/8='))).toEqual([0xfb, 0xff]);
     // The header of a typical JWT.
-    expect(decodeBase64('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')).toBe('{"alg":"HS256","typ":"JWT"}');
+    expect(decodeBase64('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')).toBe(
+      '{"alg":"HS256","typ":"JWT"}'
+    );
   });
 
   test('names the first character that is not Base64', () => {

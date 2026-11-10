@@ -65,13 +65,15 @@ export function CaseConverter() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-muted p-4 rounded-md font-mono text-sm break-all whitespace-pre-wrap">
-                    {converted || <span className="text-muted-foreground italic">Empty result</span>}
+                    {converted || (
+                      <span className="text-muted-foreground italic">Empty result</span>
+                    )}
                   </div>
                   <Button
                     onClick={() => handleCopy(converted, conversion.label)}
                     disabled={!converted}
                     size="sm"
-                    variant={showCopied ? "default" : "outline"}
+                    variant={showCopied ? 'default' : 'outline'}
                     aria-label={
                       showCopied
                         ? `Copied! ${conversion.label}`

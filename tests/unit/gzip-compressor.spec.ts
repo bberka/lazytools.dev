@@ -82,13 +82,17 @@ test.describe('runGzip', () => {
 
   test('says when the input is not Base64', async () => {
     for (const input of ['not base64 at all!', 'abc$def', 'A', 'QUJD====', '']) {
-      await expect(runGzip('decompress', input), JSON.stringify(input)).rejects.toThrow('The input is not valid Base64.');
+      await expect(runGzip('decompress', input), JSON.stringify(input)).rejects.toThrow(
+        'The input is not valid Base64.'
+      );
     }
   });
 
   test('says when the Base64 does not hold GZip data', async () => {
     const plain = Buffer.from('this is plain text, not a gzip stream').toString('base64');
-    await expect(runGzip('decompress', plain)).rejects.toThrow('The input is Base64 but not valid GZip data.');
+    await expect(runGzip('decompress', plain)).rejects.toThrow(
+      'The input is Base64 but not valid GZip data.'
+    );
   });
 
   test('leaves no rejection unhandled when decompression fails', async () => {

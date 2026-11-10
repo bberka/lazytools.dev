@@ -64,8 +64,12 @@ test.describe('decodeHtmlEntities', () => {
     expect(decodeHtmlEntities('&nbsp;')).toBe(' ');
     expect(decodeHtmlEntities('&copy; &reg; &trade; &euro; &pound; &yen;')).toBe('© ® ™ € £ ¥');
     expect(decodeHtmlEntities('&eacute;&Eacute;&uuml;&szlig;&ntilde;&yuml;')).toBe('éÉüßñÿ');
-    expect(decodeHtmlEntities('&mdash;&ndash;&hellip;&lsquo;&rsquo;&ldquo;&rdquo;')).toBe('—–…‘’“”');
-    expect(decodeHtmlEntities('&alpha;&Omega;&pi;&rarr;&hArr;&ne;&le;&infin;&hearts;')).toBe('αΩπ→⇔≠≤∞♥');
+    expect(decodeHtmlEntities('&mdash;&ndash;&hellip;&lsquo;&rsquo;&ldquo;&rdquo;')).toBe(
+      '—–…‘’“”'
+    );
+    expect(decodeHtmlEntities('&alpha;&Omega;&pi;&rarr;&hArr;&ne;&le;&infin;&hearts;')).toBe(
+      'αΩπ→⇔≠≤∞♥'
+    );
     expect(decodeHtmlEntities('&lang;&rang;')).toBe('⟨⟩');
   });
 
@@ -91,7 +95,9 @@ test.describe('decodeHtmlEntities', () => {
   test('leaves text that is not a reference untouched', () => {
     expect(decodeHtmlEntities('')).toBe('');
     expect(decodeHtmlEntities('a & b && c')).toBe('a & b && c');
-    expect(decodeHtmlEntities('&; &# &#x; &#xZZ; &unknownname;')).toBe('&; &# &#x; &#xZZ; &unknownname;');
+    expect(decodeHtmlEntities('&; &# &#x; &#xZZ; &unknownname;')).toBe(
+      '&; &# &#x; &#xZZ; &unknownname;'
+    );
     expect(decodeHtmlEntities('Q&A, R&D')).toBe('Q&A, R&D');
     expect(decodeHtmlEntities('?a=1&b=2&c=3')).toBe('?a=1&b=2&c=3');
   });

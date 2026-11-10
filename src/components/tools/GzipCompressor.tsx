@@ -74,7 +74,8 @@ export function GzipCompressor() {
     resetResult();
   };
 
-  const sizeChange = stats && mode === 'compress' ? sizeChangeLabel(stats.inputSize, stats.outputSize) : null;
+  const sizeChange =
+    stats && mode === 'compress' ? sizeChangeLabel(stats.inputSize, stats.outputSize) : null;
 
   return (
     <div className="space-y-6">
@@ -109,7 +110,11 @@ export function GzipCompressor() {
           <Textarea
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
-            placeholder={mode === 'compress' ? 'Type or paste text here...' : 'Paste Base64 GZip string here...'}
+            placeholder={
+              mode === 'compress'
+                ? 'Type or paste text here...'
+                : 'Paste Base64 GZip string here...'
+            }
             aria-label={mode === 'compress' ? 'Text to compress' : 'Base64-encoded GZip data'}
             rows={8}
             className="font-mono"
@@ -132,17 +137,26 @@ export function GzipCompressor() {
       </div>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {stats && (
         <div className="bg-muted rounded-md px-4 py-3 text-sm flex flex-wrap gap-4">
-          <span>Input: <strong>{formatBytes(stats.inputSize, SIZE_FORMAT)}</strong></span>
-          <span>Output: <strong>{formatBytes(stats.outputSize, SIZE_FORMAT)}</strong></span>
+          <span>
+            Input: <strong>{formatBytes(stats.inputSize, SIZE_FORMAT)}</strong>
+          </span>
+          <span>
+            Output: <strong>{formatBytes(stats.outputSize, SIZE_FORMAT)}</strong>
+          </span>
           {sizeChange !== null && (
-            <span>Ratio: <strong>{sizeChange}</strong></span>
+            <span>
+              Ratio: <strong>{sizeChange}</strong>
+            </span>
           )}
         </div>
       )}

@@ -73,14 +73,19 @@ test.describe('AI Metadata Cleaner', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Tool flows are verified on Chromium');
   test.use({ locale: 'en-US', permissions: ['clipboard-read', 'clipboard-write'] });
 
-  test('text mode removes hidden characters and tracking parameters, counts them and honours the switches', async ({ page }) => {
+  test('text mode removes hidden characters and tracking parameters, counts them and honours the switches', async ({
+    page,
+  }) => {
     await openTool(page, SLUG, 'AI Metadata Cleaner');
     await page.getByRole('tab', { name: 'Text' }).click();
 
     const input = page.getByRole('textbox', { name: 'Text to clean' });
     const output = page.getByRole('textbox', { name: 'Cleaned text' });
     const row = (label: string) =>
-      page.getByRole('list', { name: 'Cleanup categories' }).getByRole('listitem').filter({ hasText: label });
+      page
+        .getByRole('list', { name: 'Cleanup categories' })
+        .getByRole('listitem')
+        .filter({ hasText: label });
 
     // One zero-width space, one narrow no-break space and one tracked link.
     await input.fill('Read​ this: https://example.com/a?id=1&utm_source=chatgpt.com');
@@ -90,32 +95,42 @@ test.describe('AI Metadata Cleaner', () => {
     await expect(row('Exotic spaces')).toContainText('1 found');
     await expect(row('Tracking parameters in URLs')).toContainText('1 found');
     await expect(row('Soft hyphens')).toContainText('0 found');
-    await expect(page.getByRole('status').filter({ hasText: 'changes applied' })).toHaveText('3 changes applied.');
+    await expect(page.getByRole('status').filter({ hasText: 'changes applied' })).toHaveText(
+      '3 changes applied.'
+    );
 
     // Switching a category off keeps its characters but still counts them.
     await page.getByRole('switch', { name: 'Tracking parameters in URLs' }).click();
-    await expect(output).toHaveValue('Read this: https://example.com/a?id=1&utm_source=chatgpt.com');
-    await expect(row('Tracking parameters in URLs')).toContainText('1 found');
-    await expect(page.getByRole('status').filter({ hasText: 'changes applied' })).toHaveText('2 changes applied.');
-
-    await page.getByRole('button', { name: 'Copy', exact: true }).click();
-    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(
+    await expect(output).toHaveValue(
       'Read this: https://example.com/a?id=1&utm_source=chatgpt.com'
     );
+    await expect(row('Tracking parameters in URLs')).toContainText('1 found');
+    await expect(page.getByRole('status').filter({ hasText: 'changes applied' })).toHaveText(
+      '2 changes applied.'
+    );
+
+    await page.getByRole('button', { name: 'Copy', exact: true }).click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe('Read this: https://example.com/a?id=1&utm_source=chatgpt.com');
 
     await page.getByRole('button', { name: 'Clear', exact: true }).click();
     await expect(input).toHaveValue('');
     await expect(output).toHaveValue('');
   });
 
-  test('image mode reports a Stable Diffusion chunk, removes it and offers a smaller download', async ({ page }) => {
+  test('image mode reports a Stable Diffusion chunk, removes it and offers a smaller download', async ({
+    page,
+  }) => {
     await openTool(page, SLUG, 'AI Metadata Cleaner');
 
     const parameters = `a cat in a hat, ${'masterpiece, '.repeat(120)}\nSteps: 20, Sampler: Euler a, CFG scale: 7`;
     const original = pngWithParameters(parameters);
 
     // The page is pre-rendered; a click before React attaches its handlers opens nothing, so it is repeated.
-    const area = page.getByRole('button', { name: 'Drag & drop JPEG, PNG or WebP images or click to browse' });
+    const area = page.getByRole('button', {
+      name: 'Drag & drop JPEG, PNG or WebP images or click to browse',
+    });
     await expect(async () => {
       const chooser = await openFileChooser(page, () => area.click(), { timeout: 2_000 });
       await chooser.setFiles({ name: 'cat.png', mimeType: 'image/png', buffer: original });
@@ -141,16 +156,25 @@ test.describe('AI Metadata Cleaner', () => {
     expect(cleaned.includes(Buffer.from('parameters'))).toBe(false);
     expect(cleaned.includes(Buffer.from('tEXt'))).toBe(false);
     // The pixel chunk is carried over byte for byte.
-    const idat = pngChunk('IDAT', deflateSync(Buffer.concat([0, 1].map(() => Buffer.from([0, 255, 0, 0, 255, 0, 255, 0, 255])))));
+    const idat = pngChunk(
+      'IDAT',
+      deflateSync(Buffer.concat([0, 1].map(() => Buffer.from([0, 255, 0, 0, 255, 0, 255, 0, 255]))))
+    );
     expect(cleaned.includes(idat)).toBe(true);
   });
 
   test('image mode leaves a file that is not a valid image alone and says so', async ({ page }) => {
     await openTool(page, SLUG, 'AI Metadata Cleaner');
-    const area = page.getByRole('button', { name: 'Drag & drop JPEG, PNG or WebP images or click to browse' });
+    const area = page.getByRole('button', {
+      name: 'Drag & drop JPEG, PNG or WebP images or click to browse',
+    });
     await expect(async () => {
       const chooser = await openFileChooser(page, () => area.click(), { timeout: 2_000 });
-      await chooser.setFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('this is not a picture') });
+      await chooser.setFiles({
+        name: 'broken.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from('this is not a picture'),
+      });
     }).toPass({ timeout: 20_000 });
 
     await expect(page.getByText('Not cleaned')).toBeVisible();

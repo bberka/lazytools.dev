@@ -22,12 +22,19 @@ function pemBody(pem: string, label: string): string {
 async function roundTrip(publicKey: CryptoKey, privateKey: CryptoKey): Promise<string> {
   const message = new TextEncoder().encode('round trip 🔐');
   const encrypted = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, message);
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, encrypted));
+  return new TextDecoder().decode(
+    await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, encrypted)
+  );
 }
 
-async function importDer(pair: { publicDer: Uint8Array<ArrayBuffer>; privateDer: Uint8Array<ArrayBuffer> }) {
+async function importDer(pair: {
+  publicDer: Uint8Array<ArrayBuffer>;
+  privateDer: Uint8Array<ArrayBuffer>;
+}) {
   const publicKey = await crypto.subtle.importKey('spki', pair.publicDer, OAEP, true, ['encrypt']);
-  const privateKey = await crypto.subtle.importKey('pkcs8', pair.privateDer, OAEP, true, ['decrypt']);
+  const privateKey = await crypto.subtle.importKey('pkcs8', pair.privateDer, OAEP, true, [
+    'decrypt',
+  ]);
   return { publicKey, privateKey };
 }
 
@@ -83,12 +90,21 @@ test.describe('generateRsaKeyPair', () => {
   test('honours the requested key size', async () => {
     const pair = await generateRsaKeyPair(3072, 'PKCS8');
     expect(pair.bits).toBe(3072);
-    const publicKey = await crypto.subtle.importKey('spki', fromBase64(pair.publicKey), OAEP, true, ['encrypt']);
+    const publicKey = await crypto.subtle.importKey(
+      'spki',
+      fromBase64(pair.publicKey),
+      OAEP,
+      true,
+      ['encrypt']
+    );
     expect(modulusBits(publicKey)).toBe(3072);
   });
 
   test('makes a different pair every time', async () => {
-    const [first, second] = await Promise.all([generateRsaKeyPair(2048, 'PKCS8'), generateRsaKeyPair(2048, 'PKCS8')]);
+    const [first, second] = await Promise.all([
+      generateRsaKeyPair(2048, 'PKCS8'),
+      generateRsaKeyPair(2048, 'PKCS8'),
+    ]);
     expect(first.publicKey).not.toBe(second.publicKey);
     expect(first.privateKey).not.toBe(second.privateKey);
   });

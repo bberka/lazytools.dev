@@ -42,7 +42,9 @@ test.describe('New text tools, part 2', () => {
     const output = (page: Page) => page.getByRole('textbox', { name: 'Sorted lines' });
     const summary = (page: Page) => page.getByRole('status', { name: 'Summary' });
 
-    test('sorts, removes duplicates and empty lines, and counts what it removed', async ({ page }) => {
+    test('sorts, removes duplicates and empty lines, and counts what it removed', async ({
+      page,
+    }) => {
       await openTool(page, 'text-sorter-deduplicator', NAME);
       await expect(summary(page)).toHaveText('Add some lines above to see the result.');
       await expect(page.getByRole('button', { name: 'Copy Result' })).toBeDisabled();
@@ -53,7 +55,9 @@ test.describe('New text tools, part 2', () => {
       await expect(output(page)).toHaveValue(
         ['apple', 'Apple', 'banana', 'cherry', 'Cherry', 'file10.txt', 'file2.txt'].join('\n')
       );
-      await expect(summary(page)).toHaveText('7 lines from 9 lines. 1 duplicate and 1 empty line removed.');
+      await expect(summary(page)).toHaveText(
+        '7 lines from 9 lines. 1 duplicate and 1 empty line removed.'
+      );
 
       await page.getByRole('combobox', { name: 'Sort order' }).click();
       await page.getByRole('option', { name: 'Natural (file2 before file10)' }).click();
@@ -65,8 +69,12 @@ test.describe('New text tools, part 2', () => {
       await page.getByRole('combobox', { name: 'Sort order' }).click();
       await page.getByRole('option', { name: 'A to Z' }).click();
       await page.getByRole('checkbox', { name: 'Ignore case when comparing' }).check();
-      await expect(output(page)).toHaveValue(['Apple', 'banana', 'cherry', 'file10.txt', 'file2.txt'].join('\n'));
-      await expect(summary(page)).toHaveText('5 lines from 9 lines. 3 duplicates and 1 empty line removed.');
+      await expect(output(page)).toHaveValue(
+        ['Apple', 'banana', 'cherry', 'file10.txt', 'file2.txt'].join('\n')
+      );
+      await expect(summary(page)).toHaveText(
+        '5 lines from 9 lines. 3 duplicates and 1 empty line removed.'
+      );
 
       await page.getByRole('button', { name: 'Copy Result' }).click();
       await expect
@@ -74,7 +82,9 @@ test.describe('New text tools, part 2', () => {
         .toBe(['Apple', 'banana', 'cherry', 'file10.txt', 'file2.txt'].join('\n'));
 
       await page.getByRole('button', { name: 'Use as Input' }).click();
-      await expect(input(page)).toHaveValue(['Apple', 'banana', 'cherry', 'file10.txt', 'file2.txt'].join('\n'));
+      await expect(input(page)).toHaveValue(
+        ['Apple', 'banana', 'cherry', 'file10.txt', 'file2.txt'].join('\n')
+      );
       await expect(page.getByRole('button', { name: 'Use as Input' })).toBeDisabled();
     });
 
@@ -86,7 +96,9 @@ test.describe('New text tools, part 2', () => {
       await page.getByRole('option', { name: 'Numeric, smallest first' }).click();
       // Lines without a leading number come last; the blank line is dropped.
       await expect(output(page)).toHaveValue(['-3', '2.5', '9', '10', 'abc'].join('\n'));
-      await expect(summary(page)).toHaveText('5 lines from 6 lines. 0 duplicates and 1 empty line removed.');
+      await expect(summary(page)).toHaveText(
+        '5 lines from 6 lines. 0 duplicates and 1 empty line removed.'
+      );
 
       await page.getByRole('combobox', { name: 'Sort order' }).click();
       await page.getByRole('option', { name: 'Shortest first' }).click();
@@ -119,7 +131,9 @@ test.describe('New text tools, part 2', () => {
     const slug = (page: Page) => page.getByRole('textbox', { name: 'Slug', exact: true });
     const status = (page: Page) => page.getByRole('status', { name: 'Slug summary' });
 
-    test('builds a slug and follows the separator, accent, stopword and length options', async ({ page }) => {
+    test('builds a slug and follows the separator, accent, stopword and length options', async ({
+      page,
+    }) => {
       await openTool(page, 'slugify', NAME);
       await expect(status(page)).toHaveText('Type a title above to see its slug.');
       await expect(page.getByRole('button', { name: 'Copy Slug' })).toBeDisabled();
@@ -195,7 +209,9 @@ test.describe('New text tools, part 2', () => {
     const codeInput = (page: Page) => page.getByRole('textbox', { name: 'Code words to read' });
     const decoded = (page: Page) => page.getByRole('textbox', { name: 'Decoded text' });
 
-    test('spells text with ICAO digits, offers plain digits, and lists the reference tables', async ({ page }) => {
+    test('spells text with ICAO digits, offers plain digits, and lists the reference tables', async ({
+      page,
+    }) => {
       await openTool(page, 'nato-alphabet', NAME);
 
       await spellInput(page).fill('Hello World 42');
@@ -219,12 +235,22 @@ test.describe('New text tools, part 2', () => {
 
       const letters = page.getByRole('table', { name: 'NATO phonetic alphabet letters' });
       await expect(letters.getByRole('row')).toHaveCount(27); // header + 26 letters
-      await expect(letters.getByRole('row').nth(10).getByRole('cell')).toHaveText(['J', 'Juliett', 'JEW-LEE-ETT']);
+      await expect(letters.getByRole('row').nth(10).getByRole('cell')).toHaveText([
+        'J',
+        'Juliett',
+        'JEW-LEE-ETT',
+      ]);
       const digits = page.getByRole('table', { name: 'ICAO digit pronunciations' });
-      await expect(digits.getByRole('row').nth(10).getByRole('cell')).toHaveText(['9', 'Niner', 'NIN-ER']);
+      await expect(digits.getByRole('row').nth(10).getByRole('cell')).toHaveText([
+        '9',
+        'Niner',
+        'NIN-ER',
+      ]);
     });
 
-    test('decodes code words, swaps direction, and handles characters without a code word', async ({ page }) => {
+    test('decodes code words, swaps direction, and handles characters without a code word', async ({
+      page,
+    }) => {
       await openTool(page, 'nato-alphabet', NAME);
 
       await page.getByRole('tab', { name: 'NATO to Text' }).click();
@@ -243,7 +269,10 @@ test.describe('New text tools, part 2', () => {
 
       // Use as Input and Swap feeds the spelling back in as the text to decode.
       await page.getByRole('button', { name: 'Use as Input and Swap' }).click();
-      await expect(page.getByRole('tab', { name: 'NATO to Text' })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: 'NATO to Text' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
       await expect(codeInput(page)).toHaveValue('Hotel India / Charlie');
       await expect(decoded(page)).toHaveValue('hi c');
 
@@ -286,7 +315,9 @@ test.describe('New text tools, part 2', () => {
       await expect.poll(() => clipboardText(page)).toBe('t1e i18n of k8s, a3n!');
     });
 
-    test('counts characters rather than code units, shortens whole lines, and keeps numbers', async ({ page }) => {
+    test('counts characters rather than code units, shortens whole lines, and keeps numbers', async ({
+      page,
+    }) => {
       await openTool(page, 'numeronym-generator', NAME);
 
       // R, e plus an accent, s, u, m, e plus an accent: six characters, four between the ends.
@@ -323,12 +354,18 @@ test.describe('New text tools, part 2', () => {
       page.getByRole('table', { name: 'Addresses with their normalized form and status' });
     const GMAIL = 'Gmail: remove dots and +tag, googlemail.com becomes gmail.com';
 
-    test('normalizes a batch, reports validity and duplicates, and follows the rules', async ({ page }) => {
+    test('normalizes a batch, reports validity and duplicates, and follows the rules', async ({
+      page,
+    }) => {
       await openTool(page, 'email-normalizer', NAME);
-      await expect(page.getByText('Paste some addresses above, or load the example, to normalize them.')).toBeVisible();
+      await expect(
+        page.getByText('Paste some addresses above, or load the example, to normalize them.')
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'Load Example' }).click();
-      await expect(output(page)).toHaveValue(['johndoe@gmail.com', 'ada@example.com', 'info@xn--bcher-kva.de'].join('\n'));
+      await expect(output(page)).toHaveValue(
+        ['johndoe@gmail.com', 'ada@example.com', 'info@xn--bcher-kva.de'].join('\n')
+      );
       await expect(page.getByRole('group', { name: 'Summary' })).toHaveText(
         'Addresses7Valid5Invalid2Unique3Duplicates2'
       );
@@ -336,14 +373,35 @@ test.describe('New text tools, part 2', () => {
       const rows = details(page).getByRole('row');
       await expect(rows).toHaveCount(8); // header + 7 addresses
       await expect(rows.nth(1).getByRole('cell')).toHaveText([
-        '1', 'John.Doe+newsletter@Gmail.com', 'johndoe@gmail.com', 'Valid',
+        '1',
+        'John.Doe+newsletter@Gmail.com',
+        'johndoe@gmail.com',
+        'Valid',
       ]);
       await expect(rows.nth(2).getByRole('cell')).toHaveText([
-        '2', 'johndoe@googlemail.com', 'johndoe@gmail.com', 'Duplicate of #1',
+        '2',
+        'johndoe@googlemail.com',
+        'johndoe@gmail.com',
+        'Duplicate of #1',
       ]);
-      await expect(rows.nth(3).getByRole('cell')).toHaveText(['3', 'ADA@Example.COM', 'ada@example.com', 'Valid']);
-      await expect(rows.nth(5).getByRole('cell')).toHaveText(['5', 'not-an-email', '', 'Invalid: Missing @']);
-      await expect(rows.nth(7).getByRole('cell')).toHaveText(['7', 'name@', '', 'Invalid: Empty domain']);
+      await expect(rows.nth(3).getByRole('cell')).toHaveText([
+        '3',
+        'ADA@Example.COM',
+        'ada@example.com',
+        'Valid',
+      ]);
+      await expect(rows.nth(5).getByRole('cell')).toHaveText([
+        '5',
+        'not-an-email',
+        '',
+        'Invalid: Missing @',
+      ]);
+      await expect(rows.nth(7).getByRole('cell')).toHaveText([
+        '7',
+        'name@',
+        '',
+        'Invalid: Empty domain',
+      ]);
 
       await page.getByRole('button', { name: 'Copy Result' }).click();
       await expect
@@ -364,9 +422,16 @@ test.describe('New text tools, part 2', () => {
         'Addresses7Valid5Invalid2Unique4Duplicates1'
       );
 
-      await page.getByRole('checkbox', { name: 'Write international domains in ASCII (punycode)' }).uncheck();
+      await page
+        .getByRole('checkbox', { name: 'Write international domains in ASCII (punycode)' })
+        .uncheck();
       await expect(output(page)).toHaveValue(
-        ['john.doe+newsletter@gmail.com', 'johndoe@googlemail.com', 'ada@example.com', 'info@bücher.de'].join('\n')
+        [
+          'john.doe+newsletter@gmail.com',
+          'johndoe@googlemail.com',
+          'ada@example.com',
+          'info@bücher.de',
+        ].join('\n')
       );
 
       await page.getByRole('checkbox', { name: 'Leave duplicates out of the result' }).uncheck();
@@ -381,11 +446,15 @@ test.describe('New text tools, part 2', () => {
       );
     });
 
-    test('plus tags at other providers, mixed separators, and a batch with nothing valid', async ({ page }) => {
+    test('plus tags at other providers, mixed separators, and a batch with nothing valid', async ({
+      page,
+    }) => {
       await openTool(page, 'email-normalizer', NAME);
 
       await input(page).fill('Ana+news@Example.com;ana@example.com, <mailto:ANA+x@example.com>');
-      await expect(output(page)).toHaveValue('ana+news@example.com\nana@example.com\nana+x@example.com');
+      await expect(output(page)).toHaveValue(
+        'ana+news@example.com\nana@example.com\nana+x@example.com'
+      );
 
       await page.getByRole('checkbox', { name: 'Remove +tag at other providers too' }).check();
       await expect(output(page)).toHaveValue('ana@example.com');
@@ -402,7 +471,9 @@ test.describe('New text tools, part 2', () => {
 
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(input(page)).toHaveValue('');
-      await expect(page.getByText('Paste some addresses above, or load the example, to normalize them.')).toBeVisible();
+      await expect(
+        page.getByText('Paste some addresses above, or load the example, to normalize them.')
+      ).toBeVisible();
     });
   });
 
@@ -424,7 +495,9 @@ test.describe('New text tools, part 2', () => {
       '| Linus | Maintainer |    88 |',
     ].join('\n');
 
-    test('edits cells, alignment, rows and columns and copies the padded or compact Markdown', async ({ page }) => {
+    test('edits cells, alignment, rows and columns and copies the padded or compact Markdown', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-table-generator', NAME);
       await expect(markdown(page)).toHaveValue(SAMPLE_PADDED);
       await expect(page.getByText('3 columns, 2 rows below the header.')).toBeVisible();
@@ -462,14 +535,20 @@ test.describe('New text tools, part 2', () => {
       await expect(page.getByText('3 columns, 1 row below the header.')).toBeVisible();
 
       await page.getByRole('checkbox', { name: 'Pad columns so the raw text lines up' }).uncheck();
-      const compact = ['| Name | Role | Score |', '| :-- | :-: | --: |', '| Ada | Pilot | 95 |'].join('\n');
+      const compact = [
+        '| Name | Role | Score |',
+        '| :-- | :-: | --: |',
+        '| Ada | Pilot | 95 |',
+      ].join('\n');
       await expect(markdown(page)).toHaveValue(compact);
 
       await page.getByRole('button', { name: 'Copy Markdown' }).click();
       await expect.poll(() => clipboardText(page)).toBe(compact);
     });
 
-    test('imports CSV with quoting, escapes pipes, and clears down to an empty state', async ({ page }) => {
+    test('imports CSV with quoting, escapes pipes, and clears down to an empty state', async ({
+      page,
+    }) => {
       await openTool(page, 'markdown-table-generator', NAME);
 
       await page.getByRole('button', { name: 'Load Example' }).click();
@@ -503,7 +582,12 @@ test.describe('New text tools, part 2', () => {
       await expect(page.getByText('Imported 2 rows and 2 columns.')).toBeVisible();
       await expect(header(page, 1)).toHaveValue('Column 1');
       await expect(markdown(page)).toHaveValue(
-        ['| Column 1 | Column 2 |', '| -------- | -------- |', '| a        | b        |', '| 1        | x<br>y   |'].join('\n')
+        [
+          '| Column 1 | Column 2 |',
+          '| -------- | -------- |',
+          '| a        | b        |',
+          '| 1        | x<br>y   |',
+        ].join('\n')
       );
 
       await page.getByRole('button', { name: 'Clear table' }).click();

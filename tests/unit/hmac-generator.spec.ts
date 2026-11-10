@@ -161,7 +161,10 @@ const RFC_2202_SHA1: Vector[] = [
 test.describe('published test vectors (hmacDigest)', () => {
   for (const vector of [...RFC_4231, ...RFC_2202_SHA1]) {
     test(vector.name, async () => {
-      for (const [algorithm, expected] of Object.entries(vector.expected) as [HmacAlgorithm, string][]) {
+      for (const [algorithm, expected] of Object.entries(vector.expected) as [
+        HmacAlgorithm,
+        string,
+      ][]) {
         expect(await hmacHex(algorithm, vector.key, vector.data), algorithm).toBe(expected);
       }
     });
@@ -241,13 +244,20 @@ test.describe('computeHmac', () => {
       if (!empty.ok || !zero.ok) continue;
       expect(encodeDigest(empty.digest, 'hex')).toBe(encodeDigest(zero.digest, 'hex'));
       expect(empty.keyBytes).toBe(0);
-      const expected = createHmac(algorithm.replace('-', '').toLowerCase(), '').update('abc').digest('hex');
+      const expected = createHmac(algorithm.replace('-', '').toLowerCase(), '')
+        .update('abc')
+        .digest('hex');
       expect(encodeDigest(empty.digest, 'hex')).toBe(expected);
     }
   });
 
   test('an empty message is valid', async () => {
-    const result = await computeHmac({ message: '', key: '', keyEncoding: 'utf8', algorithm: 'SHA-256' });
+    const result = await computeHmac({
+      message: '',
+      key: '',
+      keyEncoding: 'utf8',
+      algorithm: 'SHA-256',
+    });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(encodeDigest(result.digest, 'hex')).toBe(
@@ -262,14 +272,21 @@ test.describe('computeHmac', () => {
       const result = await computeHmac({ message, key, keyEncoding: 'utf8', algorithm });
       expect(result.ok).toBe(true);
       if (!result.ok) continue;
-      const expected = createHmac(algorithm.replace('-', '').toLowerCase(), key).update(message).digest('hex');
+      const expected = createHmac(algorithm.replace('-', '').toLowerCase(), key)
+        .update(message)
+        .digest('hex');
       expect(encodeDigest(result.digest, 'hex')).toBe(expected);
     }
   });
 
   test('reports an invalid hex key as an error result instead of throwing', async () => {
     for (const key of ['xyz', 'abc', '0b0g', '12 3']) {
-      const result = await computeHmac({ message: 'm', key, keyEncoding: 'hex', algorithm: 'SHA-256' });
+      const result = await computeHmac({
+        message: 'm',
+        key,
+        keyEncoding: 'hex',
+        algorithm: 'SHA-256',
+      });
       expect(result.ok, key).toBe(false);
       if (result.ok) continue;
       expect(result.error).toMatch(/hex/i);
@@ -278,7 +295,12 @@ test.describe('computeHmac', () => {
 
   test('reports an invalid Base64 key as an error result instead of throwing', async () => {
     for (const key of ['!!!!', 'a', 'ab=c', 'abcde', 'a+b_', 'ab===', 'ab=']) {
-      const result = await computeHmac({ message: 'm', key, keyEncoding: 'base64', algorithm: 'SHA-256' });
+      const result = await computeHmac({
+        message: 'm',
+        key,
+        keyEncoding: 'base64',
+        algorithm: 'SHA-256',
+      });
       expect(result.ok, key).toBe(false);
       if (result.ok) continue;
       expect(result.error).toMatch(/base64/i);
@@ -414,7 +436,10 @@ test.describe('verifySignature', () => {
   const digest = fromHex('5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843');
 
   test('matches the hex output, in either case', () => {
-    expect(verifySignature(digest, encodeDigest(digest, 'hex'))).toEqual({ status: 'match', encoding: 'hex' });
+    expect(verifySignature(digest, encodeDigest(digest, 'hex'))).toEqual({
+      status: 'match',
+      encoding: 'hex',
+    });
     expect(verifySignature(digest, encodeDigest(digest, 'hex', true))).toEqual({
       status: 'match',
       encoding: 'hex',
@@ -445,7 +470,9 @@ test.describe('verifySignature', () => {
 
   test('ignores surrounding and embedded whitespace', () => {
     const hex = encodeDigest(digest, 'hex');
-    expect(verifySignature(digest, `  ${hex.slice(0, 32)}\n${hex.slice(32)}\n`).status).toBe('match');
+    expect(verifySignature(digest, `  ${hex.slice(0, 32)}\n${hex.slice(32)}\n`).status).toBe(
+      'match'
+    );
   });
 
   test('reports a mismatch when a single digit differs', () => {
@@ -487,7 +514,11 @@ test.describe('verifySignature', () => {
   });
 
   test('text that is no supported encoding is invalid', () => {
-    for (const text of ['not a signature!', 'zz$', 'sha256=5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843']) {
+    for (const text of [
+      'not a signature!',
+      'zz$',
+      'sha256=5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843',
+    ]) {
       const result = verifySignature(digest, text);
       expect(result.status, text).toBe('invalid');
       if (result.status === 'invalid') expect(result.error).toMatch(/hex/i);

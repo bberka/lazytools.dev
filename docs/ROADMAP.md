@@ -13,6 +13,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 ## Tool expansion backlog
 
 ### 1. Converters
+
 - [x] **cURL Command to Fetch/Axios**: Convert raw cURL commands into JavaScript, Python, Go, or Rust snippets.
 - [ ] **JSON/YAML/XML to Multi-Language Model**: Convert payloads to typed TypeScript, C#, Go, Rust, Java, Python, or PHP models.
 - [x] **JSON/CSV to TOML**: Bidirectional conversion between JSON, CSV, and TOML formats.
@@ -20,6 +21,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [x] **List Converter**: Convert line-break lists to comma-separated, JSON arrays, SQL IN clauses, etc.
 
 ### 2. Encoders & Decoders
+
 - [x] **Hex to String / String to Hex**: Convert text to hex representations and vice-versa.
 - [x] **Punycode Encoder/Decoder**: Translate internationalized domain names (IDN) to/from Punycode.
 - [x] **Morse Code / Binary Encoder**: Encode text to binary or Morse code (with optional audio playback).
@@ -27,6 +29,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **Compression Algorithms**: Compress/decompress text using LZW, RLE, and Huffman coding.
 
 ### 3. Generators
+
 - [x] **Mock/Dummy Data Generator**: Generate mock user lists, addresses, and schemas to export as CSV/JSON.
 - [ ] **SSH Key Generator**: Generate client-side SSH public and private key pairs (RSA, ECDSA) via WebCrypto.
 - [ ] **Barcode Generator**: Generate linear 1D barcodes (Code 128, EAN, UPC) in SVG/PNG format.
@@ -36,6 +39,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **WiFi QR Code Generator**: Generate QR codes that automatically connect devices to a WiFi network.
 
 ### 4. Formatters & Validators
+
 - [x] **CSS Minifier & Formatter**: Beautify or compress stylesheet blocks.
 - [ ] **HTML Minifier & Formatter**: Format or minify markup and strip comments.
 - [ ] **JSON Schema Validator**: Validate JSON data instances against a provided JSON Schema.
@@ -44,6 +48,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **IBAN Validator and Parser**: Validate international bank account numbers and extract bank details.
 
 ### 5. Text Tools
+
 - [x] **Text Sorter & Deduplicator**: Sort lists alphabetically, by length, and remove duplicate entries.
 - [x] **Zero-Width & Unicode Inspector**: Inspect string characters to highlight hidden or zero-width symbols.
 - [x] **Markdown Table Generator**: A visual grid builder to design and export Markdown tables.
@@ -57,6 +62,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **AI Summarizer**: Generate concise summaries from text or documents via AI.
 
 ### 6. Utilities
+
 - [x] **JWT Creator/Signer**: Generate mock JSON Web Tokens (HMAC) for testing authorization flows.
 - [x] **Base64 Image Decoder**: View and download images from their raw base64 data URLs.
 - [ ] **Screen & Viewport Inspector**: Display live viewport specs, pixel ratio, orientation, and browser preferences.
@@ -69,6 +75,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [x] **Open Graph Meta Generator**: Generate and preview SEO/Open Graph HTML meta tags for websites.
 
 ### 7. Security
+
 - [x] **HMAC Generator**: Compute HMAC signatures (SHA-256/512) with a custom secret key.
 - [x] **AI Metadata Cleaner**: Strip C2PA, EXIF, XMP and generation prompts from images, and invisible characters from text.
 - [ ] **Password Strength Evaluator**: Real-time password safety metric and warnings using entropy checks.
@@ -77,6 +84,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **String Obfuscator**: Obfuscate text or email addresses to hide them from simple bots.
 
 ### 8. Networking
+
 - [ ] **CORS Request Policy Tester**: Test if a given endpoint supports CORS requests directly from the client.
 - [x] **HTTP Status Codes Cheat Sheet**: Reference directory of HTTP status codes and specifications.
 - [ ] **MAC Address Vendor Lookup**: Identify NIC manufacturers from MAC address OUI prefixes.
@@ -87,6 +95,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **Random Port Generator**: Generate random unassigned high-numbered network ports.
 
 ### 9. Design
+
 - [x] **CSS Gradient Generator**: Visual multi-stop linear/radial gradient picker producing CSS and Tailwind.
 - [ ] **SVG Waves & Shape Generator**: Visual math-based generator for custom header waves and vector blobs.
 - [ ] **Tailwind Flexbox & Grid Builder**: Click-to-build visual layout grid generating responsive Tailwind CSS.
@@ -94,6 +103,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **Code Snippet Image Generator**: Convert code snippets into styled screenshot images with syntax highlighting.
 
 ### 10. PDF & Image Tools
+
 - [ ] **Client-Side PDF OCR (Image-to-Text)**: Scan and extract editable text from scanned PDFs/images.
 - [ ] **PDF Metadata Editor**: View and update standard PDF fields (Author, Title, Subject).
 - [ ] **Meme Generator**: Overlay text on top/bottom of uploaded images and export to PNG.
@@ -103,6 +113,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **AI & Processing**: Repair corrupted PDFs, PDF Forms creator/filler, Scan to PDF, Translate PDF.
 
 ### 11. Calculators
+
 - [x] **Loan & Mortgage Calculator**: Compute loan payment tables and view complete amortization schedules.
 - [x] **Compound Interest Calculator**: Project investment growth with monthly contributions and interest graphs.
 - [x] **Math Evaluator**: Parse and evaluate complex mathematical expressions.

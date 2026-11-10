@@ -62,7 +62,10 @@ function DecodePanel() {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
   const deferred = useDeferredValue(input);
-  const parsed = useMemo(() => (deferred.trim() === '' ? null : parseImageInput(deferred)), [deferred]);
+  const parsed = useMemo(
+    () => (deferred.trim() === '' ? null : parseImageInput(deferred)),
+    [deferred]
+  );
   const analysis = useMemo(
     () => (parsed?.ok ? analyzeImage(parsed.bytes, parsed.declaredMime) : null),
     [parsed]
@@ -77,7 +80,9 @@ function DecodePanel() {
   const previewUrl = useObjectUrl(blob);
   const correctedDataUrl = useMemo(
     () =>
-      parsed?.ok && analysis?.type ? buildDataUrl(analysis.type.mime, encodeBase64(parsed.bytes)) : '',
+      parsed?.ok && analysis?.type
+        ? buildDataUrl(analysis.type.mime, encodeBase64(parsed.bytes))
+        : '',
     [parsed, analysis]
   );
 
@@ -87,7 +92,10 @@ function DecodePanel() {
   const handleDownload = () => {
     if (!parsed?.ok || !analysis?.type) return;
     try {
-      downloadBlob(new Blob([parsed.bytes as BlobPart], { type: analysis.type.mime }), downloadFileName(analysis.type));
+      downloadBlob(
+        new Blob([parsed.bytes as BlobPart], { type: analysis.type.mime }),
+        downloadFileName(analysis.type)
+      );
       toast.success('Image downloaded');
     } catch {
       toast.error('Could not download the image');
@@ -102,8 +110,8 @@ function DecodePanel() {
           Decode a Base64 image
         </CardTitle>
         <CardDescription>
-          Paste a data URL or plain Base64. The image type is read from the data itself, so a missing or
-          wrong label does not matter.
+          Paste a data URL or plain Base64. The image type is read from the data itself, so a
+          missing or wrong label does not matter.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -117,11 +125,22 @@ function DecodePanel() {
           className="bg-background font-mono text-xs sm:text-sm"
         />
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => setInput(EXAMPLE_DATA_URL)}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setInput(EXAMPLE_DATA_URL)}
+          >
             <Wand2 className="mr-2 h-4 w-4" />
             Load example
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setInput('')} disabled={input === ''}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setInput('')}
+            disabled={input === ''}
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Clear
           </Button>
@@ -135,7 +154,10 @@ function DecodePanel() {
         )}
 
         {parsed && !parsed.ok && (
-          <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+          >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{parsed.error}</span>
           </div>
@@ -155,12 +177,15 @@ function DecodePanel() {
             )}
 
             {!analysis.type && (
-              <div role="alert" className="space-y-1 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+              <div
+                role="alert"
+                className="space-y-1 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"
+              >
                 <p className="flex items-start gap-1.5 text-destructive">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    The data was decoded ({formatBytes(parsed.bytes.length)}), but it is not a PNG, JPEG,
-                    GIF, WebP, SVG, BMP, ICO or AVIF image.
+                    The data was decoded ({formatBytes(parsed.bytes.length)}), but it is not a PNG,
+                    JPEG, GIF, WebP, SVG, BMP, ICO or AVIF image.
                   </span>
                 </p>
                 <p className="pl-5.5 font-mono text-xs text-muted-foreground">
@@ -170,11 +195,15 @@ function DecodePanel() {
             )}
 
             {analysis.type && analysis.mismatch && (
-              <div role="status" className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+              <div
+                role="status"
+                className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm"
+              >
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
-                  The data URL says <span className="font-mono">{analysis.declaredMime}</span>, but the data is
-                  a {analysis.type.label} image. The real type is used for the preview and the download.
+                  The data URL says <span className="font-mono">{analysis.declaredMime}</span>, but
+                  the data is a {analysis.type.label} image. The real type is used for the preview
+                  and the download.
                 </span>
               </div>
             )}
@@ -185,7 +214,8 @@ function DecodePanel() {
                   {previewFailed ? (
                     <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
                       <AlertCircle className="h-4 w-4" />
-                      The browser could not display this {analysis.type.label} image. The file may be damaged.
+                      The browser could not display this {analysis.type.label} image. The file may
+                      be damaged.
                     </p>
                   ) : previewUrl ? (
                     // The image is rendered through <img> only, so an SVG cannot run scripts.
@@ -317,7 +347,11 @@ function EncodePanel() {
           }
         />
 
-        {busy && <p role="status" className="text-sm text-muted-foreground">Reading the image...</p>}
+        {busy && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Reading the image...
+          </p>
+        )}
         {error && (
           <div role="alert" className="flex items-start gap-2 text-sm text-destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -329,14 +363,21 @@ function EncodePanel() {
           <div className="space-y-4">
             {previewUrl && (
               <div className="flex min-h-24 items-center justify-center overflow-auto rounded-md border bg-muted/40 p-3 sm:p-4">
-                <img src={previewUrl} alt="Selected image preview" className="h-auto max-h-48 max-w-full" />
+                <img
+                  src={previewUrl}
+                  alt="Selected image preview"
+                  className="h-auto max-h-48 max-w-full"
+                />
               </div>
             )}
 
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <FieldRow label="MIME type" value={encoded.mime} />
               <FieldRow label="File size" value={formatBytes(encoded.size)} />
-              <FieldRow label="Base64 length" value={`${encoded.base64.length.toLocaleString('en-US')} characters`} />
+              <FieldRow
+                label="Base64 length"
+                value={`${encoded.base64.length.toLocaleString('en-US')} characters`}
+              />
             </dl>
 
             <div className="space-y-2">
@@ -381,7 +422,13 @@ function EncodePanel() {
           </div>
         )}
 
-        <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={!encoded && !error}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleClear}
+          disabled={!encoded && !error}
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           Clear
         </Button>

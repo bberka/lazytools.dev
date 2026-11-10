@@ -76,7 +76,9 @@ export function UuidGenerator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label htmlFor="uuid-type" className="text-sm font-medium mb-2 block">Type</label>
+            <label htmlFor="uuid-type" className="text-sm font-medium mb-2 block">
+              Type
+            </label>
             <Select value={type} onValueChange={(value) => setType(value as IdType)}>
               <SelectTrigger id="uuid-type">
                 <SelectValue placeholder="Select UUID type" />
@@ -93,7 +95,9 @@ export function UuidGenerator() {
             </Select>
           </div>
           <div>
-            <label htmlFor="uuid-count" className="text-sm font-medium mb-2 block">Count</label>
+            <label htmlFor="uuid-count" className="text-sm font-medium mb-2 block">
+              Count
+            </label>
             <Select value={count} onValueChange={setCount}>
               <SelectTrigger id="uuid-count">
                 <SelectValue placeholder="Select count" />
@@ -118,7 +122,10 @@ export function UuidGenerator() {
       </Button>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           {error}
         </div>
       )}
@@ -129,11 +136,7 @@ export function UuidGenerator() {
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-2">
             <CardTitle>Generated IDs</CardTitle>
             <div className="flex items-center gap-1">
-              <Button
-                variant={copiedAll ? "default" : "ghost"}
-                size="sm"
-                onClick={handleCopyAll}
-              >
+              <Button variant={copiedAll ? 'default' : 'ghost'} size="sm" onClick={handleCopyAll}>
                 {copiedAll ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                 Copy All
               </Button>
@@ -154,7 +157,7 @@ export function UuidGenerator() {
                     </div>
                     {/* Hidden until hover only where a pointer can hover; touch screens always show it. */}
                     <Button
-                      variant={copied ? "default" : "ghost"}
+                      variant={copied ? 'default' : 'ghost'}
                       size="icon"
                       onClick={() => handleCopy(index)}
                       aria-label={copied ? `Copied ${uuid}` : `Copy ${uuid}`}

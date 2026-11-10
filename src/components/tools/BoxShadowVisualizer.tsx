@@ -77,11 +77,61 @@ const PRESETS: Preset[] = [
     canvasCustomBg: '#F8FAFC',
     borderRadius: 16,
     shadows: [
-      { name: 'Layer 1 (Sharp)', visible: true, inset: false, offsetX: 0, offsetY: 1, blur: 2, spread: 0, color: '#000000', opacity: 0.05 },
-      { name: 'Layer 2 (Ambient)', visible: true, inset: false, offsetX: 0, offsetY: 2, blur: 4, spread: 0, color: '#000000', opacity: 0.05 },
-      { name: 'Layer 3 (Soft)', visible: true, inset: false, offsetX: 0, offsetY: 4, blur: 8, spread: 0, color: '#000000', opacity: 0.05 },
-      { name: 'Layer 4 (Deep)', visible: true, inset: false, offsetX: 0, offsetY: 8, blur: 16, spread: 0, color: '#000000', opacity: 0.05 },
-      { name: 'Layer 5 (Ambient glow)', visible: true, inset: false, offsetX: 0, offsetY: 16, blur: 32, spread: 0, color: '#000000', opacity: 0.05 },
+      {
+        name: 'Layer 1 (Sharp)',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 1,
+        blur: 2,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.05,
+      },
+      {
+        name: 'Layer 2 (Ambient)',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 2,
+        blur: 4,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.05,
+      },
+      {
+        name: 'Layer 3 (Soft)',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 4,
+        blur: 8,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.05,
+      },
+      {
+        name: 'Layer 4 (Deep)',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 8,
+        blur: 16,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.05,
+      },
+      {
+        name: 'Layer 5 (Ambient glow)',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 16,
+        blur: 32,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.05,
+      },
     ],
   },
   {
@@ -91,9 +141,39 @@ const PRESETS: Preset[] = [
     canvasBgType: 'light',
     borderRadius: 8,
     shadows: [
-      { name: 'Umbra', visible: true, inset: false, offsetX: 0, offsetY: 3, blur: 3, spread: -2, color: '#000000', opacity: 0.2 },
-      { name: 'Penumbra', visible: true, inset: false, offsetX: 0, offsetY: 3, blur: 4, spread: 0, color: '#000000', opacity: 0.14 },
-      { name: 'Ambient', visible: true, inset: false, offsetX: 0, offsetY: 1, blur: 8, spread: 0, color: '#000000', opacity: 0.12 },
+      {
+        name: 'Umbra',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 3,
+        blur: 3,
+        spread: -2,
+        color: '#000000',
+        opacity: 0.2,
+      },
+      {
+        name: 'Penumbra',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 3,
+        blur: 4,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.14,
+      },
+      {
+        name: 'Ambient',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 1,
+        blur: 8,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.12,
+      },
     ],
   },
   {
@@ -104,8 +184,28 @@ const PRESETS: Preset[] = [
     canvasCustomBg: '#E2E8F0',
     borderRadius: 24,
     shadows: [
-      { name: 'Dark Shadow', visible: true, inset: false, offsetX: 9, offsetY: 9, blur: 16, spread: 0, color: '#94A3B8', opacity: 0.6 },
-      { name: 'Light Glow', visible: true, inset: false, offsetX: -9, offsetY: -9, blur: 16, spread: 0, color: '#FFFFFF', opacity: 1 },
+      {
+        name: 'Dark Shadow',
+        visible: true,
+        inset: false,
+        offsetX: 9,
+        offsetY: 9,
+        blur: 16,
+        spread: 0,
+        color: '#94A3B8',
+        opacity: 0.6,
+      },
+      {
+        name: 'Light Glow',
+        visible: true,
+        inset: false,
+        offsetX: -9,
+        offsetY: -9,
+        blur: 16,
+        spread: 0,
+        color: '#FFFFFF',
+        opacity: 1,
+      },
     ],
   },
   {
@@ -115,9 +215,39 @@ const PRESETS: Preset[] = [
     canvasBgType: 'dark',
     borderRadius: 12,
     shadows: [
-      { name: 'Core Cyan Glow', visible: true, inset: false, offsetX: 0, offsetY: 0, blur: 8, spread: 2, color: '#06B6D4', opacity: 0.8 },
-      { name: 'Ambient Purple Glow', visible: true, inset: false, offsetX: 0, offsetY: 0, blur: 25, spread: 4, color: '#A855F7', opacity: 0.6 },
-      { name: 'Deep Pink Backdrop', visible: true, inset: false, offsetX: 0, offsetY: 0, blur: 60, spread: 10, color: '#EC4899', opacity: 0.4 },
+      {
+        name: 'Core Cyan Glow',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 0,
+        blur: 8,
+        spread: 2,
+        color: '#06B6D4',
+        opacity: 0.8,
+      },
+      {
+        name: 'Ambient Purple Glow',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 0,
+        blur: 25,
+        spread: 4,
+        color: '#A855F7',
+        opacity: 0.6,
+      },
+      {
+        name: 'Deep Pink Backdrop',
+        visible: true,
+        inset: false,
+        offsetX: 0,
+        offsetY: 0,
+        blur: 60,
+        spread: 10,
+        color: '#EC4899',
+        opacity: 0.4,
+      },
     ],
   },
   {
@@ -128,8 +258,28 @@ const PRESETS: Preset[] = [
     canvasCustomBg: '#F1F5F9',
     borderRadius: 8,
     shadows: [
-      { name: 'Retro Layer 1', visible: true, inset: false, offsetX: 4, offsetY: 4, blur: 0, spread: 0, color: '#EC4899', opacity: 1 },
-      { name: 'Retro Layer 2', visible: true, inset: false, offsetX: 8, offsetY: 8, blur: 0, spread: 0, color: '#0F172A', opacity: 1 },
+      {
+        name: 'Retro Layer 1',
+        visible: true,
+        inset: false,
+        offsetX: 4,
+        offsetY: 4,
+        blur: 0,
+        spread: 0,
+        color: '#EC4899',
+        opacity: 1,
+      },
+      {
+        name: 'Retro Layer 2',
+        visible: true,
+        inset: false,
+        offsetX: 8,
+        offsetY: 8,
+        blur: 0,
+        spread: 0,
+        color: '#0F172A',
+        opacity: 1,
+      },
     ],
   },
   {
@@ -140,8 +290,28 @@ const PRESETS: Preset[] = [
     canvasCustomBg: '#F1F5F9',
     borderRadius: 16,
     shadows: [
-      { name: 'Inset Top-Left Dark', visible: true, inset: true, offsetX: 3, offsetY: 3, blur: 6, spread: 0, color: '#000000', opacity: 0.15 },
-      { name: 'Inset Bottom-Right Light', visible: true, inset: true, offsetX: -3, offsetY: -3, blur: 6, spread: 0, color: '#FFFFFF', opacity: 1 },
+      {
+        name: 'Inset Top-Left Dark',
+        visible: true,
+        inset: true,
+        offsetX: 3,
+        offsetY: 3,
+        blur: 6,
+        spread: 0,
+        color: '#000000',
+        opacity: 0.15,
+      },
+      {
+        name: 'Inset Bottom-Right Light',
+        visible: true,
+        inset: true,
+        offsetX: -3,
+        offsetY: -3,
+        blur: 6,
+        spread: 0,
+        color: '#FFFFFF',
+        opacity: 1,
+      },
     ],
   },
 ];
@@ -216,17 +386,25 @@ export function BoxShadowVisualizer() {
   const [borderRadius, setBorderRadius] = useState(16);
   const [borderWidth, setBorderWidth] = useState(0);
   const [borderColor, setBorderColor] = useState('#CBD5E1');
-  const [borderStyle, setBorderStyle] = useState<'solid' | 'dashed' | 'dotted' | 'double' | 'none'>('solid');
+  const [borderStyle, setBorderStyle] = useState<'solid' | 'dashed' | 'dotted' | 'double' | 'none'>(
+    'solid'
+  );
 
   // Canvas state
-  const [canvasBgType, setCanvasBgType] = useState<'light' | 'dark' | 'checkered' | 'custom'>('light');
+  const [canvasBgType, setCanvasBgType] = useState<'light' | 'dark' | 'checkered' | 'custom'>(
+    'light'
+  );
   const [canvasCustomBg, setCanvasCustomBg] = useState('#E2E8F0');
   const [showGrid, setShowGrid] = useState(false);
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
-
+  const dragStartRef = useRef<{
+    x: number;
+    y: number;
+    initialOffsetX: number;
+    initialOffsetY: number;
+  } | null>(null);
 
   const shadowOutput = useMemo(() => buildBoxShadow(shadows), [shadows]);
 
@@ -316,7 +494,7 @@ export function BoxShadowVisualizer() {
     setCanvasBgType(preset.canvasBgType);
     if (preset.canvasCustomBg) setCanvasCustomBg(preset.canvasCustomBg);
     setBorderRadius(preset.borderRadius);
-    
+
     const formatted: ShadowLayer[] = preset.shadows.map((s, idx) => ({
       ...s,
       id: `preset-layer-${idx}-${Date.now()}`,
@@ -347,7 +525,7 @@ export function BoxShadowVisualizer() {
       initialOffsetX: activeLayer.offsetX,
       initialOffsetY: activeLayer.offsetY,
     };
-    
+
     // Set pointer capture to handle movement outside the element safely
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -359,9 +537,15 @@ export function BoxShadowVisualizer() {
     const dy = e.clientY - dragStartRef.current.y;
 
     // Relative multiplier to make dragging feel proportional
-    const scale = 1; 
-    const nextX = Math.min(100, Math.max(-100, Math.round(dragStartRef.current.initialOffsetX + dx * scale)));
-    const nextY = Math.min(100, Math.max(-100, Math.round(dragStartRef.current.initialOffsetY + dy * scale)));
+    const scale = 1;
+    const nextX = Math.min(
+      100,
+      Math.max(-100, Math.round(dragStartRef.current.initialOffsetX + dx * scale))
+    );
+    const nextY = Math.min(
+      100,
+      Math.max(-100, Math.round(dragStartRef.current.initialOffsetY + dy * scale))
+    );
 
     updateSelectedLayer('offsetX', nextX);
     updateSelectedLayer('offsetY', nextY);
@@ -417,10 +601,8 @@ export function BoxShadowVisualizer() {
     <div className="space-y-6">
       {/* Dynamic layout: left controls side, right preview side */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,460px)] gap-4 sm:gap-6">
-        
         {/* Left Side: Controls & Editor */}
         <div className="space-y-6 order-2 lg:order-1">
-          
           {/* Shadow Layers Manager */}
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
@@ -480,7 +662,10 @@ export function BoxShadowVisualizer() {
                         </button>
 
                         {/* Operations */}
-                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex items-center gap-1 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <TooltipSimple content={layer.visible ? 'Hide Layer' : 'Show Layer'}>
                             <Button
                               variant="ghost"
@@ -489,7 +674,11 @@ export function BoxShadowVisualizer() {
                               onClick={() => updateLayer(layer.id, 'visible', !layer.visible)}
                               aria-label={layer.visible ? 'Hide Layer' : 'Show Layer'}
                             >
-                              {layer.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 opacity-60" />}
+                              {layer.visible ? (
+                                <Eye className="h-4 w-4" />
+                              ) : (
+                                <EyeOff className="h-4 w-4 opacity-60" />
+                              )}
                             </Button>
                           </TooltipSimple>
                           <TooltipSimple content="Move Layer Up">
@@ -556,10 +745,11 @@ export function BoxShadowVisualizer() {
                   <div className="flex min-w-0 items-center gap-2">
                     <Sliders className="h-5 w-5 shrink-0 text-primary" />
                     <CardTitle className="min-w-0 break-words text-lg">
-                      Properties: <span className="text-primary font-semibold">{activeLayer.name}</span>
+                      Properties:{' '}
+                      <span className="text-primary font-semibold">{activeLayer.name}</span>
                     </CardTitle>
                   </div>
-                  
+
                   {/* Layer Name Rename */}
                   <div className="flex min-w-0 items-center gap-2">
                     <Input
@@ -573,12 +763,13 @@ export function BoxShadowVisualizer() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                
                 {/* Inset Switch */}
                 <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-muted/10">
                   <div className="space-y-0.5">
                     <label className="text-sm font-semibold">Inset Shadow</label>
-                    <p className="text-xs text-muted-foreground">Place the shadow inside the boundary box.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Place the shadow inside the boundary box.
+                    </p>
                   </div>
                   <Switch
                     checked={activeLayer.inset}
@@ -589,16 +780,18 @@ export function BoxShadowVisualizer() {
 
                 {/* Slider Slates */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
                   {/* Offset X */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Offset X</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Offset X
+                      </label>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.offsetX}px
                       </span>
                     </div>
-                    <Slider aria-label="Offset X"
+                    <Slider
+                      aria-label="Offset X"
                       value={activeLayer.offsetX}
                       min={-100}
                       max={100}
@@ -609,12 +802,15 @@ export function BoxShadowVisualizer() {
                   {/* Offset Y */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Offset Y</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Offset Y
+                      </label>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.offsetY}px
                       </span>
                     </div>
-                    <Slider aria-label="Offset Y"
+                    <Slider
+                      aria-label="Offset Y"
                       value={activeLayer.offsetY}
                       min={-100}
                       max={100}
@@ -625,12 +821,15 @@ export function BoxShadowVisualizer() {
                   {/* Blur Radius */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Blur Radius</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Blur Radius
+                      </label>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.blur}px
                       </span>
                     </div>
-                    <Slider aria-label="Blur Radius"
+                    <Slider
+                      aria-label="Blur Radius"
                       value={activeLayer.blur}
                       min={0}
                       max={100}
@@ -641,27 +840,30 @@ export function BoxShadowVisualizer() {
                   {/* Spread Radius */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Spread Radius</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Spread Radius
+                      </label>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.spread}px
                       </span>
                     </div>
-                    <Slider aria-label="Spread Radius"
+                    <Slider
+                      aria-label="Spread Radius"
                       value={activeLayer.spread}
                       min={-50}
                       max={100}
                       onChange={(val) => updateSelectedLayer('spread', val)}
                     />
                   </div>
-
                 </div>
 
                 {/* Color and Opacity Row */}
                 <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4 p-4 rounded-xl border border-border/50 bg-muted/5">
-                  
                   {/* HEX Color Input */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shadow Color</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Shadow Color
+                    </label>
                     <div className="flex gap-2">
                       <ColorPicker
                         label="Shadow color"
@@ -682,13 +884,16 @@ export function BoxShadowVisualizer() {
                   {/* Opacity Slider */}
                   <div className="space-y-2 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Opacity</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Opacity
+                      </label>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {Math.round(activeLayer.opacity * 100)}%
                       </span>
                     </div>
                     <div className="pb-2">
-                      <Slider aria-label="Opacity"
+                      <Slider
+                        aria-label="Opacity"
                         value={Math.round(activeLayer.opacity * 100)}
                         min={0}
                         max={100}
@@ -696,12 +901,13 @@ export function BoxShadowVisualizer() {
                       />
                     </div>
                   </div>
-
                 </div>
 
                 {/* Quick Color Presets */}
                 <div className="space-y-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Quick Colors</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Quick Colors
+                  </span>
                   <div className="flex flex-wrap gap-2">
                     {COLOR_PRESETS.map((c) => (
                       <TooltipSimple key={c} content={c}>
@@ -709,7 +915,9 @@ export function BoxShadowVisualizer() {
                           type="button"
                           onClick={() => updateSelectedLayer('color', c)}
                           className={`w-6 h-6 rounded-md border border-black/10 transition-transform ${
-                            activeLayer.color.toUpperCase() === c.toUpperCase() ? 'scale-125 ring-2 ring-ring' : 'hover:scale-110'
+                            activeLayer.color.toUpperCase() === c.toUpperCase()
+                              ? 'scale-125 ring-2 ring-ring'
+                              : 'hover:scale-110'
                           }`}
                           style={{ backgroundColor: c }}
                           aria-label={`Select color ${c}`}
@@ -718,7 +926,6 @@ export function BoxShadowVisualizer() {
                     ))}
                   </div>
                 </div>
-
               </CardContent>
             </Card>
           )}
@@ -735,7 +942,6 @@ export function BoxShadowVisualizer() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              
               {/* Width & Height Slider Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
@@ -743,7 +949,13 @@ export function BoxShadowVisualizer() {
                     <span className="text-xs font-semibold text-muted-foreground">Width</span>
                     <span className="font-mono text-xs">{boxWidth}px</span>
                   </div>
-                  <Slider aria-label="Box width" value={boxWidth} min={50} max={400} onChange={setBoxWidth} />
+                  <Slider
+                    aria-label="Box width"
+                    value={boxWidth}
+                    min={50}
+                    max={400}
+                    onChange={setBoxWidth}
+                  />
                 </div>
 
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
@@ -751,7 +963,13 @@ export function BoxShadowVisualizer() {
                     <span className="text-xs font-semibold text-muted-foreground">Height</span>
                     <span className="font-mono text-xs">{boxHeight}px</span>
                   </div>
-                  <Slider aria-label="Box height" value={boxHeight} min={50} max={400} onChange={setBoxHeight} />
+                  <Slider
+                    aria-label="Box height"
+                    value={boxHeight}
+                    min={50}
+                    max={400}
+                    onChange={setBoxHeight}
+                  />
                 </div>
               </div>
 
@@ -759,7 +977,9 @@ export function BoxShadowVisualizer() {
               <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4">
                 {/* Box Background */}
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
-                  <label className="text-xs font-semibold text-muted-foreground">Box BG Color</label>
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Box BG Color
+                  </label>
                   <div className="flex gap-2">
                     <ColorPicker
                       label="Box background color"
@@ -782,11 +1002,19 @@ export function BoxShadowVisualizer() {
                 {/* Border Radius */}
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-muted-foreground">Border Radius</span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Border Radius
+                    </span>
                     <span className="font-mono text-xs">{borderRadius}px</span>
                   </div>
                   <div className="pb-1">
-                    <Slider aria-label="Border Radius" value={borderRadius} min={0} max={150} onChange={setBorderRadius} />
+                    <Slider
+                      aria-label="Border Radius"
+                      value={borderRadius}
+                      min={0}
+                      max={150}
+                      onChange={setBorderRadius}
+                    />
                   </div>
                 </div>
               </div>
@@ -796,18 +1024,30 @@ export function BoxShadowVisualizer() {
                 {/* Border Width */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-muted-foreground">Border Width</span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Border Width
+                    </span>
                     <span className="text-xs font-mono">{borderWidth}px</span>
                   </div>
-                  <Slider aria-label="Border Width" value={borderWidth} min={0} max={20} onChange={setBorderWidth} />
+                  <Slider
+                    aria-label="Border Width"
+                    value={borderWidth}
+                    min={0}
+                    max={20}
+                    onChange={setBorderWidth}
+                  />
                 </div>
 
                 {/* Border Style */}
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-muted-foreground mb-1 block">Border Style</span>
+                  <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    Border Style
+                  </span>
                   <Select
                     value={borderStyle}
-                    onValueChange={(val) => setBorderStyle(val as 'solid' | 'dashed' | 'dotted' | 'double' | 'none')}
+                    onValueChange={(val) =>
+                      setBorderStyle(val as 'solid' | 'dashed' | 'dotted' | 'double' | 'none')
+                    }
                   >
                     <SelectTrigger className="h-8 text-xs" aria-label="Border style">
                       <SelectValue placeholder="Select style" />
@@ -846,7 +1086,6 @@ export function BoxShadowVisualizer() {
                   </div>
                 </div>
               </div>
-
             </CardContent>
           </Card>
 
@@ -870,9 +1109,7 @@ export function BoxShadowVisualizer() {
                     onClick={() => applyPreset(preset)}
                     className="flex flex-col text-left p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/60 transition-all shadow-sm"
                   >
-                    <span className="text-xs font-bold text-primary">
-                      {preset.name}
-                    </span>
+                    <span className="text-xs font-bold text-primary">{preset.name}</span>
                     <span className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
                       {preset.description}
                     </span>
@@ -881,12 +1118,10 @@ export function BoxShadowVisualizer() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Right Side: Interactive Preview Canvas & Exports */}
         <div className="space-y-6 order-1 lg:order-2">
-          
           {/* Visual Shadow Canvas */}
           <Card className="border-border/60 shadow-md overflow-hidden flex flex-col h-[480px]">
             <CardHeader className="pb-2 shrink-0 border-b border-border/40">
@@ -901,7 +1136,7 @@ export function BoxShadowVisualizer() {
                 </div>
               </div>
             </CardHeader>
-            
+
             {/* Real Canvas Area with Drag Capture */}
             <div
               onPointerDown={handlePointerDown}
@@ -939,11 +1174,15 @@ export function BoxShadowVisualizer() {
                     d: {activeLayer.offsetX}px, {activeLayer.offsetY}px
                   </div>
                 )}
-                
+
                 {/* Text interior preview */}
                 <div className="pointer-events-none max-w-full truncate px-2 select-none">
-                  <p className="text-xs font-semibold text-muted-foreground/80 tracking-wide uppercase">Target Box</p>
-                  <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">{boxWidth}x{boxHeight}</p>
+                  <p className="text-xs font-semibold text-muted-foreground/80 tracking-wide uppercase">
+                    Target Box
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">
+                    {boxWidth}x{boxHeight}
+                  </p>
                 </div>
               </div>
 
@@ -1027,7 +1266,6 @@ export function BoxShadowVisualizer() {
                   </Button>
                 </TooltipSimple>
               </div>
-
             </div>
           </Card>
 
@@ -1037,11 +1275,12 @@ export function BoxShadowVisualizer() {
               <CardTitle className="text-base font-semibold">Generate Styles</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
               {/* CSS Box Shadow Property */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CSS Code</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    CSS Code
+                  </span>
                   <CopyButton
                     text={shadowOutput.css}
                     label="Copy CSS"
@@ -1058,7 +1297,9 @@ export function BoxShadowVisualizer() {
               {/* Tailwind CSS Class */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tailwind CSS Utility</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Tailwind CSS Utility
+                  </span>
                   <CopyButton
                     text={shadowOutput.tailwind}
                     label="Copy Class"
@@ -1071,12 +1312,9 @@ export function BoxShadowVisualizer() {
                   {shadowOutput.tailwind}
                 </div>
               </div>
-
             </CardContent>
           </Card>
-
         </div>
-
       </div>
     </div>
   );

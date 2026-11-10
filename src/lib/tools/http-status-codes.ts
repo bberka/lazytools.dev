@@ -21,10 +21,18 @@ export interface HttpStatusCode extends StatusCodeEntry {
 
 /** The five classes, ordered by their first digit. */
 export const STATUS_CLASSES: readonly StatusClassInfo[] = [
-  { id: '1xx', label: 'Informational', summary: 'The request was received and the process is continuing.' },
+  {
+    id: '1xx',
+    label: 'Informational',
+    summary: 'The request was received and the process is continuing.',
+  },
   { id: '2xx', label: 'Successful', summary: 'The request was received, understood and accepted.' },
   { id: '3xx', label: 'Redirection', summary: 'Further action is needed to complete the request.' },
-  { id: '4xx', label: 'Client Error', summary: 'The request contains an error or cannot be fulfilled.' },
+  {
+    id: '4xx',
+    label: 'Client Error',
+    summary: 'The request contains an error or cannot be fulfilled.',
+  },
   { id: '5xx', label: 'Server Error', summary: 'The server failed to fulfil a valid request.' },
 ];
 
@@ -80,7 +88,7 @@ const CLASS_TERM = /^[1-5]xx$/;
  */
 export function searchStatusCodes(
   query: string,
-  statusClass: StatusClassFilter = 'all',
+  statusClass: StatusClassFilter = 'all'
 ): HttpStatusCode[] {
   const terms = normalise(query).split(/\s+/).filter(Boolean);
 

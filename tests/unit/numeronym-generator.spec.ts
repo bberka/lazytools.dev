@@ -59,7 +59,9 @@ test.describe('numeronym', () => {
 
 test.describe('per-word mode', () => {
   test('shortens each word in place and leaves the rest alone', () => {
-    expect(generate('The internationalization of Kubernetes, again!')).toBe('The i18n of K8s, a3n!');
+    expect(generate('The internationalization of Kubernetes, again!')).toBe(
+      'The i18n of K8s, a3n!'
+    );
   });
 
   test('leaves numbers alone but shortens words that contain digits', () => {
@@ -108,7 +110,9 @@ test.describe('phrase mode', () => {
 
   test('counts graphemes across the joined line', () => {
     // Four astral letters and a combining pair: 5 graphemes, 3 between the ends.
-    expect(generate('\u{1D49C} \u{1D49C}é \u{1D49C}\u{1D49C}', { mode: 'phrase' })).toBe('\u{1D49C}3\u{1D49C}');
+    expect(generate('\u{1D49C} \u{1D49C}é \u{1D49C}\u{1D49C}', { mode: 'phrase' })).toBe(
+      '\u{1D49C}3\u{1D49C}'
+    );
   });
 
   test('empty input', () => {

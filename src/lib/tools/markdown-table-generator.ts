@@ -40,7 +40,9 @@ export const ALIGNMENTS: ReadonlyArray<{ value: Alignment; label: string }> = [
 
 export function createTable(rows: number, columns: number): TableData {
   return {
-    cells: Array.from({ length: Math.max(1, rows) }, () => Array.from({ length: Math.max(1, columns) }, () => '')),
+    cells: Array.from({ length: Math.max(1, rows) }, () =>
+      Array.from({ length: Math.max(1, columns) }, () => '')
+    ),
     alignments: Array.from({ length: Math.max(1, columns) }, () => 'default' as Alignment),
   };
 }
@@ -70,7 +72,11 @@ export function removeRow(table: TableData, index: number): TableData {
 /** Appends a column, or inserts it so it becomes `index`. */
 export function addColumn(table: TableData, index: number = table.alignments.length): TableData {
   const at = Math.min(Math.max(0, index), table.alignments.length);
-  const insert = <T>(list: readonly T[], value: T): T[] => [...list.slice(0, at), value, ...list.slice(at)];
+  const insert = <T>(list: readonly T[], value: T): T[] => [
+    ...list.slice(0, at),
+    value,
+    ...list.slice(at),
+  ];
   return {
     cells: table.cells.map((row) => insert(row, '')),
     alignments: insert<Alignment>(table.alignments, 'default'),
@@ -87,16 +93,22 @@ export function removeColumn(table: TableData, index: number): TableData {
 }
 
 export function setCell(table: TableData, row: number, column: number, value: string): TableData {
-  if (row < 0 || row >= table.cells.length || column < 0 || column >= table.alignments.length) return table;
+  if (row < 0 || row >= table.cells.length || column < 0 || column >= table.alignments.length)
+    return table;
   return {
     ...table,
-    cells: table.cells.map((cells, r) => (r === row ? cells.map((cell, c) => (c === column ? value : cell)) : cells)),
+    cells: table.cells.map((cells, r) =>
+      r === row ? cells.map((cell, c) => (c === column ? value : cell)) : cells
+    ),
   };
 }
 
 export function setAlignment(table: TableData, column: number, alignment: Alignment): TableData {
   if (column < 0 || column >= table.alignments.length) return table;
-  return { ...table, alignments: table.alignments.map((current, i) => (i === column ? alignment : current)) };
+  return {
+    ...table,
+    alignments: table.alignments.map((current, i) => (i === column ? alignment : current)),
+  };
 }
 
 /** Empties every cell and keeps the size and the alignments. */
@@ -121,7 +133,9 @@ export function escapeCell(value: string, escapePipes: boolean): string {
 }
 
 const segmenter =
-  typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+  typeof Intl !== 'undefined' && 'Segmenter' in Intl
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null;
 
 function isWide(codePoint: number): boolean {
   return (
@@ -143,7 +157,9 @@ function isWide(codePoint: number): boolean {
  * to pad cells; it does not change the Markdown.
  */
 export function displayWidth(text: string): number {
-  const parts = segmenter ? Array.from(segmenter.segment(text), (part) => part.segment) : Array.from(text);
+  const parts = segmenter
+    ? Array.from(segmenter.segment(text), (part) => part.segment)
+    : Array.from(text);
   let width = 0;
   for (const part of parts) {
     const first = part.codePointAt(0) ?? 0;
@@ -206,7 +222,11 @@ export function markdownTable(table: TableData, options: TableOptions): string {
 
 export type Delimiter = 'auto' | 'comma' | 'tab' | 'semicolon';
 
-const DELIMITER_CHARS: Record<Exclude<Delimiter, 'auto'>, string> = { comma: ',', tab: '\t', semicolon: ';' };
+const DELIMITER_CHARS: Record<Exclude<Delimiter, 'auto'>, string> = {
+  comma: ',',
+  tab: '\t',
+  semicolon: ';',
+};
 
 /** Picks the delimiter that occurs most in the first line, ignoring quoted text. Tab wins when present. */
 export function detectDelimiter(text: string): Exclude<Delimiter, 'auto'> {
@@ -288,13 +308,22 @@ export interface ImportResult {
 export function tableFromRows(rows: string[][], firstRowHeader: boolean): ImportResult | null {
   if (rows.length === 0 || rows[0].length === 0) return null;
   const columns = Math.min(rows[0].length, MAX_COLUMNS);
-  const header = firstRowHeader ? [] : [Array.from({ length: columns }, (_, i) => `Column ${i + 1}`)];
+  const header = firstRowHeader
+    ? []
+    : [Array.from({ length: columns }, (_, i) => `Column ${i + 1}`)];
   const all = [...header, ...rows];
-  const limited = all.slice(0, MAX_ROWS).map((row) => row.slice(0, columns).map((cell) => cell.trim()));
+  const limited = all
+    .slice(0, MAX_ROWS)
+    .map((row) => row.slice(0, columns).map((cell) => cell.trim()));
   return {
-    table: { cells: limited, alignments: Array.from({ length: columns }, () => 'default' as Alignment) },
+    table: {
+      cells: limited,
+      alignments: Array.from({ length: columns }, () => 'default' as Alignment),
+    },
     truncated: all.length > MAX_ROWS || rows[0].length > MAX_COLUMNS,
   };
 }
 
-export const EXAMPLE_CSV = ['Item,Quantity,Price', 'Apple,3,1.20', 'Fig | dried,12,0.45'].join('\n');
+export const EXAMPLE_CSV = ['Item,Quantity,Price', 'Apple,3,1.20', 'Fig | dried,12,0.45'].join(
+  '\n'
+);

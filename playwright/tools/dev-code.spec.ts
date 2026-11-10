@@ -189,7 +189,9 @@ test.describe('Developer code tools', () => {
       await minute.fill('30');
       await expect(expressionInput(page)).toHaveValue('30 14 * * 1-5');
       await expect(page.getByText('at 14:30, on weekdays', { exact: true })).toBeVisible();
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/4/2026 02:30 PM in 9 hours');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/4/2026 02:30 PM in 9 hours');
 
       await choose(page, scheduleType, 'Daily');
       await expect(expressionInput(page)).toHaveValue('30 14 * * *');
@@ -197,7 +199,9 @@ test.describe('Developer code tools', () => {
       await choose(page, scheduleType, 'Weekly');
       await choose(page, page.getByLabel('Day of week'), 'Saturday');
       await expect(expressionInput(page)).toHaveValue('30 14 * * 6');
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/7/2026 02:30 PM in 3 days');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/7/2026 02:30 PM in 3 days');
 
       // Months without a 31st are skipped.
       await choose(page, scheduleType, 'Monthly');
@@ -225,7 +229,9 @@ test.describe('Developer code tools', () => {
       await choose(page, scheduleType, 'Hourly');
       await page.getByLabel('Minute of the hour').fill('45');
       await expect(expressionInput(page)).toHaveValue('45 * * * *');
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/4/2026 05:45 AM in 15 minutes');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/4/2026 05:45 AM in 15 minutes');
 
       await choose(page, scheduleType, 'Every N minutes');
       await page.getByLabel('Interval (minutes)').fill('20');
@@ -289,7 +295,9 @@ test.describe('Developer code tools', () => {
       await expect(page.getByLabel('Schedule type')).toHaveText('Custom expression');
       await expect(page.getByText('Generated expression')).toBeHidden();
       await expect(page.getByText('at 00:00, on Sunday', { exact: true })).toBeVisible();
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/8/2026 12:00 AM in 3 days');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/8/2026 12:00 AM in 3 days');
 
       // Editing by hand stops the dropdown from naming a preset that no longer applies.
       await expressionInput(page).fill('0 12 * * 1,3,5');
@@ -351,7 +359,9 @@ test.describe('Developer code tools', () => {
       await expressionInput(page).fill('*/15 * * * *');
       await expect(errorAlert(page)).toBeHidden();
       await expect(page.getByText('every 15 minutes', { exact: true })).toBeVisible();
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/4/2026 05:45 AM in 15 minutes');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/4/2026 05:45 AM in 15 minutes');
     });
 
     test('moves the run list on as the minutes pass', async ({ page }) => {
@@ -359,11 +369,15 @@ test.describe('Developer code tools', () => {
       await page.goto('/tools/cron-parser/');
       await expressionInput(page).fill('* * * * *');
       await expect(page.getByText('every minute', { exact: true })).toBeVisible();
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/4/2026 05:31 AM in 1 minute');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/4/2026 05:31 AM in 1 minute');
 
       // 45 seconds later the clock has passed 05:31, which has therefore run.
       await page.clock.runFor(45_000);
-      await expect.poll(async () => (await listedRuns(page))[0]).toBe('3/4/2026 05:32 AM in 1 minute');
+      await expect
+        .poll(async () => (await listedRuns(page))[0])
+        .toBe('3/4/2026 05:32 AM in 1 minute');
     });
 
     test('keeps an every-15-minutes schedule running through the hour that repeats when clocks go back', async ({
@@ -391,7 +405,8 @@ test.describe('Developer code tools', () => {
 
   test.describe('cURL Command to Code', () => {
     const commandInput = (page: Page) => page.getByLabel('cURL command', { exact: true });
-    const snippetOutput = (page: Page) => page.getByLabel('Generated code snippet', { exact: true });
+    const snippetOutput = (page: Page) =>
+      page.getByLabel('Generated code snippet', { exact: true });
     const languageSelect = (page: Page) => page.getByRole('combobox', { name: 'Target language' });
     const notes = (page: Page) =>
       page.getByRole('status').filter({ hasText: 'Check before you run it' });
@@ -463,7 +478,11 @@ test.describe('Developer code tools', () => {
       await expect(snippetOutput(page)).toHaveValue('');
       await expect(page.getByRole('button', { name: 'Copy Snippet' })).toBeDisabled();
 
-      const snippet = await convert(page, EXAMPLE_COMMAND, `fetch("${EXAMPLE_URL}", requestOptions)`);
+      const snippet = await convert(
+        page,
+        EXAMPLE_COMMAND,
+        `fetch("${EXAMPLE_URL}", requestOptions)`
+      );
       expect(snippet).toContain('myHeaders.append("Content-Type", "application/json");');
       expect(snippet).toContain('myHeaders.append("Authorization", "Bearer token123");');
       expect(snippet).toContain('method: "POST",');
@@ -775,7 +794,9 @@ test.describe('Developer code tools', () => {
       ).toBe(true);
     });
 
-    test('writes Ruby that exists for a method without its own Net::HTTP class', async ({ page }) => {
+    test('writes Ruby that exists for a method without its own Net::HTTP class', async ({
+      page,
+    }) => {
       // PURGE is how Varnish and Fastly caches are invalidated.
       await commandInput(page).fill('curl -X PURGE https://example.com/cache');
       await choose(page, languageSelect(page), 'Ruby — Net::HTTP');
@@ -953,21 +974,31 @@ test.describe('Developer code tools', () => {
       const output = codeOutput(page);
       const rootName = page.getByLabel('Root Name');
       await jsonInput(page).fill('{"id": 1, "tags": ["a"]}');
-      await expect(output).toHaveValue('export interface RootObject {\n  id: number;\n  tags: string[];\n}');
+      await expect(output).toHaveValue(
+        'export interface RootObject {\n  id: number;\n  tags: string[];\n}'
+      );
 
       await rootName.fill('api response');
-      await expect(output).toHaveValue('export interface ApiResponse {\n  id: number;\n  tags: string[];\n}');
+      await expect(output).toHaveValue(
+        'export interface ApiResponse {\n  id: number;\n  tags: string[];\n}'
+      );
       await rootName.fill('');
-      await expect(output).toHaveValue('export interface RootObject {\n  id: number;\n  tags: string[];\n}');
+      await expect(output).toHaveValue(
+        'export interface RootObject {\n  id: number;\n  tags: string[];\n}'
+      );
 
       await choose(page, page.getByLabel('Declaration Style'), 'type alias');
-      await expect(output).toHaveValue('export type RootObject = {\n  id: number;\n  tags: string[];\n};');
+      await expect(output).toHaveValue(
+        'export type RootObject = {\n  id: number;\n  tags: string[];\n};'
+      );
 
       await page.getByRole('checkbox', { name: 'Export interfaces/types' }).click();
       await expect(output).toHaveValue('type RootObject = {\n  id: number;\n  tags: string[];\n};');
 
       await page.getByRole('checkbox', { name: 'Make properties optional (?)' }).click();
-      await expect(output).toHaveValue('type RootObject = {\n  id?: number;\n  tags?: string[];\n};');
+      await expect(output).toHaveValue(
+        'type RootObject = {\n  id?: number;\n  tags?: string[];\n};'
+      );
 
       await page.getByRole('checkbox', { name: 'Make properties readonly' }).click();
       await expect(output).toHaveValue(

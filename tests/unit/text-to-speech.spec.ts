@@ -95,7 +95,11 @@ test.describe('splitIntoSentences', () => {
       'It was 2019.',
       'Five people came.',
     ]);
-    expect(splitIntoSentences('Is that Dr? Yes! He is.')).toEqual(['Is that Dr?', 'Yes!', 'He is.']);
+    expect(splitIntoSentences('Is that Dr? Yes! He is.')).toEqual([
+      'Is that Dr?',
+      'Yes!',
+      'He is.',
+    ]);
   });
 
   test('splits text written without capital letters like any other', () => {
@@ -119,7 +123,8 @@ test.describe('splitIntoSentences', () => {
   });
 
   test('stays fast on very large text', () => {
-    const sentence = 'The quick brown fox jumps over the lazy dog near example.com at 3.14 p.m. today.';
+    const sentence =
+      'The quick brown fox jumps over the lazy dog near example.com at 3.14 p.m. today.';
     const oneLine = Array.from({ length: 20000 }, () => sentence).join(' ');
     const started = Date.now();
 

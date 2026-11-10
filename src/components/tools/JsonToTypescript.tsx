@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Trash2, FileCode, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import {
   JSON_CODE_LANGUAGES,
@@ -25,7 +31,6 @@ export function JsonToTypescript() {
   const [optional, setOptional] = useState(false);
   const [readonly, setReadonly] = useState(false);
   const [semicolon, setSemicolon] = useState(true);
-
 
   const validation = useMemo(() => (input.trim() ? inspectJson(input) : null), [input]);
 
@@ -60,9 +65,7 @@ export function JsonToTypescript() {
             <FileCode className="h-5 w-5 text-primary" />
             JSON to Code Generator
           </CardTitle>
-          <CardDescription>
-            Generate typed models and schemas from JSON data.
-          </CardDescription>
+          <CardDescription>Generate typed models and schemas from JSON data.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

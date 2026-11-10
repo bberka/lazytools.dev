@@ -8,13 +8,7 @@ import { Slider } from '../ui/slider';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Copy, Check, RefreshCw, Shield, KeyRound } from 'lucide-react';
 import { useCopyToClipboard, useHydrated } from '@/hooks';
 import {
@@ -216,7 +210,8 @@ export function PasswordGenerator() {
             suggestions: result.feedback.suggestions || [],
           },
           crackTimesDisplay: {
-            offlineFastHashing1e10PerSecond: result.crackTimesDisplay.offlineFastHashing1e10PerSecond,
+            offlineFastHashing1e10PerSecond:
+              result.crackTimesDisplay.offlineFastHashing1e10PerSecond,
             offlineSlowHashing1e4PerSecond: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond,
             onlineNoThrottling10PerSecond: result.crackTimesDisplay.onlineNoThrottling10PerSecond,
           },
@@ -257,7 +252,8 @@ export function PasswordGenerator() {
             Password Generator
           </CardTitle>
           <CardDescription>
-            Instant regeneration, stricter character controls, and wallet-style recovery phrases in one place.
+            Instant regeneration, stricter character controls, and wallet-style recovery phrases in
+            one place.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -279,7 +275,9 @@ export function PasswordGenerator() {
             <div className="flex items-center justify-between rounded-xl border border-border/70 px-4 py-3">
               <div>
                 <p className="text-sm font-medium">Auto-generate</p>
-                <p className="text-xs text-muted-foreground">Refresh the output whenever settings change.</p>
+                <p className="text-xs text-muted-foreground">
+                  Refresh the output whenever settings change.
+                </p>
               </div>
               <Switch
                 checked={autoGenerate}
@@ -298,7 +296,14 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Length: {length}</label>
-                <Slider aria-label="Length" value={length} onChange={setLength} min={4} max={256} step={1} />
+                <Slider
+                  aria-label="Length"
+                  value={length}
+                  onChange={setLength}
+                  min={4}
+                  max={256}
+                  step={1}
+                />
               </div>
 
               <div className="space-y-3">
@@ -376,11 +381,21 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">PIN length: {pinLength}</label>
-                <Slider aria-label="PIN length" value={pinLength} onChange={setPinLength} min={4} max={24} step={1} />
+                <Slider
+                  aria-label="PIN length"
+                  value={pinLength}
+                  onChange={setPinLength}
+                  min={4}
+                  max={24}
+                  step={1}
+                />
               </div>
               <div>
-                <label className="mb-3 block text-sm font-medium">Digits per group: {pinGrouping}</label>
-                <Slider aria-label="Digits per group"
+                <label className="mb-3 block text-sm font-medium">
+                  Digits per group: {pinGrouping}
+                </label>
+                <Slider
+                  aria-label="Digits per group"
                   value={pinGrouping}
                   onChange={(value) => setPinGrouping(clampInteger(value, 2, 6))}
                   min={2}
@@ -395,13 +410,23 @@ export function PasswordGenerator() {
             <div className="space-y-6">
               <div>
                 <label className="mb-3 block text-sm font-medium">Word count: {wordCount}</label>
-                <Slider aria-label="Word count" value={wordCount} onChange={setWordCount} min={3} max={12} step={1} />
+                <Slider
+                  aria-label="Word count"
+                  value={wordCount}
+                  onChange={setWordCount}
+                  min={3}
+                  max={12}
+                  step={1}
+                />
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Separator</label>
-                  <Select value={separator} onValueChange={(value) => setSeparator(value as PassphraseSeparator)}>
+                  <Select
+                    value={separator}
+                    onValueChange={(value) => setSeparator(value as PassphraseSeparator)}
+                  >
                     <SelectTrigger aria-label="Separator">
                       <SelectValue placeholder="Choose a separator" />
                     </SelectTrigger>
@@ -540,37 +565,53 @@ export function PasswordGenerator() {
             )}
 
             {/* Warnings and Suggestions */}
-            {!hasError && !isEvaluating && strengthAnalysis && (strengthAnalysis.feedback.warning || strengthAnalysis.feedback.suggestions.length > 0) && (
-              <div className="p-3.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-1.5">
-                {strengthAnalysis.feedback.warning && (
-                  <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-500 flex items-center gap-1.5">
-                    ⚠️ {strengthAnalysis.feedback.warning}
-                  </p>
-                )}
-                {strengthAnalysis.feedback.suggestions.length > 0 && (
-                  <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 pl-1">
-                    {strengthAnalysis.feedback.suggestions.map((suggestion, idx) => (
-                      <li key={idx}>{suggestion}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            {!hasError &&
+              !isEvaluating &&
+              strengthAnalysis &&
+              (strengthAnalysis.feedback.warning ||
+                strengthAnalysis.feedback.suggestions.length > 0) && (
+                <div className="p-3.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-1.5">
+                  {strengthAnalysis.feedback.warning && (
+                    <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-500 flex items-center gap-1.5">
+                      ⚠️ {strengthAnalysis.feedback.warning}
+                    </p>
+                  )}
+                  {strengthAnalysis.feedback.suggestions.length > 0 && (
+                    <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 pl-1">
+                      {strengthAnalysis.feedback.suggestions.map((suggestion, idx) => (
+                        <li key={idx}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
 
             {/* Estimated time-to-crack metrics */}
             {!hasError && !isEvaluating && strengthAnalysis && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fast Crack (Offline)</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.offlineFastHashing1e10PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Fast Crack (Offline)
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.offlineFastHashing1e10PerSecond}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Slow Crack (Offline)</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.offlineSlowHashing1e4PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Slow Crack (Offline)
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.offlineSlowHashing1e4PerSecond}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Online Crack</p>
-                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">{strengthAnalysis.crackTimesDisplay.onlineNoThrottling10PerSecond}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Online Crack
+                  </p>
+                  <p className="mt-1 font-mono text-sm leading-normal text-foreground">
+                    {strengthAnalysis.crackTimesDisplay.onlineNoThrottling10PerSecond}
+                  </p>
                 </div>
               </div>
             )}
@@ -629,12 +670,7 @@ function LimitInput({
 }) {
   return (
     <div className="space-y-3 rounded-xl border border-border/60 p-3">
-      <Checkbox
-        checked={checked}
-        onChange={onCheckedChange}
-        disabled={disabled}
-        label={label}
-      />
+      <Checkbox checked={checked} onChange={onCheckedChange} disabled={disabled} label={label} />
       <Input
         type="number"
         min={0}
@@ -651,7 +687,9 @@ function LimitInput({
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-border/70 bg-muted/30 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 font-mono text-lg">{value}</p>
     </div>
   );

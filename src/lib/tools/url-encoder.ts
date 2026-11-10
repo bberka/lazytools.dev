@@ -61,7 +61,10 @@ export type UrlCodecMode = 'encode' | 'decode';
  * could not be converted. Never throws. Whitespace is converted like any
  * other text, so a lone space encodes to `%20`.
  */
-export function convertUrlComponent(text: string, mode: UrlCodecMode): { output: string; error: string } {
+export function convertUrlComponent(
+  text: string,
+  mode: UrlCodecMode
+): { output: string; error: string } {
   try {
     return {
       output: mode === 'encode' ? encodeUrlComponent(text) : decodeUrlComponent(text),

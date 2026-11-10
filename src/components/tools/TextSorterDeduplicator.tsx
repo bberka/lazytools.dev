@@ -6,7 +6,13 @@ import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   DEFAULT_OPTIONS,
@@ -40,7 +46,9 @@ export function TextSorterDeduplicator() {
             <ArrowDownAZ className="h-5 w-5 text-primary" />
             Lines to Sort
           </CardTitle>
-          <CardDescription>One item per line. The result updates as you type and never leaves your browser.</CardDescription>
+          <CardDescription>
+            One item per line. The result updates as you type and never leaves your browser.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -67,7 +75,9 @@ export function TextSorterDeduplicator() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Options</CardTitle>
-          <CardDescription>Lines are trimmed, filtered and deduplicated first, then sorted.</CardDescription>
+          <CardDescription>
+            Lines are trimmed, filtered and deduplicated first, then sorted.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           <div className="space-y-2">
@@ -76,7 +86,10 @@ export function TextSorterDeduplicator() {
             </label>
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
-                <Select value={options.sort} onValueChange={(value) => update('sort', value as SortMode)}>
+                <Select
+                  value={options.sort}
+                  onValueChange={(value) => update('sort', value as SortMode)}
+                >
                   <SelectTrigger id="sorter-order">
                     <SelectValue placeholder="Select a sort order" />
                   </SelectTrigger>
@@ -163,7 +176,12 @@ export function TextSorterDeduplicator() {
           />
           <div className="flex flex-wrap gap-2">
             <CopyButton text={result.text} label="Copy Result" disabled={!result.text} size="sm" />
-            <Button onClick={() => setText(result.text)} disabled={!result.text || result.text === text} size="sm" variant="outline">
+            <Button
+              onClick={() => setText(result.text)}
+              disabled={!result.text || result.text === text}
+              size="sm"
+              variant="outline"
+            >
               Use as Input
             </Button>
           </div>

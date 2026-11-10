@@ -45,8 +45,12 @@ test.describe('layoutProblem', () => {
   });
 
   test('rejects widths that are not whole numbers in range', () => {
-    expect(layoutProblem({ ...twitter, workerBits: 1.5 })).toBe('Node B bits must be a whole number from 0 to 64.');
-    expect(layoutProblem({ ...twitter, datacenterBits: -1 })).toBe('Node A bits must be a whole number from 0 to 64.');
+    expect(layoutProblem({ ...twitter, workerBits: 1.5 })).toBe(
+      'Node B bits must be a whole number from 0 to 64.'
+    );
+    expect(layoutProblem({ ...twitter, datacenterBits: -1 })).toBe(
+      'Node A bits must be a whole number from 0 to 64.'
+    );
     expect(layoutProblem({ ...twitter, timestampBits: 99999999 })).toBe(
       'Timestamp bits must be a whole number from 0 to 64.'
     );
@@ -56,8 +60,12 @@ test.describe('layoutProblem', () => {
   test('needs a timestamp field and a whole-number epoch', () => {
     const noTimestamp: SnowflakeLayout = { ...twitter, timestampBits: 0, sequenceBits: 53 };
     expect(layoutProblem(noTimestamp)).toBe('The timestamp needs at least 1 bit.');
-    expect(layoutProblem({ ...twitter, epoch: 1.5 })).toBe('The epoch must be a whole number of milliseconds.');
-    expect(layoutProblem({ ...twitter, epoch: Number.NaN })).toBe('The epoch must be a whole number of milliseconds.');
+    expect(layoutProblem({ ...twitter, epoch: 1.5 })).toBe(
+      'The epoch must be a whole number of milliseconds.'
+    );
+    expect(layoutProblem({ ...twitter, epoch: Number.NaN })).toBe(
+      'The epoch must be a whole number of milliseconds.'
+    );
   });
 });
 
@@ -82,7 +90,9 @@ test.describe('field helpers', () => {
     expect(formatEpochLabel(twitter.epoch)).toBe('2010-11-04 01:42:54.657 UTC');
     expect(formatEpochLabel(discord.epoch)).toBe('2015-01-01 00:00:00.000 UTC');
     expect(formatEpochLabel(instagram.epoch)).toBe('2011-08-24 21:07:01.721 UTC');
-    expect(formatEpochLabel(SNOWFLAKE_PRESETS.custom.layout.epoch)).toBe('2024-01-01 00:00:00.000 UTC');
+    expect(formatEpochLabel(SNOWFLAKE_PRESETS.custom.layout.epoch)).toBe(
+      '2024-01-01 00:00:00.000 UTC'
+    );
     expect(formatEpochLabel(Number.NaN)).toBe('Invalid epoch');
   });
 });
@@ -109,7 +119,13 @@ test.describe('generateSnowflakeIds', () => {
 
   test('reproduces a real Discord ID', () => {
     const [item] = valueOf(
-      generateSnowflakeIds(discord, { time: 1462015105796, count: 1, workerId: 1, processId: 0, startSequence: 7 })
+      generateSnowflakeIds(discord, {
+        time: 1462015105796,
+        count: 1,
+        workerId: 1,
+        processId: 0,
+        startSequence: 7,
+      })
     );
     expect(item.id).toBe('175928847299117063');
   });
@@ -139,7 +155,11 @@ test.describe('generateSnowflakeIds', () => {
   });
 
   test('the Instagram preset generates IDs instead of being rejected', () => {
-    const result = generateSnowflakeIds(instagram, { time: Date.UTC(2026, 9, 11), count: 3, datacenterId: 5 });
+    const result = generateSnowflakeIds(instagram, {
+      time: Date.UTC(2026, 9, 11),
+      count: 3,
+      datacenterId: 5,
+    });
     expect(result.ok).toBe(true);
     expect(valueOf(result)).toHaveLength(3);
   });
@@ -157,7 +177,9 @@ test.describe('generateSnowflakeIds', () => {
 
   test('a batch larger than the sequence field never repeats an ID', () => {
     const small: SnowflakeLayout = { ...twitter, datacenterBits: 11, sequenceBits: 6 };
-    const ids = valueOf(generateSnowflakeIds(small, { time: small.epoch + 5, count: 100, startSequence: 60 }));
+    const ids = valueOf(
+      generateSnowflakeIds(small, { time: small.epoch + 5, count: 100, startSequence: 60 })
+    );
 
     expect(new Set(ids.map((item) => item.id)).size).toBe(100);
     for (let i = 1; i < ids.length; i++) {
@@ -202,17 +224,30 @@ test.describe('generateSnowflakeIds', () => {
     );
     // The last ID of a batch must fit too, once the sequence has rolled over.
     expect(
-      errorOf(generateSnowflakeIds(narrow, { time: lastStorable, count: 2, startSequence: 2 ** 20 - 1 }))
+      errorOf(
+        generateSnowflakeIds(narrow, { time: lastStorable, count: 2, startSequence: 2 ** 20 - 1 })
+      )
     ).toContain('does not fit in 20 bits');
   });
 
   test('refuses an unusable request or layout', () => {
-    expect(errorOf(generateSnowflakeIds(twitter, { time: Number.NaN, count: 1 }))).toBe('Enter a valid timestamp.');
-    expect(errorOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 0 }))).toContain('count');
-    expect(errorOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 2.5 }))).toContain('count');
-    expect(errorOf(generateSnowflakeIds({ ...twitter, sequenceBits: 11 }, { time: twitter.epoch + 1, count: 1 }))).toContain(
-      'Current sum: 62 bits'
+    expect(errorOf(generateSnowflakeIds(twitter, { time: Number.NaN, count: 1 }))).toBe(
+      'Enter a valid timestamp.'
     );
+    expect(errorOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 0 }))).toContain(
+      'count'
+    );
+    expect(
+      errorOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 2.5 }))
+    ).toContain('count');
+    expect(
+      errorOf(
+        generateSnowflakeIds(
+          { ...twitter, sequenceBits: 11 },
+          { time: twitter.epoch + 1, count: 1 }
+        )
+      )
+    ).toContain('Current sum: 62 bits');
   });
 });
 
@@ -226,7 +261,12 @@ test.describe('decodeSnowflake', () => {
     const decoded = valueOf(decodeSnowflake(' 1541815603606036480 ', twitter));
     expect(decoded.timestamp).toBe(1656432460105);
     expect(decoded.offset).toBe(1656432460105 - twitter.epoch);
-    expect(decoded).toMatchObject({ datacenterId: 11n, workerId: 26n, processId: 0n, sequence: 0n });
+    expect(decoded).toMatchObject({
+      datacenterId: 11n,
+      workerId: 26n,
+      processId: 0n,
+      sequence: 0n,
+    });
     expect(decoded.binary).toBe('0001010101100101101000010001111101100010000101111010000000000000');
   });
 
@@ -306,12 +346,12 @@ test.describe('decodeSnowflake', () => {
   });
 
   test('reports an unusable layout instead of decoding against it', () => {
-    expect(errorOf(decodeSnowflake('1541815603606036480', { ...twitter, timestampBits: 30 }))).toContain(
-      'Current sum: 52 bits'
-    );
-    expect(errorOf(decodeSnowflake('1541815603606036480', { ...twitter, timestampBits: 9999999 }))).toBe(
-      'Timestamp bits must be a whole number from 0 to 64.'
-    );
+    expect(
+      errorOf(decodeSnowflake('1541815603606036480', { ...twitter, timestampBits: 30 }))
+    ).toContain('Current sum: 52 bits');
+    expect(
+      errorOf(decodeSnowflake('1541815603606036480', { ...twitter, timestampBits: 9999999 }))
+    ).toBe('Timestamp bits must be a whole number from 0 to 64.');
     expect(errorOf(decodeSnowflake('1541815603606036480', { ...twitter, epoch: 0.5 }))).toBe(
       'The epoch must be a whole number of milliseconds.'
     );
@@ -338,16 +378,24 @@ test.describe('relativeTimeLabel', () => {
 
 test.describe('snowflakeIdsToCsv', () => {
   test('quotes the date, whose comma would otherwise add a column', () => {
-    const ids = valueOf(generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 2, datacenterId: 3 }));
+    const ids = valueOf(
+      generateSnowflakeIds(twitter, { time: twitter.epoch + 1, count: 2, datacenterId: 3 })
+    );
     const lines = snowflakeIdsToCsv(ids).split('\n');
 
     expect(lines).toHaveLength(3);
     expect(lines[0]).toBe('ID,Timestamp_MS,UTC_Date,Node_A_ID,Node_B_ID,Node_C_ID,Sequence');
-    expect(lines[1]).toBe(`${ids[0].id},${twitter.epoch + 1},"Thu, 04 Nov 2010 01:42:54 GMT",3,0,0,0`);
-    expect(lines[2]).toBe(`${ids[1].id},${twitter.epoch + 1},"Thu, 04 Nov 2010 01:42:54 GMT",3,0,0,1`);
+    expect(lines[1]).toBe(
+      `${ids[0].id},${twitter.epoch + 1},"Thu, 04 Nov 2010 01:42:54 GMT",3,0,0,0`
+    );
+    expect(lines[2]).toBe(
+      `${ids[1].id},${twitter.epoch + 1},"Thu, 04 Nov 2010 01:42:54 GMT",3,0,0,1`
+    );
   });
 
   test('is only the header for an empty list', () => {
-    expect(snowflakeIdsToCsv([])).toBe('ID,Timestamp_MS,UTC_Date,Node_A_ID,Node_B_ID,Node_C_ID,Sequence');
+    expect(snowflakeIdsToCsv([])).toBe(
+      'ID,Timestamp_MS,UTC_Date,Node_A_ID,Node_B_ID,Node_C_ID,Sequence'
+    );
   });
 });

@@ -101,7 +101,9 @@ test.describe('prepareQrRequest', () => {
   });
 
   test('reports the first problem only', () => {
-    expect(errorOf({ content: '', size: '1', margin: '99' })).toBe('Enter text or a URL to generate a QR code.');
+    expect(errorOf({ content: '', size: '1', margin: '99' })).toBe(
+      'Enter text or a URL to generate a QR code.'
+    );
     expect(errorOf({ size: '1', margin: '99' })).toBe('Size must be between 128 and 2048 pixels.');
   });
 });

@@ -277,7 +277,11 @@ function xmlNamePart(text: string): string {
 function xmlName(key: string, prefixes: ReadonlySet<string>): string {
   const colon = key.indexOf(':');
   const prefix = key.slice(0, colon);
-  if (colon > 0 && key.indexOf(':', colon + 1) === -1 && (prefix === 'xml' || prefixes.has(prefix))) {
+  if (
+    colon > 0 &&
+    key.indexOf(':', colon + 1) === -1 &&
+    (prefix === 'xml' || prefixes.has(prefix))
+  ) {
     return `${prefix}:${xmlNamePart(key.slice(colon + 1))}`;
   }
   return xmlNamePart(key);
@@ -389,7 +393,11 @@ function describeXmlError(error: unknown): string {
     : firstLine(error, 'Invalid XML');
 }
 
-async function readData(text: string, format: DataFormat, options: Required<ConvertOptions>): Promise<unknown> {
+async function readData(
+  text: string,
+  format: DataFormat,
+  options: Required<ConvertOptions>
+): Promise<unknown> {
   switch (format) {
     case 'json':
       return parseJson(text);
@@ -424,7 +432,11 @@ async function readData(text: string, format: DataFormat, options: Required<Conv
   }
 }
 
-async function writeData(data: unknown, format: DataFormat, options: Required<ConvertOptions>): Promise<string> {
+async function writeData(
+  data: unknown,
+  format: DataFormat,
+  options: Required<ConvertOptions>
+): Promise<string> {
   // An empty YAML document parses to nothing at all; every format has null.
   const value = data === undefined ? null : data;
 

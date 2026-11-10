@@ -637,8 +637,7 @@ const LOCATION_PATTERN =
 // glyphs word processors use: discs, circles, squares, diamonds, arrows, check
 // marks, dashes and middle dots, and the private-use code points that Symbol
 // and Wingdings bullets keep when a PDF does not map them to Unicode.
-const BULLET_PATTERN =
-  /^[\s]*[-*•‣⁃◦●○■□▪▫◆◇▶▸►➢➤✓✔–—·∙]\s+/gm;
+const BULLET_PATTERN = /^[\s]*[-*•‣⁃◦●○■□▪▫◆◇▶▸►➢➤✓✔–—·∙]\s+/gm;
 
 // A run of digits and the separators used inside phone numbers, on one line.
 const PHONE_CANDIDATE_PATTERN = /\+?\(?\d[\d \t()./-]*\d/g;
@@ -659,7 +658,11 @@ function normalizeText(text: string) {
 }
 
 function normalizeToken(token: string, locale: string) {
-  return token.normalize('NFKC').toLocaleLowerCase(locale).replace(/[‘’]/g, "'").trim();
+  return token
+    .normalize('NFKC')
+    .toLocaleLowerCase(locale)
+    .replace(/[‘’]/g, "'")
+    .trim();
 }
 
 function getWords(text: string, locale: string) {

@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { convertIPv4, expandIPv6, readIPv4, type IPv4ConversionResult } from '@/lib/tools/ipv4-converter';
+import {
+  convertIPv4,
+  expandIPv6,
+  readIPv4,
+  type IPv4ConversionResult,
+} from '@/lib/tools/ipv4-converter';
 
 function forms(input: string): Record<string, string> {
   const result = convertIPv4(input);
@@ -65,7 +70,11 @@ test.describe('convertIPv4 forms', () => {
 
 test.describe('readIPv4 detection', () => {
   test('reads dotted decimal, ignoring surrounding space', () => {
-    expect(readIPv4('  10.0.0.1 ')).toEqual({ ok: true, format: 'dotted-decimal', value: 167772161 });
+    expect(readIPv4('  10.0.0.1 ')).toEqual({
+      ok: true,
+      format: 'dotted-decimal',
+      value: 167772161,
+    });
   });
 
   test('reads a decimal integer', () => {
@@ -83,7 +92,11 @@ test.describe('readIPv4 detection', () => {
   });
 
   test('reads dotted hex', () => {
-    expect(readIPv4('0xC0.0xA8.0x01.0x01')).toEqual({ ok: true, format: 'dotted-hex', value: 3232235777 });
+    expect(readIPv4('0xC0.0xA8.0x01.0x01')).toEqual({
+      ok: true,
+      format: 'dotted-hex',
+      value: 3232235777,
+    });
     expect(errorOf('0xC0.0xA8.0x01.0x100')).toContain('0x00 to 0xFF');
   });
 
@@ -107,9 +120,21 @@ test.describe('readIPv4 detection', () => {
   });
 
   test('reads IPv4-mapped IPv6 in hex and dotted form', () => {
-    expect(readIPv4('::ffff:c0a8:101')).toEqual({ ok: true, format: 'mapped-ipv6', value: 3232235777 });
-    expect(readIPv4('::FFFF:192.168.1.1')).toEqual({ ok: true, format: 'mapped-ipv6', value: 3232235777 });
-    expect(readIPv4('0:0:0:0:0:ffff:ffff:ffff')).toEqual({ ok: true, format: 'mapped-ipv6', value: 4294967295 });
+    expect(readIPv4('::ffff:c0a8:101')).toEqual({
+      ok: true,
+      format: 'mapped-ipv6',
+      value: 3232235777,
+    });
+    expect(readIPv4('::FFFF:192.168.1.1')).toEqual({
+      ok: true,
+      format: 'mapped-ipv6',
+      value: 3232235777,
+    });
+    expect(readIPv4('0:0:0:0:0:ffff:ffff:ffff')).toEqual({
+      ok: true,
+      format: 'mapped-ipv6',
+      value: 4294967295,
+    });
     expect(readIPv4('::ffff:0:0')).toEqual({ ok: true, format: 'mapped-ipv6', value: 0 });
   });
 });
@@ -152,7 +177,9 @@ test.describe('expandIPv6', () => {
   test('fills in the zero groups', () => {
     expect(expandIPv6('::')).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
     expect(expandIPv6('::1')).toEqual([0, 0, 0, 0, 0, 0, 0, 1]);
-    expect(expandIPv6('2001:db8::ff00:42:8329')).toEqual([0x2001, 0xdb8, 0, 0, 0, 0xff00, 0x42, 0x8329]);
+    expect(expandIPv6('2001:db8::ff00:42:8329')).toEqual([
+      0x2001, 0xdb8, 0, 0, 0, 0xff00, 0x42, 0x8329,
+    ]);
     expect(expandIPv6('1::')).toEqual([1, 0, 0, 0, 0, 0, 0, 0]);
   });
 

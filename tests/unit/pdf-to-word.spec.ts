@@ -16,7 +16,11 @@ async function readDocx(docx: Blob) {
   const zip = await JSZip.loadAsync(await docx.arrayBuffer());
   const xml = await zip.file('word/document.xml')!.async('string');
   const unescape = (text: string) =>
-    text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+    text
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&');
 
   const paragraphs = Array.from(xml.matchAll(/<w:p>(.*?)<\/w:p>/gs), ([, body]) =>
     Array.from(body.matchAll(/<w:t[^>]*>(.*?)<\/w:t>/gs), ([, text]) => unescape(text)).join('')
@@ -88,8 +92,14 @@ test.describe('pdfTextToDocx', () => {
     const docx = await pdfTextToDocx(['First  page', 'Second page: a < b & c > d']);
 
     expect(docx).not.toBeNull();
-    expect(docx!.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    expect((await readDocx(docx!)).paragraphs).toEqual(['First page', '', 'Second page: a < b & c > d']);
+    expect(docx!.type).toBe(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    expect((await readDocx(docx!)).paragraphs).toEqual([
+      'First page',
+      '',
+      'Second page: a < b & c > d',
+    ]);
   });
 
   // A scanned PDF used to give a .docx with nothing in it and no explanation.

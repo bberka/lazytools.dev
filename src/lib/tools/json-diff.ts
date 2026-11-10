@@ -28,7 +28,8 @@ export function jsonTypeOf(value: JsonValue): JsonType {
   return typeof value as 'boolean' | 'number' | 'string' | 'object';
 }
 
-const hasOwn = (target: object, key: string): boolean => Object.prototype.hasOwnProperty.call(target, key);
+const hasOwn = (target: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(target, key);
 
 // Parsing
 
@@ -177,7 +178,8 @@ function parseText(text: string): { value: JsonValue; lossyNumbers: number } {
     if (pos >= length || !isDigit(text.charCodeAt(pos))) return fail('Expected a digit after "-"');
     if (text[pos] === '0') {
       pos++;
-      if (pos < length && isDigit(text.charCodeAt(pos))) return fail('Numbers cannot have leading zeros');
+      if (pos < length && isDigit(text.charCodeAt(pos)))
+        return fail('Numbers cannot have leading zeros');
     } else {
       skipDigits();
     }
@@ -251,7 +253,12 @@ function parseText(text: string): { value: JsonValue; lossyNumbers: number } {
       pos++;
       const value = parseValue(depth + 1);
       // Assignment would turn a "__proto__" member into a prototype change.
-      Object.defineProperty(members, key, { value, enumerable: true, writable: true, configurable: true });
+      Object.defineProperty(members, key, {
+        value,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
       skipWhitespace();
       if (text[pos] === ',') {
         pos++;
@@ -317,7 +324,8 @@ export function parseJson(text: string): ParseResult {
 
 /** "object with 3 keys", "array with 1 item", "string"... */
 export function describeJson(value: JsonValue): string {
-  if (Array.isArray(value)) return `array with ${value.length} item${value.length === 1 ? '' : 's'}`;
+  if (Array.isArray(value))
+    return `array with ${value.length} item${value.length === 1 ? '' : 's'}`;
   if (value !== null && typeof value === 'object') {
     const count = Object.keys(value).length;
     return `object with ${count} key${count === 1 ? '' : 's'}`;
@@ -439,7 +447,8 @@ interface Match {
 
 function matchByIndex(left: JsonArray, right: JsonArray): Match {
   const common = Math.min(left.length, right.length);
-  const range = (from: number, to: number): number[] => Array.from({ length: Math.max(0, to - from) }, (_, i) => from + i);
+  const range = (from: number, to: number): number[] =>
+    Array.from({ length: Math.max(0, to - from) }, (_, i) => from + i);
   return {
     pairs: range(0, common).map((i): [number, number] => [i, i]),
     freeLeft: range(common, left.length),
@@ -451,7 +460,9 @@ function matchByIndex(left: JsonArray, right: JsonArray): Match {
 const PAIRING_LIMIT = 250_000;
 
 /** The members of an object or the elements of an array, as a multiset of texts. */
-function membersOf(value: JsonValue): { type: 'object' | 'array'; counts: Map<string, number> } | null {
+function membersOf(
+  value: JsonValue
+): { type: 'object' | 'array'; counts: Map<string, number> } | null {
   let parts: string[];
   let type: 'object' | 'array';
   if (Array.isArray(value)) {
@@ -502,7 +513,11 @@ function matchUnordered(left: JsonArray, right: JsonArray): Match {
   });
   let freeRight = right.map((_, index) => index).filter((index) => !taken[index]);
 
-  if (freeLeft.length > 0 && freeRight.length > 0 && freeLeft.length * freeRight.length <= PAIRING_LIMIT) {
+  if (
+    freeLeft.length > 0 &&
+    freeRight.length > 0 &&
+    freeLeft.length * freeRight.length <= PAIRING_LIMIT
+  ) {
     const leftMembers = freeLeft.map((index) => membersOf(left[index]));
     const rightMembers = freeRight.map((index) => membersOf(right[index]));
     const candidates: Array<{ score: number; a: number; b: number }> = [];
@@ -531,19 +546,29 @@ function matchUnordered(left: JsonArray, right: JsonArray): Match {
   return { pairs, freeLeft, freeRight };
 }
 
-function diffArrays(ctx: Context, left: JsonArray, right: JsonArray, leftPath: string, rightPath: string): void {
+function diffArrays(
+  ctx: Context,
+  left: JsonArray,
+  right: JsonArray,
+  leftPath: string,
+  rightPath: string
+): void {
   if (left.length === 0 && right.length === 0) {
     record(ctx, { kind: 'unchanged', path: leftPath, value: left });
     return;
   }
-  const { pairs, freeLeft, freeRight } = ctx.ignoreOrder ? matchUnordered(left, right) : matchByIndex(left, right);
+  const { pairs, freeLeft, freeRight } = ctx.ignoreOrder
+    ? matchUnordered(left, right)
+    : matchByIndex(left, right);
 
   // Operations inside paired elements come first: nothing has moved yet, so
   // their left-hand indices are still right.
   for (const [i, j] of pairs) walk(ctx, left[i], right[j], `${leftPath}/${i}`, `${rightPath}/${j}`);
 
-  for (const i of freeLeft) record(ctx, { kind: 'removed', path: `${leftPath}/${i}`, oldValue: left[i] });
-  for (const j of freeRight) record(ctx, { kind: 'added', path: `${rightPath}/${j}`, newValue: right[j] });
+  for (const i of freeLeft)
+    record(ctx, { kind: 'removed', path: `${leftPath}/${i}`, oldValue: left[i] });
+  for (const j of freeRight)
+    record(ctx, { kind: 'added', path: `${rightPath}/${j}`, newValue: right[j] });
 
   // Highest index first, so each removal leaves the lower indices alone.
   for (let k = freeLeft.length - 1; k >= 0; k--) {
@@ -556,7 +581,13 @@ function diffArrays(ctx: Context, left: JsonArray, right: JsonArray, leftPath: s
   });
 }
 
-function diffObjects(ctx: Context, left: JsonObject, right: JsonObject, leftPath: string, rightPath: string): void {
+function diffObjects(
+  ctx: Context,
+  left: JsonObject,
+  right: JsonObject,
+  leftPath: string,
+  rightPath: string
+): void {
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
   if (leftKeys.length === 0 && rightKeys.length === 0) {
@@ -580,7 +611,13 @@ function diffObjects(ctx: Context, left: JsonObject, right: JsonObject, leftPath
   }
 }
 
-function walk(ctx: Context, left: JsonValue, right: JsonValue, leftPath: string, rightPath: string): void {
+function walk(
+  ctx: Context,
+  left: JsonValue,
+  right: JsonValue,
+  leftPath: string,
+  rightPath: string
+): void {
   const leftType = jsonTypeOf(left);
   if (leftType !== jsonTypeOf(right)) {
     record(ctx, { kind: 'type-changed', path: leftPath, oldValue: left, newValue: right });
@@ -639,10 +676,17 @@ function readSide(text: string): SideState {
 }
 
 /** Parse both texts and, when both are valid, compare them. */
-export function compareJsonText(leftText: string, rightText: string, options: DiffOptions = {}): Comparison {
+export function compareJsonText(
+  leftText: string,
+  rightText: string,
+  options: DiffOptions = {}
+): Comparison {
   const left = readSide(leftText);
   const right = readSide(rightText);
-  const result = left.status === 'valid' && right.status === 'valid' ? diffJson(left.value, right.value, options) : null;
+  const result =
+    left.status === 'valid' && right.status === 'valid'
+      ? diffJson(left.value, right.value, options)
+      : null;
   return { left, right, result };
 }
 
@@ -702,11 +746,17 @@ export function formatReport(result: DiffResult): string {
   if (summary.changed) counts.push(`${summary.changed} changed`);
   if (summary.typeChanged) counts.push(`${summary.typeChanged} type changed`);
   const noun = summary.differences === 1 ? 'difference' : 'differences';
-  const lines = [counts.length > 0 ? `${summary.differences} ${noun}: ${counts.join(', ')}` : 'No differences found.'];
+  const lines = [
+    counts.length > 0
+      ? `${summary.differences} ${noun}: ${counts.join(', ')}`
+      : 'No differences found.',
+  ];
   if (result.ignoreArrayOrder) lines.push('Array order ignored.');
   lines.push('');
   for (const entry of result.entries) {
-    lines.push(`${KIND_MARKERS[entry.kind]} ${displayPath(entry.path)} (${KIND_LABELS[entry.kind]}): ${describeEntry(entry)}`);
+    lines.push(
+      `${KIND_MARKERS[entry.kind]} ${displayPath(entry.path)} (${KIND_LABELS[entry.kind]}): ${describeEntry(entry)}`
+    );
   }
   return lines.join('\n');
 }

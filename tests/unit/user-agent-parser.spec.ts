@@ -607,13 +607,19 @@ test.describe('detection order', () => {
   });
 
   test('CriOS and FxiOS are named for what they are', () => {
-    expect(parse(CASES.find((c) => c.title.includes('CriOS'))!.ua).browser.name).toBe('Chrome for iOS');
-    expect(parse(CASES.find((c) => c.title.includes('FxiOS'))!.ua).browser.name).toBe('Firefox for iOS');
+    expect(parse(CASES.find((c) => c.title.includes('CriOS'))!.ua).browser.name).toBe(
+      'Chrome for iOS'
+    );
+    expect(parse(CASES.find((c) => c.title.includes('FxiOS'))!.ua).browser.name).toBe(
+      'Firefox for iOS'
+    );
   });
 
   test('Safari without a Chrome token is still Safari, and plain Chrome is still Chrome', () => {
     expect(parse(CASES.find((c) => c.title === 'Safari on macOS')!.ua).browser.name).toBe('Safari');
-    expect(parse(CASES.find((c) => c.title === 'Chrome on Windows 10')!.ua).browser.name).toBe('Chrome');
+    expect(parse(CASES.find((c) => c.title === 'Chrome on Windows 10')!.ua).browser.name).toBe(
+      'Chrome'
+    );
   });
 
   test('an old Opera that pretends to be MSIE is Opera', () => {
@@ -631,7 +637,7 @@ test.describe('detection order', () => {
 
   test('Windows Phone 8.1 mentioning iPhone and Android is still a Windows Phone', () => {
     const r = parse(
-      'Mozilla/5.0 (Mobile; Windows Phone 8.1; Android 4.0; ARM; Trident/7.0; Touch; rv:11.0; IEMobile/11.0; NOKIA; Lumia 635) like iPhone OS 7_0_3 Mac OS X AppleWebKit/537 (KHTML, like Gecko) Mobile Safari/537',
+      'Mozilla/5.0 (Mobile; Windows Phone 8.1; Android 4.0; ARM; Trident/7.0; Touch; rv:11.0; IEMobile/11.0; NOKIA; Lumia 635) like iPhone OS 7_0_3 Mac OS X AppleWebKit/537 (KHTML, like Gecko) Mobile Safari/537'
     );
     expect(r.os.name).toBe('Windows Phone');
     expect(r.device).toEqual({ type: 'mobile', vendor: 'Nokia', model: 'Lumia 635' });
@@ -640,7 +646,7 @@ test.describe('detection order', () => {
 
   test('a phone maker whose name ends in "bot" is not a crawler', () => {
     const r = parse(
-      'Mozilla/5.0 (Linux; Android 9; Cubot P30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36',
+      'Mozilla/5.0 (Linux; Android 9; Cubot P30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36'
     );
     expect(r.kind).toBe('browser');
     expect(r.browser.name).toBe('Chrome');
@@ -650,7 +656,8 @@ test.describe('detection order', () => {
 
 test.describe('operating system, device and CPU details', () => {
   test('Windows NT numbers map to the names people use', () => {
-    const version = (nt: string) => parse(`Mozilla/5.0 (Windows NT ${nt}) AppleWebKit/537.36`).os.version;
+    const version = (nt: string) =>
+      parse(`Mozilla/5.0 (Windows NT ${nt}) AppleWebKit/537.36`).os.version;
     expect(version('5.1')).toBe('XP');
     expect(version('6.0')).toBe('Vista');
     expect(version('6.1')).toBe('7');
@@ -661,16 +668,21 @@ test.describe('operating system, device and CPU details', () => {
   });
 
   test('macOS versions have dots, whether the UA used dots or underscores', () => {
-    expect(parse('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0').os).toEqual({
+    expect(
+      parse('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0')
+        .os
+    ).toEqual({
       name: 'macOS',
       version: '10.15',
     });
-    expect(parse('Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6_3) AppleWebKit/605.1.15').os.version).toBe('12.6.3');
+    expect(
+      parse('Mozilla/5.0 (Macintosh; Intel Mac OS X 12_6_3) AppleWebKit/605.1.15').os.version
+    ).toBe('12.6.3');
   });
 
   test('an iPod touch is not an iPhone', () => {
     const r = parse(
-      'Mozilla/5.0 (iPod touch; CPU iPhone OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Mobile/15E148 Safari/604.1',
+      'Mozilla/5.0 (iPod touch; CPU iPhone OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Mobile/15E148 Safari/604.1'
     );
     expect(r.device).toEqual({ type: 'mobile', vendor: 'Apple', model: 'iPod touch' });
     expect(r.os).toEqual({ name: 'iOS', version: '12.5.7' });
@@ -678,20 +690,21 @@ test.describe('operating system, device and CPU details', () => {
 
   test('a Samsung model loses its SAMSUNG prefix', () => {
     const r = parse(
-      'Mozilla/5.0 (Linux; Android 5.0; SAMSUNG SM-G900F Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/3.3 Chrome/38.0.2125.102 Mobile Safari/537.36',
+      'Mozilla/5.0 (Linux; Android 5.0; SAMSUNG SM-G900F Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/3.3 Chrome/38.0.2125.102 Mobile Safari/537.36'
     );
     expect(r.device).toEqual({ type: 'mobile', vendor: 'Samsung', model: 'SM-G900F' });
   });
 
   test('a model that matches no maker keeps its name with the vendor unknown', () => {
     const r = parse(
-      'Mozilla/5.0 (Linux; Android 12; Foo Bar 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+      'Mozilla/5.0 (Linux; Android 12; Foo Bar 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
     );
     expect(r.device).toEqual({ type: 'mobile', vendor: null, model: 'Foo Bar 9' });
   });
 
   test('CPU architecture is read from the usual tokens and left null otherwise', () => {
-    const cpu = (inner: string) => parse(`Mozilla/5.0 (${inner}) AppleWebKit/537.36`).cpu.architecture;
+    const cpu = (inner: string) =>
+      parse(`Mozilla/5.0 (${inner}) AppleWebKit/537.36`).cpu.architecture;
     expect(cpu('X11; Linux x86_64')).toBe('x86_64');
     expect(cpu('Windows NT 10.0; Win64; x64')).toBe('x86_64');
     expect(cpu('Windows NT 6.1; WOW64')).toBe('x86_64');
@@ -717,7 +730,9 @@ test.describe('operating system, device and CPU details', () => {
   });
 
   test('a browser token without a version keeps the version unknown', () => {
-    const r = parse('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/533.21.1 (KHTML, like Gecko) Safari/533.21.1');
+    const r = parse(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/533.21.1 (KHTML, like Gecko) Safari/533.21.1'
+    );
     expect(r.browser).toEqual({ name: 'Safari', version: null });
   });
 });
@@ -740,12 +755,16 @@ test.describe('notes', () => {
   });
 
   test('a bot gets the spoofing warning, a curl does not', () => {
-    expect(parse(CASES.find((c) => c.title === 'bingbot')!.ua).notes.join(' ')).toContain('reverse DNS');
+    expect(parse(CASES.find((c) => c.title === 'bingbot')!.ua).notes.join(' ')).toContain(
+      'reverse DNS'
+    );
     expect(parse('curl/8.4.0').notes).toEqual([]);
   });
 
   test('a plain Firefox on Linux has nothing to caveat', () => {
-    expect(parse('Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0').notes).toEqual([]);
+    expect(
+      parse('Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0').notes
+    ).toEqual([]);
   });
 });
 
@@ -779,8 +798,12 @@ test.describe('input handling', () => {
   });
 
   test('line breaks and runs of spaces collapse to single spaces', () => {
-    const r = parse('Mozilla/5.0 (X11; Linux x86_64;\n   rv:128.0)   Gecko/20100101\tFirefox/128.0\n');
-    expect(r.userAgent).toBe('Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0');
+    const r = parse(
+      'Mozilla/5.0 (X11; Linux x86_64;\n   rv:128.0)   Gecko/20100101\tFirefox/128.0\n'
+    );
+    expect(r.userAgent).toBe(
+      'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
+    );
     expect(r.browser.name).toBe('Firefox');
   });
 
@@ -820,14 +843,31 @@ test.describe('JSON output', () => {
 
   test('lists every field a reader would look for', () => {
     const json = JSON.parse(resultToJson(parse(CASES[0].ua)));
-    expect(Object.keys(json)).toEqual(['userAgent', 'kind', 'browser', 'engine', 'os', 'device', 'cpu', 'notes']);
+    expect(Object.keys(json)).toEqual([
+      'userAgent',
+      'kind',
+      'browser',
+      'engine',
+      'os',
+      'device',
+      'cpu',
+      'notes',
+    ]);
     expect(Object.keys(json.device)).toEqual(['type', 'vendor', 'model']);
   });
 });
 
 test.describe('labels', () => {
   test('every device type and client kind has a label', () => {
-    for (const type of ['desktop', 'mobile', 'tablet', 'bot', 'tv', 'console', 'unknown'] as const) {
+    for (const type of [
+      'desktop',
+      'mobile',
+      'tablet',
+      'bot',
+      'tv',
+      'console',
+      'unknown',
+    ] as const) {
       expect(DEVICE_TYPE_LABELS[type].length).toBeGreaterThan(0);
     }
     for (const kind of ['browser', 'bot', 'http-client', 'unknown'] as const) {
@@ -859,10 +899,21 @@ test.describe('client hints', () => {
   });
 
   test('recognises the placeholder brand in its many spellings', () => {
-    for (const brand of ['Not A;Brand', 'Not)A;Brand', '(Not(A:Brand', 'Not_A Brand', 'Not.A/Brand', 'Not=A?Brand']) {
-      expect(readClientHints({ brands: [{ brand, version: '99' }] })?.brands[0].placeholder).toBe(true);
+    for (const brand of [
+      'Not A;Brand',
+      'Not)A;Brand',
+      '(Not(A:Brand',
+      'Not_A Brand',
+      'Not.A/Brand',
+      'Not=A?Brand',
+    ]) {
+      expect(readClientHints({ brands: [{ brand, version: '99' }] })?.brands[0].placeholder).toBe(
+        true
+      );
     }
-    expect(readClientHints({ brands: [{ brand: 'Brave', version: '126' }] })?.brands[0].placeholder).toBe(false);
+    expect(
+      readClientHints({ brands: [{ brand: 'Brave', version: '126' }] })?.brands[0].placeholder
+    ).toBe(false);
   });
 
   test('returns null when the browser has no userAgentData', () => {
@@ -873,7 +924,13 @@ test.describe('client hints', () => {
 
   test('drops malformed entries and unknown field types', () => {
     const hints = readClientHints({
-      brands: [null, 'x', { brand: 'Chromium' }, { brand: 5, version: '1' }, { brand: 'Chromium', version: '126' }],
+      brands: [
+        null,
+        'x',
+        { brand: 'Chromium' },
+        { brand: 5, version: '1' },
+        { brand: 'Chromium', version: '126' },
+      ],
       mobile: 'yes',
       platform: '',
     });

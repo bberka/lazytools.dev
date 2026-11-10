@@ -77,7 +77,9 @@ function score(entry: MimeEntry, query: string, bare: string): number {
  * text lists everything.
  */
 export function searchMimeTypes(text: string, category: MimeCategoryFilter = 'all'): MimeEntry[] {
-  const inCategory = MIME_ENTRIES.filter((entry) => category === 'all' || entry.category === category);
+  const inCategory = MIME_ENTRIES.filter(
+    (entry) => category === 'all' || entry.category === category
+  );
   const query = text.trim().toLowerCase();
   if (query === '') return [...inCategory];
 

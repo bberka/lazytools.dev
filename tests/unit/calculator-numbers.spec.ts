@@ -67,7 +67,15 @@ test.describe('readNumber', () => {
   // Typing 1,000,000 a key at a time passes through "1,000," and "1,000,0",
   // which are no number yet but are not a mistake either.
   test('treats a number grouped in thousands and cut off after a comma as empty', () => {
-    for (const text of ['1,000,', '1,000,0', '1,000,00', '1,250,5', '12,34,', '1,00,0', '-1,000,0']) {
+    for (const text of [
+      '1,000,',
+      '1,000,0',
+      '1,000,00',
+      '1,250,5',
+      '12,34,',
+      '1,00,0',
+      '-1,000,0',
+    ]) {
       expect(readNumber(text), text).toEqual(EMPTY);
     }
 

@@ -85,14 +85,17 @@ Static export written to `out/`.
 Requires the Rust toolchain installed.
 
 #### Run desktop dev
+
 ```bash
 npm run desktop:dev
 ```
 
 #### Build desktop installers
+
 ```bash
 npm run desktop:build
 ```
+
 Native installers will be written to `src-tauri/target/release/bundle/`.
 
 ## Project structure

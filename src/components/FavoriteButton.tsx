@@ -11,11 +11,7 @@ interface FavoriteButtonProps {
   onToggle?: (isFavorite: boolean) => void;
 }
 
-export function FavoriteButton({
-  toolId,
-  variant = 'icon',
-  onToggle,
-}: FavoriteButtonProps) {
+export function FavoriteButton({ toolId, variant = 'icon', onToggle }: FavoriteButtonProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
   const isFav = isFavorite(toolId);
 

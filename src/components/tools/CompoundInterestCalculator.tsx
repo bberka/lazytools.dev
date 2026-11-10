@@ -213,7 +213,10 @@ export function CompoundInterestCalculator() {
                 <label htmlFor="ci-timing" className="text-sm font-medium">
                   Contributions are made
                 </label>
-                <Select value={timing} onValueChange={(value) => setTiming(value as ContributionTiming)}>
+                <Select
+                  value={timing}
+                  onValueChange={(value) => setTiming(value as ContributionTiming)}
+                >
                   <SelectTrigger id="ci-timing" className="h-9">
                     <SelectValue placeholder="Select timing" />
                   </SelectTrigger>
@@ -288,7 +291,8 @@ export function CompoundInterestCalculator() {
 
                 <p className="text-xs text-muted-foreground">
                   Deposits are made monthly, and interest accrues at the monthly rate equivalent to
-                  the chosen compounding. Estimates only: taxes, fees and inflation are not included.
+                  the chosen compounding. Estimates only: taxes, fees and inflation are not
+                  included.
                 </p>
 
                 <div className="flex flex-wrap gap-2">
@@ -390,7 +394,9 @@ export function CompoundInterestCalculator() {
         <Card>
           <CardHeader>
             <CardTitle>Year by year</CardTitle>
-            <CardDescription>Opening balance, deposits, interest and closing balance.</CardDescription>
+            <CardDescription>
+              Opening balance, deposits, interest and closing balance.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div
@@ -403,18 +409,20 @@ export function CompoundInterestCalculator() {
                 <caption className="sr-only">Balance by year</caption>
                 <thead>
                   <tr>
-                    {['Year', 'Start', 'Contributions', 'Interest', 'End balance'].map((heading, index) => (
-                      <th
-                        key={heading}
-                        scope="col"
-                        className={cn(
-                          'sticky top-0 bg-muted px-3 py-2 font-medium text-muted-foreground',
-                          index === 0 ? 'text-left' : 'text-right'
-                        )}
-                      >
-                        {heading}
-                      </th>
-                    ))}
+                    {['Year', 'Start', 'Contributions', 'Interest', 'End balance'].map(
+                      (heading, index) => (
+                        <th
+                          key={heading}
+                          scope="col"
+                          className={cn(
+                            'sticky top-0 bg-muted px-3 py-2 font-medium text-muted-foreground',
+                            index === 0 ? 'text-left' : 'text-right'
+                          )}
+                        >
+                          {heading}
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody className="font-mono tabular-nums">

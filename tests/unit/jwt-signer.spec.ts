@@ -92,7 +92,11 @@ test.describe('RFC 7515 Appendix A.1 (HS256)', () => {
   });
 
   test('verifyJwt accepts the RFC token before exp and rejects it from exp on', async () => {
-    const options = { token: RFC7515_TOKEN, secret: RFC7515_KEY, secretEncoding: 'base64' as const };
+    const options = {
+      token: RFC7515_TOKEN,
+      secret: RFC7515_KEY,
+      secretEncoding: 'base64' as const,
+    };
 
     const before = await verifyJwt({ ...options, clock: at(RFC7515_EXP - 1) });
     expect(before.status).toBe('valid');
@@ -331,7 +335,10 @@ test.describe('JSON helpers', () => {
     });
 
     const replaced = setJsonMember('{ "id" : 12345678901234567890 , "iat" : 1 }', 'iat', 2);
-    expect(replaced).toEqual({ ok: true, value: '{\n  "id": 12345678901234567890,\n  "iat": 2\n}' });
+    expect(replaced).toEqual({
+      ok: true,
+      value: '{\n  "id": 12345678901234567890,\n  "iat": 2\n}',
+    });
   });
 
   test('setJsonMember matches a key that was written with an escape', () => {
@@ -556,7 +563,10 @@ test.describe('signJwt', () => {
     const keyBytes = Uint8Array.from({ length: 64 }, (_, i) => (i * 11 + 3) & 0xff);
     for (const algorithm of JWT_ALGORITHMS) {
       for (const encoding of ['utf8', 'base64'] as const) {
-        const secret = encoding === 'base64' ? Buffer.from(keyBytes).toString('base64') : 'plain-text-secret-value-1234567890';
+        const secret =
+          encoding === 'base64'
+            ? Buffer.from(keyBytes).toString('base64')
+            : 'plain-text-secret-value-1234567890';
         const result = await signJwt({
           header: `{"alg":"${algorithm}","typ":"JWT"}`,
           payload: '{"sub":"abc"}',
@@ -677,7 +687,9 @@ test.describe('verifyJwt', () => {
   test('says how long a valid token has left', async () => {
     const result = await verify(await tokenFor(`{"exp":${NOW + 90}}`));
     expect(result.status).toBe('valid');
-    expect(result.message).toBe('The signature is valid (HS256). It expires in 1 minute 30 seconds.');
+    expect(result.message).toBe(
+      'The signature is valid (HS256). It expires in 1 minute 30 seconds.'
+    );
   });
 
   test('reports a wrong secret as an invalid signature', async () => {
@@ -727,7 +739,9 @@ test.describe('verifyJwt', () => {
       const result = await verify(token);
       expect(result.status).toBe('malformed');
     }
-    expect((await verify('a.b')).message).toBe('A JWT has 3 parts separated by dots, but this has 2.');
+    expect((await verify('a.b')).message).toBe(
+      'A JWT has 3 parts separated by dots, but this has 2.'
+    );
     expect((await verify('')).message).toBe('Paste a token to verify.');
   });
 
@@ -799,12 +813,22 @@ test.describe('verifyJwt', () => {
     const empty = await verifyJwt({ token, secret: '', secretEncoding: 'utf8', clock: at(NOW) });
     expect(empty.status).toBe('invalid-secret');
     expect(empty.message).toBe('Enter a secret.');
-    const bad = await verifyJwt({ token, secret: 'nope!', secretEncoding: 'base64', clock: at(NOW) });
+    const bad = await verifyJwt({
+      token,
+      secret: 'nope!',
+      secretEncoding: 'base64',
+      clock: at(NOW),
+    });
     expect(bad.status).toBe('invalid-secret');
   });
 
   test('malformed wins over a missing secret, so structure errors show up early', async () => {
-    const result = await verifyJwt({ token: 'a.b', secret: '', secretEncoding: 'utf8', clock: at(NOW) });
+    const result = await verifyJwt({
+      token: 'a.b',
+      secret: '',
+      secretEncoding: 'utf8',
+      clock: at(NOW),
+    });
     expect(result.status).toBe('malformed');
   });
 

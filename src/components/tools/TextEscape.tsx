@@ -21,7 +21,10 @@ export function TextEscape() {
   const [mode, setMode] = useState<EscapeMode>('javascript');
   const [direction, setDirection] = useState<EscapeDirection>('escape');
 
-  const { output, error } = useMemo(() => convertEscape(input, mode, direction), [input, mode, direction]);
+  const { output, error } = useMemo(
+    () => convertEscape(input, mode, direction),
+    [input, mode, direction]
+  );
 
   const handleSwap = () => {
     setInput(output);
@@ -87,7 +90,9 @@ export function TextEscape() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={direction === 'escape' ? 'Enter text here...' : 'Enter escaped text here...'}
+            placeholder={
+              direction === 'escape' ? 'Enter text here...' : 'Enter escaped text here...'
+            }
             aria-label={direction === 'escape' ? 'Text to escape' : 'Escaped text to unescape'}
             rows={8}
             className="font-mono"
@@ -96,7 +101,10 @@ export function TextEscape() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -105,7 +113,9 @@ export function TextEscape() {
         <CardHeader>
           <CardTitle>Output</CardTitle>
           <CardDescription>
-            {output ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}` :'Result will appear here automatically'}
+            {output
+              ? `${output.length} ${output.length === 1 ? 'character' : 'characters'}`
+              : 'Result will appear here automatically'}
           </CardDescription>
         </CardHeader>
         <CardContent>

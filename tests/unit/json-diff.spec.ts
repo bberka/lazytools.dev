@@ -52,7 +52,12 @@ function arrayIndex(token: string, length: number, allowEnd: boolean): number {
 }
 
 function setMember(target: Record<string, JsonValue>, key: string, value: JsonValue): void {
-  Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true });
+  Object.defineProperty(target, key, {
+    value,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
 }
 
 /** RFC 6902 add, remove and replace against a deep copy of `document`. */
@@ -120,13 +125,11 @@ function resolvePointer(document: JsonValue, pointer: string): JsonValue {
 /** Arrays sorted by their text, keys sorted: equal when the documents match up to array order. */
 function normalise(value: JsonValue): JsonValue {
   if (Array.isArray(value)) {
-    return value
-      .map(normalise)
-      .sort((a, b) => {
-        const x = JSON.stringify(a);
-        const y = JSON.stringify(b);
-        return x < y ? -1 : x > y ? 1 : 0;
-      });
+    return value.map(normalise).sort((a, b) => {
+      const x = JSON.stringify(a);
+      const y = JSON.stringify(b);
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
   }
   if (value !== null && typeof value === 'object') {
     const sorted: Record<string, JsonValue> = {};
@@ -163,14 +166,71 @@ test.describe('parseJson', () => {
 
   test('agrees with JSON.parse on what is valid and on the values', () => {
     const corpus = [
-      '', ' ', '{', '}', '[', ']', '[]', '{}', '{"a":1}', '{"a":1,}', '[1,]', '[,1]', '[1,,2]',
-      '{"a" 1}', '{"a":}', '{:1}', '{"a":1 "b":2}', "{'a':1}", "['a']", '"abc', '"a\\x"', '"\\u12"',
-      '"\\u12G4"', '"\\ud800"', '"tab\there"', '"line\nbreak"', '"\u007f"', '" "',
-      '01', '-01', '+1', '.5', '5.', '1.e3', '1e', '1e+', '-', '--1', '0x10', '1e5', '1E-5', '-0',
-      '0.0', '123456789012345678901234567890', 'true', 'tru', 'truee', 'True', 'nul', 'null null',
-      'NaN', 'Infinity', 'undefined', '[1 2]', '{"a":1}}', '[[[]]]', '{"a":{"b":{"c":[1,2,3]}}}',
-      '{"a":1,"a":2}', '"\\"quoted\\""', '[true,false,null,0,"x"]', '/* c */ 1', '// c\n1',
-      '{"__proto__":1}', ' 1', '1 ',
+      '',
+      ' ',
+      '{',
+      '}',
+      '[',
+      ']',
+      '[]',
+      '{}',
+      '{"a":1}',
+      '{"a":1,}',
+      '[1,]',
+      '[,1]',
+      '[1,,2]',
+      '{"a" 1}',
+      '{"a":}',
+      '{:1}',
+      '{"a":1 "b":2}',
+      "{'a':1}",
+      "['a']",
+      '"abc',
+      '"a\\x"',
+      '"\\u12"',
+      '"\\u12G4"',
+      '"\\ud800"',
+      '"tab\there"',
+      '"line\nbreak"',
+      '"\u007f"',
+      '" "',
+      '01',
+      '-01',
+      '+1',
+      '.5',
+      '5.',
+      '1.e3',
+      '1e',
+      '1e+',
+      '-',
+      '--1',
+      '0x10',
+      '1e5',
+      '1E-5',
+      '-0',
+      '0.0',
+      '123456789012345678901234567890',
+      'true',
+      'tru',
+      'truee',
+      'True',
+      'nul',
+      'null null',
+      'NaN',
+      'Infinity',
+      'undefined',
+      '[1 2]',
+      '{"a":1}}',
+      '[[[]]]',
+      '{"a":{"b":{"c":[1,2,3]}}}',
+      '{"a":1,"a":2}',
+      '"\\"quoted\\""',
+      '[true,false,null,0,"x"]',
+      '/* c */ 1',
+      '// c\n1',
+      '{"__proto__":1}',
+      ' 1',
+      '1 ',
     ];
     for (const text of corpus) {
       let expected: { ok: true; value: JsonValue } | { ok: false };
@@ -181,7 +241,8 @@ test.describe('parseJson', () => {
       }
       const actual = parseJson(text);
       expect(actual.ok, JSON.stringify(text)).toBe(expected.ok);
-      if (actual.ok && expected.ok) expect(actual.value, JSON.stringify(text)).toEqual(expected.value);
+      if (actual.ok && expected.ok)
+        expect(actual.value, JSON.stringify(text)).toEqual(expected.value);
     }
   });
 
@@ -197,7 +258,10 @@ test.describe('parseJson', () => {
   });
 
   test('names a trailing comma', () => {
-    for (const [text, position] of [['{"a":1,}', 7], ['[1,2,]', 5]] as const) {
+    for (const [text, position] of [
+      ['{"a":1,}', 7],
+      ['[1,2,]', 5],
+    ] as const) {
       const result = parseJson(text);
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -344,7 +408,19 @@ test.describe('JSON Pointer escaping', () => {
       'm~n': 108,
     };
     const result = diffJson(document, changed);
-    const published = ['/foo/0', '/foo/1', '/', '/a~1b', '/c%d', '/e^f', '/g|h', '/i\\j', '/k"l', '/ ', '/m~0n'];
+    const published = [
+      '/foo/0',
+      '/foo/1',
+      '/',
+      '/a~1b',
+      '/c%d',
+      '/e^f',
+      '/g|h',
+      '/i\\j',
+      '/k"l',
+      '/ ',
+      '/m~0n',
+    ];
     expect(result.entries.map((entry) => entry.path).sort()).toEqual([...published].sort());
     // Each path points at the member the RFC says it does.
     expect(resolvePointer(document, '/foo/0')).toBe('bar');
@@ -401,12 +477,23 @@ test.describe('diffJson: objects', () => {
       'added /user/address/zip',
       'changed /user/age',
     ]);
-    expect(result.summary).toMatchObject({ added: 2, removed: 1, changed: 2, typeChanged: 0, differences: 5 });
+    expect(result.summary).toMatchObject({
+      added: 2,
+      removed: 1,
+      changed: 2,
+      typeChanged: 0,
+      differences: 5,
+    });
   });
 
   test('carries the old and new values on each entry', () => {
     const result = diff('{"a":1,"b":"x","c":[1]}', '{"a":2,"d":{"e":1},"c":[1]}');
-    expect(result.entries).toContainEqual({ kind: 'changed', path: '/a', oldValue: 1, newValue: 2 });
+    expect(result.entries).toContainEqual({
+      kind: 'changed',
+      path: '/a',
+      oldValue: 1,
+      newValue: 2,
+    });
     expect(result.entries).toContainEqual({ kind: 'removed', path: '/b', oldValue: 'x' });
     expect(result.entries).toContainEqual({ kind: 'added', path: '/d', newValue: { e: 1 } });
   });
@@ -445,7 +532,10 @@ test.describe('diffJson: arrays by index', () => {
   });
 
   test('recurses into elements', () => {
-    const result = diff('{"rows":[{"id":1,"v":"a"},{"id":2,"v":"b"}]}', '{"rows":[{"id":1,"v":"a"},{"id":2,"v":"c"}]}');
+    const result = diff(
+      '{"rows":[{"id":1,"v":"a"},{"id":2,"v":"b"}]}',
+      '{"rows":[{"id":1,"v":"a"},{"id":2,"v":"c"}]}'
+    );
     expect(summarise(result)).toEqual(['changed /rows/1/v']);
   });
 
@@ -510,12 +600,16 @@ test.describe('diffJson: arrays with order ignored', () => {
       '[{"id":2,"name":"Grace"},{"id":1,"name":"Ada L."}]',
       ignore
     );
-    expect(result.entries).toEqual([{ kind: 'changed', path: '/0/name', oldValue: 'Ada', newValue: 'Ada L.' }]);
+    expect(result.entries).toEqual([
+      { kind: 'changed', path: '/0/name', oldValue: 'Ada', newValue: 'Ada L.' },
+    ]);
     // Without the option the same documents differ at every field.
-    expect(diff(
-      '[{"id":1,"name":"Ada"},{"id":2,"name":"Grace"}]',
-      '[{"id":2,"name":"Grace"},{"id":1,"name":"Ada L."}]'
-    ).summary.differences).toBe(4);
+    expect(
+      diff(
+        '[{"id":1,"name":"Ada"},{"id":2,"name":"Grace"}]',
+        '[{"id":2,"name":"Grace"},{"id":1,"name":"Ada L."}]'
+      ).summary.differences
+    ).toBe(4);
   });
 
   test('does not pair records with nothing in common', () => {
@@ -569,7 +663,9 @@ test.describe('diffJson: types, null and numbers', () => {
 
   test('a type change at the root replaces the whole document', () => {
     const result = diff('[1]', '{"a":1}');
-    expect(result.entries).toEqual([{ kind: 'type-changed', path: '', oldValue: [1], newValue: { a: 1 } }]);
+    expect(result.entries).toEqual([
+      { kind: 'type-changed', path: '', oldValue: [1], newValue: { a: 1 } },
+    ]);
     expect(result.patch).toEqual([{ op: 'replace', path: '', value: { a: 1 } }]);
     expect(applyPatch([1], result.patch)).toEqual({ a: 1 });
   });
@@ -580,8 +676,12 @@ test.describe('diffJson: types, null and numbers', () => {
     expect(summarise(diff('{"a":null}', '{}'))).toEqual(['removed /a']);
     expect(summarise(diff('{}', '{"a":null}'))).toEqual(['added /a']);
     expect(diff('{"a":null}', '{"a":null}').summary.differences).toBe(0);
-    expect(diff('{"a":null}', '{}').entries).toEqual([{ kind: 'removed', path: '/a', oldValue: null }]);
-    expect(diff('{}', '{"a":null}').entries).toEqual([{ kind: 'added', path: '/a', newValue: null }]);
+    expect(diff('{"a":null}', '{}').entries).toEqual([
+      { kind: 'removed', path: '/a', oldValue: null },
+    ]);
+    expect(diff('{}', '{"a":null}').entries).toEqual([
+      { kind: 'added', path: '/a', newValue: null },
+    ]);
   });
 
   test('null versus missing inside arrays', () => {
@@ -590,7 +690,16 @@ test.describe('diffJson: types, null and numbers', () => {
   });
 
   test('numbers are equal when their values are, however they are written', () => {
-    for (const [left, right] of [['1', '1.0'], ['1', '1e0'], ['100', '1E2'], ['1', '10e-1'], ['0.5', '5e-1'], ['0', '-0'], ['-0', '0'], ['0', '0.000']]) {
+    for (const [left, right] of [
+      ['1', '1.0'],
+      ['1', '1e0'],
+      ['100', '1E2'],
+      ['1', '10e-1'],
+      ['0.5', '5e-1'],
+      ['0', '-0'],
+      ['-0', '0'],
+      ['0', '0.000'],
+    ]) {
       const result = diff(`{"n":${left}}`, `{"n":${right}}`);
       expect(result.summary.differences, `${left} vs ${right}`).toBe(0);
     }
@@ -636,13 +745,9 @@ test.describe('diffJson: summary and unchanged values', () => {
 
     const verbose = diff(left, right, { showUnchanged: true });
     expect(verbose.summary).toEqual(quiet.summary);
-    expect(verbose.entries.filter((entry) => entry.kind === 'unchanged').map((entry) => entry.path)).toEqual([
-      '/a',
-      '/c/d/0',
-      '/c/d/1',
-      '/e',
-      '/f',
-    ]);
+    expect(
+      verbose.entries.filter((entry) => entry.kind === 'unchanged').map((entry) => entry.path)
+    ).toEqual(['/a', '/c/d/0', '/c/d/1', '/e', '/f']);
     expect(verbose.entries).toContainEqual({ kind: 'unchanged', path: '/e', value: {} });
     expect(verbose.patch).toEqual(quiet.patch);
   });
@@ -660,15 +765,24 @@ test.describe('diffJson: summary and unchanged values', () => {
 
 test.describe('JSON Patch (RFC 6902)', () => {
   test('the reference applier follows the RFC 6902 Appendix A examples', () => {
-    expect(applyPatch({ foo: 'bar' }, [{ op: 'add', path: '/baz', value: 'qux' }])).toEqual({ foo: 'bar', baz: 'qux' });
-    expect(applyPatch({ foo: ['bar', 'baz'] }, [{ op: 'add', path: '/foo/1', value: 'qux' }])).toEqual({
+    expect(applyPatch({ foo: 'bar' }, [{ op: 'add', path: '/baz', value: 'qux' }])).toEqual({
+      foo: 'bar',
+      baz: 'qux',
+    });
+    expect(
+      applyPatch({ foo: ['bar', 'baz'] }, [{ op: 'add', path: '/foo/1', value: 'qux' }])
+    ).toEqual({
       foo: ['bar', 'qux', 'baz'],
     });
-    expect(applyPatch({ baz: 'qux', foo: 'bar' }, [{ op: 'remove', path: '/baz' }])).toEqual({ foo: 'bar' });
+    expect(applyPatch({ baz: 'qux', foo: 'bar' }, [{ op: 'remove', path: '/baz' }])).toEqual({
+      foo: 'bar',
+    });
     expect(applyPatch({ foo: ['bar', 'qux', 'baz'] }, [{ op: 'remove', path: '/foo/1' }])).toEqual({
       foo: ['bar', 'baz'],
     });
-    expect(applyPatch({ baz: 'qux', foo: 'bar' }, [{ op: 'replace', path: '/baz', value: 'boo' }])).toEqual({
+    expect(
+      applyPatch({ baz: 'qux', foo: 'bar' }, [{ op: 'replace', path: '/baz', value: 'boo' }])
+    ).toEqual({
       baz: 'boo',
       foo: 'bar',
     });
@@ -725,7 +839,10 @@ test.describe('JSON Patch (RFC 6902)', () => {
       ['[1,2,3]', '[3,2,1]'],
       ['[1,2,3]', '[3,2,4]'],
       ['[1,1,2]', '[1,2,2,5]'],
-      ['{"a":[{"id":1,"n":"x"},{"id":2,"n":"y"}]}', '{"a":[{"id":2,"n":"z"},{"id":1,"n":"x"},{"id":3}]}'],
+      [
+        '{"a":[{"id":1,"n":"x"},{"id":2,"n":"y"}]}',
+        '{"a":[{"id":2,"n":"z"},{"id":1,"n":"x"},{"id":3}]}',
+      ],
       ['[[1,2],[3,4]]', '[[4,3],[2,9]]'],
       ['["a","b","c","d"]', '["d"]'],
     ];
@@ -739,7 +856,9 @@ test.describe('JSON Patch (RFC 6902)', () => {
 
   test('turns into text with two-space indentation', () => {
     const result = diff('{"a":1}', '{"a":2}');
-    expect(formatPatch(result.patch)).toBe('[\n  {\n    "op": "replace",\n    "path": "/a",\n    "value": 2\n  }\n]');
+    expect(formatPatch(result.patch)).toBe(
+      '[\n  {\n    "op": "replace",\n    "path": "/a",\n    "value": 2\n  }\n]'
+    );
     expect(formatPatch([])).toBe('[]');
   });
 });
@@ -789,7 +908,8 @@ function mutate(random: () => number, value: JsonValue): JsonValue {
       if (random() < 0.1) continue;
       setMember(copy, key, mutate(random, value[key]));
     }
-    if (random() < 0.3) setMember(copy, KEYS[Math.floor(random() * KEYS.length)], randomValue(random, 1));
+    if (random() < 0.3)
+      setMember(copy, KEYS[Math.floor(random() * KEYS.length)], randomValue(random, 1));
     return copy;
   }
   return value;
@@ -807,7 +927,8 @@ function reorder(random: () => number, value: JsonValue): JsonValue {
   }
   if (value !== null && typeof value === 'object') {
     const copy: Record<string, JsonValue> = {};
-    for (const key of Object.keys(value).reverse()) setMember(copy, key, reorder(random, value[key]));
+    for (const key of Object.keys(value).reverse())
+      setMember(copy, key, reorder(random, value[key]));
     return copy;
   }
   return value;
@@ -823,7 +944,10 @@ test.describe('generated documents', () => {
       const right = random() < 0.6 ? mutate(random, left) : randomValue(random, 4);
       const result = diffJson(left, right);
       expect(result.patch, `seed ${seed}`).toHaveLength(result.summary.differences);
-      expect(applyPatch(left, result.patch), `seed ${seed}: ${JSON.stringify(left)} -> ${JSON.stringify(right)}`).toEqual(right);
+      expect(
+        applyPatch(left, result.patch),
+        `seed ${seed}: ${JSON.stringify(left)} -> ${JSON.stringify(right)}`
+      ).toEqual(right);
     }
   });
 
@@ -846,7 +970,10 @@ test.describe('generated documents', () => {
       const random = makeRandom(seed * 104729);
       const value = randomValue(random, 4);
       expect(diffJson(value, structuredClone(value)).summary.differences, `seed ${seed}`).toBe(0);
-      expect(diffJson(value, reorder(random, value), { ignoreArrayOrder: true }).summary.differences, `seed ${seed}`).toBe(0);
+      expect(
+        diffJson(value, reorder(random, value), { ignoreArrayOrder: true }).summary.differences,
+        `seed ${seed}`
+      ).toBe(0);
     }
   });
 
@@ -875,7 +1002,10 @@ test.describe('generated documents', () => {
         const verbose = diffJson(left, right, { ignoreArrayOrder, showUnchanged: true });
         expect(verbose.summary, `seed ${seed}`).toEqual(quiet.summary);
         expect(verbose.patch, `seed ${seed}`).toEqual(quiet.patch);
-        expect(verbose.entries.filter((entry) => entry.kind !== 'unchanged'), `seed ${seed}`).toEqual(quiet.entries);
+        expect(
+          verbose.entries.filter((entry) => entry.kind !== 'unchanged'),
+          `seed ${seed}`
+        ).toEqual(quiet.entries);
       }
     }
   });
@@ -922,8 +1052,12 @@ test.describe('compareJsonText', () => {
 
   test('describes valid sides', () => {
     const comparison = compareJsonText('{"a":1,"b":2}', '[1,2,3]');
-    expect(comparison.left.status === 'valid' && comparison.left.description).toBe('object with 2 keys');
-    expect(comparison.right.status === 'valid' && comparison.right.description).toBe('array with 3 items');
+    expect(comparison.left.status === 'valid' && comparison.left.description).toBe(
+      'object with 2 keys'
+    );
+    expect(comparison.right.status === 'valid' && comparison.right.description).toBe(
+      'array with 3 items'
+    );
     expect(describeJson({ a: 1 })).toBe('object with 1 key');
     expect(describeJson([1])).toBe('array with 1 item');
     expect(describeJson('x')).toBe('string');
@@ -939,10 +1073,7 @@ test.describe('compareJsonText', () => {
 
 test.describe('formatReport', () => {
   test('lists each difference with a marker that is not a colour', () => {
-    const result = diff(
-      '{"a":1,"b":"x","c":true,"d":[1]}',
-      '{"a":2,"c":"yes","d":[1],"e":null}'
-    );
+    const result = diff('{"a":1,"b":"x","c":true,"d":[1]}', '{"a":2,"c":"yes","d":[1],"e":null}');
     expect(formatReport(result)).toBe(
       [
         '4 differences: 1 added, 1 removed, 1 changed, 1 type changed',
@@ -963,7 +1094,12 @@ test.describe('formatReport', () => {
   test('names the root and notes ignored array order', () => {
     const result = diff('1', '"1"', { ignoreArrayOrder: true });
     expect(formatReport(result)).toBe(
-      ['1 difference: 1 type changed', 'Array order ignored.', '', '! (root) (type changed): 1 (number) -> "1" (string)'].join('\n')
+      [
+        '1 difference: 1 type changed',
+        'Array order ignored.',
+        '',
+        '! (root) (type changed): 1 (number) -> "1" (string)',
+      ].join('\n')
     );
   });
 
@@ -1007,6 +1143,8 @@ test.describe('sample data', () => {
     expect(applyPatch(left.value, diffJson(left.value, right.value).patch)).toEqual(right.value);
     const loose = diffJson(left.value, right.value, { ignoreArrayOrder: true });
     expect(normalise(applyPatch(left.value, loose.patch))).toEqual(normalise(right.value));
-    expect(loose.summary.differences).toBeLessThan(diffJson(left.value, right.value).summary.differences);
+    expect(loose.summary.differences).toBeLessThan(
+      diffJson(left.value, right.value).summary.differences
+    );
   });
 });

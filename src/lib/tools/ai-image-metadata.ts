@@ -74,7 +74,10 @@ export interface StripResult {
 // Signals
 
 const SIGNAL_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/compositeWithTrainedAlgorithmicMedia/i, 'DigitalSourceType: compositeWithTrainedAlgorithmicMedia'],
+  [
+    /compositeWithTrainedAlgorithmicMedia/i,
+    'DigitalSourceType: compositeWithTrainedAlgorithmicMedia',
+  ],
   [/trainedAlgorithmicMedia/i, 'DigitalSourceType: trainedAlgorithmicMedia'],
   [/algorithmicMedia/i, 'DigitalSourceType: algorithmicMedia'],
   [/c2pa/i, 'C2PA'],
@@ -118,7 +121,11 @@ function findSignals(haystack: string): string[] {
   for (const [pattern, label] of SIGNAL_PATTERNS) {
     if (!pattern.test(haystack)) continue;
     // The DigitalSourceType patterns overlap; the first, most specific one wins.
-    if (label.startsWith('DigitalSourceType') && found.some((item) => item.startsWith('DigitalSourceType'))) continue;
+    if (
+      label.startsWith('DigitalSourceType') &&
+      found.some((item) => item.startsWith('DigitalSourceType'))
+    )
+      continue;
     found.push(label);
   }
   return found;
@@ -148,7 +155,8 @@ interface Parsed {
 
 class ImageParseError extends Error {}
 
-const truncated = () => new ImageParseError('The file is cut short or damaged, so it was left unchanged.');
+const truncated = () =>
+  new ImageParseError('The file is cut short or damaged, so it was left unchanged.');
 
 const ascii = (bytes: Uint8Array, start: number, length: number): string => {
   let text = '';
@@ -158,10 +166,12 @@ const ascii = (bytes: Uint8Array, start: number, length: number): string => {
   return text;
 };
 
-const startsWithText = (bytes: Uint8Array, text: string): boolean => ascii(bytes, 0, text.length) === text;
+const startsWithText = (bytes: Uint8Array, text: string): boolean =>
+  ascii(bytes, 0, text.length) === text;
 
 function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return 'jpeg';
   if (
     bytes.length >= 8 &&
     bytes[0] === 0x89 &&
@@ -173,7 +183,8 @@ function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
   ) {
     return 'png';
   }
-  if (bytes.length >= 12 && ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WEBP') return 'webp';
+  if (bytes.length >= 12 && ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WEBP')
+    return 'webp';
   return null;
 }
 
@@ -191,12 +202,18 @@ function exifOrientation(payload: Uint8Array): number | null {
   for (let index = 0; index < count; index++) {
     const entry = directory + 2 + index * 12;
     if (entry + 12 > tiff.length) return null;
-    if (view.getUint16(entry, littleEndian) === 0x0112) return view.getUint16(entry + 8, littleEndian);
+    if (view.getUint16(entry, littleEndian) === 0x0112)
+      return view.getUint16(entry + 8, littleEndian);
   }
   return null;
 }
 
-function exifFinding(payload: Uint8Array, location: string, size: number, warnings: string[]): MetadataFinding {
+function exifFinding(
+  payload: Uint8Array,
+  location: string,
+  size: number,
+  warnings: string[]
+): MetadataFinding {
   const haystack = searchable(payload);
   const signals = findSignals(haystack);
   const generated = signals.includes('Stable Diffusion parameters');
@@ -221,7 +238,10 @@ function addKept(parsed: Parsed, label: string): void {
 
 // JPEG
 
-const XMP_JPEG_PREFIXES = ['http://ns.adobe.com/xap/1.0/\0', 'http://ns.adobe.com/xmp/extension/\0'];
+const XMP_JPEG_PREFIXES = [
+  'http://ns.adobe.com/xap/1.0/\0',
+  'http://ns.adobe.com/xmp/extension/\0',
+];
 
 function isJumbf(payload: Uint8Array): boolean {
   return ascii(payload, 0, 2) === 'JP' && ascii(payload, 0, 24).includes('jumb');
@@ -252,13 +272,17 @@ function parseJpeg(bytes: Uint8Array): Parsed {
   let position = 2;
   for (;;) {
     if (position >= bytes.length) throw truncated();
-    if (bytes[position] !== 0xff) throw new ImageParseError('Unexpected data between JPEG segments, so the file was left unchanged.');
+    if (bytes[position] !== 0xff)
+      throw new ImageParseError(
+        'Unexpected data between JPEG segments, so the file was left unchanged.'
+      );
     while (bytes[position + 1] === 0xff) position += 1;
     const marker = bytes[position + 1];
     if (marker === undefined) throw truncated();
 
     if (marker === 0xd9) return parsed;
-    if (marker === 0x00) throw new ImageParseError('Invalid JPEG marker, so the file was left unchanged.');
+    if (marker === 0x00)
+      throw new ImageParseError('Invalid JPEG marker, so the file was left unchanged.');
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd8)) {
       position += 2;
       continue;
@@ -277,7 +301,12 @@ function parseJpeg(bytes: Uint8Array): Parsed {
         finding = exifFinding(payload, 'JPEG APP1 (EXIF)', size, parsed.warnings);
       } else if (XMP_JPEG_PREFIXES.some((prefix) => startsWithText(payload, prefix))) {
         const text = latin1.decode(payload);
-        finding = { category: 'XMP', location: 'JPEG APP1 (XMP)', size, signals: findSignals(text) };
+        finding = {
+          category: 'XMP',
+          location: 'JPEG APP1 (XMP)',
+          size,
+          signals: findSignals(text),
+        };
       }
     } else if (marker === 0xeb && isJumbf(payload)) {
       finding = {
@@ -295,7 +324,13 @@ function parseJpeg(bytes: Uint8Array): Parsed {
       };
     } else if (marker === 0xfe) {
       const text = latin1.decode(payload);
-      finding = { category: 'Comment', location: 'JPEG COM', size, signals: findSignals(text), preview: preview(text) };
+      finding = {
+        category: 'Comment',
+        location: 'JPEG COM',
+        size,
+        signals: findSignals(text),
+        preview: preview(text),
+      };
     } else if (marker === 0xe2 && startsWithText(payload, 'ICC_PROFILE\0')) {
       addKept(parsed, ICC_LABEL);
     }
@@ -330,7 +365,8 @@ function pngTextFinding(type: string, payload: Uint8Array, size: number): Metada
 
   let category: FindingCategory = 'Text metadata';
   if (lowerKeyword === 'xml:com.adobe.xmp') category = 'XMP';
-  else if (GENERATION_KEYWORDS.has(lowerKeyword) || signals.length > 0) category = 'Generation prompt/parameters';
+  else if (GENERATION_KEYWORDS.has(lowerKeyword) || signals.length > 0)
+    category = 'Generation prompt/parameters';
 
   return { category, location, size, signals, preview: text ? preview(text) : undefined };
 }
@@ -347,7 +383,10 @@ function parsePng(bytes: Uint8Array): Parsed {
     const type = ascii(bytes, position + 4, 4);
     const end = position + 12 + length;
     if (end > bytes.length) throw truncated();
-    if (first && type !== 'IHDR') throw new ImageParseError('The PNG does not start with an IHDR chunk, so it was left unchanged.');
+    if (first && type !== 'IHDR')
+      throw new ImageParseError(
+        'The PNG does not start with an IHDR chunk, so it was left unchanged.'
+      );
     first = false;
 
     const payload = bytes.subarray(position + 8, position + 8 + length);
@@ -415,7 +454,12 @@ function parseWebp(bytes: Uint8Array): Parsed {
       parsed.removals.push({
         start: position,
         end,
-        finding: { category: 'XMP', location: 'WebP XMP chunk', size, signals: findSignals(latin1.decode(payload)) },
+        finding: {
+          category: 'XMP',
+          location: 'WebP XMP chunk',
+          size,
+          signals: findSignals(latin1.decode(payload)),
+        },
         webpFlag: WEBP_FLAG_XMP,
       });
     } else if (type === 'C2PA') {
@@ -449,7 +493,9 @@ function parseSafely(bytes: Uint8Array): Parsed | ImageParseError {
     return parse(bytes);
   } catch (error) {
     // Every read is bounds-checked; anything else is a net under a crafted file.
-    return error instanceof ImageParseError ? error : new ImageParseError('The file could not be read, so it was left unchanged.');
+    return error instanceof ImageParseError
+      ? error
+      : new ImageParseError('The file could not be read, so it was left unchanged.');
   }
 }
 
@@ -474,7 +520,13 @@ export function scanImageMetadata(bytes: Uint8Array): ImageScan {
   };
 }
 
-function unchanged(bytes: Uint8Array, format: ImageFormat | null, message: string, verified: boolean, extra: Partial<StripResult> = {}): StripResult {
+function unchanged(
+  bytes: Uint8Array,
+  format: ImageFormat | null,
+  message: string,
+  verified: boolean,
+  extra: Partial<StripResult> = {}
+): StripResult {
   return {
     format,
     bytes,
@@ -507,7 +559,13 @@ export function stripImageMetadata(bytes: Uint8Array): StripResult {
   const details = { kept: parsed.kept, warnings: parsed.warnings };
 
   if (removals.length === 0) {
-    return unchanged(bytes, parsed.format, 'No AI or provenance metadata found. The file was left unchanged.', true, details);
+    return unchanged(
+      bytes,
+      parsed.format,
+      'No AI or provenance metadata found. The file was left unchanged.',
+      true,
+      details
+    );
   }
 
   const removedBytes = removals.reduce((sum, removal) => sum + (removal.end - removal.start), 0);
@@ -532,7 +590,13 @@ export function stripImageMetadata(bytes: Uint8Array): StripResult {
 
   const rescan = parseSafely(output);
   if (rescan instanceof ImageParseError || rescan.removals.length > 0) {
-    return unchanged(bytes, parsed.format, 'The cleaned file did not pass the re-scan, so the original was left unchanged.', false, details);
+    return unchanged(
+      bytes,
+      parsed.format,
+      'The cleaned file did not pass the re-scan, so the original was left unchanged.',
+      false,
+      details
+    );
   }
 
   return {

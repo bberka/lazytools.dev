@@ -337,7 +337,8 @@ test.describe('ATS analyzer bullets, headings and keywords', () => {
   test('counts a bullet whose text starts on the next line, and nothing else', () => {
     expect(analyzeResumeText('●\nBuilt a thing\n●\nLed a team', 1).bulletCount).toBe(2);
     expect(
-      analyzeResumeText('Plain line\nnot - a bullet\n-nospace\n1. numbered\n2019–2022', 1).bulletCount
+      analyzeResumeText('Plain line\nnot - a bullet\n-nospace\n1. numbered\n2019–2022', 1)
+        .bulletCount
     ).toBe(0);
   });
 

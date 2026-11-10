@@ -47,9 +47,7 @@ function TooltipSimple({
 }: TooltipSimpleProps) {
   return (
     <Tooltip delayDuration={delayDuration}>
-      <TooltipTrigger asChild>
-        {children}
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent side={side} align={align} {...props}>
         {content}
       </TooltipContent>

@@ -1,7 +1,16 @@
 'use client';
 
 import { useId, useMemo, useRef, useState } from 'react';
-import { Archive, Download, FileImage, Image as ImageIcon, ShieldCheck, Trash2, Type, X } from 'lucide-react';
+import {
+  Archive,
+  Download,
+  FileImage,
+  Image as ImageIcon,
+  ShieldCheck,
+  Trash2,
+  Type,
+  X,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
@@ -11,8 +20,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { FileDropzone } from '@/components/FileDropzone';
 import { useFileIntake } from '@/hooks/useFileIntake';
-import { downloadBlob, formatBytes, outputFileName, readFileAsArrayBuffer, type FormatBytesOptions } from '@/lib/files';
-import { IMAGE_MIME_TYPES, stripImageMetadata, type StripResult } from '@/lib/tools/ai-image-metadata';
+import {
+  downloadBlob,
+  formatBytes,
+  outputFileName,
+  readFileAsArrayBuffer,
+  type FormatBytesOptions,
+} from '@/lib/files';
+import {
+  IMAGE_MIME_TYPES,
+  stripImageMetadata,
+  type StripResult,
+} from '@/lib/tools/ai-image-metadata';
 import {
   DEFAULT_TEXT_OPTIONS,
   TEXT_CATEGORIES,
@@ -34,7 +53,9 @@ interface ImageItem {
 }
 
 const cleanedBlob = (result: StripResult, file: File): Blob =>
-  new Blob([result.bytes as BlobPart], { type: result.format ? IMAGE_MIME_TYPES[result.format] : file.type });
+  new Blob([result.bytes as BlobPart], {
+    type: result.format ? IMAGE_MIME_TYPES[result.format] : file.type,
+  });
 
 const cleanedName = (file: File) => outputFileName(file.name, { suffix: '-clean' });
 
@@ -42,7 +63,8 @@ const cleanedName = (file: File) => outputFileName(file.name, { suffix: '-clean'
 
 function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void }) {
   const { file, result } = item;
-  const failed = item.error !== undefined || (result !== null && !result.changed && !result.verified);
+  const failed =
+    item.error !== undefined || (result !== null && !result.changed && !result.verified);
 
   return (
     <li className="space-y-3 rounded-lg border bg-muted/20 p-3 sm:p-4">
@@ -75,9 +97,15 @@ function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void
               Re-scan clean
             </Badge>
           )}
-          {result && !result.changed && result.verified && <Badge variant="outline">Nothing found</Badge>}
+          {result && !result.changed && result.verified && (
+            <Badge variant="outline">Nothing found</Badge>
+          )}
           {result?.changed && (
-            <Button size="sm" variant="outline" onClick={() => downloadBlob(cleanedBlob(result, file), cleanedName(file))}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadBlob(cleanedBlob(result, file), cleanedName(file))}
+            >
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
@@ -109,14 +137,21 @@ function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void
           <p className="text-xs font-semibold">Removed</p>
           <ul className="space-y-1.5">
             {result.removed.map((finding, index) => (
-              <li key={`${finding.location}-${index}`} className="rounded-md border bg-background p-2 text-xs">
+              <li
+                key={`${finding.location}-${index}`}
+                className="rounded-md border bg-background p-2 text-xs"
+              >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="font-medium">{finding.category}</span>
                   <span className="text-muted-foreground">{finding.location}</span>
-                  <span className="text-muted-foreground">{formatBytes(finding.size, SIZE_FORMAT)}</span>
+                  <span className="text-muted-foreground">
+                    {formatBytes(finding.size, SIZE_FORMAT)}
+                  </span>
                 </div>
                 {finding.preview && (
-                  <p className="mt-1 break-words font-mono text-muted-foreground">{finding.preview}</p>
+                  <p className="mt-1 break-words font-mono text-muted-foreground">
+                    {finding.preview}
+                  </p>
                 )}
               </li>
             ))}
@@ -164,10 +199,17 @@ function ImageCleaner() {
     }
   };
 
-  const intake = useFileIntake({ accept: 'image/jpeg,image/png,image/webp', multiple: true, onFiles: addFiles });
+  const intake = useFileIntake({
+    accept: 'image/jpeg,image/png,image/webp',
+    multiple: true,
+    onFiles: addFiles,
+  });
 
   const cleaned = items.filter((item) => item.result?.changed);
-  const totalSaved = cleaned.reduce((sum, item) => sum + (item.result ? item.result.originalSize - item.result.cleanedSize : 0), 0);
+  const totalSaved = cleaned.reduce(
+    (sum, item) => sum + (item.result ? item.result.originalSize - item.result.cleanedSize : 0),
+    0
+  );
 
   const handleDownloadAll = async () => {
     setZipping(true);
@@ -202,8 +244,9 @@ function ImageCleaner() {
             Images
           </CardTitle>
           <CardDescription>
-            Finds and cuts out AI provenance metadata (EXIF, XMP, C2PA Content Credentials, IPTC, comments, PNG
-            text chunks) without re-encoding. Pixels and colour profiles stay exactly as they were.
+            Finds and cuts out AI provenance metadata (EXIF, XMP, C2PA Content Credentials, IPTC,
+            comments, PNG text chunks) without re-encoding. Pixels and colour profiles stay exactly
+            as they were.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -229,7 +272,11 @@ function ImageCleaner() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleDownloadAll} disabled={cleaned.length === 0 || zipping} size="sm">
+              <Button
+                onClick={handleDownloadAll}
+                disabled={cleaned.length === 0 || zipping}
+                size="sm"
+              >
                 <Archive className="mr-2 h-4 w-4" />
                 {zipping ? 'Creating ZIP…' : `Download all cleaned (${cleaned.length})`}
               </Button>
@@ -248,7 +295,9 @@ function ImageCleaner() {
                 <ImageResult
                   key={item.id}
                   item={item}
-                  onRemove={() => setItems((previous) => previous.filter((other) => other.id !== item.id))}
+                  onRemove={() =>
+                    setItems((previous) => previous.filter((other) => other.id !== item.id))
+                  }
                 />
               ))}
             </ul>
@@ -279,8 +328,8 @@ function TextCleaner() {
             AI-generated Text
           </CardTitle>
           <CardDescription>
-            Paste text to remove invisible watermark-style characters and chat tracking parameters. It never leaves
-            your browser.
+            Paste text to remove invisible watermark-style characters and chat tracking parameters.
+            It never leaves your browser.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -298,7 +347,10 @@ function TextCleaner() {
               const info = TEXT_CATEGORY_INFO[category];
               const count = result.found[category];
               return (
-                <li key={category} className="flex items-start gap-3 rounded-lg border bg-muted/20 p-3">
+                <li
+                  key={category}
+                  className="flex items-start gap-3 rounded-lg border bg-muted/20 p-3"
+                >
                   <Switch
                     id={`${id}-${category}`}
                     checked={options[category]}
@@ -306,7 +358,10 @@ function TextCleaner() {
                     className="mt-0.5"
                   />
                   <div className="min-w-0 flex-1">
-                    <label htmlFor={`${id}-${category}`} className="block cursor-pointer text-sm font-medium">
+                    <label
+                      htmlFor={`${id}-${category}`}
+                      className="block cursor-pointer text-sm font-medium"
+                    >
                       {info.label}
                     </label>
                     <p className="text-xs text-muted-foreground">{info.description}</p>

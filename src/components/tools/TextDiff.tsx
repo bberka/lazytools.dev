@@ -127,7 +127,11 @@ export function TextDiff() {
             <span id="text-diff-mode-label" className="text-sm font-medium">
               Diff Mode:
             </span>
-            <div role="group" aria-labelledby="text-diff-mode-label" className="flex flex-wrap gap-2">
+            <div
+              role="group"
+              aria-labelledby="text-diff-mode-label"
+              className="flex flex-wrap gap-2"
+            >
               <Button
                 onClick={() => setDiffMode('lines')}
                 variant={diffMode === 'lines' ? 'default' : 'outline'}
@@ -151,7 +155,11 @@ export function TextDiff() {
             <span id="text-diff-view-label" className="text-sm font-medium">
               View:
             </span>
-            <div role="group" aria-labelledby="text-diff-view-label" className="flex flex-wrap gap-2">
+            <div
+              role="group"
+              aria-labelledby="text-diff-view-label"
+              className="flex flex-wrap gap-2"
+            >
               <Button
                 onClick={() => setViewMode('side-by-side')}
                 variant={viewMode === 'side-by-side' ? 'default' : 'outline'}
@@ -172,7 +180,12 @@ export function TextDiff() {
           </div>
         </div>
 
-        <Button onClick={handleClear} variant="outline" size="sm" className="min-h-11 sm:min-h-9 lg:self-start">
+        <Button
+          onClick={handleClear}
+          variant="outline"
+          size="sm"
+          className="min-h-11 sm:min-h-9 lg:self-start"
+        >
           <Trash2 className="h-4 w-4 mr-2" />
           Clear
         </Button>

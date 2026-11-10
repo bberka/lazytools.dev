@@ -31,7 +31,12 @@ const uint32 = (value: number, littleEndian = false) => {
 };
 
 /** A JPEG segment: marker, length (which counts itself) and payload. */
-const segment = (marker: number, payload: number[]) => [0xff, marker, ...uint16(payload.length + 2), ...payload];
+const segment = (marker: number, payload: number[]) => [
+  0xff,
+  marker,
+  ...uint16(payload.length + 2),
+  ...payload,
+];
 
 interface ExifOptions {
   littleEndian?: boolean;
@@ -40,8 +45,12 @@ interface ExifOptions {
 }
 
 /** An APP1 segment whose only job is to carry an orientation. */
-function exifSegment(orientation: number, { littleEndian = false, type = 3 }: ExifOptions = {}): number[] {
-  const value = type === 4 ? uint32(orientation, littleEndian) : [...uint16(orientation, littleEndian), 0, 0];
+function exifSegment(
+  orientation: number,
+  { littleEndian = false, type = 3 }: ExifOptions = {}
+): number[] {
+  const value =
+    type === 4 ? uint32(orientation, littleEndian) : [...uint16(orientation, littleEndian), 0, 0];
 
   return segment(0xe1, [
     ...[0x45, 0x78, 0x69, 0x66, 0, 0], // "Exif\0\0"
@@ -69,7 +78,21 @@ const XMP = segment(0xe1, Array.from(Buffer.from('http://ns.adobe.com/xap/1.0/\0
  * PDF from.
  */
 function jpeg(width: number, height: number, ...leading: number[][]): Uint8Array {
-  const frame = segment(0xc0, [8, ...uint16(height), ...uint16(width), 3, 1, 0x11, 0, 2, 0x11, 1, 3, 0x11, 1]);
+  const frame = segment(0xc0, [
+    8,
+    ...uint16(height),
+    ...uint16(width),
+    3,
+    1,
+    0x11,
+    0,
+    2,
+    0x11,
+    1,
+    3,
+    0x11,
+    1,
+  ]);
   return bytesOf([0xff, 0xd8], ...leading, frame, [0xff, 0xd9]);
 }
 
@@ -114,12 +137,16 @@ async function readPages(pdfBytes: Uint8Array) {
   return doc.getPages().map((page) => {
     const contents = page.node.Contents();
     const streams =
-      contents instanceof PDFArray ? contents.asArray().map((ref) => doc.context.lookup(ref)) : [contents];
+      contents instanceof PDFArray
+        ? contents.asArray().map((ref) => doc.context.lookup(ref))
+        : [contents];
     const source = streams
       .filter((stream): stream is PDFRawStream => stream instanceof PDFRawStream)
       .map((stream) => Buffer.from(decodePDFRawStream(stream).decode()).toString('latin1'))
       .join('\n');
-    const matrix = /([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) cm/.exec(source);
+    const matrix = /([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+) cm/.exec(
+      source
+    );
 
     return {
       width: page.getWidth(),
@@ -137,7 +164,9 @@ async function readPageImages(pdfBytes: Uint8Array) {
   return doc.getPages().map((page) => {
     const contents = page.node.Contents();
     const streams =
-      contents instanceof PDFArray ? contents.asArray().map((ref) => doc.context.lookup(ref)) : [contents];
+      contents instanceof PDFArray
+        ? contents.asArray().map((ref) => doc.context.lookup(ref))
+        : [contents];
     const source = streams
       .filter((stream): stream is PDFRawStream => stream instanceof PDFRawStream)
       .map((stream) => Buffer.from(decodePDFRawStream(stream).decode()).toString('latin1'))
@@ -173,7 +202,9 @@ test.describe('detectImageFormat', () => {
     expect(detectImageFormat(new Uint8Array())).toBeNull();
     expect(detectImageFormat(Uint8Array.from([0xff, 0xd8]))).toBeNull();
     expect(detectImageFormat(Uint8Array.from(Buffer.from('GIF89a', 'latin1')))).toBeNull();
-    expect(detectImageFormat(Uint8Array.from(Buffer.from('RIFF\0\0\0\0WEBPVP8 ', 'latin1')))).toBeNull();
+    expect(
+      detectImageFormat(Uint8Array.from(Buffer.from('RIFF\0\0\0\0WEBPVP8 ', 'latin1')))
+    ).toBeNull();
     expect(detectImageFormat(Uint8Array.from(Buffer.from('\x89PNG\r\n', 'latin1')))).toBeNull();
   });
 });
@@ -182,20 +213,24 @@ test.describe('readJpegOrientation', () => {
   test('reads every orientation, in both byte orders', () => {
     for (let orientation = 1; orientation <= 8; orientation++) {
       expect(readJpegOrientation(jpeg(4, 3, exifSegment(orientation)))).toBe(orientation);
-      expect(readJpegOrientation(jpeg(4, 3, exifSegment(orientation, { littleEndian: true })))).toBe(
-        orientation
-      );
+      expect(
+        readJpegOrientation(jpeg(4, 3, exifSegment(orientation, { littleEndian: true })))
+      ).toBe(orientation);
     }
   });
 
   test('finds EXIF behind a JFIF header and behind another APP1 segment', () => {
     expect(readJpegOrientation(jpeg(4, 3, JFIF, exifSegment(6)))).toBe(6);
-    expect(readJpegOrientation(jpeg(4, 3, JFIF, XMP, exifSegment(8, { littleEndian: true })))).toBe(8);
+    expect(readJpegOrientation(jpeg(4, 3, JFIF, XMP, exifSegment(8, { littleEndian: true })))).toBe(
+      8
+    );
   });
 
   test('reads an orientation stored as a LONG', () => {
     expect(readJpegOrientation(jpeg(4, 3, exifSegment(3, { type: 4 })))).toBe(3);
-    expect(readJpegOrientation(jpeg(4, 3, exifSegment(3, { type: 4, littleEndian: true })))).toBe(3);
+    expect(readJpegOrientation(jpeg(4, 3, exifSegment(3, { type: 4, littleEndian: true })))).toBe(
+      3
+    );
   });
 
   test('reads a view that does not start at the beginning of its buffer', () => {
@@ -226,7 +261,9 @@ test.describe('readJpegOrientation', () => {
     expect(readJpegOrientation(png(2, 2))).toBe(1);
     expect(readJpegOrientation(new Uint8Array())).toBe(1);
     // A segment that claims to be longer than the file.
-    expect(readJpegOrientation(Uint8Array.from([0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff, 0x45, 0x78]))).toBe(1);
+    expect(
+      readJpegOrientation(Uint8Array.from([0xff, 0xd8, 0xff, 0xe1, 0xff, 0xff, 0x45, 0x78]))
+    ).toBe(1);
   });
 });
 
@@ -253,7 +290,11 @@ test.describe('placeImage', () => {
   });
 
   test('leaves an upright image as it is', () => {
-    expect(placeImage(WIDTH, HEIGHT)).toEqual({ pageWidth: 40, pageHeight: 30, matrix: [40, 0, 0, 30, 0, 0] });
+    expect(placeImage(WIDTH, HEIGHT)).toEqual({
+      pageWidth: 40,
+      pageHeight: 30,
+      matrix: [40, 0, 0, 30, 0, 0],
+    });
     expect(placeImage(WIDTH, HEIGHT, 1)).toEqual(placeImage(WIDTH, HEIGHT));
     expect(placeImage(WIDTH, HEIGHT, 0)).toEqual(placeImage(WIDTH, HEIGHT));
     expect(placeImage(WIDTH, HEIGHT, 42)).toEqual(placeImage(WIDTH, HEIGHT));
@@ -377,7 +418,10 @@ test.describe('imagesToPdf', () => {
   // it. Such an image was skipped without a word; alone, it gave a PDF with one
   // blank page.
   test('embeds an image that has no reported type', async () => {
-    const pdf = await imagesToPdf([file(jpeg(20, 10), 'scan', ''), file(png(4, 6), 'IMG_0001', '')]);
+    const pdf = await imagesToPdf([
+      file(jpeg(20, 10), 'scan', ''),
+      file(png(4, 6), 'IMG_0001', ''),
+    ]);
 
     expect(await readPages(pdf)).toEqual([
       { width: 20, height: 10, matrix: [20, 0, 0, 10, 0, 0], imagesDrawn: 1 },
@@ -396,7 +440,9 @@ test.describe('imagesToPdf', () => {
   test('names the file when an image is damaged', async () => {
     const broken = file(png(2, 2).subarray(0, 30), 'broken.png', 'image/png');
 
-    await expect(imagesToPdf([broken])).rejects.toThrow(/^"broken\.png" could not be read as an image: /);
+    await expect(imagesToPdf([broken])).rejects.toThrow(
+      /^"broken\.png" could not be read as an image: /
+    );
   });
 
   test('refuses an empty list instead of writing a blank page', async () => {
@@ -409,7 +455,11 @@ test.describe('imagesToPdf', () => {
   test('turns a JPEG upright according to its EXIF orientation', async () => {
     const pdf = await imagesToPdf([
       file(jpeg(400, 300, exifSegment(6)), 'portrait.jpg', 'image/jpeg'),
-      file(jpeg(400, 300, JFIF, exifSegment(3, { littleEndian: true })), 'upside-down.jpg', 'image/jpeg'),
+      file(
+        jpeg(400, 300, JFIF, exifSegment(3, { littleEndian: true })),
+        'upside-down.jpg',
+        'image/jpeg'
+      ),
       file(jpeg(400, 300, exifSegment(8)), 'other-side.jpg', 'image/jpeg'),
     ]);
 
@@ -421,7 +471,9 @@ test.describe('imagesToPdf', () => {
   });
 
   test('keeps a very long image inside the largest page a PDF allows', async () => {
-    const [page] = await readPages(await imagesToPdf([file(jpeg(1080, 43200), 'long-screenshot.jpg')]));
+    const [page] = await readPages(
+      await imagesToPdf([file(jpeg(1080, 43200), 'long-screenshot.jpg')])
+    );
 
     expect([page.width, page.height]).toEqual([360, MAX_PAGE_SIDE]);
     expect(page.matrix).toEqual([360, 0, 0, MAX_PAGE_SIDE, 0, 0]);

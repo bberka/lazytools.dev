@@ -183,7 +183,9 @@ export function generateUlids(
 
   const randomBytes = deps.randomBytes ?? secureRandomBytes();
   if (!randomBytes) {
-    return fail('This browser cannot provide secure random numbers (crypto.getRandomValues is missing).');
+    return fail(
+      'This browser cannot provide secure random numbers (crypto.getRandomValues is missing).'
+    );
   }
   const now = deps.now ?? Date.now;
 
@@ -302,7 +304,9 @@ export function ulidToUuid(text: string): UlidResult<string> {
 
   const hex = parsed.value.value.toString(16).padStart(32, '0');
   return ok(
-    [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-')
+    [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join(
+      '-'
+    )
   );
 }
 

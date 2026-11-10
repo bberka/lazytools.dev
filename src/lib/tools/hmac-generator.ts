@@ -92,7 +92,8 @@ function parseBase64(input: string, strict: boolean): Decoded {
     return { ok: false, error: 'Invalid Base64: the padding does not fit the length.' };
   }
   const stray = /[^A-Za-z0-9+/_-]/.exec(body);
-  if (stray) return { ok: false, error: `Invalid Base64: "${stray[0]}" is not a Base64 character.` };
+  if (stray)
+    return { ok: false, error: `Invalid Base64: "${stray[0]}" is not a Base64 character.` };
   if (/[+/]/.test(body) && /[-_]/.test(body)) {
     return {
       ok: false,
@@ -120,7 +121,8 @@ function parseBase64(input: string, strict: boolean): Decoded {
   if (strict && accumulator !== 0) {
     return {
       ok: false,
-      error: 'Invalid Base64: the last character carries stray bits, so this is not a canonical encoding.',
+      error:
+        'Invalid Base64: the last character carries stray bits, so this is not a canonical encoding.',
     };
   }
   return { ok: true, bytes };
@@ -162,7 +164,11 @@ function toBase64(bytes: Uint8Array, urlSafe: boolean): string {
  * Formats a digest. Hex is lower case unless `uppercase` is set. Base64 is
  * standard and padded; Base64URL uses `-` and `_` and has no padding.
  */
-export function encodeDigest(digest: Uint8Array, encoding: SignatureEncoding, uppercase = false): string {
+export function encodeDigest(
+  digest: Uint8Array,
+  encoding: SignatureEncoding,
+  uppercase = false
+): string {
   if (encoding === 'hex') {
     const hex = bytesToHex(digest);
     return uppercase ? hex.toUpperCase() : hex;
@@ -176,14 +182,25 @@ export function encodeDigest(digest: Uint8Array, encoding: SignatureEncoding, up
  * HMAC of raw bytes. Throws if WebCrypto is unavailable (for example on an
  * insecure origin); `computeHmac` turns that into an error result.
  */
-export async function hmacDigest(algorithm: HmacAlgorithm, key: Bytes, data: Bytes): Promise<Bytes> {
+export async function hmacDigest(
+  algorithm: HmacAlgorithm,
+  key: Bytes,
+  data: Bytes
+): Promise<Bytes> {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new Error('WebCrypto is not available here. Open the tool over HTTPS or localhost.');
+  if (!subtle)
+    throw new Error('WebCrypto is not available here. Open the tool over HTTPS or localhost.');
 
   // HMAC zero-pads a short key up to the block size, so an empty key is the
   // same as a single zero byte. WebCrypto itself rejects zero-length keys.
   const keyData = key.length === 0 ? new Uint8Array(1) : key;
-  const cryptoKey = await subtle.importKey('raw', keyData, { name: 'HMAC', hash: algorithm }, false, ['sign']);
+  const cryptoKey = await subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: algorithm },
+    false,
+    ['sign']
+  );
   return new Uint8Array(await subtle.sign('HMAC', cryptoKey, data));
 }
 
@@ -199,7 +216,10 @@ export async function computeHmac(request: HmacRequest): Promise<HmacResult> {
     const digest = await hmacDigest(request.algorithm, key.bytes, data);
     return { ok: true, digest, keyBytes: key.bytes.length };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'Could not compute the HMAC.' };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not compute the HMAC.',
+    };
   }
 }
 

@@ -118,7 +118,8 @@ export const BOT_RULES: readonly NamedRule[] = [
  * bot, crawler or spider, with an optional version. Group 1 is the whole
  * token, group 2 the version.
  */
-export const GENERIC_BOT_PATTERN = /(?:^|[\s;(,/])([A-Za-z0-9._+-]*(?:bot|crawler|spider))\b(?:[/\s_-]v?(\d[\d.]*))?/i;
+export const GENERIC_BOT_PATTERN =
+  /(?:^|[\s;(,/])([A-Za-z0-9._+-]*(?:bot|crawler|spider))\b(?:[/\s_-]v?(\d[\d.]*))?/i;
 
 /** Tokens that end in "bot" but belong to a phone maker, not a crawler. */
 export const NOT_A_BOT = new Set(['cubot']);
@@ -201,7 +202,11 @@ export const OS_RULES: readonly OsRule[] = [
     pattern: /\bWindows NT ([\d.]+)/i,
     version: (match) => WINDOWS_NT_VERSIONS[match[1]] ?? `NT ${match[1]}`,
   },
-  { name: 'Windows', pattern: /\bWin(?:dows)?[ _]?(95|98|ME)\b/i, version: (match) => match[1].toUpperCase() },
+  {
+    name: 'Windows',
+    pattern: /\bWin(?:dows)?[ _]?(95|98|ME)\b/i,
+    version: (match) => match[1].toUpperCase(),
+  },
   // iOS says "like Mac OS X", so it has to be read before macOS.
   { name: 'iOS', pattern: /\bOS ([\d_]+) like Mac OS X/i },
   { name: 'iOS', pattern: /\biOS[ /]([\d_.]+)/ },
@@ -254,7 +259,11 @@ export const DESKTOP_OPERATING_SYSTEMS: ReadonlySet<string> = new Set([
 // Devices
 
 export const CONSOLE_RULES: readonly DeviceRule[] = [
-  { pattern: /\bPlayStation[ ](\d|Vita|Portable)\b/i, vendor: 'Sony', model: (match) => `PlayStation ${match[1]}` },
+  {
+    pattern: /\bPlayStation[ ](\d|Vita|Portable)\b/i,
+    vendor: 'Sony',
+    model: (match) => `PlayStation ${match[1]}`,
+  },
   { pattern: /\bPlayStation\b/i, vendor: 'Sony', model: () => 'PlayStation' },
   {
     pattern: /\bXbox[ ](One(?: [SX])?|Series [SX]|360)\b/i,
@@ -277,7 +286,11 @@ export const TV_RULES: readonly DeviceRule[] = [
   { pattern: /\bAFT[A-Z0-9]{1,6}\b/, vendor: 'Amazon', model: (match) => `Fire TV (${match[0]})` },
   { pattern: /\bBRAVIA\b/i, vendor: 'Sony', model: () => null },
   // Generic smart-TV markers. The vendor is not named, so it stays unknown.
-  { pattern: /\b(?:SMART-?TV|HbbTV|NetCast|GoogleTV|Android ?TV|Web0S)\b|\bTV Safari\//i, vendor: null, model: () => null },
+  {
+    pattern: /\b(?:SMART-?TV|HbbTV|NetCast|GoogleTV|Android ?TV|Web0S)\b|\bTV Safari\//i,
+    vendor: null,
+    model: () => null,
+  },
 ];
 
 /** Vendors that name themselves in a Windows Phone UA: "...; Touch; NOKIA; Lumia 920)". */
@@ -304,12 +317,14 @@ export const ANDROID_VENDOR_RULES: readonly VendorRule[] = [
   { vendor: 'Google', pattern: /^(?:Pixel|Nexus)\b/i },
   {
     vendor: 'Samsung',
-    pattern: /^(?:SAMSUNG[-_ ]?)?(?:SM|GT|SCH|SGH|SHV|SHW|SPH|SCV|SCG|SC)-[A-Z0-9]+|^SAMSUNG\b|^Galaxy\b/i,
+    pattern:
+      /^(?:SAMSUNG[-_ ]?)?(?:SM|GT|SCH|SGH|SHV|SHW|SPH|SCV|SCG|SC)-[A-Z0-9]+|^SAMSUNG\b|^Galaxy\b/i,
     strip: /^SAMSUNG[-_ ]?/i,
   },
   {
     vendor: 'Xiaomi',
-    pattern: /^(?:Redmi|POCO|Xiaomi|MIX\b|Mi ?(?:\d|Pad|Note|Max|Mix|A\d)|M\d{4}[A-Z]\d+[A-Z]*$|2\d{6,7}[A-Z]{1,2}\w*$)/i,
+    pattern:
+      /^(?:Redmi|POCO|Xiaomi|MIX\b|Mi ?(?:\d|Pad|Note|Max|Mix|A\d)|M\d{4}[A-Z]\d+[A-Z]*$|2\d{6,7}[A-Z]{1,2}\w*$)/i,
   },
   { vendor: 'Honor', pattern: /^HONOR\b/i },
   {

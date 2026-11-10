@@ -49,7 +49,9 @@ test.describe('cleanAiText characters', () => {
   });
 
   test('removes Unicode tag characters, including a hidden ASCII message', () => {
-    const hidden = Array.from('hi', (char) => String.fromCodePoint(0xe0000 + char.charCodeAt(0))).join('');
+    const hidden = Array.from('hi', (char) =>
+      String.fromCodePoint(0xe0000 + char.charCodeAt(0))
+    ).join('');
     const result = cleanAiText(`Hello${hidden}\u{E0001}\u{E007F} there`);
     expect(result.text).toBe('Hello there');
     expect(result.found.tags).toBe(4);
@@ -92,10 +94,12 @@ test.describe('cleanAiText characters', () => {
 
 test.describe('tracking parameters', () => {
   test('strips utm_source=chatgpt.com and keeps the other parameters and the fragment', () => {
-    expect(stripTrackingParams('https://example.com/a?x=1&utm_source=chatgpt.com&y=2#top')).toEqual({
-      url: 'https://example.com/a?x=1&y=2#top',
-      removed: 1,
-    });
+    expect(stripTrackingParams('https://example.com/a?x=1&utm_source=chatgpt.com&y=2#top')).toEqual(
+      {
+        url: 'https://example.com/a?x=1&y=2#top',
+        removed: 1,
+      }
+    );
   });
 
   test('drops the question mark when no parameter is left', () => {
@@ -106,9 +110,9 @@ test.describe('tracking parameters', () => {
   });
 
   test('removes ref and source parameters only when they name an AI assistant', () => {
-    expect(stripTrackingParams('https://e.com/?ref=chatgpt.com&source=newsletter&from=Claude').url).toBe(
-      'https://e.com/?source=newsletter'
-    );
+    expect(
+      stripTrackingParams('https://e.com/?ref=chatgpt.com&source=newsletter&from=Claude').url
+    ).toBe('https://e.com/?source=newsletter');
   });
 
   test('leaves URLs without tracking parameters byte for byte', () => {
@@ -120,7 +124,9 @@ test.describe('tracking parameters', () => {
     const input =
       'See https://a.com/x?utm_source=chatgpt.com. Also [b](https://b.com/?id=7&utm_source=chatgpt.com) and (https://c.com/?utm_source=openai).';
     const result = stripTrackingParamsInText(input);
-    expect(result.text).toBe('See https://a.com/x. Also [b](https://b.com/?id=7) and (https://c.com/).');
+    expect(result.text).toBe(
+      'See https://a.com/x. Also [b](https://b.com/?id=7) and (https://c.com/).'
+    );
     expect(result.removed).toBe(3);
   });
 

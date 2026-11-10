@@ -5,7 +5,9 @@ type Rgba = [number, number, number, number];
 
 /** RGBA bytes for a run of pixels: `[colour, how many]` pairs. */
 function pixels(...runs: Array<[Rgba, number]>): Uint8ClampedArray {
-  return Uint8ClampedArray.from(runs.flatMap(([color, count]) => Array.from({ length: count }, () => color).flat()));
+  return Uint8ClampedArray.from(
+    runs.flatMap(([color, count]) => Array.from({ length: count }, () => color).flat())
+  );
 }
 
 const opaque = (red: number, green: number, blue: number): Rgba => [red, green, blue, 255];
@@ -37,13 +39,21 @@ test.describe('extractPalette', () => {
   });
 
   test('orders colours by how much of the image they cover', () => {
-    const image = pixels([opaque(200, 30, 30), 5], [opaque(30, 30, 200), 20], [opaque(30, 200, 30), 10]);
+    const image = pixels(
+      [opaque(200, 30, 30), 5],
+      [opaque(30, 30, 200), 20],
+      [opaque(30, 200, 30), 10]
+    );
 
     expect(extractPalette(image)).toEqual(['#1e1ec8', '#1ec81e', '#c81e1e']);
   });
 
   test('counts near-identical shades as one colour', () => {
-    const image = pixels([opaque(12, 12, 12), 3], [opaque(14, 13, 11), 3], [opaque(100, 100, 100), 5]);
+    const image = pixels(
+      [opaque(12, 12, 12), 3],
+      [opaque(14, 13, 11), 3],
+      [opaque(100, 100, 100), 5]
+    );
 
     expect(extractPalette(image)).toEqual(['#0a0a0a', '#646464']);
   });
@@ -61,7 +71,10 @@ test.describe('extractPalette', () => {
 
   test('returns at most the requested number of colours', () => {
     const image = pixels(
-      ...Array.from({ length: 20 }, (_, index): [Rgba, number] => [opaque(index * 10, 0, 0), 20 - index])
+      ...Array.from({ length: 20 }, (_, index): [Rgba, number] => [
+        opaque(index * 10, 0, 0),
+        20 - index,
+      ])
     );
 
     expect(extractPalette(image)).toHaveLength(DEFAULT_PALETTE_SIZE);
@@ -70,6 +83,9 @@ test.describe('extractPalette', () => {
   });
 
   test('accepts plain arrays as well as image data', () => {
-    expect(extractPalette([255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255])).toEqual(['#000000', '#ffffff']);
+    expect(extractPalette([255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255])).toEqual([
+      '#000000',
+      '#ffffff',
+    ]);
   });
 });

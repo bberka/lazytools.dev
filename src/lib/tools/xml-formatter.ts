@@ -304,7 +304,8 @@ const PARSER_ERROR_NAMESPACES = [
   'http://www.mozilla.org/newlayout/xml/parsererror.xml',
 ];
 
-const FIREFOX_ERROR = /^XML Parsing Error:\s*([^\n]+?)\s*\nLocation:[^\n]*\nLine Number (\d+), Column (\d+)/;
+const FIREFOX_ERROR =
+  /^XML Parsing Error:\s*([^\n]+?)\s*\nLocation:[^\n]*\nLine Number (\d+), Column (\d+)/;
 
 /**
  * Turns the text of a browser's `<parsererror>` element into one sentence.

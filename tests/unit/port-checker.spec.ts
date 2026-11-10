@@ -28,7 +28,9 @@ const badEntry = (entry: string) =>
 /** A request that never answers but gives up when aborted, like the real fetch. */
 const hang: FetchLike = (_input, init) =>
   new Promise((_, reject) => {
-    init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    init?.signal?.addEventListener('abort', () =>
+      reject(new DOMException('Aborted', 'AbortError'))
+    );
   });
 
 test.describe('parseScanHost', () => {
@@ -64,7 +66,15 @@ test.describe('parseScanHost', () => {
   // Regression: these passed as hostnames, and the browser then scanned another
   // address ("1.2.3" is 1.2.0.3 to a URL parser) or rejected every request.
   test('rejects hosts that end in a number without being an IPv4 address', () => {
-    for (const input of ['999.1.1.1', '256.256.256.256', '1.2.3', '1.2.3.4.5', '12345', 'host.0x10', '0x7f000001']) {
+    for (const input of [
+      '999.1.1.1',
+      '256.256.256.256',
+      '1.2.3',
+      '1.2.3.4.5',
+      '12345',
+      'host.0x10',
+      '0x7f000001',
+    ]) {
       expect(hostOf(input), input).toBe(INVALID_HOST);
     }
   });
@@ -180,8 +190,14 @@ test.describe('planScan', () => {
   });
 
   test('reports the host problem first, then the port problem', () => {
-    expect(planScan('', 'custom', '')).toEqual({ ok: false, error: 'Please enter a hostname or IP address' });
-    expect(planScan('bad host', 'common', '')).toEqual({ ok: false, error: 'Invalid hostname or IP address format' });
+    expect(planScan('', 'custom', '')).toEqual({
+      ok: false,
+      error: 'Please enter a hostname or IP address',
+    });
+    expect(planScan('bad host', 'common', '')).toEqual({
+      ok: false,
+      error: 'Invalid hostname or IP address format',
+    });
     expect(planScan('localhost', 'custom', '')).toEqual({
       ok: false,
       error: 'Please enter valid port numbers (e.g., 80,443 or 8000-8010)',
@@ -214,7 +230,11 @@ test.describe('probePort', () => {
     await probePort('localhost', 3000, { fetchImpl });
     expect(requests).toHaveLength(1);
     expect(requests[0][0]).toBe('http://localhost:3000/favicon.ico');
-    expect(requests[0][1]).toMatchObject({ mode: 'no-cors', cache: 'no-store', credentials: 'omit' });
+    expect(requests[0][1]).toMatchObject({
+      mode: 'no-cors',
+      cache: 'no-store',
+      credentials: 'omit',
+    });
     // A no-cors request may only follow redirects; any other mode makes it fail outright.
     expect(requests[0][1]?.redirect).toBeUndefined();
   });
@@ -262,7 +282,11 @@ test.describe('probePort', () => {
   // Regression: a scan could not be stopped; each probe ran its full three seconds.
   test('resolves at once when the caller cancels', async () => {
     const controller = new AbortController();
-    const pending = probePort('localhost', 80, { fetchImpl: hang, signal: controller.signal, timeoutMs: 60_000 });
+    const pending = probePort('localhost', 80, {
+      fetchImpl: hang,
+      signal: controller.signal,
+      timeoutMs: 60_000,
+    });
     controller.abort();
     expect(await pending).toBe('filtered');
 
@@ -271,7 +295,9 @@ test.describe('probePort', () => {
       called = true;
       return new Response(null);
     };
-    expect(await probePort('localhost', 80, { fetchImpl, signal: controller.signal })).toBe('filtered');
+    expect(await probePort('localhost', 80, { fetchImpl, signal: controller.signal })).toBe(
+      'filtered'
+    );
     expect(called).toBe(false);
   });
 });

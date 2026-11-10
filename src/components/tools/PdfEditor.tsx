@@ -449,7 +449,9 @@ export function PdfEditor() {
       };
 
       setPages((prev) =>
-        prev.map((p) => (p.id === selectedPageId ? { ...p, drawPaths: [...p.drawPaths, newPath] } : p))
+        prev.map((p) =>
+          p.id === selectedPageId ? { ...p, drawPaths: [...p.drawPaths, newPath] } : p
+        )
       );
     }
     currentPathPoints.current = [];
@@ -486,7 +488,12 @@ export function PdfEditor() {
     setActiveTool('pan');
   };
 
-  const startTextDrag = (e: React.PointerEvent, textId: string, currentX: number, currentY: number) => {
+  const startTextDrag = (
+    e: React.PointerEvent,
+    textId: string,
+    currentX: number,
+    currentY: number
+  ) => {
     e.stopPropagation();
     e.preventDefault();
     setDraggingTextId(textId);
@@ -646,7 +653,9 @@ export function PdfEditor() {
       // The message belongs to the file that was exported, not to one loaded since.
       if (loadId === loadIdRef.current) {
         setError(
-          exportError instanceof PdfToolError ? exportError.message : 'Failed to generate output PDF.'
+          exportError instanceof PdfToolError
+            ? exportError.message
+            : 'Failed to generate output PDF.'
         );
       }
     } finally {
@@ -663,7 +672,8 @@ export function PdfEditor() {
             Edit PDF
           </CardTitle>
           <CardDescription>
-            Rearrange pages, delete pages, rotate layouts, and annotate with drawings and text notes.
+            Rearrange pages, delete pages, rotate layouts, and annotate with drawings and text
+            notes.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -683,7 +693,11 @@ export function PdfEditor() {
 
           {pages.length > 0 && (
             <div className="mt-4 flex gap-2 flex-wrap">
-              <Button onClick={exportEditedPdf} disabled={exporting} className="bg-primary hover:bg-primary/90">
+              <Button
+                onClick={exportEditedPdf}
+                disabled={exporting}
+                className="bg-primary hover:bg-primary/90"
+              >
                 {exporting ? 'Generating PDF...' : 'Download Edited PDF'}
                 <Download className="h-4 w-4 ml-2" />
               </Button>
@@ -696,13 +710,19 @@ export function PdfEditor() {
       </Card>
 
       {error && (
-        <div role="alert" className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
+        >
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {loading && (
-        <div role="status" className="flex flex-col items-center justify-center p-6 sm:p-12 space-y-4">
+        <div
+          role="status"
+          className="flex flex-col items-center justify-center p-6 sm:p-12 space-y-4"
+        >
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Parsing PDF and rendering pages...</p>
         </div>
@@ -716,7 +736,9 @@ export function PdfEditor() {
               <CardHeader className="py-4">
                 <CardTitle className="text-sm font-semibold flex justify-between items-center">
                   Page Layout ({pages.length} {pages.length === 1 ? 'Page' : 'Pages'})
-                  <span className="text-xs font-normal text-muted-foreground">Reorder and rotate</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    Reorder and rotate
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 max-h-[600px] overflow-y-auto scrollbar-thin space-y-3">
@@ -724,10 +746,10 @@ export function PdfEditor() {
                   <div
                     key={p.id}
                     className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer group",
+                      'flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer group',
                       selectedPageId === p.id
-                        ? "bg-primary/5 border-primary shadow-sm"
-                        : "bg-card hover:bg-muted/30 border-border/80"
+                        ? 'bg-primary/5 border-primary shadow-sm'
+                        : 'bg-card hover:bg-muted/30 border-border/80'
                     )}
                     onClick={() => setSelectedPageId(p.id)}
                   >
@@ -752,7 +774,9 @@ export function PdfEditor() {
                     </button>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-muted-foreground">Page {index + 1}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        Page {index + 1}
+                      </p>
                       <p className="text-[10px] text-muted-foreground truncate">
                         Source Page: {p.originalIndex + 1}
                       </p>
@@ -865,8 +889,10 @@ export function PdfEditor() {
                             aria-pressed={brushColor === c.value}
                             onClick={() => setBrushColor(c.value)}
                             className={cn(
-                              "w-5 h-5 rounded-full border border-black/10 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                              brushColor === c.value ? "scale-125 border-primary shadow-sm" : "hover:scale-110"
+                              'w-5 h-5 rounded-full border border-black/10 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                              brushColor === c.value
+                                ? 'scale-125 border-primary shadow-sm'
+                                : 'hover:scale-110'
                             )}
                             style={{ backgroundColor: c.value }}
                           />
@@ -874,7 +900,8 @@ export function PdfEditor() {
                       </div>
                       <div className="flex items-center gap-1.5 border-l pl-3">
                         <span>Size:</span>
-                        <Slider aria-label="Brush size"
+                        <Slider
+                          aria-label="Brush size"
                           min={1}
                           max={15}
                           value={brushSize}
@@ -914,15 +941,16 @@ export function PdfEditor() {
                             aria-pressed={textColor === c.value}
                             onClick={() => setTextColor(c.value)}
                             className={cn(
-                              "w-4 h-4 rounded-full border border-black/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                              textColor === c.value ? "scale-125 border-primary" : "hover:scale-110"
+                              'w-4 h-4 rounded-full border border-black/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                              textColor === c.value ? 'scale-125 border-primary' : 'hover:scale-110'
                             )}
                             style={{ backgroundColor: c.value }}
                           />
                         ))}
                       </div>
                       <div className="flex items-center gap-1 border-l pl-2">
-                        <Slider aria-label="Text size"
+                        <Slider
+                          aria-label="Text size"
                           min={10}
                           max={36}
                           value={textSize}
@@ -960,10 +988,10 @@ export function PdfEditor() {
                     <canvas
                       ref={drawingCanvasRef}
                       className={cn(
-                        "absolute inset-0 w-full h-full",
+                        'absolute inset-0 w-full h-full',
                         activeTool === 'draw'
-                          ? "cursor-crosshair pointer-events-auto touch-none"
-                          : "pointer-events-none"
+                          ? 'cursor-crosshair pointer-events-auto touch-none'
+                          : 'pointer-events-none'
                       )}
                       onPointerDown={handleDrawStart}
                       onPointerMove={handleDrawMove}
@@ -987,8 +1015,10 @@ export function PdfEditor() {
                           // One line as tall as the font size, with nothing else on it:
                           // the export places the text by exactly this box.
                           className={cn(
-                            "group absolute pointer-events-auto cursor-move select-none touch-none whitespace-nowrap leading-none p-1 rounded border border-dashed transition-all hover:bg-black/5",
-                            draggingTextId === t.id ? "border-primary bg-primary/5" : "border-transparent"
+                            'group absolute pointer-events-auto cursor-move select-none touch-none whitespace-nowrap leading-none p-1 rounded border border-dashed transition-all hover:bg-black/5',
+                            draggingTextId === t.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-transparent'
                           )}
                           onPointerDown={(e) => startTextDrag(e, t.id, t.x, t.y)}
                           tabIndex={0}
@@ -1039,7 +1069,9 @@ export function PdfEditor() {
                 </div>
 
                 <div className="border-t bg-muted/20 px-4 py-2 text-[11px] text-muted-foreground flex flex-wrap justify-between items-center gap-x-3">
-                  <span>Double-click or tap a text box to edit. Drag or use the arrow keys to position.</span>
+                  <span>
+                    Double-click or tap a text box to edit. Drag or use the arrow keys to position.
+                  </span>
                   {selectedPage.drawPaths.length > 0 && (
                     <span>Drawings: {selectedPage.drawPaths.length} stroke(s)</span>
                   )}

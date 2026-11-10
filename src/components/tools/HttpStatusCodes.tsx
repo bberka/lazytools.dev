@@ -18,7 +18,7 @@ import {
 import { Check, Copy, Search, SearchX, ServerCrash, X } from 'lucide-react';
 
 const CLASS_LABELS: Record<string, string> = Object.fromEntries(
-  STATUS_CLASSES.map((info) => [info.id, info.label]),
+  STATUS_CLASSES.map((info) => [info.id, info.label])
 );
 
 export function HttpStatusCodes() {

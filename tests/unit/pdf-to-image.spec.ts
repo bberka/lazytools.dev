@@ -71,7 +71,9 @@ test.describe('describeFailedPages', () => {
   });
 
   test('names several pages, with neighbours as ranges', () => {
-    expect(describeFailedPages([2, 5], 12)).toBe('Pages 2, 5 could not be rendered and are missing below.');
+    expect(describeFailedPages([2, 5], 12)).toBe(
+      'Pages 2, 5 could not be rendered and are missing below.'
+    );
     expect(describeFailedPages([1, 2, 3, 7, 9, 10], 12)).toBe(
       'Pages 1-3, 7, 9-10 could not be rendered and are missing below.'
     );

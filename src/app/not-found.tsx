@@ -9,13 +9,7 @@ import { homeViewState } from '@/lib/home/client';
 import { TAGS_IN_ORDER } from '@/lib/tags';
 import type { ToolTag } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import {
-  Home,
-  ArrowLeft,
-  Search,
-  HelpCircle,
-  Compass,
-} from 'lucide-react';
+import { Home, ArrowLeft, Search, HelpCircle, Compass } from 'lucide-react';
 
 export default function NotFound() {
   const router = useRouter();
@@ -54,14 +48,18 @@ export default function NotFound() {
           </h1>
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Lost in Code?</h2>
           <p className="mx-auto max-w-lg text-muted-foreground text-sm sm:text-base">
-            The tool or page you are looking for does not exist, has been renamed, or moved. Let&apos;s get you back on track.
+            The tool or page you are looking for does not exist, has been renamed, or moved.
+            Let&apos;s get you back on track.
           </p>
         </div>
 
         {/* Main Navigation Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mx-auto">
           <Link href="/" className="w-full sm:w-auto">
-            <Button variant="default" className="w-full h-11 px-6 gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+            <Button
+              variant="default"
+              className="w-full h-11 px-6 gap-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
               <Home className="h-4 w-4" />
               Go Home
             </Button>
@@ -108,7 +106,12 @@ export default function NotFound() {
                     styles.glow
                   )}
                 >
-                  <div className={cn('p-2.5 rounded-xl bg-background border border-border/50 mb-2 transition-transform duration-300 group-hover:scale-110 shadow-sm', styles.text)}>
+                  <div
+                    className={cn(
+                      'p-2.5 rounded-xl bg-background border border-border/50 mb-2 transition-transform duration-300 group-hover:scale-110 shadow-sm',
+                      styles.text
+                    )}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <span className="text-xs font-semibold tracking-tight leading-tight group-hover:text-foreground">

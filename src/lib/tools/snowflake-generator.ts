@@ -109,7 +109,13 @@ export interface SnowflakeId {
   sequence: number;
 }
 
-export type SnowflakeField = 'sign' | 'timestamp' | 'datacenter' | 'worker' | 'process' | 'sequence';
+export type SnowflakeField =
+  | 'sign'
+  | 'timestamp'
+  | 'datacenter'
+  | 'worker'
+  | 'process'
+  | 'sequence';
 
 export interface SnowflakeBitSegment {
   field: SnowflakeField;
@@ -136,7 +142,9 @@ export interface DecodedSnowflake {
 const ID_BITS = 64;
 const MAX_ID = (1n << 64n) - 1n;
 
-const WIDTHS: ReadonlyArray<readonly [Exclude<SnowflakeField, 'sign'>, keyof SnowflakeLayout, string]> = [
+const WIDTHS: ReadonlyArray<
+  readonly [Exclude<SnowflakeField, 'sign'>, keyof SnowflakeLayout, string]
+> = [
   ['timestamp', 'timestampBits', 'Timestamp'],
   ['datacenter', 'datacenterBits', 'Node A'],
   ['worker', 'workerBits', 'Node B'],
@@ -366,7 +374,15 @@ function csvField(value: string | number): string {
 
 /** Generated IDs as CSV with a header row. Fields that contain a comma are quoted. */
 export function snowflakeIdsToCsv(ids: SnowflakeId[]): string {
-  const header = ['ID', 'Timestamp_MS', 'UTC_Date', 'Node_A_ID', 'Node_B_ID', 'Node_C_ID', 'Sequence'];
+  const header = [
+    'ID',
+    'Timestamp_MS',
+    'UTC_Date',
+    'Node_A_ID',
+    'Node_B_ID',
+    'Node_C_ID',
+    'Sequence',
+  ];
   const rows = ids.map((item) => [
     item.id,
     item.timestamp,

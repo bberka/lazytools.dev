@@ -25,7 +25,9 @@ async function openTool(page: Page, slug: string, heading: string): Promise<void
 
   const lastControl = page.getByRole('main').getByRole('button').last();
   await expect
-    .poll(() => lastControl.evaluate((el) => Object.keys(el).some((key) => key.startsWith('__reactProps'))))
+    .poll(() =>
+      lastControl.evaluate((el) => Object.keys(el).some((key) => key.startsWith('__reactProps')))
+    )
     .toBe(true);
 }
 
@@ -39,7 +41,10 @@ async function choose(page: Page, combobox: Locator, option: string): Promise<vo
 }
 
 /** Clicks something that saves a file and returns the download with its bytes. */
-async function saveFrom(page: Page, trigger: Locator): Promise<{ download: Download; bytes: Buffer }> {
+async function saveFrom(
+  page: Page,
+  trigger: Locator
+): Promise<{ download: Download; bytes: Buffer }> {
   const [download] = await Promise.all([page.waitForEvent('download'), trigger.click()]);
   return { download, bytes: await readFile(await download.path()) };
 }
@@ -111,7 +116,12 @@ function pixelsOf(image: Locator): Promise<Bitmap> {
 
 function pixelAt(bitmap: Bitmap, x: number, y: number): Rgba {
   const offset = (y * bitmap.width + x) * 4;
-  return [bitmap.rgba[offset], bitmap.rgba[offset + 1], bitmap.rgba[offset + 2], bitmap.rgba[offset + 3]];
+  return [
+    bitmap.rgba[offset],
+    bitmap.rgba[offset + 1],
+    bitmap.rgba[offset + 2],
+    bitmap.rgba[offset + 3],
+  ];
 }
 
 /**
@@ -121,7 +131,8 @@ function pixelAt(bitmap: Bitmap, x: number, y: number): Rgba {
  * top edge is seven modules long.
  */
 function sampleQr(bitmap: Bitmap, background: Rgba): SampledQr {
-  const isDark = (x: number, y: number) => pixelAt(bitmap, x, y).some((value, index) => value !== background[index]);
+  const isDark = (x: number, y: number) =>
+    pixelAt(bitmap, x, y).some((value, index) => value !== background[index]);
 
   let left = bitmap.width;
   let top = bitmap.height;
@@ -162,13 +173,27 @@ function sampleQr(bitmap: Bitmap, background: Rgba): SampledQr {
 function readQr(modules: boolean[][]): ReadQr {
   const size = modules.length;
   const version = (size - 17) / 4;
-  if (version !== 1 && version !== 2) throw new Error(`A ${size}-module symbol is outside this reader's range.`);
+  if (version !== 1 && version !== 2)
+    throw new Error(`A ${size}-module symbol is outside this reader's range.`);
   const bit = (row: number, column: number) => (modules[row][column] ? 1 : 0);
 
   // The 15 format bits beside the top-left finder pattern, least significant first.
   const formatCells: Array<[number, number]> = [
-    [0, 8], [1, 8], [2, 8], [3, 8], [4, 8], [5, 8], [7, 8], [8, 8],
-    [8, 7], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0],
+    [0, 8],
+    [1, 8],
+    [2, 8],
+    [3, 8],
+    [4, 8],
+    [5, 8],
+    [7, 8],
+    [8, 8],
+    [8, 7],
+    [8, 5],
+    [8, 4],
+    [8, 3],
+    [8, 2],
+    [8, 1],
+    [8, 0],
   ];
   let format = 0;
   formatCells.forEach(([row, column], index) => {
@@ -196,7 +221,11 @@ function readQr(modules: boolean[][]): ReadQr {
     (row >= size - 8 && column <= 8) || // bottom-left
     row === 6 || // timing
     column === 6 ||
-    (version === 2 && row >= size - 9 && row <= size - 5 && column >= size - 9 && column <= size - 5); // alignment
+    (version === 2 &&
+      row >= size - 9 &&
+      row <= size - 5 &&
+      column >= size - 9 &&
+      column <= size - 5); // alignment
 
   // Data runs in two-module columns from the bottom right, snaking up and down.
   const bits: number[] = [];
@@ -206,13 +235,16 @@ function readQr(modules: boolean[][]): ReadQr {
     for (let step = 0; step < size; step++) {
       const row = upward ? size - 1 - step : step;
       for (const column of [right, right - 1]) {
-        if (!isFunctionModule(row, column)) bits.push(bit(row, column) ^ (masked(row, column) ? 1 : 0));
+        if (!isFunctionModule(row, column))
+          bits.push(bit(row, column) ^ (masked(row, column) ? 1 : 0));
       }
     }
     upward = !upward;
   }
 
-  const dataCodewords = { 1: { L: 19, M: 16, Q: 13, H: 9 }, 2: { L: 34, M: 28, Q: 22, H: 16 } }[version][level];
+  const dataCodewords = { 1: { L: 19, M: 16, Q: 13, H: 9 }, 2: { L: 34, M: 28, Q: 22, H: 16 } }[
+    version
+  ][level];
   const data = bits.slice(0, dataCodewords * 8);
   let position = 0;
   const take = (length: number) => {
@@ -326,7 +358,9 @@ test.describe('Generator tools', () => {
 
       // Copy one row: the button says so and the clipboard holds exactly that ID.
       await rowCopy.click();
-      await expect(page.getByRole('button', { name: `Copied ${uuids[3]}`, exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: `Copied ${uuids[3]}`, exact: true })
+      ).toBeVisible();
       expect(await readClipboard(page)).toBe(uuids[3]);
 
       await page.getByRole('button', { name: 'Copy All' }).click();
@@ -334,9 +368,13 @@ test.describe('Generator tools', () => {
 
       // A new list starts without the check mark of the old one.
       await page.getByRole('button', { name: `Copy ${uuids[5]}`, exact: true }).click();
-      await expect(page.getByRole('button', { name: `Copied ${uuids[5]}`, exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: `Copied ${uuids[5]}`, exact: true })
+      ).toBeVisible();
       await generate(page).click();
-      await expect(page.getByRole('button', { name: `Copy ${uuids[5]}`, exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: `Copy ${uuids[5]}`, exact: true })).toHaveCount(
+        0
+      );
       await expect(page.getByRole('button', { name: /^Copied / })).toHaveCount(0);
       await expect(listedUuids(page)).toHaveCount(20);
 
@@ -394,7 +432,9 @@ test.describe('Generator tools', () => {
       }
     });
 
-    test('reports a clock that is too early for a Snowflake ID instead of listing bad IDs', async ({ page }) => {
+    test('reports a clock that is too early for a Snowflake ID instead of listing bad IDs', async ({
+      page,
+    }) => {
       await page.clock.setFixedTime(new Date('2021-06-01T00:00:00.000Z'));
       await openTool(page, 'uuid-generator', 'UUID Generator');
 
@@ -415,7 +455,8 @@ test.describe('Generator tools', () => {
 
     test('does not claim a copy the browser refused', async ({ page }) => {
       await page.addInitScript(() => {
-        navigator.clipboard.writeText = () => Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError'));
+        navigator.clipboard.writeText = () =>
+          Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError'));
       });
       await openTool(page, 'uuid-generator', 'UUID Generator');
 
@@ -423,7 +464,9 @@ test.describe('Generator tools', () => {
       await expect(listedUuids(page)).toHaveCount(1);
       const [uuid] = await listedUuids(page).allTextContents();
 
-      const refused = page.waitForEvent('console', (message) => message.text().includes('Failed to copy'));
+      const refused = page.waitForEvent('console', (message) =>
+        message.text().includes('Failed to copy')
+      );
       await page.getByRole('button', { name: `Copy ${uuid}`, exact: true }).click();
       await refused;
       await expect(page.getByRole('button', { name: `Copy ${uuid}`, exact: true })).toBeVisible();
@@ -442,7 +485,9 @@ test.describe('Generator tools', () => {
     const generate = (page: Page) => page.getByRole('button', { name: 'Generate IDs' });
     const listedIds = (page: Page) => page.getByRole('main').getByText(/^\d{15,20}$/);
 
-    test('generates Twitter IDs from the chosen node values and decodes a row back', async ({ page }) => {
+    test('generates Twitter IDs from the chosen node values and decodes a row back', async ({
+      page,
+    }) => {
       await page.clock.setFixedTime(new Date(CLOCK));
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
@@ -477,16 +522,24 @@ test.describe('Generator tools', () => {
       await rowDecode.focus();
       await expect.poll(() => shownOpacity(rowDecode)).toBe(1);
       await page.getByText(expected[0], { exact: true }).hover();
-      await expect.poll(() => shownOpacity(page.getByRole('button', { name: 'Decode', exact: true }).first())).toBe(1);
+      await expect
+        .poll(() => shownOpacity(page.getByRole('button', { name: 'Decode', exact: true }).first()))
+        .toBe(1);
 
       await page.getByRole('button', { name: 'Copy all IDs' }).click();
       await expect.poll(() => readClipboard(page)).toBe(expected.join('\n'));
       await page.getByRole('button', { name: `Copy ${expected[1]}`, exact: true }).click();
-      await expect(page.getByRole('button', { name: `Copied ${expected[1]}`, exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: `Copied ${expected[1]}`, exact: true })
+      ).toBeVisible();
       expect(await readClipboard(page)).toBe(expected[1]);
 
       // Rows keep the preset they were made with when the form moves on.
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Discord Snowflake');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Discord Snowflake'
+      );
       await expect(main).toContainText('Timestamp Epoch:2015-01-01 00:00:00.000 UTC');
       await expect(main).toContainText(
         '1746872546743447557twitter1/15/2024, 12:30:45 PMDatacenter: 3Worker: 7Seq: 5Decode'
@@ -494,14 +547,23 @@ test.describe('Generator tools', () => {
 
       // Decode from a row: the decoder takes the row's own layout, not the form's.
       await page.getByRole('button', { name: 'Decode', exact: true }).nth(2).click();
-      await expect(page.getByRole('tab', { name: 'Decode ID' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'Snowflake ID to decode' })).toHaveValue(expected[2]);
-      await expect(page.getByRole('combobox', { name: 'Decoder preset' })).toHaveText('Decode as Twitter Preset');
+      await expect(page.getByRole('tab', { name: 'Decode ID' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(page.getByRole('textbox', { name: 'Snowflake ID to decode' })).toHaveValue(
+        expected[2]
+      );
+      await expect(page.getByRole('combobox', { name: 'Decoder preset' })).toHaveText(
+        'Decode as Twitter Preset'
+      );
       await expect(main).toContainText('UTC Timestamp DateMon, 15 Jan 2024 12:30:45 GMT');
       await expect(main).toContainText('Local Time1/15/2024, 12:30:45 PM');
       // 1705321845123 - 1288834974657
       await expect(main).toContainText('Unix Milliseconds Offset416486870466 (from Epoch base)');
-      await expect(main).toContainText('Raw Timestamp (ms)1705321845123Datacenter ID3Worker ID7Sequence ID7');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)1705321845123Datacenter ID3Worker ID7Sequence ID7'
+      );
     });
 
     test('exports the generated batch as CSV and JSON', async ({ page }) => {
@@ -554,7 +616,9 @@ test.describe('Generator tools', () => {
       await expect(page.getByRole('button', { name: 'Export CSV' })).toHaveCount(0);
     });
 
-    test('generates Discord and Instagram IDs, rolling the sequence into the next millisecond', async ({ page }) => {
+    test('generates Discord and Instagram IDs, rolling the sequence into the next millisecond', async ({
+      page,
+    }) => {
       await page.clock.setFixedTime(new Date(CLOCK));
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
@@ -576,8 +640,12 @@ test.describe('Generator tools', () => {
         '1196431277289512961',
         '1196431277289512962',
       ]);
-      await expect(main).toContainText('1196431277285322751discord1/15/2024, 12:30:45 PMWorker: 1Process: 2Seq: 4095Decode');
-      await expect(main).toContainText('1196431277289512960discord1/15/2024, 12:30:45 PMWorker: 1Process: 2Seq: 0Decode');
+      await expect(main).toContainText(
+        '1196431277285322751discord1/15/2024, 12:30:45 PMWorker: 1Process: 2Seq: 4095Decode'
+      );
+      await expect(main).toContainText(
+        '1196431277289512960discord1/15/2024, 12:30:45 PMWorker: 1Process: 2Seq: 0Decode'
+      );
 
       // Instagram: 41 timestamp bits from 2011-08-24T21:07:01.721Z, a 13-bit shard and a 10-bit sequence.
       await choose(page, preset, 'Instagram Shard ID');
@@ -595,7 +663,9 @@ test.describe('Generator tools', () => {
         '3280799884605977603',
         '3280799884605977604',
       ]);
-      await expect(main).toContainText('3280799884605977600instagram1/15/2024, 12:30:45 PMShard: 1341Seq: 0Decode');
+      await expect(main).toContainText(
+        '3280799884605977600instagram1/15/2024, 12:30:45 PMShard: 1341Seq: 0Decode'
+      );
     });
 
     test('decodes published Twitter, Discord and Instagram IDs', async ({ page }) => {
@@ -618,7 +688,9 @@ test.describe('Generator tools', () => {
       // 565 whole days before the clock: more than one year of 365 days, less than two.
       await expect(main).toContainText('Local Time6/28/2022, 4:07:40 PMRelative Time1y ago');
       await expect(main).toContainText('Unix Milliseconds Offset367597485448 (from Epoch base)');
-      await expect(main).toContainText('Raw Timestamp (ms)1656432460105Datacenter ID11Worker ID26Sequence ID0');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)1656432460105Datacenter ID11Worker ID26Sequence ID0'
+      );
       await expect(main).toContainText(
         'Sign (1 bit)Timestamp (41 bits)Datacenter ID (5 bits)Worker ID (5 bits)Sequence (12 bits)'
       );
@@ -630,7 +702,9 @@ test.describe('Generator tools', () => {
       // 2816 whole days before the clock.
       await expect(main).toContainText('Relative Time7y ago');
       await expect(main).toContainText('Unix Milliseconds Offset41944705796 (from Epoch base)');
-      await expect(main).toContainText('Raw Timestamp (ms)1462015105796Worker ID1Process ID0Sequence ID7');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)1462015105796Worker ID1Process ID0Sequence ID7'
+      );
       // All 64 bits, sign first, and nothing after them.
       await expect(main).toContainText(
         'Binary Bit String:' +
@@ -642,9 +716,15 @@ test.describe('Generator tools', () => {
           'Decoded Values'
       );
       // The first block is the unused sign bit, the last one the lowest sequence bit.
-      await main.getByText(/^[01]$/).first().hover();
+      await main
+        .getByText(/^[01]$/)
+        .first()
+        .hover();
       await expect(main).toContainText('Bit Position:#63 (Array Index: 0)SignValue:0');
-      await main.getByText(/^[01]$/).nth(63).hover();
+      await main
+        .getByText(/^[01]$/)
+        .nth(63)
+        .hover();
       await expect(main).toContainText('Bit Position:#0 (Array Index: 63)SequenceValue:1');
 
       // Instagram's published example: 1387263000 ms after the epoch, shard 1341, sequence 5001 % 1024 = 905.
@@ -668,7 +748,10 @@ test.describe('Generator tools', () => {
           '1110001001' +
           'Decoded Values'
       );
-      await main.getByText(/^[01]$/).first().hover();
+      await main
+        .getByText(/^[01]$/)
+        .first()
+        .hover();
       await expect(main).toContainText('Bit Position:#63 (Array Index: 0)TimestampValue:0');
 
       // The largest 64-bit value is a legal Instagram ID: every field at its maximum.
@@ -697,9 +780,15 @@ test.describe('Generator tools', () => {
       await expect(main.getByRole('alert')).toHaveCount(0);
 
       // A custom layout must still fill 63 or 64 bits.
-      await choose(page, page.getByRole('combobox', { name: 'Decoder preset' }), 'Decode as Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Decoder preset' }),
+        'Decode as Custom Configuration'
+      );
       // The custom default is the Twitter split from 2024-01-01: the same fields, 13 years later.
-      await expect(main).toContainText('Raw Timestamp (ms)2071664685448Node ID A11Node ID B26Sequence ID0');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)2071664685448Node ID A11Node ID B26Sequence ID0'
+      );
       await page.getByRole('spinbutton', { name: 'Timestamp Bits' }).fill('50');
       await expect(main.getByRole('alert')).toHaveText(
         'Bit widths must sum to 63 bits (leaving the sign bit unused) or 64 bits. Current sum: 72 bits.'
@@ -708,17 +797,27 @@ test.describe('Generator tools', () => {
 
       // 42 + 5 + 5 + 0 + 12 = 64 is fine again; the Twitter epoch brings the Twitter time back, one bit over.
       await page.getByRole('spinbutton', { name: 'Timestamp Bits' }).fill('42');
-      await page.getByRole('spinbutton', { name: 'Custom Decoder Epoch (ms)' }).fill('1288834974657');
+      await page
+        .getByRole('spinbutton', { name: 'Custom Decoder Epoch (ms)' })
+        .fill('1288834974657');
       await expect(main.getByRole('alert')).toHaveCount(0);
-      await expect(main).toContainText('Raw Timestamp (ms)1656432460105Node ID A11Node ID B26Sequence ID0');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)1656432460105Node ID A11Node ID B26Sequence ID0'
+      );
       await expect(main).not.toContainText('Sign (1 bit)');
     });
 
-    test('generates with a custom layout, epoch and timestamp, and refuses what does not fit', async ({ page }) => {
+    test('generates with a custom layout, epoch and timestamp, and refuses what does not fit', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
 
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Custom Configuration'
+      );
       await expect(main).toContainText('Timestamp Epoch:2024-01-01 00:00:00.000 UTC');
       await expect(main).toContainText('Unix epoch (ms):1704067200000');
 
@@ -745,24 +844,40 @@ test.describe('Generator tools', () => {
       await generate(page).click();
       await expect(main.getByRole('alert')).toHaveCount(0);
       // (How the two node fields are captioned is left open here; see the test about telling them apart.)
-      await expect(main).toContainText(/4194443264custom1\/1\/2020, 12:00:01 AMNode[^:]*: 1Node[^:]*: 2Seq: 0Decode/);
-      await expect(main).toContainText(/4194443268custom1\/1\/2020, 12:00:01 AMNode[^:]*: 1Node[^:]*: 2Seq: 4Decode/);
+      await expect(main).toContainText(
+        /4194443264custom1\/1\/2020, 12:00:01 AMNode[^:]*: 1Node[^:]*: 2Seq: 0Decode/
+      );
+      await expect(main).toContainText(
+        /4194443268custom1\/1\/2020, 12:00:01 AMNode[^:]*: 1Node[^:]*: 2Seq: 4Decode/
+      );
 
       // Decode uses the epoch the row was made with, not the custom default.
       await page.getByRole('button', { name: 'Decode', exact: true }).first().click();
-      await expect(page.getByRole('textbox', { name: 'Snowflake ID to decode' })).toHaveValue('4194443264');
-      await expect(page.getByRole('combobox', { name: 'Decoder preset' })).toHaveText('Decode as Custom Configuration');
-      await expect(page.getByRole('spinbutton', { name: 'Custom Decoder Epoch (ms)' })).toHaveValue('1577836800000');
+      await expect(page.getByRole('textbox', { name: 'Snowflake ID to decode' })).toHaveValue(
+        '4194443264'
+      );
+      await expect(page.getByRole('combobox', { name: 'Decoder preset' })).toHaveText(
+        'Decode as Custom Configuration'
+      );
+      await expect(page.getByRole('spinbutton', { name: 'Custom Decoder Epoch (ms)' })).toHaveValue(
+        '1577836800000'
+      );
       await expect(main).toContainText('UTC Timestamp DateWed, 01 Jan 2020 00:00:01 GMT');
       await expect(main).toContainText('Unix Milliseconds Offset1000 (from Epoch base)');
-      await expect(main).toContainText('Raw Timestamp (ms)1577836801000Node ID A1Node ID B2Sequence ID0');
+      await expect(main).toContainText(
+        'Raw Timestamp (ms)1577836801000Node ID A1Node ID B2Sequence ID0'
+      );
     });
 
     test('keeps custom bit widths and field values consistent', async ({ page }) => {
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
 
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Custom Configuration'
+      );
       await expect(main).toContainText('Node A Width (e.g. Datacenter):5 bits');
       await page.getByRole('spinbutton', { name: 'Node ID A' }).fill('31');
       await expect(main).toContainText('Range: 0 - 31 (5 bits)');
@@ -795,7 +910,11 @@ test.describe('Generator tools', () => {
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
 
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Custom Configuration'
+      );
       // Sliders by position, as above: timestamp down to its minimum of 20 bits, node A up to its
       // maximum of 20, node B from 5 to 11. With the 12 sequence bits that is 20 + 20 + 11 + 12 = 63.
       const sliders = page.getByRole('slider');
@@ -829,7 +948,11 @@ test.describe('Generator tools', () => {
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
 
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Custom Configuration'
+      );
       await page.getByRole('spinbutton', { name: 'Node ID A' }).fill('1');
       await page.getByRole('spinbutton', { name: 'Node ID B' }).fill('2');
       await generate(page).click();
@@ -863,7 +986,11 @@ test.describe('Generator tools', () => {
       await page.getByRole('tab', { name: 'Decode ID' }).click();
 
       // One timestamp bit and a 63-bit node field: 64 bits, a layout the decoder accepts.
-      await choose(page, page.getByRole('combobox', { name: 'Decoder preset' }), 'Decode as Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Decoder preset' }),
+        'Decode as Custom Configuration'
+      );
       await page.getByRole('spinbutton', { name: 'Timestamp Bits' }).fill('1');
       await page.getByRole('spinbutton', { name: 'Node A Bits' }).fill('63');
       await page.getByRole('spinbutton', { name: 'Node B Bits' }).fill('0');
@@ -895,7 +1022,11 @@ test.describe('Generator tools', () => {
       await openTool(page, SLUG, TITLE);
       await expect(page.getByRole('slider', { name: /count/i })).toBeVisible();
 
-      await choose(page, page.getByRole('combobox', { name: 'Preset Format' }), 'Custom Configuration');
+      await choose(
+        page,
+        page.getByRole('combobox', { name: 'Preset Format' }),
+        'Custom Configuration'
+      );
       await expect(page.getByRole('slider', { name: /timestamp width/i })).toBeVisible();
       await expect(page.getByRole('slider', { name: /sequence width/i })).toBeVisible();
     });
@@ -911,7 +1042,9 @@ test.describe('Generator tools', () => {
     const headers = (page: Page) => page.getByRole('columnheader');
     const bodyRows = (page: Page) => page.getByRole('row').filter({ has: page.getByRole('cell') });
 
-    test('generates the default user list and serves it as a table, JSON and CSV', async ({ page }) => {
+    test('generates the default user list and serves it as a table, JSON and CSV', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
 
       await expect(headers(page)).toHaveText(['id', 'first_name', 'last_name', 'email', 'country']);
@@ -933,7 +1066,9 @@ test.describe('Generator tools', () => {
         // The address belongs to the person in the same row.
         const [local, domain] = String(row.email).split('@');
         expect(local).toMatch(
-          new RegExp(`^${String(row.first_name).toLowerCase()}\\.${String(row.last_name).toLowerCase()}\\d{0,2}$`)
+          new RegExp(
+            `^${String(row.first_name).toLowerCase()}\\.${String(row.last_name).toLowerCase()}\\d{0,2}$`
+          )
         );
         expect(domain).toMatch(/^[a-z]+\.com$/);
         expect(String(row.country).length).toBeGreaterThan(3);
@@ -941,7 +1076,10 @@ test.describe('Generator tools', () => {
       // The table shows the same data as the JSON.
       expect(firstRowCells).toEqual(Object.values(rows[0]).map(String));
 
-      const jsonFile = await saveFrom(page, page.getByRole('button', { name: 'Download', exact: true }));
+      const jsonFile = await saveFrom(
+        page,
+        page.getByRole('button', { name: 'Download', exact: true })
+      );
       expect(jsonFile.download.suggestedFilename()).toBe('mock-data.json');
       expect(jsonFile.bytes.toString('utf8')).toBe(jsonText);
 
@@ -956,7 +1094,10 @@ test.describe('Generator tools', () => {
       expect(csvRows[0]).toEqual(['id', 'first_name', 'last_name', 'email', 'country']);
       expect(csvRows.slice(1)).toEqual(rows.map((row) => Object.values(row).map(String)));
 
-      const csvFile = await saveFrom(page, page.getByRole('button', { name: 'Download', exact: true }));
+      const csvFile = await saveFrom(
+        page,
+        page.getByRole('button', { name: 'Download', exact: true })
+      );
       expect(csvFile.download.suggestedFilename()).toBe('mock-data.csv');
       expect(csvFile.bytes.toString('utf8')).toBe(csvText);
 
@@ -999,7 +1140,9 @@ test.describe('Generator tools', () => {
         await expect(name).toHaveValue(/^field_\d{4}$/);
         const placeholderName = await name.inputValue();
 
-        await page.getByRole('combobox', { name: `Type of ${placeholderName}`, exact: true }).click();
+        await page
+          .getByRole('combobox', { name: `Type of ${placeholderName}`, exact: true })
+          .click();
         if (index === 0) {
           // The type list is long enough to come with a search box: narrow it down and take the match with Enter.
           await page.getByPlaceholder('Search...').fill('uuid');
@@ -1010,7 +1153,9 @@ test.describe('Generator tools', () => {
         }
         // A field that still has its placeholder name takes the name of its type.
         await expect(name).toHaveValue(column);
-        await expect(page.getByRole('combobox', { name: `Type of ${column}`, exact: true })).toHaveText(label);
+        await expect(
+          page.getByRole('combobox', { name: `Type of ${column}`, exact: true })
+        ).toHaveText(label);
         await expect(page.getByRole('option')).toHaveCount(0);
       }
 
@@ -1053,7 +1198,9 @@ test.describe('Generator tools', () => {
       rows.forEach((row, index) => {
         expect(Object.keys(row)).toEqual(['id', ...added.map(([, column]) => column)]);
         expect(row.id).toBe(index + 1);
-        expect(row.id_uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+        expect(row.id_uuid).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+        );
         expect(row.full_name).toMatch(/^[A-Z][a-z]+ [A-Z][a-z]+$/);
         expect(row.phone).toMatch(/^\+1 \(555\) \d{3}-\d{4}$/);
         expect(row.street).toMatch(/^\d{3,4} [A-Z][A-Za-z ]+$/);
@@ -1072,13 +1219,17 @@ test.describe('Generator tools', () => {
 
       // Text with commas survives the CSV, and booleans are written as words.
       await page.getByRole('button', { name: 'CSV Output' }).click();
-      const csvRows = parseQuotedCsv(await page.getByRole('textbox', { name: 'CSV output' }).inputValue());
+      const csvRows = parseQuotedCsv(
+        await page.getByRole('textbox', { name: 'CSV output' }).inputValue()
+      );
       expect(csvRows).toHaveLength(101);
       expect(csvRows[0]).toEqual(['id', ...added.map(([, column]) => column)]);
       expect(csvRows.slice(1)).toEqual(rows.map((row) => Object.values(row).map(String)));
     });
 
-    test('keeps the output consistent through renames, duplicate and blank column names', async ({ page }) => {
+    test('keeps the output consistent through renames, duplicate and blank column names', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
       await expect(bodyRows(page)).toHaveCount(10);
       const firstRowBefore = await bodyRows(page).first().getByRole('cell').allTextContents();
@@ -1089,12 +1240,16 @@ test.describe('Generator tools', () => {
       await page.getByRole('textbox', { name: 'Column name of field 5' }).fill('__proto__');
       await expect(page.getByText(STALE)).toBeVisible();
       await expect(headers(page)).toHaveText(['id', 'first_name', 'last_name', 'email', 'country']);
-      expect(await bodyRows(page).first().getByRole('cell').allTextContents()).toEqual(firstRowBefore);
+      expect(await bodyRows(page).first().getByRole('cell').allTextContents()).toEqual(
+        firstRowBefore
+      );
 
       // Email moves in front of the names.
       await page.getByRole('button', { name: 'Move email up' }).click();
       await page.getByRole('button', { name: 'Move email up' }).click();
-      await expect(page.getByRole('textbox', { name: 'Column name of field 2' })).toHaveValue('email');
+      await expect(page.getByRole('textbox', { name: 'Column name of field 2' })).toHaveValue(
+        'email'
+      );
 
       await page.getByRole('button', { name: 'Generate Data' }).click();
       await expect(page.getByText(STALE)).toBeHidden();
@@ -1127,7 +1282,9 @@ test.describe('Generator tools', () => {
       expect(JSON.parse(jsonText)).toHaveLength(50);
 
       await page.getByRole('button', { name: 'CSV Output' }).click();
-      const csvRows = parseQuotedCsv(await page.getByRole('textbox', { name: 'CSV output' }).inputValue());
+      const csvRows = parseQuotedCsv(
+        await page.getByRole('textbox', { name: 'CSV output' }).inputValue()
+      );
       expect(csvRows[0]).toEqual(['id', 'email', 'id_2', 'field_3', '__proto__']);
       expect(csvRows).toHaveLength(51);
       for (const row of csvRows) expect(row).toHaveLength(5);
@@ -1163,10 +1320,14 @@ test.describe('Generator tools', () => {
       await expect(hex).toBeHidden();
     }
 
-    test('draws a code that reads back as the content and downloads it as PNG and SVG', async ({ page }) => {
+    test('draws a code that reads back as the content and downloads it as PNG and SVG', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
       await expect(page.getByText('No QR code generated yet.')).toBeVisible();
-      await expect(page.getByRole('textbox', { name: 'Content' })).toHaveValue('https://lazytools.dev');
+      await expect(page.getByRole('textbox', { name: 'Content' })).toHaveValue(
+        'https://lazytools.dev'
+      );
 
       await generate(page).click();
       await expect(preview(page)).toBeVisible();
@@ -1181,7 +1342,11 @@ test.describe('Generator tools', () => {
       expect(Math.round(sampled.quietZone)).toBe(2);
       // #111827
       expect(sampled.foreground).toEqual([17, 24, 39, 255]);
-      expect(readQr(sampled.modules)).toEqual({ text: 'https://lazytools.dev', level: 'M', version: 2 });
+      expect(readQr(sampled.modules)).toEqual({
+        text: 'https://lazytools.dev',
+        level: 'M',
+        version: 2,
+      });
 
       const png = await saveFrom(page, page.getByRole('button', { name: 'Download PNG' }));
       expect(png.download.suggestedFilename()).toBe('https-lazytools-dev.png');
@@ -1205,7 +1370,9 @@ test.describe('Generator tools', () => {
       expect(await readClipboard(page)).toBe('https://lazytools.dev');
     });
 
-    test('applies size, margin, error correction and colour, and flags a stale preview', async ({ page }) => {
+    test('applies size, margin, error correction and colour, and flags a stale preview', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
 
       // Surrounding whitespace is not part of the content.
@@ -1215,7 +1382,9 @@ test.describe('Generator tools', () => {
       await choose(page, page.getByRole('combobox', { name: 'Error correction' }), 'High (H)');
       await expect(page.getByText('~30% recovery')).toBeVisible();
 
-      await withColourPicker(page, 'Foreground', '#111827', () => page.getByPlaceholder('#FFFFFF').fill('#1D4ED8'));
+      await withColourPicker(page, 'Foreground', '#111827', () =>
+        page.getByPlaceholder('#FFFFFF').fill('#1D4ED8')
+      );
       await expect(colourButton(page, 'Foreground', '#1D4ED8')).toBeVisible();
 
       await generate(page).click();
@@ -1240,7 +1409,9 @@ test.describe('Generator tools', () => {
       // Editing the content afterwards: the picture is the old code, and the tool says so.
       await page.getByRole('textbox', { name: 'Content' }).fill('something else');
       await expect(
-        page.getByText('The content or settings changed after this code was generated. Generate again to update it.')
+        page.getByText(
+          'The content or settings changed after this code was generated. Generate again to update it.'
+        )
       ).toBeVisible();
       await expect(page.getByText(/^Ready at/)).toBeHidden();
       // The downloads are still the code on show, under its own name.
@@ -1249,14 +1420,18 @@ test.describe('Generator tools', () => {
 
       await generate(page).click();
       await expect(page.getByText('Ready at 256 × 256 pixels')).toBeVisible();
-      expect(readQr(sampleQr(await pixelsOf(preview(page)), WHITE).modules).text).toBe('something else');
+      expect(readQr(sampleQr(await pixelsOf(preview(page)), WHITE).modules).text).toBe(
+        'something else'
+      );
 
       // Clear takes the form back to its defaults and drops the code.
       await page.getByRole('button', { name: 'Clear' }).click();
       await expect(page.getByRole('textbox', { name: 'Content' })).toHaveValue('');
       await expect(page.getByRole('spinbutton', { name: 'Size (px)' })).toHaveValue('320');
       await expect(page.getByRole('spinbutton', { name: 'Margin' })).toHaveValue('2');
-      await expect(page.getByRole('combobox', { name: 'Error correction' })).toHaveText('Medium (M)');
+      await expect(page.getByRole('combobox', { name: 'Error correction' })).toHaveText(
+        'Medium (M)'
+      );
       await expect(colourButton(page, 'Foreground', '#111827')).toBeVisible();
       await expect(page.getByText('No QR code generated yet.')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Copy content' })).toBeDisabled();
@@ -1295,13 +1470,17 @@ test.describe('Generator tools', () => {
       await margin.fill('10');
 
       // White on white, picked from the swatches.
-      await withColourPicker(page, 'Foreground', '#111827', () => page.getByTitle('#ffffff').click());
+      await withColourPicker(page, 'Foreground', '#111827', () =>
+        page.getByTitle('#ffffff').click()
+      );
       await generate(page).click();
       await expect(alert).toHaveText('Foreground and background colors must be different.');
       await expect(preview(page)).toHaveCount(0);
 
       // The limits themselves are accepted: 128 px with a margin of 10.
-      await withColourPicker(page, 'Foreground', '#ffffff', () => page.getByTitle('#000000').click());
+      await withColourPicker(page, 'Foreground', '#ffffff', () =>
+        page.getByTitle('#000000').click()
+      );
       await generate(page).click();
       await expect(alert).toHaveCount(0);
       await expect(page.getByText('Ready at 128 × 128 pixels')).toBeVisible();
@@ -1331,7 +1510,9 @@ test.describe('Generator tools', () => {
       await generate(page).click();
       await expect(preview(page)).toBeVisible();
 
-      const naturalWidth = await preview(page).evaluate((node) => (node as HTMLImageElement).naturalWidth);
+      const naturalWidth = await preview(page).evaluate(
+        (node) => (node as HTMLImageElement).naturalWidth
+      );
       expect(naturalWidth).toBeGreaterThan(128);
       const label = new Intl.NumberFormat('en-US').format(naturalWidth);
       await expect(page.getByText(`Ready at ${label} × ${label} pixels`)).toBeVisible();
@@ -1345,12 +1526,16 @@ test.describe('Generator tools', () => {
       );
     });
 
-    test('draws on a transparent background, and refuses a transparent foreground', async ({ page }) => {
+    test('draws on a transparent background, and refuses a transparent foreground', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
       const transparent: Rgba = [0, 0, 0, 0];
 
       // The picker's HEX field takes "none" for no colour at all.
-      await withColourPicker(page, 'Background', '#FFFFFF', () => page.getByPlaceholder('#FFFFFF').fill('none'));
+      await withColourPicker(page, 'Background', '#FFFFFF', () =>
+        page.getByPlaceholder('#FFFFFF').fill('none')
+      );
       await expect(colourButton(page, 'Background', 'none')).toBeVisible();
       await generate(page).click();
       await expect(page.getByText('Ready at 320 × 320 pixels')).toBeVisible();
@@ -1359,7 +1544,11 @@ test.describe('Generator tools', () => {
       expect(pixelAt(bitmap, 0, 0)).toEqual(transparent);
       const sampled = sampleQr(bitmap, transparent);
       expect(sampled.foreground).toEqual([17, 24, 39, 255]);
-      expect(readQr(sampled.modules)).toEqual({ text: 'https://lazytools.dev', level: 'M', version: 2 });
+      expect(readQr(sampled.modules)).toEqual({
+        text: 'https://lazytools.dev',
+        level: 'M',
+        version: 2,
+      });
 
       // The SVG has the modules and no background rectangle.
       const svg = await saveFrom(page, page.getByRole('button', { name: 'Download SVG' }));
@@ -1368,13 +1557,19 @@ test.describe('Generator tools', () => {
       expect(markup).not.toContain('fill=');
 
       // Nothing to scan without a foreground.
-      await withColourPicker(page, 'Foreground', '#111827', () => page.getByPlaceholder('#FFFFFF').fill('none'));
+      await withColourPicker(page, 'Foreground', '#111827', () =>
+        page.getByPlaceholder('#FFFFFF').fill('none')
+      );
       await generate(page).click();
-      await expect(page.getByRole('main').getByRole('alert')).toHaveText('Choose a foreground color.');
+      await expect(page.getByRole('main').getByRole('alert')).toHaveText(
+        'Choose a foreground color.'
+      );
       await expect(preview(page)).toHaveCount(0);
     });
 
-    test('encodes text beyond ASCII and names the files after what is left of it', async ({ page }) => {
+    test('encodes text beyond ASCII and names the files after what is left of it', async ({
+      page,
+    }) => {
       await openTool(page, SLUG, TITLE);
       const content = page.getByRole('textbox', { name: 'Content' });
 
@@ -1416,7 +1611,9 @@ test.describe('Generator tools', () => {
     const SLUG = 'gzip-compressor';
     const TITLE = 'GZip Compressor / Decompressor';
 
-    test('compresses text to Base64 GZip, reports the sizes and swaps back to the text', async ({ page }) => {
+    test('compresses text to Base64 GZip, reports the sizes and swaps back to the text', async ({
+      page,
+    }) => {
       const errors = trackPageErrors(page);
       await openTool(page, SLUG, TITLE);
       const main = page.getByRole('main');
@@ -1439,7 +1636,9 @@ test.describe('Generator tools', () => {
 
       expect(base64.length).toBeLessThan(900);
       const saved = ((1 - base64.length / 900) * 100).toFixed(1);
-      await expect(main).toContainText(`Input: 900 BOutput: ${base64.length} BRatio: ${saved}% smaller`);
+      await expect(main).toContainText(
+        `Input: 900 BOutput: ${base64.length} BRatio: ${saved}% smaller`
+      );
 
       await page.getByRole('button', { name: 'Copy', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Copied!' })).toBeVisible();
@@ -1447,8 +1646,13 @@ test.describe('Generator tools', () => {
 
       // Swap: the result becomes the input of the opposite direction.
       await page.getByRole('button', { name: 'Swap' }).click();
-      await expect(page.getByRole('tab', { name: 'Decompress' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('textbox', { name: 'Base64-encoded GZip data' })).toHaveValue(base64);
+      await expect(page.getByRole('tab', { name: 'Decompress' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await expect(page.getByRole('textbox', { name: 'Base64-encoded GZip data' })).toHaveValue(
+        base64
+      );
       await expect(page.getByRole('textbox', { name: 'Decompressed text' })).toHaveValue('');
       await expect(main).not.toContainText('Ratio:');
 
@@ -1480,7 +1684,9 @@ test.describe('Generator tools', () => {
       expect(gunzipSync(Buffer.from(base64, 'base64')).toString('utf8')).toBe('hi');
       // A GZip member is at least 18 bytes of header and trailer, so two bytes can only grow.
       const grown = ((base64.length / 2 - 1) * 100).toFixed(1);
-      await expect(page.getByRole('main')).toContainText(`Input: 2 BOutput: ${base64.length} BRatio: ${grown}% larger`);
+      await expect(page.getByRole('main')).toContainText(
+        `Input: 2 BOutput: ${base64.length} BRatio: ${grown}% larger`
+      );
     });
 
     test('decompresses Base64 GZip made elsewhere, in every Base64 spelling', async ({ page }) => {
@@ -1498,7 +1704,9 @@ test.describe('Generator tools', () => {
       await input.fill(base64);
       await decompress.click();
       await expect(output).toHaveValue(text);
-      await expect(main).toContainText(`Input: ${base64.length} BOutput: ${Buffer.byteLength(text, 'utf8')} B`);
+      await expect(main).toContainText(
+        `Input: ${base64.length} BOutput: ${Buffer.byteLength(text, 'utf8')} B`
+      );
 
       // URL-safe alphabet without padding, wrapped over several lines.
       const urlSafe = gzipSync(Buffer.from(text, 'utf8')).toString('base64url');
@@ -1535,7 +1743,9 @@ test.describe('Generator tools', () => {
       await expect(main).not.toContainText('Output:');
 
       // A real stream cut off half way.
-      const whole = gzipSync(Buffer.from('The quick brown fox jumps over the lazy dog. '.repeat(20), 'utf8'));
+      const whole = gzipSync(
+        Buffer.from('The quick brown fox jumps over the lazy dog. '.repeat(20), 'utf8')
+      );
       await input.fill(whole.subarray(0, Math.floor(whole.length / 2)).toString('base64'));
       await decompress.click();
       await expect(alert).toHaveText('Error: The input is Base64 but not valid GZip data.');
@@ -1587,7 +1797,9 @@ test.describe('Generator tools', () => {
 
     /** How far the page can be scrolled sideways, in pixels. */
     const sidewaysOverflow = (page: Page) =>
-      page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
 
     test('the UUID Generator lists 20 IDs without sideways scrolling', async ({ page }) => {
       await openTool(page, 'uuid-generator', 'UUID Generator');
@@ -1597,12 +1809,16 @@ test.describe('Generator tools', () => {
       expect(await sidewaysOverflow(page)).toBe(0);
     });
 
-    test('the Snowflake tool generates and decodes without sideways scrolling', async ({ page }) => {
+    test('the Snowflake tool generates and decodes without sideways scrolling', async ({
+      page,
+    }) => {
       await openTool(page, 'snowflake-id-generator', 'Snowflake ID Generator & Decoder');
       await page.getByRole('button', { name: 'Generate IDs' }).click();
       await expect(page.getByRole('button', { name: 'Decode', exact: true })).toHaveCount(5);
       // The row actions are on show without a pointer hovering over the row.
-      await expect(page.getByRole('button', { name: 'Decode', exact: true }).first()).toBeInViewport();
+      await expect(
+        page.getByRole('button', { name: 'Decode', exact: true }).first()
+      ).toBeInViewport();
       expect(await sidewaysOverflow(page)).toBe(0);
 
       await page.getByRole('button', { name: 'Decode', exact: true }).first().click();
@@ -1637,7 +1853,9 @@ test.describe('Generator tools', () => {
       await openTool(page, 'gzip-compressor', 'GZip Compressor / Decompressor');
       await page.getByRole('textbox', { name: 'Text to compress' }).fill('LazyTools'.repeat(400));
       await page.getByRole('button', { name: 'Compress', exact: true }).click();
-      await expect(page.getByRole('textbox', { name: 'Base64-encoded GZip result' })).toHaveValue(/^H4sI/);
+      await expect(page.getByRole('textbox', { name: 'Base64-encoded GZip result' })).toHaveValue(
+        /^H4sI/
+      );
       for (const name of ['Compress', 'Swap', 'Clear']) {
         const box = await page.getByRole('button', { name, exact: true }).boundingBox();
         expect((box?.x ?? 0) + (box?.width ?? 0), `right edge of ${name}`).toBeLessThanOrEqual(360);

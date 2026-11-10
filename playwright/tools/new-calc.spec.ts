@@ -66,14 +66,17 @@ test.describe('New calculator, generator and reference tools', () => {
     const principal = (page: Page) => page.getByRole('textbox', { name: /^Starting amount/ });
     const rate = (page: Page) => page.getByRole('textbox', { name: 'Annual interest rate (%)' });
     const years = (page: Page) => page.getByRole('textbox', { name: 'Years', exact: true });
-    const contribution = (page: Page) => page.getByRole('textbox', { name: /^Monthly contribution/ });
+    const contribution = (page: Page) =>
+      page.getByRole('textbox', { name: /^Monthly contribution/ });
     const finalBalance = (page: Page) => page.getByTestId('ci-final-balance');
     const table = (page: Page) => page.getByRole('region', { name: 'Year by year table' });
     /** The value under a result label such as "Total contributed". */
     const stat = (page: Page, label: string) =>
       page.locator('dt', { hasText: label }).locator('xpath=following-sibling::dd');
 
-    test('works out the balance, deposits and interest, with a table and a chart', async ({ page }) => {
+    test('works out the balance, deposits and interest, with a table and a chart', async ({
+      page,
+    }) => {
       await openTool(page, 'compound-interest-calculator', 'Compound Interest Calculator');
 
       // 1000 at 5% for 10 years, compounded monthly: 1000 * (1 + 0.05 / 12) ^ 120 = 1647.0095
@@ -90,7 +93,12 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(stat(page, 'Total contributed')).toHaveText('$13,000.00');
       await expect(stat(page, 'Interest earned')).toHaveText('$4,175.24');
       const firstYear = table(page).locator('tbody tr').first();
-      await expect(firstYear.getByRole('cell')).toHaveText(['$1,000.00', '$1,200.00', '$79.05', '$2,279.05']);
+      await expect(firstYear.getByRole('cell')).toHaveText([
+        '$1,000.00',
+        '$1,200.00',
+        '$79.05',
+        '$2,279.05',
+      ]);
 
       // Paid at the start of the month, every deposit earns one more month of interest
       await choose(page, 'Contributions are made', 'Start of each month');
@@ -110,22 +118,26 @@ test.describe('New calculator, generator and reference tools', () => {
     test('copies the summary and reports invalid input per field', async ({ page }) => {
       await openTool(page, 'compound-interest-calculator', 'Compound Interest Calculator');
       await page.getByRole('button', { name: 'Copy summary' }).click();
-      await expect.poll(() => readClipboard(page).then((text) => text.replace(/\r\n/g, '\n'))).toBe(
-        [
-          'Compound interest',
-          'Starting amount: $1,000.00',
-          'Monthly contribution: $0.00 (end of month)',
-          'Annual rate: 5% compounded monthly',
-          'Years: 10',
-          '',
-          'Final balance: $1,647.01',
-          'Total contributed: $1,000.00',
-          'Interest earned: $647.01',
-        ].join('\n')
-      );
+      await expect
+        .poll(() => readClipboard(page).then((text) => text.replace(/\r\n/g, '\n')))
+        .toBe(
+          [
+            'Compound interest',
+            'Starting amount: $1,000.00',
+            'Monthly contribution: $0.00 (end of month)',
+            'Annual rate: 5% compounded monthly',
+            'Years: 10',
+            '',
+            'Final balance: $1,647.01',
+            'Total contributed: $1,000.00',
+            'Interest earned: $647.01',
+          ].join('\n')
+        );
 
       await rate(page).fill('150');
-      await expect(alerts(page).filter({ hasText: 'Interest rate must be between 0 and 100 percent.' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: 'Interest rate must be between 0 and 100 percent.' })
+      ).toBeVisible();
       await expect(finalBalance(page)).toHaveCount(0);
       await rate(page).fill('5');
 
@@ -133,13 +145,19 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(alerts(page).filter({ hasText: 'whole number of months' })).toBeVisible();
       await years(page).fill('2.5');
       await expect(table(page).locator('tbody tr')).toHaveCount(3);
-      await expect(table(page).locator('tbody tr').nth(2).getByRole('rowheader')).toHaveText(/^3\s*\(6 mo\)$/);
+      await expect(table(page).locator('tbody tr').nth(2).getByRole('rowheader')).toHaveText(
+        /^3\s*\(6 mo\)$/
+      );
 
       await principal(page).fill('');
-      await expect(alerts(page).filter({ hasText: 'Enter a starting amount or a monthly contribution.' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: 'Enter a starting amount or a monthly contribution.' })
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'Clear' }).click();
-      await expect(page.getByText('Enter a starting amount, an interest rate and a number of years.')).toBeVisible();
+      await expect(
+        page.getByText('Enter a starting amount, an interest rate and a number of years.')
+      ).toBeVisible();
     });
   });
 
@@ -167,7 +185,10 @@ test.describe('New calculator, generator and reference tools', () => {
       await expression(page).fill('sin(30)');
       await expect(result(page)).toHaveText('0.5');
       await page.getByRole('button', { name: 'Radians' }).click();
-      await expect(page.getByRole('button', { name: 'Radians' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Radians' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expression(page).fill('sin(pi / 2)');
       await expect(result(page)).toHaveText('1');
       await expression(page).fill('1 / 3');
@@ -247,7 +268,9 @@ test.describe('New calculator, generator and reference tools', () => {
     test('builds the SVG, data URI, CSS and HTML and downloads the file', async ({ page }) => {
       await openTool(page, 'svg-placeholder-generator', 'SVG Placeholder Generator');
 
-      await expect(page.getByRole('img', { name: 'Placeholder preview, 600 by 400 pixels' })).toBeVisible();
+      await expect(
+        page.getByRole('img', { name: 'Placeholder preview, 600 by 400 pixels' })
+      ).toBeVisible();
       await expect(svgOutput(page)).toHaveValue(
         '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" role="img" aria-label="600 x 400">' +
           '<rect width="600" height="400" fill="#cccccc"/>' +
@@ -260,13 +283,19 @@ test.describe('New calculator, generator and reference tools', () => {
       await text(page).fill('Logo');
       await page.getByRole('textbox', { name: /^Corner radius/ }).fill('12');
       await expect(svgOutput(page)).toHaveValue(/width="300" height="200"/);
-      await expect(svgOutput(page)).toHaveValue(/<rect width="300" height="200" rx="12" fill="#cccccc"\/>/);
+      await expect(svgOutput(page)).toHaveValue(
+        /<rect width="300" height="200" rx="12" fill="#cccccc"\/>/
+      );
       await expect(svgOutput(page)).toHaveValue(/>Logo<\/text>/);
-      await expect(page.getByRole('img', { name: 'Placeholder preview, 300 by 200 pixels' })).toBeVisible();
+      await expect(
+        page.getByRole('img', { name: 'Placeholder preview, 300 by 200 pixels' })
+      ).toBeVisible();
 
       await page.getByRole('tab', { name: 'Data URI' }).click();
       const dataUri = page.getByRole('textbox', { name: 'Data URI output' });
-      await expect(dataUri).toHaveValue(/^data:image\/svg\+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww\.w3\.org%2F2000%2Fsvg%22%20width%3D%22300%22/);
+      await expect(dataUri).toHaveValue(
+        /^data:image\/svg\+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww\.w3\.org%2F2000%2Fsvg%22%20width%3D%22300%22/
+      );
       expect(await dataUri.inputValue()).toMatch(/^data:image\/svg\+xml,[A-Za-z0-9%\-_.~]+$/);
       await page.getByRole('button', { name: 'Copy', exact: true }).click();
       await expect.poll(() => readClipboard(page)).toBe(await dataUri.inputValue());
@@ -286,11 +315,15 @@ test.describe('New calculator, generator and reference tools', () => {
       await openTool(page, 'svg-placeholder-generator', 'SVG Placeholder Generator');
 
       await text(page).fill('</text><b>&"x"');
-      await expect(svgOutput(page)).toHaveValue(/>&lt;\/text&gt;&lt;b&gt;&amp;&quot;x&quot;<\/text><\/svg>$/);
+      await expect(svgOutput(page)).toHaveValue(
+        />&lt;\/text&gt;&lt;b&gt;&amp;&quot;x&quot;<\/text><\/svg>$/
+      );
       expect(await svgOutput(page).inputValue()).not.toContain('<b>');
 
       await width(page).fill('0');
-      await expect(alerts(page).filter({ hasText: 'Width must be a whole number from 1 to 5000.' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: 'Width must be a whole number from 1 to 5000.' })
+      ).toBeVisible();
       await expect(page.getByText('No preview', { exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Download .svg' })).toBeDisabled();
       await width(page).fill('5001');
@@ -334,7 +367,10 @@ test.describe('New calculator, generator and reference tools', () => {
       );
 
       await page.getByRole('button', { name: 'Beautify' }).click();
-      await expect(page.getByRole('button', { name: 'Beautify' })).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByRole('button', { name: 'Beautify' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       await expect(output(page)).toHaveValue(
         '/* header */\n.a > .b,\n.c {\n  content: "a  /* x */ ; }";\n  width: calc(100% - (2 * 1.50px));\n  background: url(x y.png);\n  color: #ffffff;\n}\n'
       );
@@ -344,7 +380,9 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(output(page)).toHaveValue(/\n\tcontent: /);
 
       // Modern nesting and @media
-      await input(page).fill('.card{color:red;&:hover{color:blue}@media (min-width:600px){padding:1rem}}');
+      await input(page).fill(
+        '.card{color:red;&:hover{color:blue}@media (min-width:600px){padding:1rem}}'
+      );
       await choose(page, 'Indent', '2 spaces');
       await expect(output(page)).toHaveValue(
         [
@@ -363,7 +401,9 @@ test.describe('New calculator, generator and reference tools', () => {
       );
 
       await page.getByRole('button', { name: 'Copy', exact: true }).click();
-      await expect.poll(() => readClipboard(page).then((value) => value.replace(/\r\n/g, '\n'))).toContain('  &:hover {');
+      await expect
+        .poll(() => readClipboard(page).then((value) => value.replace(/\r\n/g, '\n')))
+        .toContain('  &:hover {');
     });
 
     test('keeps /*! comments on request and warns about broken CSS', async ({ page }) => {
@@ -384,7 +424,9 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(page.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
 
       await page.getByRole('button', { name: 'Load example' }).click();
-      await expect(output(page)).toHaveValue(/^\.card\{display:flex;margin:\.5rem 0 0px -\.5em;color:#fff;/);
+      await expect(output(page)).toHaveValue(
+        /^\.card\{display:flex;margin:\.5rem 0 0px -\.5em;color:#fff;/
+      );
       await expect(page.getByTestId('css-size-saved')).toContainText('bytes');
     });
   });
@@ -395,11 +437,16 @@ test.describe('New calculator, generator and reference tools', () => {
   test.describe('MIME Types Reference', () => {
     const search = (page: Page) => page.getByRole('textbox', { name: 'Search MIME types' });
     const summary = (page: Page) => page.getByText(/^Showing \d+ of \d+ file types$/);
-    const rows = (page: Page) => page.getByRole('region', { name: 'MIME types table' }).locator('tbody tr');
+    const rows = (page: Page) =>
+      page.getByRole('region', { name: 'MIME types table' }).locator('tbody tr');
     const chip = (page: Page, name: string) =>
-      page.getByRole('group', { name: 'Filter by category' }).getByRole('button', { name, exact: true });
+      page
+        .getByRole('group', { name: 'Filter by category' })
+        .getByRole('button', { name, exact: true });
 
-    test('searches by extension and type, filters by category and copies a row', async ({ page }) => {
+    test('searches by extension and type, filters by category and copies a row', async ({
+      page,
+    }) => {
       await openTool(page, 'mime-types-reference', 'MIME Types Reference');
       await expect(summary(page)).toHaveText('Showing 158 of 158 file types');
       await expect(rows(page)).toHaveCount(158);
@@ -453,7 +500,10 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(rows(page)).toHaveCount(1); // m4a is audio/mp4
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
       await expect(summary(page)).toHaveText('Showing 158 of 158 file types');
-      await expect(chip(page, 'All categories, 158 matching')).toHaveAttribute('aria-pressed', 'true');
+      await expect(chip(page, 'All categories, 158 matching')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
 
       // ArrowDown moves from the search box into the table, ArrowUp comes back
       await search(page).focus();
@@ -478,7 +528,9 @@ test.describe('New calculator, generator and reference tools', () => {
     const input = (page: Page) => page.getByRole('textbox', { name: 'Base64 or data URL input' });
     const preview = (page: Page) => page.getByAltText('Decoded image preview');
 
-    test('decodes a mislabelled data URL, detects the real type and downloads it', async ({ page }) => {
+    test('decodes a mislabelled data URL, detects the real type and downloads it', async ({
+      page,
+    }) => {
       await openTool(page, 'base64-image-decoder', 'Base64 Image Decoder');
       await expect(page.getByText('Paste Base64 text above to see the image.')).toBeVisible();
 
@@ -487,8 +539,14 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(page.getByText('24 x 16 px', { exact: true })).toBeVisible();
       await expect(page.getByText('759 Bytes', { exact: true })).toBeVisible();
       await expect(page.getByText('image/png', { exact: true })).toBeVisible();
-      await expect(page.getByRole('status').filter({ hasText: 'The data URL says image/jpeg, but the data is a PNG image.' })).toBeVisible();
-      expect(await preview(page).evaluate((img: HTMLImageElement) => img.src.startsWith('blob:'))).toBe(true);
+      await expect(
+        page
+          .getByRole('status')
+          .filter({ hasText: 'The data URL says image/jpeg, but the data is a PNG image.' })
+      ).toBeVisible();
+      expect(
+        await preview(page).evaluate((img: HTMLImageElement) => img.src.startsWith('blob:'))
+      ).toBe(true);
 
       const downloadPromise = page.waitForEvent('download');
       await page.getByRole('button', { name: 'Download .png' }).click();
@@ -503,7 +561,9 @@ test.describe('New calculator, generator and reference tools', () => {
       await expect(preview(page)).toHaveCount(0);
     });
 
-    test('takes bare Base64 with line breaks and the URL-safe alphabet, and SVG data URLs', async ({ page }) => {
+    test('takes bare Base64 with line breaks and the URL-safe alphabet, and SVG data URLs', async ({
+      page,
+    }) => {
       await openTool(page, 'base64-image-decoder', 'Base64 Image Decoder');
 
       const urlSafe = PNG_BASE64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -527,25 +587,43 @@ test.describe('New calculator, generator and reference tools', () => {
       await openTool(page, 'base64-image-decoder', 'Base64 Image Decoder');
 
       await input(page).fill('not*base64');
-      await expect(alerts(page).filter({ hasText: '"*" is not a Base64 character (position 4).' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: '"*" is not a Base64 character (position 4).' })
+      ).toBeVisible();
       await expect(preview(page)).toHaveCount(0);
 
       await input(page).fill('data:image/png;base64');
-      await expect(alerts(page).filter({ hasText: 'A data URL needs a comma between its header and its data.' })).toBeVisible();
+      await expect(
+        alerts(page).filter({
+          hasText: 'A data URL needs a comma between its header and its data.',
+        })
+      ).toBeVisible();
 
       await input(page).fill('QUJDRA');
-      await expect(alerts(page).filter({ hasText: 'is not a PNG, JPEG, GIF, WebP, SVG, BMP, ICO or AVIF image' })).toBeVisible();
+      await expect(
+        alerts(page).filter({
+          hasText: 'is not a PNG, JPEG, GIF, WebP, SVG, BMP, ICO or AVIF image',
+        })
+      ).toBeVisible();
       await expect(page.getByText('First bytes: 41 42 43 44', { exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: /^Download/ })).toHaveCount(0);
 
       await input(page).fill('SGVsbG8gd29ybGQ=');
-      await expect(page.getByText('The data was decoded (11 Bytes)', { exact: false })).toBeVisible();
-      await expect(page.getByText('First bytes: 48 65 6c 6c 6f 20 77 6f', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('The data was decoded (11 Bytes)', { exact: false })
+      ).toBeVisible();
+      await expect(
+        page.getByText('First bytes: 48 65 6c 6c 6f 20 77 6f', { exact: true })
+      ).toBeVisible();
 
       await input(page).fill('data:image/png;base64,QU');
-      await expect(page.getByRole('list', { name: 'What was fixed' })).toContainText('Missing "=" padding was added.');
+      await expect(page.getByRole('list', { name: 'What was fixed' })).toContainText(
+        'Missing "=" padding was added.'
+      );
       await input(page).fill('QUJDR');
-      await expect(alerts(page).filter({ hasText: 'leaves a single character over' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: 'leaves a single character over' })
+      ).toBeVisible();
     });
 
     test('encodes an uploaded image to a data URL and Base64', async ({ page }) => {
@@ -558,10 +636,14 @@ test.describe('New calculator, generator and reference tools', () => {
         buffer: Buffer.from(PNG_BASE64, 'base64'),
       });
       await expect(page.getByText('tiny.png (759 Bytes)')).toBeVisible();
-      await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveValue(`data:image/png;base64,${PNG_BASE64}`);
+      await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveValue(
+        `data:image/png;base64,${PNG_BASE64}`
+      );
       await expect(page.getByRole('textbox', { name: 'Base64 only' })).toHaveValue(PNG_BASE64);
       await expect(page.getByAltText('Selected image preview')).toBeVisible();
-      await expect(page.getByText(`${PNG_BASE64.length.toLocaleString('en-US')} characters`)).toBeVisible();
+      await expect(
+        page.getByText(`${PNG_BASE64.length.toLocaleString('en-US')} characters`)
+      ).toBeVisible();
 
       await page.getByRole('button', { name: 'Copy Base64' }).click();
       await expect.poll(() => readClipboard(page)).toBe(PNG_BASE64);
@@ -574,7 +656,9 @@ test.describe('New calculator, generator and reference tools', () => {
         mimeType: 'image/jpeg',
         buffer: Buffer.from(PNG_BASE64, 'base64'),
       });
-      await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveValue(`data:image/png;base64,${PNG_BASE64}`);
+      await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveValue(
+        `data:image/png;base64,${PNG_BASE64}`
+      );
 
       await page.getByRole('button', { name: 'Clear', exact: true }).click();
       await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveCount(0);
@@ -589,7 +673,9 @@ test.describe('New calculator, generator and reference tools', () => {
         mimeType: 'text/plain',
         buffer: Buffer.from('hello'),
       });
-      await expect(alerts(page).filter({ hasText: '"notes.txt" is not a supported file type.' })).toBeVisible();
+      await expect(
+        alerts(page).filter({ hasText: '"notes.txt" is not a supported file type.' })
+      ).toBeVisible();
       await expect(page.getByRole('textbox', { name: 'Data URL' })).toHaveCount(0);
     });
   });
