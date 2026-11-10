@@ -145,7 +145,7 @@ export function TimestampConverter() {
               />
             </div>
 
-            <div role="group" aria-labelledby={`${id}-datetime`}>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-datetime`}>
               <span id={`${id}-datetime`} className="text-sm font-medium mb-2 block">
                 Date / Time
               </span>
@@ -199,7 +199,7 @@ export function TimestampConverter() {
                   </Select>
                 </div>
               </div>
-            </div>
+            </fieldset>
           </div>
 
           {state.error && (

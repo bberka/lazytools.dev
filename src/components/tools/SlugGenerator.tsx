@@ -204,7 +204,7 @@ export function SlugGenerator() {
         <CardHeader>
           <CardTitle className="text-base">Slug</CardTitle>
           <CardDescription>
-            <span role="status" aria-label="Slug summary">
+            <output aria-label="Slug summary">
               {!hasText
                 ? 'Type a title above to see its slug.'
                 : slugCount === 0
@@ -212,7 +212,7 @@ export function SlugGenerator() {
                   : options.perLine
                     ? `${slugCount.toLocaleString()} ${slugCount === 1 ? 'slug' : 'slugs'}`
                     : `${slug.length.toLocaleString()} ${slug.length === 1 ? 'character' : 'characters'}`}
-            </span>
+            </output>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

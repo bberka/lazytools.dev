@@ -91,7 +91,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div role="group" aria-labelledby={`${id}-start`}>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-start`}>
               <span id={`${id}-start`} className="mb-2 block text-sm font-medium">
                 Start date
               </span>
@@ -106,8 +106,8 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 }}
                 error={!parseDateInput(startDate) && !!startDate}
               />
-            </div>
-            <div role="group" aria-labelledby={`${id}-end`}>
+            </fieldset>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-end`}>
               <span id={`${id}-end`} className="mb-2 block text-sm font-medium">
                 End date
               </span>
@@ -122,7 +122,7 @@ function DateDifferenceForm({ initialEndDate }: { initialEndDate: string }) {
                 }}
                 error={!parseDateInput(endDate) && !!endDate}
               />
-            </div>
+            </fieldset>
           </div>
 
           {result.error && (

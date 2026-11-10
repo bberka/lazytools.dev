@@ -343,6 +343,7 @@ const isPlainObject = (shape: Shape): shape is ObjectShape =>
 function tsKey(key: string): string {
   if (JS_IDENTIFIER.test(key)) return key;
   // Single quotes as long as nothing in the key needs escaping.
+  // oxlint-disable-next-line no-control-regex -- a key with a control character must be escaped
   return /['\\\u0000-\u001f]/.test(key) ? JSON.stringify(key) : `'${key}'`;
 }
 

@@ -137,7 +137,7 @@ export function SubnetCalculator() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* IP Address */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">IP Address</label>
+                  <span className="text-sm font-medium text-muted-foreground">IP Address</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.ipAddress}/{subnetInfo.cidr}
@@ -163,7 +163,7 @@ export function SubnetCalculator() {
 
                 {/* Subnet Mask */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Subnet Mask</label>
+                  <span className="text-sm font-medium text-muted-foreground">Subnet Mask</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.subnetMask}
@@ -187,7 +187,7 @@ export function SubnetCalculator() {
 
                 {/* Wildcard Mask */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Wildcard Mask</label>
+                  <span className="text-sm font-medium text-muted-foreground">Wildcard Mask</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.wildcardMask}
@@ -211,9 +211,9 @@ export function SubnetCalculator() {
 
                 {/* Binary Subnet Mask */}
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-sm font-medium text-muted-foreground">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Binary Subnet Mask
-                  </label>
+                  </span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-xs break-all">
                       {subnetInfo.binarySubnetMask}
@@ -248,9 +248,7 @@ export function SubnetCalculator() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Network Address */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Network Address
-                  </label>
+                  <span className="text-sm font-medium text-muted-foreground">Network Address</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.networkAddress}
@@ -274,9 +272,9 @@ export function SubnetCalculator() {
 
                 {/* Broadcast Address */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Broadcast Address
-                  </label>
+                  </span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.broadcastAddress}
@@ -300,9 +298,7 @@ export function SubnetCalculator() {
 
                 {/* First Usable IP */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    First Usable IP
-                  </label>
+                  <span className="text-sm font-medium text-muted-foreground">First Usable IP</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.firstUsableIP}
@@ -326,9 +322,7 @@ export function SubnetCalculator() {
 
                 {/* Last Usable IP */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Last Usable IP
-                  </label>
+                  <span className="text-sm font-medium text-muted-foreground">Last Usable IP</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                       {subnetInfo.lastUsableIP}
@@ -352,7 +346,7 @@ export function SubnetCalculator() {
 
                 {/* Total Hosts */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Total Hosts</label>
+                  <span className="text-sm font-medium text-muted-foreground">Total Hosts</span>
                   <div className="p-2 rounded-md bg-muted text-sm font-mono">
                     {subnetInfo.totalHosts.toLocaleString()}
                   </div>
@@ -360,7 +354,7 @@ export function SubnetCalculator() {
 
                 {/* Usable Hosts */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Usable Hosts</label>
+                  <span className="text-sm font-medium text-muted-foreground">Usable Hosts</span>
                   <div className="p-2 rounded-md bg-muted text-sm font-mono">
                     {subnetInfo.usableHosts.toLocaleString()}
                   </div>
@@ -368,13 +362,13 @@ export function SubnetCalculator() {
 
                 {/* IP Class */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">IP Class</label>
+                  <span className="text-sm font-medium text-muted-foreground">IP Class</span>
                   <div className="p-2 rounded-md bg-muted text-sm">{subnetInfo.ipClass}</div>
                 </div>
 
                 {/* IP Type */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">IP Type</label>
+                  <span className="text-sm font-medium text-muted-foreground">IP Type</span>
                   <div className="p-2 rounded-md bg-muted text-sm">{subnetInfo.ipType}</div>
                 </div>
               </div>

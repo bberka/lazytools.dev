@@ -446,6 +446,9 @@ test.describe('PDF conversion tools', () => {
 
       // The PDF reader is closed after each conversion; the next tool has to start it again.
       await page.getByRole('tab', { name: 'To Word' }).click();
+      // The old tab's panel stays until the new one has replaced it; wait for the swap
+      // before choosing a file, or the file lands in the Images tab's input.
+      await expect(panel.getByText('Extracted Pages (2)')).toHaveCount(0);
       await panel.getByLabel('Upload a PDF').setInputFiles(pdf);
       await panel.getByRole('button', { name: 'Convert to Word' }).click();
 
@@ -700,6 +703,7 @@ test.describe('PDF conversion tools', () => {
       // Stands in for a browser that runs out of image memory on one page: the
       // canvas of page 2, and only that one, cannot be encoded.
       await page.addInitScript(() => {
+        // oxlint-disable-next-line typescript/unbound-method -- the original is called back with the canvas as `this`
         const encode = HTMLCanvasElement.prototype.toBlob;
         HTMLCanvasElement.prototype.toBlob = function (callback, ...rest) {
           if (this.width === 444 && this.height === 666) {

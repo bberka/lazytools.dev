@@ -92,7 +92,9 @@ function Select<T extends string = string>({
   searchThreshold?: number;
   disabled?: boolean;
 }) {
-  const [open, setOpen] = React.useState(openProp || false);
+  const [openState, setOpenState] = React.useState(false);
+  // A caller that passes `open` controls the panel; otherwise it keeps its own state.
+  const open = openProp !== undefined ? openProp : openState;
   const [selectedValue, setSelectedValue] = React.useState(defaultValue || '');
   const [search, setSearch] = React.useState('');
   const [highlightedValue, setHighlightedValue] = React.useState('');
@@ -109,13 +111,9 @@ function Select<T extends string = string>({
       .filter((item) => !search || item.label.toLowerCase().includes(search.toLowerCase()));
   }, [items, search]);
 
-  React.useEffect(() => {
-    if (openProp !== undefined) setOpen(openProp);
-  }, [openProp]);
-
   const handleOpenChange = (nextOpen: boolean) => {
     if (disabled) return;
-    setOpen(nextOpen);
+    setOpenState(nextOpen);
     onOpenChange?.(nextOpen);
     if (!nextOpen) {
       setSearch('');
@@ -125,51 +123,61 @@ function Select<T extends string = string>({
   const handleValueChange = (val: string) => {
     setSelectedValue(val);
     onValueChange?.(val as T);
-    setOpen(false);
+    setOpenState(false);
+    onOpenChange?.(false);
     setSearch('');
   };
 
   const activeValue = value !== undefined ? value : selectedValue;
 
-  React.useEffect(() => {
+  // While the panel is open the highlight starts on the selected option (or the first one)
+  // and starts over whenever the selection or the filtered list changes
+  const [highlightSource, setHighlightSource] = React.useState({
+    open,
+    activeValue,
+    filteredItems,
+  });
+  if (
+    highlightSource.open !== open ||
+    highlightSource.activeValue !== activeValue ||
+    highlightSource.filteredItems !== filteredItems
+  ) {
+    setHighlightSource({ open, activeValue, filteredItems });
     if (open) {
       const exists = filteredItems.some((item) => item.value === activeValue);
       setHighlightedValue(exists ? activeValue : filteredItems[0]?.value || '');
     }
-  }, [open, activeValue, filteredItems]);
+  }
 
-  const handleKeyDown = React.useCallback(
-    (e: React.KeyboardEvent) => {
-      if (filteredItems.length === 0) return;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (filteredItems.length === 0) return;
 
-      const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
+    const currentIndex = filteredItems.findIndex((item) => item.value === highlightedValue);
 
-      switch (e.key) {
-        case 'ArrowDown': {
-          e.preventDefault();
-          const nextIndex = currentIndex + 1 >= filteredItems.length ? 0 : currentIndex + 1;
-          setHighlightedValue(filteredItems[nextIndex].value);
-          break;
-        }
-        case 'ArrowUp': {
-          e.preventDefault();
-          const prevIndex = currentIndex - 1 < 0 ? filteredItems.length - 1 : currentIndex - 1;
-          setHighlightedValue(filteredItems[prevIndex].value);
-          break;
-        }
-        case 'Enter': {
-          e.preventDefault();
-          if (currentIndex !== -1) {
-            handleValueChange(filteredItems[currentIndex].value);
-          }
-          break;
-        }
-        default:
-          break;
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const nextIndex = currentIndex + 1 >= filteredItems.length ? 0 : currentIndex + 1;
+        setHighlightedValue(filteredItems[nextIndex].value);
+        break;
       }
-    },
-    [filteredItems, highlightedValue]
-  );
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prevIndex = currentIndex - 1 < 0 ? filteredItems.length - 1 : currentIndex - 1;
+        setHighlightedValue(filteredItems[prevIndex].value);
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        if (currentIndex !== -1) {
+          handleValueChange(filteredItems[currentIndex].value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
 
   return (
     <SelectContext.Provider
@@ -219,6 +227,7 @@ const SelectTrigger = React.forwardRef<
       <Button
         ref={ref}
         variant="outline"
+        // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props, jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> cannot hold the search field or the styling, and PopoverTrigger asChild adds aria-expanded and aria-controls to this button at runtime
         role="combobox"
         className={cn(
           'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
@@ -274,10 +283,12 @@ const SelectContent = React.forwardRef<
             value={context.search}
             onChange={(e) => context.setSearch(e.target.value)}
             className="h-8 text-xs px-2"
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user just opened the list to pick from it, so the search field takes focus
             autoFocus
           />
         </div>
       )}
+      {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> or <datalist> cannot hold the search field or the styling */}
       <div role="listbox" className="max-h-60 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
         {children}
       </div>
@@ -344,6 +355,7 @@ const SelectItem = React.forwardRef<
     <button
       ref={handleRef}
       type="button"
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom select built on a popover: a native <select> or <datalist> cannot hold the search field or the styling
       role="option"
       tabIndex={-1}
       aria-selected={isSelected}

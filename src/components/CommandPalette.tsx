@@ -54,6 +54,7 @@ function TagIconBadge({ tagId }: { tagId: ToolTag }) {
   return (
     <TooltipSimple content={tag.name}>
       <span
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an emoji span is named with role="img", the standard way to label an emoji
         role="img"
         aria-label={tag.name}
         className={cn(

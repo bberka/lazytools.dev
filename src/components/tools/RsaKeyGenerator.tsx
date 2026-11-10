@@ -92,7 +92,7 @@ export function RsaKeyGenerator() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Key Size (bits)</label>
+              <span className="text-sm font-medium">Key Size (bits)</span>
               <Select
                 value={keySize.toString()}
                 onValueChange={(value) => {
@@ -116,7 +116,7 @@ export function RsaKeyGenerator() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Key Format</label>
+              <span className="text-sm font-medium">Key Format</span>
               <Select
                 value={keyFormat}
                 onValueChange={(value) => {

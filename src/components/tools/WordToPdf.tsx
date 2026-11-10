@@ -173,11 +173,11 @@ export function WordToPdf() {
           )}
 
           {pdfResult && pdfResult.unsupportedCharacters > 0 && (
-            <p role="status" className="mt-2 text-xs text-muted-foreground">
+            <output className="block mt-2 text-xs text-muted-foreground">
               {pdfResult.unsupportedCharacters === 1
                 ? '1 character is not in the font this tool writes with and shows as an empty box in the PDF.'
                 : `${pdfResult.unsupportedCharacters} characters are not in the font this tool writes with and show as empty boxes in the PDF.`}
-            </p>
+            </output>
           )}
         </CardContent>
       </Card>

@@ -228,9 +228,9 @@ export function MarkdownToDocx() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-muted/40 p-4 rounded-xl border">
                   <div className="space-y-3">
                     <div>
-                      <label id="docx-page-size" className="text-xs font-semibold block mb-1">
+                      <span id="docx-page-size" className="text-xs font-semibold block mb-1">
                         Page Size
-                      </label>
+                      </span>
                       <Select
                         value={pageSize}
                         onValueChange={(val: 'A4' | 'Letter') => setPageSize(val)}
@@ -245,9 +245,9 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-orientation" className="text-xs font-semibold block mb-1">
+                      <span id="docx-orientation" className="text-xs font-semibold block mb-1">
                         Orientation
-                      </label>
+                      </span>
                       <Select
                         value={orientation}
                         onValueChange={(val: 'portrait' | 'landscape') => setOrientation(val)}
@@ -262,9 +262,9 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-margins" className="text-xs font-semibold block mb-1">
+                      <span id="docx-margins" className="text-xs font-semibold block mb-1">
                         Page Margins
-                      </label>
+                      </span>
                       <Select
                         value={marginType}
                         onValueChange={(val: 'normal' | 'narrow' | 'wide') => setMarginType(val)}
@@ -363,9 +363,9 @@ export function MarkdownToDocx() {
                 <div className="space-y-4 mb-4 bg-muted/40 p-4 rounded-xl border">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label id="docx-theme-preset" className="text-xs font-semibold block mb-1">
+                      <span id="docx-theme-preset" className="text-xs font-semibold block mb-1">
                         Theme Preset
-                      </label>
+                      </span>
                       <Select value={themeKey} onValueChange={handleThemeChange}>
                         <SelectTrigger className="h-9" aria-labelledby="docx-theme-preset">
                           <SelectValue />
@@ -381,9 +381,9 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-font-family" className="text-xs font-semibold block mb-1">
+                      <span id="docx-font-family" className="text-xs font-semibold block mb-1">
                         Font Family
-                      </label>
+                      </span>
                       <Select
                         value={options.fontFamily}
                         onValueChange={(val) => updateOption('fontFamily', val)}
@@ -404,9 +404,9 @@ export function MarkdownToDocx() {
                       </Select>
                     </div>
                     <div>
-                      <label id="docx-line-spacing" className="text-xs font-semibold block mb-1">
+                      <span id="docx-line-spacing" className="text-xs font-semibold block mb-1">
                         Line Spacing
-                      </label>
+                      </span>
                       <Select
                         value={String(options.bodyLineSpacing)}
                         onValueChange={(val) => updateOption('bodyLineSpacing', parseFloat(val))}
@@ -428,7 +428,7 @@ export function MarkdownToDocx() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-3">
                     <div className="space-y-3">
-                      <div role="group" aria-labelledby="docx-body-font-size">
+                      <fieldset className="min-w-0" aria-labelledby="docx-body-font-size">
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-body-font-size" className="text-xs font-semibold">
                             Body Font Size ({options.bodyFontSize}pt)
@@ -442,8 +442,8 @@ export function MarkdownToDocx() {
                           step={0.5}
                           onChange={(val: number) => updateOption('bodyFontSize', val)}
                         />
-                      </div>
-                      <div role="group" aria-labelledby="docx-paragraph-spacing">
+                      </fieldset>
+                      <fieldset className="min-w-0" aria-labelledby="docx-paragraph-spacing">
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-paragraph-spacing" className="text-xs font-semibold">
                             Paragraph Spacing After ({options.paragraphSpacingAfter}pt)
@@ -457,11 +457,11 @@ export function MarkdownToDocx() {
                           step={1}
                           onChange={(val: number) => updateOption('paragraphSpacingAfter', val)}
                         />
-                      </div>
+                      </fieldset>
                     </div>
 
                     <div className="space-y-3">
-                      <div role="group" aria-labelledby="docx-h1-size">
+                      <fieldset className="min-w-0" aria-labelledby="docx-h1-size">
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-h1-size" className="text-xs font-semibold">
                             Heading 1 Size ({options.h1FontSize}pt)
@@ -475,8 +475,8 @@ export function MarkdownToDocx() {
                           step={1}
                           onChange={(val: number) => updateOption('h1FontSize', val)}
                         />
-                      </div>
-                      <div role="group" aria-labelledby="docx-heading-spacing">
+                      </fieldset>
+                      <fieldset className="min-w-0" aria-labelledby="docx-heading-spacing">
                         <div className="flex justify-between items-center mb-1">
                           <span id="docx-heading-spacing" className="text-xs font-semibold">
                             Heading Spacing Before ({options.headingSpacingBefore}pt)
@@ -490,7 +490,7 @@ export function MarkdownToDocx() {
                           step={1}
                           onChange={(val: number) => updateOption('headingSpacingBefore', val)}
                         />
-                      </div>
+                      </fieldset>
                     </div>
                   </div>
                 </div>

@@ -451,6 +451,7 @@ test.describe('Developer code tools', () => {
       };
       const quietConsole = { log: () => undefined, error: () => undefined };
 
+      // oxlint-disable-next-line no-implied-eval -- running the generated snippet is what this test checks
       new Function('fetch', 'Headers', 'console', snippet)(fetchStandIn, Headers, quietConsole);
       if (!sent) throw new Error('The snippet never called fetch.');
       return sent;

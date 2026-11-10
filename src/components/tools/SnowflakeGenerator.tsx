@@ -1036,7 +1036,9 @@ export function SnowflakeGenerator() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Grid representation */}
+                      {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- one tab stop for the whole bit grid; the arrow keys move between the bits */}
                       <div
+                        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the bit grid is laid out with CSS grid and carries its own key handling, which a <fieldset> would not
                         role="group"
                         aria-label="64 bits, most significant first"
                         className="grid grid-cols-8 gap-1 p-4 bg-muted/30 rounded-xl border sm:flex sm:flex-wrap sm:justify-center sm:gap-[5px]"

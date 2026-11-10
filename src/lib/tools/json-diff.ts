@@ -501,7 +501,7 @@ function matchUnordered(left: JsonArray, right: JsonArray): Match {
 
   const pairs: Array<[number, number]> = [];
   let freeLeft: number[] = [];
-  const taken = new Array<boolean>(right.length).fill(false);
+  const taken = Array.from({ length: right.length }, () => false);
   left.forEach((item, index) => {
     const partner = rightByText.get(canonical(item))?.shift();
     if (partner === undefined) {

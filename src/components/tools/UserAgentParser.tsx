@@ -274,16 +274,13 @@ export function UserAgentParser() {
               </div>
 
               {!isRecognised(result) && (
-                <div
-                  role="status"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/40 p-3 text-sm text-destructive"
-                >
+                <output className="flex items-start gap-2 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     Nothing in this string matched a known browser, engine, operating system or
                     device. Check that you pasted the whole header value.
                   </span>
-                </div>
+                </output>
               )}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

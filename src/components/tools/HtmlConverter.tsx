@@ -544,9 +544,9 @@ export function HtmlConverter() {
           <CardContent className="space-y-4 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label id="html-export-format" className="text-sm font-medium">
+                <span id="html-export-format" className="text-sm font-medium">
                   Format
-                </label>
+                </span>
                 <Select
                   value={exportFormat}
                   onValueChange={(value) => setExportFormat(value as ExportFormat)}
@@ -583,9 +583,9 @@ export function HtmlConverter() {
               <div className="space-y-4 rounded-md border p-3 sm:p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label id="html-export-page-size" className="text-sm font-medium">
+                    <span id="html-export-page-size" className="text-sm font-medium">
                       Page size
-                    </label>
+                    </span>
                     <Select
                       value={pageSize}
                       onValueChange={(value) => setPageSize(value as PageSize)}
@@ -605,9 +605,9 @@ export function HtmlConverter() {
                   </div>
 
                   <div className="space-y-2">
-                    <label id="html-export-orientation" className="text-sm font-medium">
+                    <span id="html-export-orientation" className="text-sm font-medium">
                       Orientation
-                    </label>
+                    </span>
                     <Select
                       value={orientation}
                       onValueChange={(value) => setOrientation(value as Orientation)}
@@ -626,7 +626,7 @@ export function HtmlConverter() {
                   </div>
                 </div>
 
-                <div className="space-y-2" role="group" aria-labelledby="html-export-margins">
+                <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-margins">
                   <label id="html-export-margins" className="text-sm font-medium">
                     Margins: {margin} mm
                   </label>
@@ -639,9 +639,9 @@ export function HtmlConverter() {
                     step={1}
                     disabled={exporting}
                   />
-                </div>
+                </fieldset>
 
-                <div className="space-y-2" role="group" aria-labelledby="html-export-scale">
+                <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-scale">
                   <label id="html-export-scale" className="text-sm font-medium">
                     Render scale: {scale}x
                   </label>
@@ -654,13 +654,13 @@ export function HtmlConverter() {
                     step={1}
                     disabled={exporting}
                   />
-                </div>
+                </fieldset>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label id="html-export-theme" className="text-sm font-medium">
+                    <span id="html-export-theme" className="text-sm font-medium">
                       PDF theme
-                    </label>
+                    </span>
                     <Select
                       value={pdfTheme}
                       onValueChange={(value) => {
@@ -682,17 +682,17 @@ export function HtmlConverter() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2" role="group" aria-labelledby="html-export-background">
-                    <label id="html-export-background" className="text-sm font-medium">
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby="html-export-background">
+                    <span id="html-export-background" className="text-sm font-medium">
                       PDF background
-                    </label>
+                    </span>
                     <ColorPicker
                       label="PDF background"
                       value={backgroundColor}
                       onChange={setBackgroundColor}
                       disabled={exporting}
                     />
-                  </div>
+                  </fieldset>
                 </div>
 
                 <div className="space-y-3">

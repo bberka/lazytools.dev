@@ -626,6 +626,7 @@ export function BoxShadowVisualizer() {
                   {shadows.map((layer, index) => {
                     const isSelected = layer.id === selectedId;
                     return (
+                      // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- clicking the row is a pointer shortcut; keyboard users select the layer with the row button inside it
                       <div
                         key={layer.id}
                         onClick={() => setSelectedId(layer.id)}
@@ -662,6 +663,7 @@ export function BoxShadowVisualizer() {
                         </button>
 
                         {/* Operations */}
+                        {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the click only keeps the row buttons from also selecting the row */}
                         <div
                           className="flex items-center gap-1 shrink-0"
                           onClick={(e) => e.stopPropagation()}
@@ -766,7 +768,7 @@ export function BoxShadowVisualizer() {
                 {/* Inset Switch */}
                 <div className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-muted/10">
                   <div className="space-y-0.5">
-                    <label className="text-sm font-semibold">Inset Shadow</label>
+                    <span className="text-sm font-semibold">Inset Shadow</span>
                     <p className="text-xs text-muted-foreground">
                       Place the shadow inside the boundary box.
                     </p>
@@ -783,9 +785,9 @@ export function BoxShadowVisualizer() {
                   {/* Offset X */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Offset X
-                      </label>
+                      </span>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.offsetX}px
                       </span>
@@ -802,9 +804,9 @@ export function BoxShadowVisualizer() {
                   {/* Offset Y */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Offset Y
-                      </label>
+                      </span>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.offsetY}px
                       </span>
@@ -821,9 +823,9 @@ export function BoxShadowVisualizer() {
                   {/* Blur Radius */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Blur Radius
-                      </label>
+                      </span>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.blur}px
                       </span>
@@ -840,9 +842,9 @@ export function BoxShadowVisualizer() {
                   {/* Spread Radius */}
                   <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Spread Radius
-                      </label>
+                      </span>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {activeLayer.spread}px
                       </span>
@@ -861,9 +863,9 @@ export function BoxShadowVisualizer() {
                 <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4 p-4 rounded-xl border border-border/50 bg-muted/5">
                   {/* HEX Color Input */}
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Shadow Color
-                    </label>
+                    </span>
                     <div className="flex gap-2">
                       <ColorPicker
                         label="Shadow color"
@@ -884,9 +886,9 @@ export function BoxShadowVisualizer() {
                   {/* Opacity Slider */}
                   <div className="space-y-2 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Opacity
-                      </label>
+                      </span>
                       <span className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded">
                         {Math.round(activeLayer.opacity * 100)}%
                       </span>
@@ -977,9 +979,7 @@ export function BoxShadowVisualizer() {
               <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(0,1fr)] gap-4">
                 {/* Box Background */}
                 <div className="space-y-2 p-3 rounded-xl border border-border/50 bg-muted/5">
-                  <label className="text-xs font-semibold text-muted-foreground">
-                    Box BG Color
-                  </label>
+                  <span className="text-xs font-semibold text-muted-foreground">Box BG Color</span>
                   <div className="flex gap-2">
                     <ColorPicker
                       label="Box background color"

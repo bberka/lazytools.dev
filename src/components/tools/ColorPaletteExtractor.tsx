@@ -113,13 +113,10 @@ export function ColorPaletteExtractor() {
             }
           />
           {processing && (
-            <p
-              role="status"
-              className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
-            >
+            <output className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Extracting colors...
-            </p>
+            </output>
           )}
           {error && (
             <div

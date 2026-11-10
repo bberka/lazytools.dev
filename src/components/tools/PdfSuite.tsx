@@ -7,13 +7,9 @@ import { Loader2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const loadingEl = (
-  <div
-    role="status"
-    aria-label="Loading tool"
-    className="flex items-center justify-center py-6 sm:py-12"
-  >
+  <output aria-label="Loading tool" className="flex items-center justify-center py-6 sm:py-12">
     <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
-  </div>
+  </output>
 );
 
 const PdfToImage = dynamic(() => import('./PdfToImage').then((m) => ({ default: m.PdfToImage })), {

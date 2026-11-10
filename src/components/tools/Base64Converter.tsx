@@ -247,9 +247,9 @@ export function Base64Converter() {
                 </div>
               )}
               {isReading && (
-                <p role="status" className="mt-3 text-sm text-muted-foreground">
+                <output className="block mt-3 text-sm text-muted-foreground">
                   Reading file...
-                </p>
+                </output>
               )}
             </CardContent>
           </Card>

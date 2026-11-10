@@ -185,7 +185,7 @@ export function CurrencyConverter() {
             </div>
           </div>
 
-          <div role="group" aria-labelledby="currency-date-label">
+          <fieldset className="min-w-0" aria-labelledby="currency-date-label">
             <span id="currency-date-label" className="mb-2 block text-sm font-medium">
               Reference date
             </span>
@@ -199,7 +199,7 @@ export function CurrencyConverter() {
             <p className="mt-2 text-xs text-muted-foreground">
               Leave blank to use the latest available rate.
             </p>
-          </div>
+          </fieldset>
 
           {error && (
             <div

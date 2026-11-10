@@ -583,10 +583,7 @@ test.describe('Calculator and number tools', () => {
      * list the calls are recorded in. Nothing reaches the real service. Every
      * test installs its stub before it opens the page.
      */
-    async function stubRateService(
-      page: Page,
-      reply: (route: Route, call: RateCall) => Promise<unknown> | unknown
-    ) {
+    async function stubRateService(page: Page, reply: (route: Route, call: RateCall) => unknown) {
       const calls: RateCall[] = [];
 
       await page.unroute(RATE_SERVICE);

@@ -379,6 +379,7 @@ function TextCleaner() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Cleaned text</CardTitle>
+          {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- CardDescription renders a <p>, which cannot become an <output> */}
           <CardDescription role="status">
             {text === ''
               ? 'Paste some text above to see the result.'

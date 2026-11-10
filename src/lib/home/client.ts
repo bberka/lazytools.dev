@@ -21,19 +21,19 @@ export type HomeFilters = Omit<HomeViewState, 'scrollY'>;
 
 export interface HomeView extends HomeFilters {
   /** Searches as the user types. The results start over from the top. */
-  setSearchQuery(query: string): void;
+  setSearchQuery: (query: string) => void;
   /** Empties the search box and leaves the page where it is scrolled. */
-  clearSearch(): void;
+  clearSearch: () => void;
   /**
    * Selects a tag, or none with `null`, and jumps to the top of the page. A
    * tag replaces favorites-only.
    */
-  selectTag(tag: ToolTag | null): void;
+  selectTag: (tag: ToolTag | null) => void;
   /**
    * Switches favorites-only on or off and jumps to the top of the page.
    * Favorites-only replaces the selected tag.
    */
-  toggleFavoritesOnly(): void;
+  toggleFavoritesOnly: () => void;
 }
 
 const DEFAULT_FILTERS: HomeFilters = {
@@ -94,6 +94,7 @@ export function useHomeViewState(): HomeView {
   useEffect(() => {
     // Read here, after mount, and never during render (see above)
     const { scrollY, ...stored } = homeViewState.restore();
+    // oxlint-disable-next-line react-hooks/set-state-in-effect -- the stored view can only be read after mount, or the static HTML would not hydrate
     setFilters((current) => (isSameFilters(current, stored) ? current : stored));
 
     // Scroll offsets are saved only once the stored one has been applied or

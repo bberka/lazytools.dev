@@ -479,9 +479,9 @@ export function ExifViewerRemover() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label id={`${id}-format-label`} className="mb-2 block text-sm font-medium">
+                  <span id={`${id}-format-label`} className="mb-2 block text-sm font-medium">
                     Output format
-                  </label>
+                  </span>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
@@ -679,9 +679,9 @@ export function ExifViewerRemover() {
               {batchItems.length > 0 && (
                 <div className="flex flex-col gap-4 p-4 rounded-lg border bg-card sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex-1 space-y-2 max-w-sm">
-                    <label id={`${id}-batch-format-label`} className="text-sm font-medium">
+                    <span id={`${id}-batch-format-label`} className="text-sm font-medium">
                       Batch Output Format
-                    </label>
+                    </span>
                     <Select
                       value={batchOutputFormat}
                       onValueChange={(value) => setBatchOutputFormat(value as OutputFormat)}

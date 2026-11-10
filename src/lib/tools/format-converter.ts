@@ -178,7 +178,7 @@ function csvCell(value: unknown, delimiter: CsvDelimiter): string {
     // A nested list or object has no CSV form; JSON keeps it readable.
     text = stringifyJson(value);
   } else {
-    text = String(value);
+    text = String(value as string | number | boolean | bigint | symbol);
   }
 
   const needsQuotes =

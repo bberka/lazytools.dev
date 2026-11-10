@@ -199,7 +199,7 @@ export function PasswordHasher() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Hashing Algorithm</label>
+                <span className="text-sm font-medium">Hashing Algorithm</span>
                 <Select
                   value={algorithm}
                   onValueChange={(val) => {
@@ -267,7 +267,7 @@ export function PasswordHasher() {
             {algorithm !== 'bcrypt' && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2 border-t border-border">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Memory Size</label>
+                  <span className="text-sm font-medium">Memory Size</span>
                   <Select
                     value={memorySize.toString()}
                     onValueChange={(val) => {
@@ -291,7 +291,7 @@ export function PasswordHasher() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Parallelism (Threads)</label>
+                  <span className="text-sm font-medium">Parallelism (Threads)</span>
                   <Select
                     value={parallelism.toString()}
                     onValueChange={(val) => {
@@ -315,7 +315,7 @@ export function PasswordHasher() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Hash Output Length</label>
+                  <span className="text-sm font-medium">Hash Output Length</span>
                   <Select
                     value={hashLength.toString()}
                     onValueChange={(val) => {

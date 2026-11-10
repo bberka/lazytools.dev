@@ -150,9 +150,8 @@ export function EmailNormalizer() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div
-                className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3"
-                role="group"
+              <fieldset
+                className="min-w-0 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3"
                 aria-label="Summary"
               >
                 {statTiles.map((tile) => (
@@ -168,7 +167,7 @@ export function EmailNormalizer() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </fieldset>
               <Textarea
                 readOnly
                 value={result.output}
@@ -234,11 +233,11 @@ export function EmailNormalizer() {
                   </table>
                 </div>
                 {result.entries.length > MAX_ROWS && (
-                  <p className="text-xs text-muted-foreground" role="status">
+                  <output className="block text-xs text-muted-foreground">
                     Showing the first {MAX_ROWS.toLocaleString()} of{' '}
                     {result.entries.length.toLocaleString()} rows. The result above covers all of
                     them.
-                  </p>
+                  </output>
                 )}
               </CardContent>
             </Card>

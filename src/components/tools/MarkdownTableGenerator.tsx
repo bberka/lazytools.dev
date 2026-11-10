@@ -209,10 +209,10 @@ export function MarkdownTableGenerator() {
               Clear table
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground" role="status">
+          <output className="block text-xs text-muted-foreground">
             {columnCount} {columnCount === 1 ? 'column' : 'columns'}, {bodyRowCount}{' '}
             {bodyRowCount === 1 ? 'row' : 'rows'} below the header.
-          </p>
+          </output>
         </CardContent>
       </Card>
 
@@ -282,14 +282,15 @@ export function MarkdownTableGenerator() {
             </Button>
           </div>
           {importMessage && (
-            <p
-              role="status"
+            <output
               className={
-                importMessage.error ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'
+                importMessage.error
+                  ? 'block text-sm text-destructive'
+                  : 'block text-sm text-muted-foreground'
               }
             >
               {importMessage.text}
-            </p>
+            </output>
           )}
         </CardContent>
       </Card>

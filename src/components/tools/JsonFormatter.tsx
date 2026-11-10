@@ -254,9 +254,8 @@ export function JsonFormatter() {
             </CardDescription>
           </div>
           {validation?.valid && !outputResult.error && (
-            <div
-              className="flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
-              role="group"
+            <fieldset
+              className="min-w-0 flex gap-1 bg-muted p-0.5 rounded-md border text-xs"
               aria-label="Output view"
             >
               <Button
@@ -277,7 +276,7 @@ export function JsonFormatter() {
               >
                 Tree View
               </Button>
-            </div>
+            </fieldset>
           )}
         </CardHeader>
         <CardContent className="space-y-4 pt-4">

@@ -387,7 +387,7 @@ export function TextToSpeech() {
             </div>
 
             {/* Speed (Rate) Slider */}
-            <div className="space-y-2" role="group" aria-labelledby="tts-rate-label">
+            <fieldset className="min-w-0 space-y-2" aria-labelledby="tts-rate-label">
               <div className="flex justify-between text-sm">
                 <span id="tts-rate-label" className="font-medium">
                   Speed (Rate)
@@ -404,10 +404,10 @@ export function TextToSpeech() {
                 className="py-2"
               />
               <p className="text-[10px] text-muted-foreground">Adjust the pace of the narration.</p>
-            </div>
+            </fieldset>
 
             {/* Pitch Slider */}
-            <div className="space-y-2" role="group" aria-labelledby="tts-pitch-label">
+            <fieldset className="min-w-0 space-y-2" aria-labelledby="tts-pitch-label">
               <div className="flex justify-between text-sm">
                 <span id="tts-pitch-label" className="font-medium">
                   Pitch
@@ -426,10 +426,10 @@ export function TextToSpeech() {
               <p className="text-[10px] text-muted-foreground">
                 Adjust the voice tone higher or lower.
               </p>
-            </div>
+            </fieldset>
 
             {/* Volume Slider */}
-            <div className="space-y-2" role="group" aria-labelledby="tts-volume-label">
+            <fieldset className="min-w-0 space-y-2" aria-labelledby="tts-volume-label">
               <div className="flex justify-between text-sm">
                 <span id="tts-volume-label" className="font-medium">
                   Volume
@@ -447,7 +447,7 @@ export function TextToSpeech() {
                 step={0.05}
                 className="py-2"
               />
-            </div>
+            </fieldset>
 
             {/* Interactive Equalizer Visualizer */}
             <div className="pt-2" aria-hidden="true">
@@ -520,6 +520,7 @@ export function TextToSpeech() {
               <div className="space-y-3">
                 <div
                   ref={readerScrollContainerRef}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a scrolling list of sentences, not a group of form controls
                   role="group"
                   aria-label="Sentences"
                   className="w-full h-[320px] p-4 rounded-md bg-muted/40 border overflow-y-auto scrollbar-thin font-sans text-base leading-relaxed select-text flex flex-col gap-1.5"
@@ -538,6 +539,7 @@ export function TextToSpeech() {
                           <span
                             key={idx}
                             ref={activeSentenceRef}
+                            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a sentence flows inline across lines in the text, which a <button> cannot do
                             role="button"
                             tabIndex={idx === tabStopIndex ? 0 : -1}
                             aria-current="true"
@@ -558,6 +560,7 @@ export function TextToSpeech() {
                       return (
                         <span
                           key={idx}
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a sentence flows inline across lines in the text, which a <button> cannot do
                           role="button"
                           tabIndex={idx === tabStopIndex ? 0 : -1}
                           onClick={() => handlePlayFromIndex(idx)}

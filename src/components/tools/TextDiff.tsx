@@ -127,10 +127,9 @@ export function TextDiff() {
             <span id="text-diff-mode-label" className="text-sm font-medium">
               Diff Mode:
             </span>
-            <div
-              role="group"
+            <fieldset
               aria-labelledby="text-diff-mode-label"
-              className="flex flex-wrap gap-2"
+              className="min-w-0 flex flex-wrap gap-2"
             >
               <Button
                 onClick={() => setDiffMode('lines')}
@@ -148,17 +147,16 @@ export function TextDiff() {
               >
                 Words
               </Button>
-            </div>
+            </fieldset>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <span id="text-diff-view-label" className="text-sm font-medium">
               View:
             </span>
-            <div
-              role="group"
+            <fieldset
               aria-labelledby="text-diff-view-label"
-              className="flex flex-wrap gap-2"
+              className="min-w-0 flex flex-wrap gap-2"
             >
               <Button
                 onClick={() => setViewMode('side-by-side')}
@@ -176,7 +174,7 @@ export function TextDiff() {
               >
                 Inline
               </Button>
-            </div>
+            </fieldset>
           </div>
         </div>
 

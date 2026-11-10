@@ -119,7 +119,7 @@ export function HttpStatusCodes() {
           </Button>
         </div>
 
-        <div role="group" aria-label="Filter by class" className="flex flex-wrap gap-2">
+        <fieldset aria-label="Filter by class" className="min-w-0 flex flex-wrap gap-2">
           <Button
             type="button"
             size="sm"
@@ -147,7 +147,7 @@ export function HttpStatusCodes() {
               <span className="text-xs opacity-70">{classCounts[info.id]}</span>
             </Button>
           ))}
-        </div>
+        </fieldset>
         {/* The class summary was a title-only tooltip, which touch and keyboard users never see. */}
         {statusClass !== 'all' && (
           <p className="text-sm text-muted-foreground">
@@ -156,10 +156,10 @@ export function HttpStatusCodes() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <p role="status">
+          <output className="block">
             Showing {results.length} of {HTTP_STATUS_CODES.length} status codes
-          </p>
-          <p role="status" className="flex items-center gap-1.5">
+          </output>
+          <output className="flex items-center gap-1.5">
             {isCopied && lastCopied && (
               <>
                 <Check className="h-3.5 w-3.5 text-primary" />
@@ -167,7 +167,7 @@ export function HttpStatusCodes() {
               </>
             )}
             {isError && <span className="text-destructive">Could not copy to the clipboard</span>}
-          </p>
+          </output>
         </div>
 
         {results.length === 0 ? (
@@ -184,6 +184,7 @@ export function HttpStatusCodes() {
             </Button>
           </div>
         ) : (
+          // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only receives key presses bubbling up from the copy buttons in the list, to move between them
           <ul
             ref={listRef}
             onKeyDown={handleListKeyDown}

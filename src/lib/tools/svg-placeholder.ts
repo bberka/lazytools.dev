@@ -54,6 +54,7 @@ const FONT_FAMILY = 'Arial, Helvetica, sans-serif';
 // ── Escaping and encoding ─────────────────────────────────────────────────────
 
 // Characters XML 1.0 forbids: most control characters and the two non-characters.
+// oxlint-disable-next-line no-control-regex -- the control characters are exactly what is stripped
 const XML_FORBIDDEN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g;
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
 

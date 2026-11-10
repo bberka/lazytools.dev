@@ -61,7 +61,7 @@ export function ColorContrastChecker() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Foreground Color (Text)</label>
+              <span className="text-sm font-medium">Foreground Color (Text)</span>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Foreground color"
@@ -83,7 +83,7 @@ export function ColorContrastChecker() {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Background Color</label>
+              <span className="text-sm font-medium">Background Color</span>
               <div className="flex gap-2">
                 <ColorPicker
                   label="Background color"
@@ -198,12 +198,9 @@ export function ColorContrastChecker() {
           </CardContent>
         ) : (
           <CardContent>
-            <div
-              role="status"
-              className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
-            >
+            <output className="block bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
               {contrast.error}
-            </div>
+            </output>
           </CardContent>
         )}
       </Card>

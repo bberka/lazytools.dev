@@ -77,7 +77,7 @@ interface SliderFieldProps {
 function SliderField({ label, valueLabel, value, min, max, onChange }: SliderFieldProps) {
   const labelId = useId();
   return (
-    <div role="group" aria-labelledby={labelId} className="space-y-1">
+    <fieldset aria-labelledby={labelId} className="min-w-0 space-y-1">
       <div className="flex items-center justify-between gap-2">
         <span id={labelId} className={SECTION_LABEL}>
           {label}
@@ -87,7 +87,7 @@ function SliderField({ label, valueLabel, value, min, max, onChange }: SliderFie
         </span>
       </div>
       <Slider aria-labelledby={labelId} value={value} min={min} max={max} onChange={onChange} />
-    </div>
+    </fieldset>
   );
 }
 
@@ -143,8 +143,7 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
     <li className="space-y-1 rounded-lg border border-border bg-muted/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="w-12 text-xs font-semibold text-muted-foreground">{name}</span>
-        <div
-          role="group"
+        <fieldset
           aria-label={`${name} colour`}
           className="min-w-0 flex-1 basis-32 sm:w-36 sm:flex-none"
         >
@@ -154,7 +153,7 @@ function StopRow({ stop, index, count, onColor, onPosition, onMove, onRemove }: 
             onChange={onColor}
             className="h-9"
           />
-        </div>
+        </fieldset>
         <PercentInput
           label={`${name} position in percent`}
           value={stop.position}
@@ -286,6 +285,7 @@ export function CssGradientGenerator() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a styled <div> preview is named with role="img"; <img> needs an image source
             role="img"
             aria-label="Gradient preview"
             className="h-48 w-full rounded-lg border border-border sm:h-64 lg:h-72"
@@ -366,16 +366,13 @@ export function CssGradientGenerator() {
             </div>
 
             {repeatNotice && (
-              <div
-                role="status"
-                className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground"
-              >
+              <output className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
                   The stops already run from 0% to 100%, so nothing repeats yet. Move the last stop
                   to a smaller value, such as 20%, to see the pattern tile.
                 </span>
-              </div>
+              </output>
             )}
 
             {usesAngle && (
@@ -501,9 +498,7 @@ export function CssGradientGenerator() {
             The Tailwind class is an arbitrary value for Tailwind v4, with spaces written as
             underscores.
           </p>
-          <span role="status" className="sr-only">
-            {copyStatus}
-          </span>
+          <output className="sr-only">{copyStatus}</output>
         </CardContent>
       </Card>
     </div>

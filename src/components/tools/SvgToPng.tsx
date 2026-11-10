@@ -144,7 +144,7 @@ export function SvgToPng() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Upload SVG File</label>
+            <span className="text-sm font-medium">Upload SVG File</span>
             <FileDropzone
               intake={intake}
               label="Drag & drop an SVG file here or click to browse"

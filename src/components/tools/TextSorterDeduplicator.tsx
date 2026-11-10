@@ -154,7 +154,7 @@ export function TextSorterDeduplicator() {
         <CardHeader>
           <CardTitle className="text-base">Result</CardTitle>
           <CardDescription>
-            <span role="status" aria-label="Summary">
+            <output aria-label="Summary">
               {hasText
                 ? `${plural(stats.outputLines, 'line', 'lines')} from ${plural(stats.inputLines, 'line', 'lines')}. ${plural(
                     stats.removedDuplicates,
@@ -162,7 +162,7 @@ export function TextSorterDeduplicator() {
                     'duplicates'
                   )} and ${plural(stats.removedEmpty, 'empty line', 'empty lines')} removed.`
                 : 'Add some lines above to see the result.'}
-            </span>
+            </output>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

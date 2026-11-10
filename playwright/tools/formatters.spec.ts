@@ -676,7 +676,10 @@ test.describe('Formatter tools', () => {
       await input.fill('<a><b>text</a>');
       const banner = page.getByText(/^Invalid XML Syntax: /);
       await expect(banner).toBeVisible();
-      await expect(banner).toContainText('Opening and ending tag mismatch: b line 1 and a');
+      // The wording is the browser's own: Chromium 148 says "Opening and ending tag mismatch", later builds "Unexpected closing tag".
+      await expect(banner).toContainText(
+        /Opening and ending tag mismatch: b line 1 and a|Unexpected closing tag: a != b/
+      );
       // The browser wraps the reason in boilerplate about "this page"; none of it belongs here.
       await expect(banner).not.toContainText('This page contains');
       await expect(banner).not.toContainText('Below is a rendering');
@@ -688,7 +691,9 @@ test.describe('Formatter tools', () => {
 
       // Two root elements are not one document.
       await input.fill('<a>1</a><b>2</b>');
-      await expect(banner).toContainText('Extra content at the end of the document');
+      await expect(banner).toContainText(
+        /Extra content at the end of the document|Unexpected token: </
+      );
 
       await input.fill('<a><b>text</b></a>');
       await expect(

@@ -346,7 +346,7 @@ export function PdfEditor() {
       }
     };
 
-    renderActivePage();
+    void renderActivePage();
 
     return () => {
       active = false;
@@ -719,13 +719,10 @@ export function PdfEditor() {
       )}
 
       {loading && (
-        <div
-          role="status"
-          className="flex flex-col items-center justify-center p-6 sm:p-12 space-y-4"
-        >
+        <output className="flex flex-col items-center justify-center p-6 sm:p-12 space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Parsing PDF and rendering pages...</p>
-        </div>
+        </output>
       )}
 
       {pages.length > 0 && (
@@ -743,6 +740,7 @@ export function PdfEditor() {
               </CardHeader>
               <CardContent className="p-3 max-h-[600px] overflow-y-auto scrollbar-thin space-y-3">
                 {pages.map((p, index) => (
+                  // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- clicking the row is a pointer shortcut; keyboard users select the page with the thumbnail button inside it
                   <div
                     key={p.id}
                     className={cn(
@@ -1003,6 +1001,7 @@ export function PdfEditor() {
                     {/* 3. Draggable Text Annotation absolute-layer */}
                     <div className="absolute inset-0 pointer-events-none">
                       {selectedPage.texts.map((t) => (
+                        // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the note is dragged with the pointer and moved with the arrow keys while it has focus
                         <div
                           key={t.id}
                           style={{
@@ -1021,7 +1020,9 @@ export function PdfEditor() {
                               : 'border-transparent'
                           )}
                           onPointerDown={(e) => startTextDrag(e, t.id, t.x, t.y)}
+                          // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the note has to take focus so it can be moved and edited with the keyboard
                           tabIndex={0}
+                          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an absolutely positioned note that holds a text field and a button, not a group of form controls
                           role="group"
                           aria-label={`Move or edit note: ${t.text}`}
                           onKeyDown={(e) => handleTextKeyDown(e, t.id)}
@@ -1040,6 +1041,7 @@ export function PdfEditor() {
                               onPointerDown={(e) => e.stopPropagation()}
                               className="bg-transparent border-b border-primary outline-none px-0.5"
                               style={{ color: t.color, fontSize: `${t.size}px` }}
+                              // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user just chose to edit this note, so its field takes focus
                               autoFocus
                             />
                           ) : (

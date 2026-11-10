@@ -127,7 +127,7 @@ export function TotpGenerator() {
     if (!secretIsValid || counter === null) return;
 
     let cancelled = false;
-    computeTotpWindow(secret, options, counter * period * 1000).then((result) => {
+    void computeTotpWindow(secret, options, counter * period * 1000).then((result) => {
       if (!cancelled) setCodes({ key: codesKey, result });
     });
     return () => {
@@ -382,6 +382,7 @@ export function TotpGenerator() {
 
                 <div className="mx-auto max-w-sm space-y-1.5">
                   <div
+                    // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a styled countdown bar; <progress> cannot be styled to match
                     role="progressbar"
                     aria-label="Time until the code changes"
                     aria-valuemin={0}

@@ -658,7 +658,7 @@ function pythonLiteral(value: unknown, depth = 0): string {
   if (value === true) return 'True';
   if (value === false) return 'False';
   if (typeof value === 'string') return quote(value);
-  if (typeof value !== 'object') return String(value);
+  if (typeof value !== 'object') return String(value as number | bigint | undefined | symbol);
 
   const inner = '  '.repeat(depth + 1);
   const outer = '  '.repeat(depth);

@@ -261,9 +261,9 @@ export function MockDataGenerator() {
             </Button>
 
             {isOutdated && (
-              <p role="status" className="text-xs text-muted-foreground">
+              <output className="block text-xs text-muted-foreground">
                 The schema changed. Generate again to update the output.
-              </p>
+              </output>
             )}
           </CardContent>
         </Card>
@@ -310,9 +310,9 @@ export function MockDataGenerator() {
                   <Button
                     onClick={() => {
                       if (activeTab === 'json') {
-                        copyJson.copyToClipboard(jsonString);
+                        void copyJson.copyToClipboard(jsonString);
                       } else {
-                        copyCsv.copyToClipboard(csvString);
+                        void copyCsv.copyToClipboard(csvString);
                       }
                     }}
                     variant={

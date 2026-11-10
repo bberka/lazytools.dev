@@ -120,10 +120,9 @@ export function ChmodCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div
-              role="group"
+            <fieldset
               aria-label="Permission checkboxes"
-              className="grid grid-cols-4 gap-y-3"
+              className="min-w-0 grid grid-cols-4 gap-y-3"
             >
               <div />
               {BIT_COLUMNS.map(({ bit, label }) => (
@@ -156,7 +155,7 @@ export function ChmodCalculator() {
                   ))}
                 </div>
               ))}
-            </div>
+            </fieldset>
 
             <div className="space-y-3 border-t pt-4">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

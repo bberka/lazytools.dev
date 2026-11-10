@@ -51,7 +51,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   };
 
   const handleReportIssue = () => {
-    copyToClipboard();
+    void copyToClipboard();
     const title = encodeURIComponent(`Critical Root Crash: ${error.message.substring(0, 50)}`);
     const body = encodeURIComponent(
       `### Describe the bug\nA critical root-level crash occurred.\n\n### Error Details\n` +

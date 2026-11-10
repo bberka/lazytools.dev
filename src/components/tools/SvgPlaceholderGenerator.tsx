@@ -139,7 +139,7 @@ export function SvgPlaceholderGenerator() {
             </div>
           </div>
 
-          <div role="group" aria-label="Size presets" className="flex flex-wrap gap-2">
+          <fieldset aria-label="Size presets" className="min-w-0 flex flex-wrap gap-2">
             {SIZE_PRESETS.map((preset) => (
               <Button
                 key={`${preset.width}x${preset.height}`}
@@ -158,7 +158,7 @@ export function SvgPlaceholderGenerator() {
                 {preset.width}x{preset.height}
               </Button>
             ))}
-          </div>
+          </fieldset>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">

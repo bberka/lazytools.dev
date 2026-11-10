@@ -164,7 +164,7 @@ export function encodeDomain(domain: string): string {
   return domain
     .split('.')
     .map((label) => {
-      if (/[^\x00-\x7F]/.test(label)) {
+      if (/\P{ASCII}/u.test(label)) {
         return ACE_PREFIX + encodePunycode(label.normalize('NFC').toLowerCase());
       }
       return label;

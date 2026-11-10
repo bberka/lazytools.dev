@@ -492,9 +492,9 @@ export function JwtSigner() {
             </CardHeader>
             <CardContent className="space-y-4">
               {signed === null ? (
-                <p className="py-4 text-center text-sm text-muted-foreground sm:py-8" role="status">
+                <output className="block py-4 text-center text-sm text-muted-foreground sm:py-8">
                   Signing...
-                </p>
+                </output>
               ) : signed.ok ? (
                 <>
                   <TokenView parts={signed.parts} />
@@ -516,12 +516,9 @@ export function JwtSigner() {
                   )}
                 </>
               ) : (
-                <p
-                  className="rounded-md border border-dashed py-4 text-center text-sm text-muted-foreground sm:py-8"
-                  role="status"
-                >
+                <output className="block rounded-md border border-dashed py-4 text-center text-sm text-muted-foreground sm:py-8">
                   {signFailureMessage(signed, secret === '')}
-                </p>
+                </output>
               )}
 
               <div className="flex flex-wrap gap-2">

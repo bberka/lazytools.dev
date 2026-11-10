@@ -79,8 +79,11 @@ export function KeycodeInfo() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- this area exists to capture the key presses made while it has focus */}
           <div
+            // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the capture area has to take focus to receive key presses
             tabIndex={0}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a focusable key capture area, not a group of form controls
             role="group"
             aria-label="Key capture area"
             data-testid="keycode-capture"

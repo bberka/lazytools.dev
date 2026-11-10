@@ -117,7 +117,7 @@ export function MimeTypesReference() {
           </Button>
         </div>
 
-        <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">
+        <fieldset aria-label="Filter by category" className="min-w-0 flex flex-wrap gap-2">
           <Button
             type="button"
             size="sm"
@@ -143,13 +143,13 @@ export function MimeTypesReference() {
               <span className="text-xs opacity-70">{counts[item.id]}</span>
             </Button>
           ))}
-        </div>
+        </fieldset>
 
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <p role="status">
+          <output className="block">
             Showing {results.length} of {MIME_ENTRIES.length} file types
-          </p>
-          <p role="status" className="flex items-center gap-1.5">
+          </output>
+          <output className="flex items-center gap-1.5">
             {isCopied && lastCopied && (
               <>
                 <Check className="h-3.5 w-3.5 text-primary" />
@@ -157,7 +157,7 @@ export function MimeTypesReference() {
               </>
             )}
             {isError && <span className="text-destructive">Could not copy to the clipboard</span>}
-          </p>
+          </output>
         </div>
 
         {results.length === 0 ? (
@@ -172,10 +172,10 @@ export function MimeTypesReference() {
             </Button>
           </div>
         ) : (
-          <div
+          <section
             className="max-h-[32rem] overflow-auto rounded-md border"
-            role="region"
             aria-label="MIME types table"
+            // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
             tabIndex={0}
           >
             <table className="w-full border-collapse text-sm">
@@ -202,6 +202,7 @@ export function MimeTypesReference() {
                   </th>
                 </tr>
               </thead>
+              {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the handler only receives key presses bubbling up from the copy buttons in the rows, to move between them */}
               <tbody ref={bodyRef} onKeyDown={handleBodyKeyDown}>
                 {results.map((entry) => {
                   const extKey = `ext:.${entry.ext}`;
@@ -250,7 +251,7 @@ export function MimeTypesReference() {
                 })}
               </tbody>
             </table>
-          </div>
+          </section>
         )}
       </CardContent>
     </Card>

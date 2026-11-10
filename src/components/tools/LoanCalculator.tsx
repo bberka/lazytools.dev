@@ -341,9 +341,9 @@ export function LoanCalculator() {
             </div>
           </CardHeader>
           <CardContent>
-            <div
-              role="region"
+            <section
               aria-label="Amortization schedule table"
+              // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
               tabIndex={0}
               className="max-h-96 overflow-auto rounded-md border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -425,7 +425,7 @@ export function LoanCalculator() {
                   </tr>
                 </tfoot>
               </table>
-            </div>
+            </section>
           </CardContent>
         </Card>
       )}

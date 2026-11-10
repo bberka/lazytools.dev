@@ -90,7 +90,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div role="group" aria-labelledby={`${id}-birth`}>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-birth`}>
               <span id={`${id}-birth`} className="mb-2 block text-sm font-medium">
                 Birth date
               </span>
@@ -105,8 +105,8 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 }}
                 error={!parseDateInput(birthDate) && !!birthDate}
               />
-            </div>
-            <div role="group" aria-labelledby={`${id}-target`}>
+            </fieldset>
+            <fieldset className="min-w-0" aria-labelledby={`${id}-target`}>
               <span id={`${id}-target`} className="mb-2 block text-sm font-medium">
                 Age at
               </span>
@@ -121,7 +121,7 @@ function AgeForm({ initialTargetDate }: { initialTargetDate: string }) {
                 }}
                 error={!parseDateInput(targetDate) && !!targetDate}
               />
-            </div>
+            </fieldset>
           </div>
 
           {result.error && (

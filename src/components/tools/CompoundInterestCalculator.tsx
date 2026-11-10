@@ -320,6 +320,7 @@ export function CompoundInterestCalculator() {
           </CardHeader>
           <CardContent className="space-y-3">
             <svg
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an <svg> chart is named with role="img" and aria-label; <img> cannot draw it
               role="img"
               aria-label={`Growth chart: the balance grows from ${formatMoney(result.principal)} to ${formatMoney(result.finalBalance)} over ${result.years} years, against ${formatMoney(result.totalContributed)} contributed.`}
               viewBox={`0 0 ${CHART_BOX.width} ${CHART_BOX.height}`}
@@ -399,9 +400,9 @@ export function CompoundInterestCalculator() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div
-              role="region"
+            <section
               aria-label="Year by year table"
+              // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
               tabIndex={0}
               className="max-h-96 overflow-auto rounded-md border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -442,7 +443,7 @@ export function CompoundInterestCalculator() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </section>
           </CardContent>
         </Card>
       )}

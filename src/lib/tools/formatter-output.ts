@@ -98,5 +98,9 @@ export function describeTreeNode(
   }
 
   // Functions and symbols cannot come out of a parser; show them as text.
-  return { kind: 'leaf', type: 'empty', text: String(value) };
+  return {
+    kind: 'leaf',
+    type: 'empty',
+    text: String(value as undefined | symbol | ((...args: never[]) => unknown)),
+  };
 }

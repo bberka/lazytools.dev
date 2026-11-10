@@ -282,12 +282,9 @@ export function ColorPicker() {
             </div>
 
             {error && (
-              <div
-                role="status"
-                className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-              >
+              <output className="block rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
-              </div>
+              </output>
             )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -649,6 +646,7 @@ function ColorField({
 
   return (
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom colour slider dragged in two dimensions; <input type="range"> cannot draw or move like it
       role="slider"
       tabIndex={0}
       aria-label="Saturation and brightness"
@@ -734,6 +732,7 @@ function HueSlider({ value, onChange }: { value: number; onChange: (value: numbe
         <span className="font-mono text-sm text-muted-foreground">{value}deg</span>
       </div>
       <div
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a custom colour slider dragged in two dimensions; <input type="range"> cannot draw or move like it
         role="slider"
         tabIndex={0}
         aria-labelledby={labelId}

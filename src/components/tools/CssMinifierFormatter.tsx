@@ -151,7 +151,7 @@ export function CssMinifierFormatter() {
                   : 'One declaration per line, nested blocks indented.'}
               </CardDescription>
             </div>
-            <div role="group" aria-label="Mode" className="flex gap-1">
+            <fieldset aria-label="Mode" className="min-w-0 flex gap-1">
               {MODES.map((item) => (
                 <Button
                   key={item.value}
@@ -164,7 +164,7 @@ export function CssMinifierFormatter() {
                   {item.label}
                 </Button>
               ))}
-            </div>
+            </fieldset>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

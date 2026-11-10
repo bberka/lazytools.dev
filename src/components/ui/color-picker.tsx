@@ -247,9 +247,9 @@ export function ColorPicker({
         <div className="border-t border-border/60 my-2" />
 
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             Preset Swatches
-          </label>
+          </span>
           <div className="grid grid-cols-8 gap-1.5">
             {PRESET_COLORS.map((color) => (
               <button
@@ -261,6 +261,7 @@ export function ColorPicker({
                 style={{ backgroundColor: color }}
                 onClick={() => handlePresetClick(color)}
                 title={color}
+                aria-label={color}
               />
             ))}
           </div>

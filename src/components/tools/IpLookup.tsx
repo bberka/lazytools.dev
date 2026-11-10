@@ -97,7 +97,7 @@ export function IpLookup() {
               className="flex-1 font-mono"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isLoading) {
-                  handleLookup();
+                  void handleLookup();
                 }
               }}
             />
@@ -151,7 +151,7 @@ export function IpLookup() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* IP Address */}
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">IP Address</label>
+                  <span className="text-sm font-medium text-muted-foreground">IP Address</span>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm break-all">
                       {ipInfo.ip}
@@ -176,7 +176,7 @@ export function IpLookup() {
                 {/* Hostname */}
                 {ipInfo.hostname && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Hostname</label>
+                    <span className="text-sm font-medium text-muted-foreground">Hostname</span>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm break-all">
                         {ipInfo.hostname}
@@ -202,7 +202,7 @@ export function IpLookup() {
                 {/* City */}
                 {ipInfo.city && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">City</label>
+                    <span className="text-sm font-medium text-muted-foreground">City</span>
                     <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.city}</div>
                   </div>
                 )}
@@ -210,7 +210,7 @@ export function IpLookup() {
                 {/* Region */}
                 {ipInfo.region && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Region</label>
+                    <span className="text-sm font-medium text-muted-foreground">Region</span>
                     <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.region}</div>
                   </div>
                 )}
@@ -218,7 +218,7 @@ export function IpLookup() {
                 {/* Country */}
                 {ipInfo.country && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Country</label>
+                    <span className="text-sm font-medium text-muted-foreground">Country</span>
                     <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.country}</div>
                   </div>
                 )}
@@ -226,7 +226,7 @@ export function IpLookup() {
                 {/* Postal Code */}
                 {ipInfo.postal && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Postal Code</label>
+                    <span className="text-sm font-medium text-muted-foreground">Postal Code</span>
                     <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.postal}</div>
                   </div>
                 )}
@@ -234,7 +234,7 @@ export function IpLookup() {
                 {/* Location (Coordinates) */}
                 {ipInfo.loc && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Location</label>
+                    <span className="text-sm font-medium text-muted-foreground">Location</span>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm">
                         {ipInfo.loc}
@@ -260,7 +260,7 @@ export function IpLookup() {
                 {/* Timezone */}
                 {ipInfo.timezone && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">Timezone</label>
+                    <span className="text-sm font-medium text-muted-foreground">Timezone</span>
                     <div className="p-2 rounded-md bg-muted text-sm">{ipInfo.timezone}</div>
                   </div>
                 )}
@@ -268,9 +268,9 @@ export function IpLookup() {
                 {/* Organization/ISP */}
                 {ipInfo.org && (
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">
+                    <span className="text-sm font-medium text-muted-foreground">
                       Organization (ISP)
-                    </label>
+                    </span>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 p-2 rounded-md bg-muted font-mono text-sm break-all">
                         {ipInfo.org}

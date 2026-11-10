@@ -526,7 +526,7 @@ test.describe('New calculator, generator and reference tools', () => {
       'iVBORw0KGgoAAAANSUhEUgAAABgAAAAQCAIAAACDRijCAAACvklEQVR4nAXBoQqFMABAUT/MuLZoW1xbtC0YVkReEDEoWBaEGYQZLAaDwWCwGAyG+zHvnMSmFCkupUz5pdQpbUqXMqT4lDFlSplTlpQ1ZUvZU46UM+VKuVOelDflS0msoBA4QSn4CWpBK+gEg8ALRsEkmAWLYBVsgl1wCE7BJbgFj+AVfILESgqJk5SSn6SWtJJOMki8ZJRMklmySFbJJtklh+SUXJJb8kheySdJbEaR4TLKjF9GndFmdBlDhs8YM6aMOWPJWDO2jD3jyDgzrow748l4M76MxCoKhVOUip+iVrSKTjEovGJUTIpZsShWxabYFYfiVFyKW/EoXsWnSKym0DhNqflpak2r6TSDxmtGzaSZNYtm1WyaXXNoTs2luTWP5tV8msQaCoMzlIafoTa0hs4wGLxhNEyG2bAYVsNm2A2H4TRchtvwGF7DZ0hsTpHjcsqcX06d0+Z0OUOOzxlzppw5Z8lZc7acPefIOXOunDvnyXlzvpzEWgqLs5SWn6W2tJbOMli8ZbRMltmyWFbLZtkth+W0XJbb8lhey2dJrKNwOEfp+DlqR+voHIPDO0bH5Jgdi2N1bI7dcThOx+W4HY/jdXyOxFYUFa6irPhV1BVtRVcxVPiKsWKqmCuWirViq9grjoqz4qq4K56Kt+KrSGxD0eAayoZfQ93QNnQNQ4NvGBumhrlhaVgbtoa94Wg4G66Gu+FpeBu+hsT2FD2up+z59dQ9bU/XM/T4nrFn6pl7lp61Z+vZe46es+fquXuenrfn60msp/A4T+n5eWpP6+k8g8d7Rs/kmT2LZ/Vsnt1zeE7P5bk9j+f1fJ7EBoqAC5SBX6AOtIEuMAR8YAxMgTmwBNbAFtgDR+AMXIE78ATewBdIbKSIuEgZ+UXqSBvpIkPER8bIFJkjS2SNbJE9ckTOyBW5I0/kjXyRP7Ca9N9d8tG2AAAAAElFTkSuQmCC';
 
     const input = (page: Page) => page.getByRole('textbox', { name: 'Base64 or data URL input' });
-    const preview = (page: Page) => page.getByAltText('Decoded image preview');
+    const preview = (page: Page) => page.getByAltText('Decoded preview');
 
     test('decodes a mislabelled data URL, detects the real type and downloads it', async ({
       page,
@@ -640,7 +640,7 @@ test.describe('New calculator, generator and reference tools', () => {
         `data:image/png;base64,${PNG_BASE64}`
       );
       await expect(page.getByRole('textbox', { name: 'Base64 only' })).toHaveValue(PNG_BASE64);
-      await expect(page.getByAltText('Selected image preview')).toBeVisible();
+      await expect(page.getByAltText('Selected preview')).toBeVisible();
       await expect(
         page.getByText(`${PNG_BASE64.length.toLocaleString('en-US')} characters`)
       ).toBeVisible();

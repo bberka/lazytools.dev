@@ -44,6 +44,7 @@ for (const profile of PROFILES) {
       isMobile: profile.name === 'phone',
     });
 
+    // oxlint-disable-next-line no-empty-pattern -- Playwright reads fixtures from a destructured first argument and rejects any other form
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium', 'Layout is verified on Chromium');
     });

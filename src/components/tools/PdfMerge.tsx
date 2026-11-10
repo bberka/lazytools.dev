@@ -172,11 +172,7 @@ export function PdfMerge() {
                 </div>
               </div>
             ))}
-            {status && (
-              <p role="status" className="text-sm text-muted-foreground">
-                {status}
-              </p>
-            )}
+            {status && <output className="block text-sm text-muted-foreground">{status}</output>}
           </CardContent>
         </Card>
       )}

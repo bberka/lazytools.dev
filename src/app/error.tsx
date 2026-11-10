@@ -53,7 +53,7 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
   };
 
   const handleReportIssue = () => {
-    copyToClipboard();
+    void copyToClipboard();
     // Redirect to GitHub issues page if URL is configured, otherwise just let the copy toast handle it
     const title = encodeURIComponent(`Crash Report: ${error.message.substring(0, 50)}`);
     const body = encodeURIComponent(

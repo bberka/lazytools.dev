@@ -166,7 +166,9 @@ function TimeZonePicker({
               }}
               placeholder="Search time zones..."
               className="h-9"
+              // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user just opened the picker to search it, so the search field takes focus
               autoFocus
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options
               role="combobox"
               aria-label={`Search ${label} time zones`}
               aria-expanded
@@ -176,11 +178,13 @@ function TimeZonePicker({
             />
           </div>
           <ScrollArea className="h-60">
+            {/* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options */}
             <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`} className="p-1">
               {filteredOptions.map((option, index) => (
                 <button
                   key={option.value}
                   id={optionId(index)}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a searchable combobox: a native <select> or <datalist> cannot hold the filtering and the styled options
                   role="option"
                   aria-selected={value === option.value}
                   tabIndex={-1}
@@ -283,7 +287,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div role="group" aria-labelledby={`${id}-datetime`}>
+          <fieldset className="min-w-0" aria-labelledby={`${id}-datetime`}>
             <span id={`${id}-datetime`} className="mb-2 block text-sm font-medium">
               Date and time
             </span>
@@ -338,7 +342,7 @@ function Converter({ defaults }: { defaults: Defaults }) {
                 </Select>
               </div>
             </div>
-          </div>
+          </fieldset>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
             <TimeZonePicker

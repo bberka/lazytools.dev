@@ -120,10 +120,7 @@ export function CurlConverter() {
 
             {/* What the command asks for that the snippet does not do */}
             {warnings.length > 0 && (
-              <div
-                role="status"
-                className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground"
-              >
+              <output className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <strong className="font-semibold block mb-0.5 text-foreground">
@@ -137,7 +134,7 @@ export function CurlConverter() {
                     ))}
                   </ul>
                 </div>
-              </div>
+              </output>
             )}
 
             <CopyButton

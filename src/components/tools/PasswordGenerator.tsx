@@ -162,20 +162,23 @@ export function PasswordGenerator() {
 
   const counts = useMemo(() => countCharacterTypes(password), [password]);
 
-  const [strengthAnalysis, setStrengthAnalysis] = useState<ZxcvbnResult | null>(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [strengthFailed, setStrengthFailed] = useState(false);
+  // The estimate belongs to the password it was made for. Until one is in for
+  // the current password the strength is being evaluated; a null analysis means
+  // the estimate failed.
+  const [strengthOutcome, setStrengthOutcome] = useState<{
+    password: string;
+    analysis: ZxcvbnResult | null;
+  } | null>(null);
+  const hasOutcome = strengthOutcome?.password === password;
+  const strengthAnalysis = hasOutcome && !hasError ? strengthOutcome.analysis : null;
+  const strengthFailed = hasOutcome && strengthOutcome.analysis === null;
+  const isEvaluating = password !== '' && !hasError && !hasOutcome;
 
   useEffect(() => {
-    if (!password || hasError) {
-      setStrengthAnalysis(null);
-      return;
-    }
+    if (!password || hasError) return;
 
     let isCurrent = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    setIsEvaluating(true);
-    setStrengthFailed(false);
 
     const evaluate = async () => {
       try {
@@ -203,7 +206,7 @@ export function PasswordGenerator() {
 
         if (!isCurrent) return;
 
-        setStrengthAnalysis({
+        const analysis: ZxcvbnResult = {
           score: result.score,
           feedback: {
             warning: result.feedback.warning || undefined,
@@ -216,18 +219,11 @@ export function PasswordGenerator() {
             onlineNoThrottling10PerSecond: result.crackTimesDisplay.onlineNoThrottling10PerSecond,
           },
           entropyBits: Math.round(Math.log2(result.guesses)),
-        });
+        };
+        setStrengthOutcome({ password, analysis });
       } catch (e) {
         console.error('zxcvbn evaluation failed', e);
-        // The estimate still on screen belongs to an earlier password.
-        if (isCurrent) {
-          setStrengthAnalysis(null);
-          setStrengthFailed(true);
-        }
-      } finally {
-        if (isCurrent) {
-          setIsEvaluating(false);
-        }
+        if (isCurrent) setStrengthOutcome({ password, analysis: null });
       }
     };
 
@@ -259,7 +255,7 @@ export function PasswordGenerator() {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Generation mode</label>
+              <span className="text-sm font-medium">Generation mode</span>
               <Select value={mode} onValueChange={(value) => setMode(value as GenerationMode)}>
                 <SelectTrigger aria-label="Generation mode">
                   <SelectValue placeholder="Select a mode" />
@@ -422,7 +418,7 @@ export function PasswordGenerator() {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Separator</label>
+                  <span className="text-sm font-medium">Separator</span>
                   <Select
                     value={separator}
                     onValueChange={(value) => setSeparator(value as PassphraseSeparator)}

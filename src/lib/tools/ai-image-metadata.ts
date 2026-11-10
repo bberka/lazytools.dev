@@ -132,6 +132,7 @@ function findSignals(haystack: string): string[] {
 }
 
 function preview(text: string): string {
+  // oxlint-disable-next-line no-control-regex -- control characters are what is collapsed to spaces
   const flat = text.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
   return flat.length > 160 ? `${flat.slice(0, 160)}…` : flat;
 }

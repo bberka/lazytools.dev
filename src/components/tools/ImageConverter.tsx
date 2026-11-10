@@ -483,9 +483,9 @@ export function ImageConverter() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label id={`${id}-format-label`} className="text-sm font-medium">
+                  <span id={`${id}-format-label`} className="text-sm font-medium">
                     Output Format
-                  </label>
+                  </span>
                   <Select
                     value={outputFormat}
                     onValueChange={(value) => setOutputFormat(value as OutputFormat)}
@@ -508,7 +508,7 @@ export function ImageConverter() {
                 </div>
 
                 {outputFormat !== 'png' && outputFormat !== 'ico' && (
-                  <div className="space-y-2" role="group" aria-labelledby={`${id}-quality`}>
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-quality`}>
                     <label id={`${id}-quality`} className="text-sm font-medium">
                       Quality: {quality}%
                     </label>
@@ -519,12 +519,12 @@ export function ImageConverter() {
                       value={quality}
                       onChange={setQuality}
                     />
-                  </div>
+                  </fieldset>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Resize</label>
+                <span className="text-sm font-medium">Resize</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor={`${id}-width`} className="text-xs text-muted-foreground">
@@ -561,9 +561,9 @@ export function ImageConverter() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Transform</label>
+                <span className="text-sm font-medium">Transform</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2" role="group" aria-labelledby={`${id}-rotate`}>
+                  <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-rotate`}>
                     <label id={`${id}-rotate`} className="text-xs text-muted-foreground">
                       Rotate: {rotation}°
                     </label>
@@ -575,7 +575,7 @@ export function ImageConverter() {
                       value={rotation}
                       onChange={setRotation}
                     />
-                  </div>
+                  </fieldset>
                   <div className="flex gap-4 sm:gap-6 items-center h-full pt-4">
                     <Checkbox
                       checked={flipHorizontal}
@@ -592,14 +592,14 @@ export function ImageConverter() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Filters</label>
+                <span className="text-sm font-medium">Filters</span>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Checkbox checked={grayscale} onCheckedChange={setGrayscale} label="Grayscale" />
                   <Checkbox checked={sepia} onCheckedChange={setSepia} label="Sepia" />
                 </div>
               </div>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-blur`}>
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-blur`}>
                 <label id={`${id}-blur`} className="text-sm font-medium">
                   Blur: {blur}px
                 </label>
@@ -610,9 +610,9 @@ export function ImageConverter() {
                   value={blur}
                   onChange={setBlur}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-brightness`}>
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-brightness`}>
                 <label id={`${id}-brightness`} className="text-sm font-medium">
                   Brightness: {brightness}%
                 </label>
@@ -623,9 +623,9 @@ export function ImageConverter() {
                   value={brightness}
                   onChange={setBrightness}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-contrast`}>
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-contrast`}>
                 <label id={`${id}-contrast`} className="text-sm font-medium">
                   Contrast: {contrast}%
                 </label>
@@ -636,9 +636,9 @@ export function ImageConverter() {
                   value={contrast}
                   onChange={setContrast}
                 />
-              </div>
+              </fieldset>
 
-              <div className="space-y-2" role="group" aria-labelledby={`${id}-saturation`}>
+              <fieldset className="min-w-0 space-y-2" aria-labelledby={`${id}-saturation`}>
                 <label id={`${id}-saturation`} className="text-sm font-medium">
                   Saturation: {saturation}%
                 </label>
@@ -649,7 +649,7 @@ export function ImageConverter() {
                   value={saturation}
                   onChange={setSaturation}
                 />
-              </div>
+              </fieldset>
 
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button
@@ -709,10 +709,10 @@ export function ImageConverter() {
                 </div>
               )}
               {filtersSkipped && !processing && (
-                <p role="status" className="mt-4 text-sm text-muted-foreground">
+                <output className="block mt-4 text-sm text-muted-foreground">
                   This browser cannot apply filters when exporting, so the converted image does not
                   include them.
-                </p>
+                </output>
               )}
               {processed && !processing && (
                 <Button

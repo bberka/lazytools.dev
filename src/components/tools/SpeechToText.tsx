@@ -495,12 +495,13 @@ export function SpeechToText() {
 
             {/* Audio Waveform Canvas */}
             <div className="space-y-2.5">
-              <label id="stt-waveform-label" className="text-sm font-medium">
+              <span id="stt-waveform-label" className="text-sm font-medium">
                 Voice Input Waveform
-              </label>
+              </span>
               <div className="relative h-20 w-full rounded-lg border bg-gradient-to-br from-indigo-950/20 to-purple-950/20 dark:from-indigo-950/40 dark:to-purple-950/40 p-1 border-indigo-500/10 overflow-hidden">
                 <canvas
                   ref={canvasRef}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <canvas> waveform is named with role="img"; <img> cannot draw on it
                   role="img"
                   aria-labelledby="stt-waveform-label"
                   width={400}

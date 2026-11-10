@@ -346,7 +346,7 @@ export function JsonDiff() {
                 </div>
               )}
 
-              <div role="status" aria-label="Difference summary" className="flex flex-wrap gap-2">
+              <output aria-label="Difference summary" className="flex flex-wrap gap-2">
                 {SUMMARY_KINDS.map((kind) => {
                   const count = result.summary[kind === 'type-changed' ? 'typeChanged' : kind];
                   return (
@@ -370,7 +370,7 @@ export function JsonDiff() {
                   </span>
                   {result.summary.unchanged} unchanged
                 </span>
-              </div>
+              </output>
 
               {result.summary.differences === 0 && (
                 <div className="flex items-start gap-3 rounded-md border bg-muted/40 px-4 py-3 text-sm">
@@ -404,9 +404,9 @@ export function JsonDiff() {
                     />
                   </div>
 
-                  <div
-                    role="region"
+                  <section
                     aria-label="List of differences"
+                    // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
                     tabIndex={0}
                     className="max-h-[32rem] overflow-auto rounded-md border"
                   >
@@ -426,7 +426,7 @@ export function JsonDiff() {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </section>
 
                   {result.entries.length > shownEntries.length && (
                     <p className="text-xs text-muted-foreground">

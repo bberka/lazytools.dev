@@ -217,9 +217,7 @@ export function HashGenerator() {
       )}
 
       {loading && (
-        <div role="status" className="text-sm text-muted-foreground px-1">
-          Computing hashes...
-        </div>
+        <output className="block text-sm text-muted-foreground px-1">Computing hashes...</output>
       )}
 
       {/* Checksum Comparison Card */}
@@ -240,7 +238,7 @@ export function HashGenerator() {
               className="font-mono text-sm bg-background"
             />
             {compareHash.trim() && (
-              <div role="status" className="flex items-center gap-2 text-sm mt-1">
+              <output className="flex items-center gap-2 text-sm mt-1">
                 {matchingAlgorithm ? (
                   <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
                     <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -252,7 +250,7 @@ export function HashGenerator() {
                     No match found in computed hashes.
                   </span>
                 )}
-              </div>
+              </output>
             )}
           </CardContent>
         </Card>

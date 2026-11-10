@@ -178,9 +178,9 @@ export function ColorBlindnessSimulator() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label id={`${id}-type-label`} className="text-sm font-medium">
+                <span id={`${id}-type-label`} className="text-sm font-medium">
                   Type of Color Blindness
-                </label>
+                </span>
                 <Select value={type} onValueChange={(v) => setType(v as BlindnessType)}>
                   <SelectTrigger id={`${id}-type`} aria-labelledby={`${id}-type-label ${id}-type`}>
                     <SelectValue placeholder="Select type" />

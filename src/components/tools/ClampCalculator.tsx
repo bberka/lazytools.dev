@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Check, Copy, HelpCircle, Info, Maximize, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,6 +70,7 @@ const PROPERTY_OPTIONS = [
 ];
 
 export function ClampCalculator() {
+  const id = useId();
   const [minSize, setMinSize] = useState('16');
   const [minSizeUnit, setMinSizeUnit] = useState<Unit>('px');
   const [maxSize, setMaxSize] = useState('32');
@@ -346,7 +347,10 @@ export function ClampCalculator() {
               {/* Sizes Inputs */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <label
+                    htmlFor={`${id}-min-size`}
+                    className="text-sm font-semibold text-foreground flex items-center justify-between"
+                  >
                     <span>Min Size</span>
                     <span className="text-xs font-normal text-muted-foreground">
                       At min viewport
@@ -354,6 +358,7 @@ export function ClampCalculator() {
                   </label>
                   <div className="flex">
                     <Input
+                      id={`${id}-min-size`}
                       type="text"
                       inputMode="decimal"
                       value={minSize}
@@ -385,7 +390,10 @@ export function ClampCalculator() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <label
+                    htmlFor={`${id}-max-size`}
+                    className="text-sm font-semibold text-foreground flex items-center justify-between"
+                  >
                     <span>Max Size</span>
                     <span className="text-xs font-normal text-muted-foreground">
                       At max viewport
@@ -393,6 +401,7 @@ export function ClampCalculator() {
                   </label>
                   <div className="flex">
                     <Input
+                      id={`${id}-max-size`}
                       type="text"
                       inputMode="decimal"
                       value={maxSize}
@@ -427,7 +436,10 @@ export function ClampCalculator() {
               {/* Viewports Inputs */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <label
+                    htmlFor={`${id}-min-viewport`}
+                    className="text-sm font-semibold text-foreground flex items-center justify-between"
+                  >
                     <span>Min Viewport Width</span>
                     <span className="text-xs font-normal text-muted-foreground">
                       Lower boundary
@@ -435,6 +447,7 @@ export function ClampCalculator() {
                   </label>
                   <div className="flex">
                     <Input
+                      id={`${id}-min-viewport`}
                       type="text"
                       inputMode="decimal"
                       value={minViewport}
@@ -466,7 +479,10 @@ export function ClampCalculator() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <label
+                    htmlFor={`${id}-max-viewport`}
+                    className="text-sm font-semibold text-foreground flex items-center justify-between"
+                  >
                     <span>Max Viewport Width</span>
                     <span className="text-xs font-normal text-muted-foreground">
                       Upper boundary
@@ -474,6 +490,7 @@ export function ClampCalculator() {
                   </label>
                   <div className="flex">
                     <Input
+                      id={`${id}-max-viewport`}
                       type="text"
                       inputMode="decimal"
                       value={maxViewport}
@@ -508,7 +525,10 @@ export function ClampCalculator() {
               {/* Base and Property Configuration */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <label
+                    htmlFor={`${id}-base-font-size`}
+                    className="text-sm font-semibold text-foreground flex items-center gap-1.5"
+                  >
                     <span>Base Font Size</span>
                     <TooltipSimple content="Used for conversions between px and rem">
                       <HelpCircle
@@ -519,6 +539,7 @@ export function ClampCalculator() {
                   </label>
                   <div className="relative">
                     <Input
+                      id={`${id}-base-font-size`}
                       type="text"
                       inputMode="decimal"
                       value={baseFontSize}
@@ -534,7 +555,7 @@ export function ClampCalculator() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground">Output Unit</label>
+                  <span className="text-sm font-semibold text-foreground">Output Unit</span>
                   <Select value={outputUnit} onValueChange={(val) => setOutputUnit(val as Unit)}>
                     <SelectTrigger className="font-mono" aria-label="Output unit">
                       <SelectValue placeholder="Select output unit" />
@@ -551,7 +572,7 @@ export function ClampCalculator() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-foreground">CSS Property</label>
+                  <span className="text-sm font-semibold text-foreground">CSS Property</span>
                   <Select
                     value={cssProperty}
                     onValueChange={(val) => setCssProperty(val as Property)}
@@ -575,10 +596,14 @@ export function ClampCalculator() {
               {/* Custom property text input */}
               {cssProperty === 'custom' && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-250">
-                  <label className="text-sm font-semibold text-foreground">
+                  <label
+                    htmlFor={`${id}-custom-property`}
+                    className="text-sm font-semibold text-foreground"
+                  >
                     Custom Property Name
                   </label>
                   <Input
+                    id={`${id}-custom-property`}
                     type="text"
                     value={customProperty}
                     onChange={(e) => setCustomProperty(e.target.value)}
@@ -590,13 +615,10 @@ export function ClampCalculator() {
               )}
 
               {calculations.error && (
-                <div
-                  role="status"
-                  className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-start gap-2"
-                >
+                <output className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-start gap-2">
                   <Info className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>{calculations.error}</span>
-                </div>
+                </output>
               )}
 
               <div className="flex gap-2 pt-2">
@@ -644,12 +666,14 @@ export function ClampCalculator() {
             </CardHeader>
             <CardContent className="flex-1 flex items-center justify-center p-3 sm:p-6">
               <div className="w-full max-w-[500px]">
+                {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- clicking the graph is a pointer shortcut; the viewport width has number inputs for keyboard users */}
                 <svg
                   viewBox={`0 0 ${svgCoords.width} ${svgCoords.height}`}
                   width="100%"
                   height="100%"
                   className="overflow-visible select-none cursor-pointer"
                   onClick={handleChartClick}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an <svg> chart is named with role="img" and aria-label; <img> cannot draw it
                   role="img"
                   aria-label="Graph of the computed size across viewport widths"
                 >

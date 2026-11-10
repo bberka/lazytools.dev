@@ -110,7 +110,7 @@ export function DnsLookup() {
               className="flex-1 font-mono"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !isLoading) {
-                  handleLookup();
+                  void handleLookup();
                 }
               }}
             />

@@ -49,6 +49,7 @@ export function FileDropzone({ intake, label, hint, selected, className }: FileD
           </p>
         )}
         {selected && (
+          // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the click only stops the selected-file badge from reaching the dropzone and opening the picker
           <div
             className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
             onClick={(event) => event.stopPropagation()}

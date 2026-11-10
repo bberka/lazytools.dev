@@ -70,7 +70,7 @@ export interface JsonRenderResult {
  * 2^53 - 1. It may also match digits inside a string; that only costs a slower
  * read, never a wrong one.
  */
-const LONG_INTEGER = /(?:^|[\[:,\s])(-?\d{16,})(?=[\],}\s]|$)/g;
+const LONG_INTEGER = /(?:^|[[:,\s])(-?\d{16,})(?=[\],}\s]|$)/g;
 const INTEGER_LITERAL = /^-?\d+$/;
 
 /** True when the text holds an integer that `JSON.parse` would round. */
@@ -383,11 +383,10 @@ interface PathStep {
 }
 
 // ["key"], ['key'], [0] or [key], or else a bare name between dots.
-const PATH_STEP =
-  /\[\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^\[\]"']*?))\s*\]|([^.\[\]]+)/g;
+const PATH_STEP = /\[\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^[\]"']*?))\s*\]|([^.[\]]+)/g;
 const ARRAY_INDEX = /^-?\d+$/;
 
-const ROOT_MARKER = /^\$(?=[.\[]|$)/;
+const ROOT_MARKER = /^\$(?=[.[]|$)/;
 
 function parsePath(path: string): PathStep[] {
   // "$" is the root only when a step follows it; "$ref" and "$schema" are keys.

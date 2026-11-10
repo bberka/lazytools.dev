@@ -363,7 +363,7 @@ export function PdfWatermark() {
       }
     };
 
-    renderPreview();
+    void renderPreview();
 
     return () => {
       active = false;
@@ -485,13 +485,10 @@ export function PdfWatermark() {
       )}
 
       {rendering && (
-        <div
-          role="status"
-          className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3"
-        >
+        <output className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3">
           <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Generating live preview...</p>
-        </div>
+        </output>
       )}
 
       {pdfFile && previewLoaded && (
@@ -504,7 +501,7 @@ export function PdfWatermark() {
               </CardHeader>
               <CardContent className="p-4 space-y-5">
                 {/* 1. Watermark Type */}
-                <div className="space-y-2" role="group" aria-labelledby={typeLabelId}>
+                <fieldset className="min-w-0 space-y-2" aria-labelledby={typeLabelId}>
                   <p
                     id={typeLabelId}
                     className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
@@ -531,7 +528,7 @@ export function PdfWatermark() {
                       Image
                     </Button>
                   </div>
-                </div>
+                </fieldset>
 
                 {/* 2. Text Watermark Settings */}
                 {watermarkType === 'text' && (
@@ -565,7 +562,7 @@ export function PdfWatermark() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5" role="group" aria-labelledby={colorLabelId}>
+                      <fieldset className="min-w-0 space-y-1.5" aria-labelledby={colorLabelId}>
                         <span id={colorLabelId} className="text-xs font-medium font-semibold">
                           Color
                         </span>
@@ -597,7 +594,7 @@ export function PdfWatermark() {
                             className="w-5 h-5 rounded-full border border-black/10"
                           />
                         </div>
-                      </div>
+                      </fieldset>
                     </div>
 
                     <div className="space-y-1">
@@ -792,9 +789,7 @@ export function PdfWatermark() {
                 </div>
 
                 {exportStatus && (
-                  <p role="status" className="text-xs text-muted-foreground">
-                    {exportStatus}
-                  </p>
+                  <output className="block text-xs text-muted-foreground">{exportStatus}</output>
                 )}
               </CardContent>
             </Card>

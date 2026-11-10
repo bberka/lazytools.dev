@@ -224,7 +224,7 @@ export function PdfCompress() {
             <CardTitle className="text-sm font-semibold">Compression Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
-            <div className="space-y-3" role="group" aria-labelledby={modeLabelId}>
+            <fieldset className="min-w-0 space-y-3" aria-labelledby={modeLabelId}>
               <p
                 id={modeLabelId}
                 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
@@ -267,10 +267,10 @@ export function PdfCompress() {
                   </span>
                 </button>
               </div>
-            </div>
+            </fieldset>
 
             {compressionMode === 'image' && (
-              <div className="space-y-3" role="group" aria-labelledby={levelLabelId}>
+              <fieldset className="min-w-0 space-y-3" aria-labelledby={levelLabelId}>
                 <p
                   id={levelLabelId}
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
@@ -296,7 +296,7 @@ export function PdfCompress() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
             )}
 
             <div className="flex flex-wrap gap-3 pt-2">
@@ -313,6 +313,7 @@ export function PdfCompress() {
 
       {compressing && (
         <Card
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Card renders a <div>, which cannot become an <output>
           role="status"
           className="border-border/60 shadow-md p-4 sm:p-8 flex flex-col items-center justify-center space-y-4"
         >

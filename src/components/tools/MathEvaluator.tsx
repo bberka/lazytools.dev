@@ -169,7 +169,7 @@ export function MathEvaluator() {
               </p>
             )}
             {live?.ok && (
-              <div role="status" className="flex flex-wrap items-center justify-between gap-2">
+              <output className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     {live.assignment ? `${live.assignment.name} =` : 'Result'}
@@ -198,7 +198,7 @@ export function MathEvaluator() {
                       ? 'Copy failed'
                       : 'Copy result'}
                 </Button>
-              </div>
+              </output>
             )}
             {live && !live.ok && (
               <div role="alert" className="space-y-2">
@@ -223,7 +223,7 @@ export function MathEvaluator() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div role="group" aria-label="Angle unit" className="flex gap-1">
+            <fieldset aria-label="Angle unit" className="min-w-0 flex gap-1">
               {ANGLE_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
@@ -236,7 +236,7 @@ export function MathEvaluator() {
                   {option.label}
                 </Button>
               ))}
-            </div>
+            </fieldset>
             <Button
               type="button"
               variant="outline"

@@ -195,17 +195,14 @@ function DecodePanel() {
             )}
 
             {analysis.type && analysis.mismatch && (
-              <div
-                role="status"
-                className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm"
-              >
+              <output className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
                   The data URL says <span className="font-mono">{analysis.declaredMime}</span>, but
                   the data is a {analysis.type.label} image. The real type is used for the preview
                   and the download.
                 </span>
-              </div>
+              </output>
             )}
 
             {analysis.type && (
@@ -222,7 +219,7 @@ function DecodePanel() {
                     <img
                       key={previewUrl}
                       src={previewUrl}
-                      alt="Decoded image preview"
+                      alt="Decoded preview"
                       onLoad={(event) =>
                         setLoaded({
                           url: previewUrl,
@@ -348,9 +345,7 @@ function EncodePanel() {
         />
 
         {busy && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Reading the image...
-          </p>
+          <output className="block text-sm text-muted-foreground">Reading the image...</output>
         )}
         {error && (
           <div role="alert" className="flex items-start gap-2 text-sm text-destructive">
@@ -365,7 +360,7 @@ function EncodePanel() {
               <div className="flex min-h-24 items-center justify-center overflow-auto rounded-md border bg-muted/40 p-3 sm:p-4">
                 <img
                   src={previewUrl}
-                  alt="Selected image preview"
+                  alt="Selected preview"
                   className="h-auto max-h-48 max-w-full"
                 />
               </div>

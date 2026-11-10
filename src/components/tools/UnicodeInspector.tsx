@@ -251,14 +251,13 @@ export function UnicodeInspector() {
               )}
 
               {stats.flagged === 0 ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+                <output className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CircleCheck className="h-4 w-4 shrink-0 text-primary" />
                   No invisible or suspicious characters found.
-                </p>
+                </output>
               ) : (
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="group"
+                <fieldset
+                  className="min-w-0 flex flex-wrap gap-2"
                   aria-label="Invisible characters by class"
                 >
                   {CHAR_CLASSES.filter((name) => (stats.byClass[name] ?? 0) > 0).map((name) => (
@@ -272,14 +271,11 @@ export function UnicodeInspector() {
                       <span className="font-semibold">{stats.byClass[name]}</span>
                     </Badge>
                   ))}
-                </div>
+                </fieldset>
               )}
 
               {inspection.hiddenTagText && (
-                <div
-                  role="status"
-                  className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-                >
+                <output className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="min-w-0">
                     Tag characters in this text spell out hidden ASCII:{' '}
@@ -287,7 +283,7 @@ export function UnicodeInspector() {
                       {inspection.hiddenTagText}
                     </code>
                   </p>
-                </div>
+                </output>
               )}
             </CardContent>
           </Card>
@@ -309,8 +305,8 @@ export function UnicodeInspector() {
                 checked={markWhitespace}
                 onCheckedChange={setMarkWhitespace}
               />
-              <div
-                role="region"
+              <section
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region needs a tab stop so keyboard users can scroll it
                 tabIndex={0}
                 aria-label="Text with invisible characters marked"
                 className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md border border-input bg-muted/30 p-3 font-mono text-sm leading-7 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -330,13 +326,13 @@ export function UnicodeInspector() {
                     </Fragment>
                   )
                 )}
-              </div>
+              </section>
               {inspection.highlightTruncated && (
-                <p className="text-xs text-muted-foreground" role="status">
+                <output className="block text-xs text-muted-foreground">
                   The view stops after the first{' '}
                   {inspection.highlight.filter((s) => s.kind === 'mark').length.toLocaleString()}{' '}
                   marked characters. The statistics still cover the whole text.
-                </p>
+                </output>
               )}
             </CardContent>
           </Card>
@@ -404,9 +400,9 @@ export function UnicodeInspector() {
                   <label htmlFor="unicode-cleaned-text" className="text-sm font-medium">
                     Cleaned text
                   </label>
-                  <span className="text-xs text-muted-foreground" role="status">
+                  <output className="text-xs text-muted-foreground">
                     {describeCleaning(cleaned, { removeInvisible, replaceSpaces, normalization })}
-                  </span>
+                  </output>
                 </div>
                 <Textarea
                   id="unicode-cleaned-text"
@@ -456,13 +452,10 @@ export function UnicodeInspector() {
               />
 
               {inspection.rows.length === 0 ? (
-                <p
-                  className="flex items-center gap-2 py-4 text-sm text-muted-foreground"
-                  role="status"
-                >
+                <output className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
                   <CircleCheck className="h-4 w-4 shrink-0 text-primary" />
                   No invisible or special characters found.
-                </p>
+                </output>
               ) : (
                 <div className="overflow-x-auto rounded-md border">
                   <table className="w-full min-w-[44rem] border-collapse text-left text-xs">
@@ -534,11 +527,11 @@ export function UnicodeInspector() {
               )}
 
               {inspection.rowsTruncated && (
-                <p className="text-xs text-muted-foreground" role="status">
+                <output className="block text-xs text-muted-foreground">
                   Showing the first {inspection.rows.length.toLocaleString()} of{' '}
                   {inspection.totalRows.toLocaleString()} rows. Use the filter above to list only
                   the special characters, or paste a shorter excerpt.
-                </p>
+                </output>
               )}
             </CardContent>
           </Card>

@@ -169,12 +169,9 @@ export function SvgPathEditor() {
 
       {/* Error */}
       {error && (
-        <div
-          role="status"
-          className="bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm"
-        >
+        <output className="block bg-destructive/10 text-destructive px-4 py-3 rounded-md text-sm">
           <strong>Error:</strong> {error}
-        </div>
+        </output>
       )}
 
       {/* Preview: shown for broken paths too, since SVG draws a path up to its first error */}
@@ -195,6 +192,7 @@ export function SvgPathEditor() {
                   viewBox={viewBoxValid ? viewBox : undefined}
                   className="max-w-full h-auto border border-input"
                   style={{ maxHeight: '400px' }}
+                  // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- an <svg> drawing is named with role="img" and aria-label; <img> cannot draw it
                   role="img"
                   aria-label="Path preview"
                 >
@@ -221,26 +219,26 @@ export function SvgPathEditor() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Total Commands</label>
+                <span className="text-sm font-medium text-muted-foreground">Total Commands</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {pathInfo.commandCount}
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Path Length</label>
+                <span className="text-sm font-medium text-muted-foreground">Path Length</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {pathInfo.length} characters
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Command Types</label>
+                <span className="text-sm font-medium text-muted-foreground">Command Types</span>
                 <div className="p-2 rounded-md bg-muted text-sm font-mono">
                   {Object.keys(pathInfo.commands).length}
                 </div>
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Command Breakdown</label>
+              <span className="text-sm font-medium text-muted-foreground">Command Breakdown</span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(pathInfo.commands).map(([cmd, count]) => (
                   <div key={cmd} className="p-2 rounded-md bg-muted text-sm">

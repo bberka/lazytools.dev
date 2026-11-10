@@ -95,7 +95,7 @@ async function networkFirst(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {
-      cache.put(request, response.clone());
+      void cache.put(request, response.clone());
     }
     return response;
   } catch (error) {
@@ -121,7 +121,7 @@ async function staleWhileRevalidate(request) {
     fetch(request)
       .then((response) => {
         if (response.ok) {
-          cache.put(request, response.clone());
+          void cache.put(request, response.clone());
         }
       })
       .catch(() => undefined);
@@ -132,7 +132,7 @@ async function staleWhileRevalidate(request) {
   const response = await fetch(request);
 
   if (response.ok) {
-    cache.put(request, response.clone());
+    void cache.put(request, response.clone());
   }
 
   return response;

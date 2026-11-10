@@ -191,8 +191,7 @@ export function JsonToTypescript() {
 
             {/* Validation Banner */}
             {validation && (
-              <div
-                role="status"
+              <output
                 className={`flex items-start gap-3 rounded-lg px-4 py-3 text-xs font-medium border transition-all duration-300 ${
                   validation.valid
                     ? 'bg-green-500/5 text-green-700 dark:text-green-400 border-green-500/20'
@@ -214,7 +213,7 @@ export function JsonToTypescript() {
                     </div>
                   </>
                 )}
-              </div>
+              </output>
             )}
           </CardContent>
         </Card>
