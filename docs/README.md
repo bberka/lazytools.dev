@@ -1,4 +1,4 @@
-# LazyTools Collection
+# LazyTools collection
 
 > A privacy-first collection of browser-based web utilities, developer tools, and productivity helpers built with Next.js App Router, React, shadcn-style components, Tailwind CSS, and static export.
 

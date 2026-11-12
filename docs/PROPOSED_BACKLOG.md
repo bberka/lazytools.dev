@@ -2,8 +2,6 @@
 
 This is a reference catalog of proposed client-side tools for lazytools.dev. It complements the roadmap in [ROADMAP.md](./ROADMAP.md) with the implementation libraries, browser APIs, and features for each tool.
 
----
-
 ## Technical guidelines
 
 All tools must:
@@ -11,8 +9,6 @@ All tools must:
 - Run client-side only: no user-entered data leaves the browser.
 - Work with the Next.js static export. External lookups must use public CORS-enabled HTTPS endpoints.
 - Load heavy libraries dynamically inside the tool's component.
-
----
 
 ## Detailed tool backlog
 
@@ -48,8 +44,6 @@ All tools must:
 - **Key Features**: Custom delimiters, quoting options, removing duplicates.
 - **Implementation**: Native JS string/array operations.
 
----
-
 ### 2. Encoders & Decoders
 
 #### Hex to String / String to Hex Converter (Status: Implemented)
@@ -81,8 +75,6 @@ All tools must:
 - **Description**: Compress and decompress text using LZW, RLE, and Huffman coding.
 - **Key Features**: Step-by-step compression walkthrough, dictionary generation trees, compression ratio statistics.
 - **Implementation**: Client-side implementations of Lempel–Ziv–Welch (LZW), Run-Length Encoding (RLE), and Huffman coding.
-
----
 
 ### 3. Generators
 
@@ -128,8 +120,6 @@ All tools must:
 - **Key Features**: WPA/WEP/Hidden network support.
 - **Implementation**: QR code generator with specific WiFi string format `WIFI:T:WPA;S:MyNetwork;P:MyPassword;;`.
 
----
-
 ### 4. Formatters & Validators
 
 #### CSS Minifier & Formatter (Status: Implemented)
@@ -167,8 +157,6 @@ All tools must:
 - **Description**: Validate international bank account numbers and extract bank details.
 - **Key Features**: Country format validation, checksum verification.
 - **Implementation**: Client-side IBAN validation library.
-
----
 
 ### 5. Text Tools
 
@@ -238,8 +226,6 @@ All tools must:
 - **Key Features**: Adjustable summary length.
 - **Implementation**: Web LLM API or integration with external AI APIs.
 
----
-
 ### 6. Utilities
 
 #### JWT Creator/Signer (Status: Implemented)
@@ -302,8 +288,6 @@ All tools must:
 - **Key Features**: Facebook/Twitter card previews.
 - **Implementation**: React state to HTML string generation.
 
----
-
 ### 7. Security
 
 #### HMAC Generator (Status: Implemented)
@@ -335,8 +319,6 @@ All tools must:
 - **Description**: Obfuscate text or email addresses to hide them from simple bots.
 - **Key Features**: HTML entity encoding, JS `document.write` wrappers.
 - **Implementation**: Text encoding utilities.
-
----
 
 ### 8. Networking
 
@@ -388,8 +370,6 @@ All tools must:
 - **Key Features**: Avoids known registered ports.
 - **Implementation**: Random number within `1024-65535` range.
 
----
-
 ### 9. Design
 
 #### CSS Gradient Generator (Status: Implemented)
@@ -421,8 +401,6 @@ All tools must:
 - **Description**: Convert code snippets into styled screenshot images.
 - **Key Features**: Syntax highlighting for multiple languages, customizable background gradients, macOS-style window controls, padding and typography adjustments, export as PNG.
 - **Implementation**: Client-side rendering using `highlight.js` for syntax highlighting and `html2canvas` for DOM-to-image capture.
-
----
 
 ### 10. PDF & Image Tools
 
@@ -467,8 +445,6 @@ All tools must:
 - **Description**: Repair corrupted PDFs, fill interactive forms, capture mobile scans, translate text.
 - **Key Features**: Cross-reference table repair, camera integration, form field detection.
 - **Implementation**: File parsing algorithms, MediaDevices API, translation APIs.
-
----
 
 ### 11. Calculators
 
