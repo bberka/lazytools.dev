@@ -14,7 +14,7 @@ This guide is for coding agents working in this repository. It reflects the curr
 
 ## Commands
 
-The package manager is pnpm, pinned in `package.json`. Vite+ (`vp`, from the `vite-plus` dev dependency) runs lint, format and unit tests; Next.js still builds and serves the app. A pre-commit hook runs `vp check --fix` on staged files.
+The package manager is pnpm, pinned in `package.json`. Vite+ (`vp`, from the `vite-plus` dev dependency) runs lint, format and unit tests; Next.js still builds and serves the app. The pre-commit hook (`.vite-hooks/pre-commit`, installed by `pnpm install` through `vp config`) runs `vp staged` (`vp check --fix` on staged files), then `pnpm run typecheck` and `pnpm run test:unit`. It replaces Husky; do not add a second hook manager.
 
 - Install: `pnpm install`
 - Dev server: `pnpm run dev`
@@ -101,7 +101,7 @@ For normal code changes, at minimum run `pnpm run typecheck` and the most releva
 - Keep empty state placeholders and instructions compact on mobile using responsive vertical paddings (like `py-4 sm:py-8` or `py-6 sm:py-12`) instead of hardcoded tall paddings like `py-8` or `py-12`.
 - Scrollbars are styled once, globally, in `src/styles/globals.css` (thin, no arrow buttons, no track fill). Do not add per-component scrollbar classes; `ScrollArea` matches the same look.
 - Avoid horizontal overflow. Action rows should wrap or stack on small screens.
-- Avoid nested full cards unless the grouping genuinely needs it; prefer lighter bordered panels inside cards.
+- Avoid nested full cards unless the grouping needs it; prefer lighter bordered panels inside cards.
 - Use real-time processing for lightweight converters, encoders, formatters, and text transforms.
 - Use explicit buttons for expensive work: file uploads, image/PDF processing, crypto/key generation, network lookups, and exports.
 - Provide clear empty, error, loading, and success states where applicable.
@@ -154,7 +154,7 @@ For normal code changes, at minimum run `pnpm run typecheck` and the most releva
 
 ## Code style
 
-- TypeScript is strict; avoid `any` unless a dynamic API genuinely requires it.
+- TypeScript is strict; avoid `any` unless a dynamic API requires it.
 - Use the `@/*` path aliases from `tsconfig.json`.
 - React components are function components with hooks.
 - Oxlint runs type-aware with the TypeScript, React, Next.js, jsx-a11y and import plugins, configured in `vite.config.ts`. Fix findings; where a rule is a false positive for a deliberate ARIA pattern, disable it on that line with a reason (`// oxlint-disable-next-line <rule> -- <reason>`). Oxfmt formats the code (`pnpm run format`).
@@ -173,9 +173,30 @@ For normal code changes, at minimum run `pnpm run typecheck` and the most releva
 
 ## Agent workflow
 
+For every task:
+
 1. Read the relevant docs before changing behavior: start with `docs/ARCHITECTURE.md` and `docs/CONTRIBUTING.md`.
 2. Locate the source of truth before editing. For tools, start in `tool-registry.ts`, `src/lib/catalog`, and the relevant `src/components/tools/*` and `src/lib/tools/*` files.
 3. Keep privacy-first and static-export compatibility as non-negotiable constraints.
 4. Make minimal targeted edits and avoid touching shared UI primitives for one-off layout fixes.
-5. Run the narrowest useful checks first, then `pnpm run build` when feasible.
-6. Report exactly what changed and what was verified.
+5. Run the narrowest useful checks first, then `pnpm run check`, `pnpm run test:unit` and `pnpm run build` before the final commit.
+6. Update the docs and this file when the change makes them wrong (see "Keeping docs current").
+7. Report exactly what changed and what was verified.
+
+### Worktrees
+
+Use a git worktree for each task, so parallel tasks do not share a working tree, and branch from the up-to-date default branch (`master`). Name the branch after the change (`feat/…`, `fix/…`, `docs/…`, matching the commit prefixes in `docs/CONTRIBUTING.md`). Run `pnpm install` in a new worktree. Never use bare `git stash`: the stash stack is shared across worktrees.
+
+### Commits and pull request
+
+1. Run `pnpm run check`, `pnpm run test:unit` and `pnpm run build` locally before committing. The pre-commit hook repeats the check, typecheck and unit tests, so a failing hook means the commit did not happen: fix it and commit again. Do not bypass it with `--no-verify`.
+2. Group changes into commits by purpose, each with a conventional prefix (`feat:`, `fix:`, `docs:`, `refactor:`, `perf:`, `test:`, `chore:`). Do not mix a refactor, a feature and a docs update in one commit.
+3. Open a pull request as soon as the work is done. Do not leave finished work on a local branch. The description says what changed, why, and what you verified.
+4. Wait for CI (`.github/workflows/ci.yml`: check, unit tests, build) to finish.
+5. If CI fails because of the change, read the failing log, fix it, push, and wait again. Make at most 3 fix attempts.
+6. If CI fails for another reason (a flaky or infrastructure failure, a runner outage, a failure that also occurs on `master`, a missing secret or permission), or it is still red after 3 attempts, stop and tell the user: what failed, the log excerpt, and what you tried. Do not keep retrying or merge on red.
+7. Merge only when the user asked for it or the task says so.
+
+### Keeping docs current
+
+Before opening the pull request, check that `AGENTS.md`, `.agents/AGENTS.md` (keep it identical to `AGENTS.md`) and `docs/` still match the code: commands in `package.json`, the tool and tag counts in `docs/README.md`, module paths, the CI workflow, the hook, and the PR checklist in `docs/CONTRIBUTING.md`. Write docs in plain prose: no filler, intensifiers, em dashes or promotional words, and sentence-case headings.
