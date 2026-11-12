@@ -658,11 +658,7 @@ function normalizeText(text: string) {
 }
 
 function normalizeToken(token: string, locale: string) {
-  return token
-    .normalize('NFKC')
-    .toLocaleLowerCase(locale)
-    .replace(/[‘’]/g, "'")
-    .trim();
+  return token.normalize('NFKC').toLocaleLowerCase(locale).replace(/[‘’]/g, "'").trim();
 }
 
 function getWords(text: string, locale: string) {

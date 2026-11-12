@@ -426,7 +426,7 @@ export function listLines(tokens: readonly MarkdownToken[]): ListLine[] {
       case 'bullet_list_open':
       case 'ordered_list_open': {
         flushMarker();
-        const start = Number.parseInt(token.attrGet('start') ?? '1', 10);
+        const start = Number.parseInt(String(token.attrGet('start') ?? '1'), 10);
         lists.push({
           ordered: token.type === 'ordered_list_open',
           next: Number.isNaN(start) ? 1 : start,
@@ -621,7 +621,7 @@ function inlineRuns(
         break;
       case 'link_open':
         closeLink();
-        link = { href: child.attrGet('href') ?? '', runs: [] };
+        link = { href: String(child.attrGet('href') ?? ''), runs: [] };
         break;
       case 'link_close':
         closeLink();
@@ -844,7 +844,9 @@ function buildDocument(
           );
         } else if (token.type === 'th_open' || token.type === 'td_open') {
           // A column aligned with `:--`, `:-:` or `--:` carries it as a style.
-          const align = /text-align:\s*(left|center|right)/.exec(token.attrGet('style') ?? '');
+          const align = /text-align:\s*(left|center|right)/.exec(
+            String(token.attrGet('style') ?? '')
+          );
           cellAlignment = align ? (align[1] as 'left' | 'center' | 'right') : undefined;
         } else if (token.type === 'inline') {
           cells.push(

@@ -107,11 +107,7 @@ export function unsupportedMorseCharacters(text: string): string[] {
 // ("..." becomes an ellipsis, "--" an em dash) and accepts the typographic
 // dot and dash characters Morse is often printed with.
 function normalizeMorse(morse: string): string {
-  return morse
-    .replace(/…/g, '...')
-    .replace(/—/g, '--')
-    .replace(/[–−]/g, '-')
-    .replace(/[·•]/g, '.');
+  return morse.replace(/…/g, '...').replace(/—/g, '--').replace(/[–−]/g, '-').replace(/[·•]/g, '.');
 }
 
 /**

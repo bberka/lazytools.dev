@@ -7,9 +7,8 @@ import markdownLanguage from 'highlight.js/lib/languages/markdown';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import katex from 'katex';
-import type { PluginSimple } from 'markdown-it';
 import texmath from 'markdown-it-texmath';
-import { createMarkdownParser, type MarkdownParser } from './parser';
+import { createMarkdownParser, type MarkdownParser, type PluginSimple } from './parser';
 
 // Markdown rendering for the preview and its exports: the shared syntax from
 // `./parser` plus syntax highlighting, KaTeX maths and source-line mapping.

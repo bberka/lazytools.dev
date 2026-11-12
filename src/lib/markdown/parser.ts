@@ -1,4 +1,7 @@
-import MarkdownIt, { type Options, type PluginSimple } from 'markdown-it';
+import MarkdownIt, { type MarkdownItOptions as Options } from 'markdown-it';
+
+export type PluginSimple = (markdown: MarkdownItInstance) => void;
+type MarkdownItInstance = InstanceType<typeof MarkdownIt>;
 
 // The one place MarkdownIt is configured for the Markdown tools.
 //
@@ -15,7 +18,7 @@ const SYNTAX: Options = {
   breaks: true,
 };
 
-export type MarkdownToken = ReturnType<MarkdownIt['parse']>[number];
+export type MarkdownToken = ReturnType<MarkdownItInstance['parse']>[number];
 
 export interface MarkdownParser {
   /** Block tokens for `source`; inline runs hang off them as `children`. */

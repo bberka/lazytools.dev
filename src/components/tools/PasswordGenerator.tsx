@@ -36,7 +36,7 @@ interface ZxcvbnResult {
   entropyBits: number;
 }
 
-let isZxcvbnInitialized = false;
+let zxcvbn: InstanceType<typeof import('@zxcvbn-ts/core').ZxcvbnFactory> | null = null;
 
 // Estimating the strength of a long password takes long enough to stall the
 // page (about a second at 256 characters). Above this length the estimate
@@ -190,19 +190,16 @@ export function PasswordGenerator() {
 
         if (!isCurrent) return;
 
-        if (!isZxcvbnInitialized) {
-          core.zxcvbnOptions.setOptions({
-            dictionary: {
-              ...langCommon.dictionary,
-              ...langEn.dictionary,
-            },
-            graphs: langCommon.adjacencyGraphs,
-            translations: langEn.translations,
-          });
-          isZxcvbnInitialized = true;
-        }
+        zxcvbn ??= new core.ZxcvbnFactory({
+          dictionary: {
+            ...langCommon.dictionary,
+            ...langEn.dictionary,
+          },
+          graphs: langCommon.adjacencyGraphs,
+          translations: langEn.translations,
+        });
 
-        const result = core.zxcvbn(password);
+        const result = zxcvbn.check(password);
 
         if (!isCurrent) return;
 
@@ -213,10 +210,9 @@ export function PasswordGenerator() {
             suggestions: result.feedback.suggestions || [],
           },
           crackTimesDisplay: {
-            offlineFastHashing1e10PerSecond:
-              result.crackTimesDisplay.offlineFastHashing1e10PerSecond,
-            offlineSlowHashing1e4PerSecond: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond,
-            onlineNoThrottling10PerSecond: result.crackTimesDisplay.onlineNoThrottling10PerSecond,
+            offlineFastHashing1e10PerSecond: result.crackTimes.offlineFastHashingXPerSecond.display,
+            offlineSlowHashing1e4PerSecond: result.crackTimes.offlineSlowHashingXPerSecond.display,
+            onlineNoThrottling10PerSecond: result.crackTimes.onlineNoThrottlingXPerSecond.display,
           },
           entropyBits: Math.round(Math.log2(result.guesses)),
         };
