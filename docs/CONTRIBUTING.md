@@ -90,11 +90,12 @@ Architecture notes live in `docs/ARCHITECTURE.md`.
 
 ## Development workflow
 
-1. Create a feature branch.
+1. Create a feature branch, ideally in its own git worktree (`git worktree add ../lazytools-<name> -b <branch> master`), and run `pnpm install` there.
 2. Make focused changes that follow the existing patterns.
-3. Run `pnpm run build`.
+3. Run `pnpm run check`, `pnpm run test:unit` and `pnpm run build`.
 4. Manually test the affected tool or workflow in `pnpm run dev`.
-5. Open a pull request with a clear summary and testing notes.
+5. Commit in groups of related changes, then open a pull request with a clear summary and testing notes.
+6. Wait for CI. If it fails because of your change, fix it and push again; if it fails for another reason, ask a maintainer.
 
 Commit prefixes used in this repo:
 
@@ -109,7 +110,7 @@ Commit prefixes used in this repo:
 ## Coding standards
 
 - Use TypeScript for new code.
-- Avoid `any` unless the API is genuinely dynamic and a narrower type would be misleading.
+- Avoid `any` unless the API is dynamic and a narrower type would be misleading.
 - Use React function components and hooks.
 - Use existing UI components from `src/components/ui` (such as `Select`, `Slider`, `Switch`, `Checkbox`, `Input`, `Button`, `ColorPicker`) before adding new primitives. Avoid using native browser elements like `<select>`, `<input type="range">`, `<input type="checkbox">`, `<input type="color">`.
 - Ensure all interactive elements like dropdowns, custom select inputs, search boxes, and list items are fully keyboard accessible (navigable with `ArrowUp`/`ArrowDown` and selectable with `Enter`/`Space`).
@@ -214,7 +215,7 @@ export function ExampleTool() {
 
 ## Code quality
 
-Vite+ runs the checks, and `pnpm install` sets up a pre-commit hook that runs `vp check --fix` on staged files.
+Vite+ runs the checks. `pnpm install` installs a pre-commit hook (`.vite-hooks/pre-commit`) that runs `vp check --fix` on staged files, then the type check and the unit tests. Do not bypass it with `--no-verify`; CI runs the same checks plus the build.
 
 ```bash
 pnpm run check         # format check, type-aware Oxlint and type check in one go
@@ -280,7 +281,8 @@ For manual verification:
 
 ## Pull request checklist
 
-- [ ] `pnpm run build` passes
+- [ ] `pnpm run check`, `pnpm run test:unit` and `pnpm run build` pass
+- [ ] CI is green
 - [ ] Affected workflow was manually tested
 - [ ] UI works in light and dark mode
 - [ ] Mobile layout was checked

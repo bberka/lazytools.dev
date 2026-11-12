@@ -49,7 +49,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 - [ ] **Phone Parser and Formatter**: Parse international phone numbers to extract country codes and formats.
 - [ ] **IBAN Validator and Parser**: Validate international bank account numbers and extract bank details.
 
-### 5. Text Tools
+### 5. Text tools
 
 - [x] **Text Sorter & Deduplicator**: Sort lists alphabetically, by length, and remove duplicate entries.
 - [x] **Zero-Width & Unicode Inspector**: Inspect string characters to highlight hidden or zero-width symbols.
