@@ -86,7 +86,10 @@ function id3TextFrame(id: string, value: string): Buffer {
   return Buffer.concat([Buffer.from(id, 'ascii'), size, Buffer.from([0, 0]), body]);
 }
 
-/** One ID3v2.3 tag with a title and an encoder naming Suno, then one MPEG frame. */
+/**
+ * One ID3v2.3 tag with a title and an encoder naming Suno, then one complete
+ * MPEG-1 Layer III frame (417 bytes at 128 kbit/s, 44.1 kHz), then an ID3v1 tag.
+ */
 function mp3WithTags(): { file: Buffer; audio: Buffer } {
   const frames = Buffer.concat([id3TextFrame('TIT2', 'Song'), id3TextFrame('TSSE', 'Suno v4')]);
   const header = Buffer.concat([
@@ -94,7 +97,7 @@ function mp3WithTags(): { file: Buffer; audio: Buffer } {
     Buffer.from([3, 0, 0]),
     Buffer.from(syncsafe(frames.length)),
   ]);
-  const audio = Buffer.concat([Buffer.from([0xff, 0xfb, 0x90, 0x64]), Buffer.alloc(64, 0x21)]);
+  const audio = Buffer.concat([Buffer.from([0xff, 0xfb, 0x90, 0x64]), Buffer.alloc(413, 0x21)]);
   const id3v1 = Buffer.concat([Buffer.from('TAG', 'ascii'), Buffer.alloc(125, 0)]);
   return { file: Buffer.concat([header, frames, audio, id3v1]), audio };
 }
