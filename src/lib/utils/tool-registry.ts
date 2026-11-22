@@ -218,7 +218,7 @@ export const TOOL_REGISTRY = {
   },
   'ai-metadata-cleaner': {
     name: 'AI Metadata Cleaner',
-    description: 'Strip AI metadata from images and invisible chars from text',
+    description: 'Strip AI metadata from images, video, audio and text',
     tags: ['security', 'image-tools'],
     icon: 'ShieldCheck',
     keywords: [
@@ -234,9 +234,18 @@ export const TOOL_REGISTRY = {
       'comfyui',
       'exif',
       'xmp',
+      'gps',
       'utm',
       'invisible characters',
       'privacy',
+      'mp4',
+      'mov',
+      'mp3',
+      'id3',
+      'flac',
+      'wav',
+      'video metadata',
+      'audio tags',
     ],
     component: () =>
       import('@/components/tools/AiMetadataCleaner').then((m) => m.AiMetadataCleaner),
