@@ -15,8 +15,10 @@ import {
   findSignals,
   latin1Text,
   preview,
+  removalIndex,
   searchable,
   startsWithText,
+  utf8Text,
   type MetadataFinding,
   type ParsedMedia,
   type Removal,
@@ -36,6 +38,49 @@ const readU24BE = (bytes: Uint8Array, at: number): number =>
 
 const isMpegSync = (bytes: Uint8Array, at: number): boolean =>
   bytes[at] === 0xff && (bytes[at + 1] & 0xe0) === 0xe0;
+
+// MPEG audio frames
+
+/** Bitrates in kbit/s, indexed by the four header bits, for each layer and version. */
+const BITRATES_V1: Record<number, readonly number[]> = {
+  1: [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
+  2: [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+  3: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+};
+const BITRATES_V2: Record<number, readonly number[]> = {
+  1: [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
+  2: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+  3: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+};
+/** Sample rates by version bits: 3 is MPEG-1, 2 is MPEG-2, 0 is MPEG-2.5. */
+const SAMPLE_RATES: Record<number, readonly number[]> = {
+  3: [44100, 48000, 32000],
+  2: [22050, 24000, 16000],
+  0: [11025, 12000, 8000],
+};
+
+/**
+ * The length of the MPEG audio frame whose header starts at `at`, or 0 when
+ * there is no valid header there. Nothing is decoded: the header fields and the
+ * frame length are enough to know a whole frame fits.
+ */
+function mpegFrameLength(bytes: Uint8Array, at: number): number {
+  if (at + 4 > bytes.length || !isMpegSync(bytes, at)) return 0;
+  const version = (bytes[at + 1] >> 3) & 0x03;
+  const layer = (bytes[at + 1] >> 1) & 0x03;
+  const bitrateIndex = (bytes[at + 2] >> 4) & 0x0f;
+  const sampleRateIndex = (bytes[at + 2] >> 2) & 0x03;
+  const padding = (bytes[at + 2] >> 1) & 0x01;
+  // A reserved version, layer 0, a free or bad bitrate and a reserved rate are all invalid.
+  if (version === 1 || layer === 0) return 0;
+  if (bitrateIndex === 0 || bitrateIndex === 15 || sampleRateIndex === 3) return 0;
+
+  const bitrate = (version === 3 ? BITRATES_V1 : BITRATES_V2)[layer][bitrateIndex] * 1000;
+  const sampleRate = SAMPLE_RATES[version][sampleRateIndex];
+  if (layer === 1) return Math.floor((12 * bitrate) / sampleRate + padding) * 4;
+  const samplesPerFrame = layer === 3 && version !== 3 ? 576 : 1152;
+  return Math.floor(((samplesPerFrame / 8) * bitrate) / sampleRate) + padding;
+}
 
 // ID3v2
 
@@ -68,21 +113,24 @@ function readId3v2(bytes: Uint8Array, at: number): Id3Tag | null {
 function decodeUtf16(bytes: Uint8Array, littleEndian: boolean): string {
   const decoder = new TextDecoder(littleEndian ? 'utf-16le' : 'utf-16be');
   let start = 0;
-  // A byte order mark decides the order, whatever the frame header said.
   if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) start = 2;
   else if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) start = 2;
   return decoder.decode(bytes.subarray(start));
 }
 
-/** The readable text of a text, comment or lyrics frame. */
+/** The readable text of a text, comment or lyrics frame, decoded by its encoding selector. */
 function decodeFrameText(body: Uint8Array): string {
   if (body.length === 0) return '';
   const encoding = body[0];
   const rest = body.subarray(1);
   if (encoding === 0) return latin1Text(rest);
-  if (encoding === 1) return decodeUtf16(rest, true);
   if (encoding === 2) return decodeUtf16(rest, false);
-  return latin1Text(rest);
+  // Selector 1 is UTF-16 with a byte order mark, which decides the order. Writers that skip the mark mean little endian.
+  if (encoding === 1) {
+    const bigEndian = rest.length >= 2 && rest[0] === 0xfe && rest[1] === 0xff;
+    return decodeUtf16(rest, !bigEndian);
+  }
+  return utf8Text(rest);
 }
 
 interface Id3Frames {
@@ -255,11 +303,18 @@ function parseMp3(bytes: Uint8Array): ParsedMedia {
   const audio = bytes.subarray(position, end);
   if (audio.length === 0)
     throw new MetadataParseError('The file holds no audio frames, so it was left unchanged.');
-  if (!isMpegSync(audio, 0))
+  const frameLength = mpegFrameLength(bytes, position);
+  if (frameLength === 0)
     throw new MetadataParseError(
       'No MPEG audio frame follows the tags, so this is not an MP3 and it was left unchanged.'
     );
+  if (position + frameLength > end)
+    throw new MetadataParseError(
+      'The MPEG audio frame after the tags is cut short, so the file was left unchanged.'
+    );
 
+  // The trailers are found from the end backwards; the cutter needs them in file order.
+  removals.sort((a, b) => a.start - b.start);
   return {
     format: 'mp3',
     removals,
@@ -292,7 +347,8 @@ function vorbisPreview(payload: Uint8Array): string | undefined {
   if (payload.length < 8) return undefined;
   const vendorLength = readU32LE(payload, 0);
   if (vendorLength > payload.length - 4) return undefined;
-  const vendor = latin1Text(payload.subarray(4, 4 + vendorLength));
+  // Vorbis comments are UTF-8, vendor and fields alike.
+  const vendor = utf8Text(payload.subarray(4, 4 + vendorLength));
   let at = 4 + vendorLength + 4;
   const count = readU32LE(payload, 4 + vendorLength);
   const comments: string[] = [];
@@ -300,7 +356,7 @@ function vorbisPreview(payload: Uint8Array): string | undefined {
     const length = readU32LE(payload, at);
     at += 4;
     if (at + length > payload.length) break;
-    comments.push(latin1Text(payload.subarray(at, at + length)));
+    comments.push(utf8Text(payload.subarray(at, at + length)));
     at += length;
   }
   const text = [`vendor ${vendor}`, ...comments].join('; ');
@@ -321,6 +377,7 @@ function flacFinding(block: FlacBlock, payload: Uint8Array): MetadataFinding {
 function parseFlac(bytes: Uint8Array): ParsedMedia {
   const removals: Removal[] = [];
   const kept: string[] = [];
+  const retained: FlacBlock[] = [];
 
   const id3 = readId3v2(bytes, 0);
   let position = 0;
@@ -365,43 +422,47 @@ function parseFlac(bytes: Uint8Array): ParsedMedia {
     else {
       const name = FLAC_BLOCK_NAMES[block.type] ?? `type ${block.type}`;
       if (!kept.includes(name)) kept.push(name);
+      retained.push(block);
     }
   }
 
-  return { format: 'flac', removals, kept, warnings: [], finalise: finaliseFlac };
+  return {
+    format: 'flac',
+    removals,
+    kept,
+    warnings: [],
+    finalise: (output) => moveLastFlacBlockFlag(output, retained, removals),
+  };
 }
 
 /**
- * Moves the last-block flag onto the new final metadata block after blocks
- * were cut, which is what tells a decoder where the audio frames start.
+ * Moves the last-metadata-block flag onto the new final metadata block after
+ * blocks were cut, which is what tells a decoder where the audio frames start.
+ * The blocks are the ones the parse kept, so the audio is never read as a
+ * metadata header.
  */
-function finaliseFlac(output: Uint8Array): void {
-  const id3 = readId3v2(output, 0);
-  let position = id3 ? id3.total : 0;
-  if (ascii(output, position, 4) !== 'fLaC') return;
-  position += 4;
-
-  let lastHeader = -1;
-  for (;;) {
-    if (position + 4 > output.length) break;
-    const header = output[position];
-    const length = readU24BE(output, position + 1);
-    const end = position + 4 + length;
-    if (end > output.length) break;
-    output[position] = header & 0x7f;
-    lastHeader = position;
-    position = end;
-    if (header & 0x80) break;
+function moveLastFlacBlockFlag(
+  output: Uint8Array,
+  retained: readonly FlacBlock[],
+  removals: readonly Removal[]
+): boolean {
+  if (retained.length === 0) return false;
+  const index = removalIndex(removals);
+  for (const block of retained) {
+    const header = block.start - index.shift(block.start);
+    if (header < 0 || header >= output.length) return false;
+    output[header] &= 0x7f;
   }
-  if (lastHeader >= 0) output[lastHeader] |= 0x80;
+  const last = retained[retained.length - 1].start;
+  output[last - index.shift(last)] |= 0x80;
+  return true;
 }
 
 // WAV
 
-const WAV_REMOVABLE = new Set(['LIST', 'id3 ', 'ID3 ', 'bext', 'iXML', 'axml', 'xmp ', '_PMX']);
+const WAV_REMOVABLE = new Set(['id3 ', 'ID3 ', 'bext', 'iXML', 'axml', 'xmp ', '_PMX']);
 
 const WAV_NAMES: Record<string, string> = {
-  LIST: 'LIST chunk (INFO tags)',
   'id3 ': 'ID3 chunk',
   'ID3 ': 'ID3 chunk',
   bext: 'bext chunk (broadcast metadata)',
@@ -429,8 +490,9 @@ function parseWav(bytes: Uint8Array): ParsedMedia {
     const payloadStart = position + 8;
     let payloadEnd = payloadStart + length;
     if (payloadEnd > bytes.length) {
-      // A data chunk that runs to the end of the file is legal enough to read.
-      if (type !== 'data') throw truncated();
+      // 0 and 0xFFFFFFFF are the sizes a writer uses when the length is not known yet.
+      const unknownLength = length === 0 || length === 0xffffffff;
+      if (!unknownLength) throw truncated();
       payloadEnd = bytes.length;
     }
 
@@ -439,16 +501,21 @@ function parseWav(bytes: Uint8Array): ParsedMedia {
         'The file uses 64-bit RF64 sizes, which this tool does not rewrite, so it was left unchanged.'
       );
 
-    if (WAV_REMOVABLE.has(type)) {
+    // A LIST chunk is only tags when its list type says so: `INFO` is tags, `wavl` is audio.
+    const listType = type === 'LIST' ? ascii(bytes, payloadStart, 4) : '';
+    const removable = type === 'LIST' ? listType === 'INFO' : WAV_REMOVABLE.has(type);
+
+    if (removable) {
       const payload = bytes.subarray(payloadStart, payloadEnd);
       const xmp = type === 'axml' || type === 'xmp ' || type === '_PMX';
+      const end = Math.min(payloadEnd + (length & 1), bytes.length);
       removals.push({
         start: position,
-        end: Math.min(payloadEnd + (length & 1), bytes.length),
+        end,
         finding: {
           category: xmp ? 'XMP' : 'Audio tags',
-          location: `WAV ${WAV_NAMES[type] ?? `${type} chunk`}`,
-          size: Math.min(payloadEnd + (length & 1), bytes.length) - position,
+          location: `WAV ${type === 'LIST' ? 'LIST chunk (INFO tags)' : (WAV_NAMES[type] ?? `${type} chunk`)}`,
+          size: end - position,
           signals: findSignals(searchable(payload)),
           preview: type === 'LIST' ? preview(latin1Text(payload)) : undefined,
         },
@@ -456,7 +523,10 @@ function parseWav(bytes: Uint8Array): ParsedMedia {
     } else {
       if (type === 'fmt ') sawFormat = true;
       if (type === 'data') sawData = true;
-      if (!kept.includes(`${type.trim()} chunk`)) kept.push(`${type.trim()} chunk`);
+      // A wave list carries the samples in alternating data chunks instead of a top-level one.
+      if (type === 'LIST' && listType === 'wavl') sawData = true;
+      const label = type === 'LIST' ? 'LIST chunk' : `${type.trim()} chunk`;
+      if (!kept.includes(label)) kept.push(label);
     }
 
     position = payloadEnd + (length & 1);
@@ -472,8 +542,9 @@ function parseWav(bytes: Uint8Array): ParsedMedia {
 }
 
 /** Rewrites the RIFF size after chunks were cut. */
-function finaliseWav(output: Uint8Array): void {
-  if (output.length < 8) return;
+function finaliseWav(output: Uint8Array): boolean {
+  if (output.length < 8) return false;
   const view = new DataView(output.buffer, output.byteOffset, output.byteLength);
   view.setUint32(4, output.length - 8, true);
+  return true;
 }

@@ -134,13 +134,17 @@ export function stripMediaMetadata(bytes: Uint8Array): MediaStripResult {
 
   if (!format) {
     const brand = isoImageBrand(bytes);
-    if (brand)
+    if (brand) {
+      // Nothing is rewritten, but the markers still say something worth knowing.
+      const signals = scanForSignals(bytes);
       return unchanged(
         bytes,
         null,
         `${brand.toUpperCase()} images are an ISO media container this tool does not rewrite yet, so the file was left unchanged.`,
-        false
+        false,
+        { signals }
       );
+    }
     // A type we cannot clean is still worth telling the user about.
     const signals = scanForSignals(bytes);
     if (signals.length > 0)
@@ -167,6 +171,10 @@ export function stripMediaMetadata(bytes: Uint8Array): MediaStripResult {
     return failure(bytes, format, error);
   }
 
+  // Every parser reports its blocks in file order; sorting here keeps the
+  // cutter and the offset arithmetic safe if one of them ever does not.
+  parsed.removals.sort((a, b) => a.start - b.start);
+
   const findings = parsed.removals.map((removal) => removal.finding);
   const signals = distinct(findings.flatMap((finding) => finding.signals));
   const details = { kept: parsed.kept, warnings: parsed.warnings };
@@ -180,8 +188,22 @@ export function stripMediaMetadata(bytes: Uint8Array): MediaStripResult {
       details
     );
 
-  const output = cutRemovals(bytes, parsed.removals);
-  parsed.finalise?.(output);
+  // Cutting and repairing work on the whole file at once, so they are guarded
+  // like the parse: a file is only ever handed back whole or not at all.
+  let output: Uint8Array;
+  try {
+    output = cutRemovals(bytes, parsed.removals);
+    if (parsed.finalise && !parsed.finalise(output))
+      return unchanged(
+        bytes,
+        format,
+        'The metadata was found but the file could not be put back together, so the original was left unchanged.',
+        false,
+        details
+      );
+  } catch (error) {
+    return failure(bytes, format, error);
+  }
 
   let rescan: ParsedMedia | null = null;
   try {
