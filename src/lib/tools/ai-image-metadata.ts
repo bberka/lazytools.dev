@@ -14,6 +14,22 @@
  * Pure functions, no DOM: they run in Node as well as in the browser.
  */
 
+import {
+  MetadataParseError,
+  ascii,
+  cutRemovals,
+  distinct,
+  findImageSignals,
+  latin1Text,
+  preview,
+  searchable,
+  startsWithText,
+  utf8Text,
+  type FindingCategory,
+  type MetadataFinding,
+  type Removal as ByteRange,
+} from './metadata-core';
+
 export type ImageFormat = 'jpeg' | 'png' | 'webp';
 
 export const IMAGE_MIME_TYPES: Record<ImageFormat, string> = {
@@ -21,27 +37,6 @@ export const IMAGE_MIME_TYPES: Record<ImageFormat, string> = {
   png: 'image/png',
   webp: 'image/webp',
 };
-
-export type FindingCategory =
-  | 'Content Credentials (C2PA)'
-  | 'Generation prompt/parameters'
-  | 'EXIF'
-  | 'XMP'
-  | 'IPTC / Photoshop'
-  | 'Comment'
-  | 'Text metadata';
-
-export interface MetadataFinding {
-  category: FindingCategory;
-  /** Where it sits, for example `JPEG APP1` or `PNG tEXt "parameters"`. */
-  location: string;
-  /** Size of the block in the file, header included. */
-  size: number;
-  /** Recognised AI and provenance markers found inside the block. */
-  signals: string[];
-  /** The start of the text, for text blocks. */
-  preview?: string;
-}
 
 export interface ImageScan {
   format: ImageFormat | null;
@@ -71,30 +66,6 @@ export interface StripResult {
   message: string;
 }
 
-// Signals
-
-const SIGNAL_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
-  [
-    /compositeWithTrainedAlgorithmicMedia/i,
-    'DigitalSourceType: compositeWithTrainedAlgorithmicMedia',
-  ],
-  [/trainedAlgorithmicMedia/i, 'DigitalSourceType: trainedAlgorithmicMedia'],
-  [/algorithmicMedia/i, 'DigitalSourceType: algorithmicMedia'],
-  [/c2pa/i, 'C2PA'],
-  [/contentauth|contentcredentials/i, 'Content Authenticity'],
-  [/midjourney/i, 'Midjourney'],
-  [/dall[-_ ]?e/i, 'DALL-E'],
-  [/openai/i, 'OpenAI'],
-  [/stable[-_ ]?diffusion/i, 'Stable Diffusion'],
-  [/\bsdxl\b/i, 'SDXL'],
-  [/comfy-?ui/i, 'ComfyUI'],
-  [/firefly/i, 'Adobe Firefly'],
-  [/invoke-?ai/i, 'InvokeAI'],
-  [/novel-?ai/i, 'NovelAI'],
-  [/synthid/i, 'SynthID'],
-  [/\bSteps: \d+, Sampler: /, 'Stable Diffusion parameters'],
-];
-
 // PNG text keywords that the common generators write their prompt and settings under.
 const GENERATION_KEYWORDS = new Set([
   'parameters',
@@ -107,42 +78,9 @@ const GENERATION_KEYWORDS = new Set([
   'generation_data',
 ]);
 
-const latin1 = new TextDecoder('latin1');
-const utf8 = new TextDecoder('utf-8');
-
-/** The bytes as text to search. UTF-16 text (EXIF UserComment) is also searched with its zero bytes dropped. */
-function searchable(bytes: Uint8Array): string {
-  const text = latin1.decode(bytes);
-  return text.includes('\0') ? `${text}\n${text.replace(/\0/g, '')}` : text;
-}
-
-function findSignals(haystack: string): string[] {
-  const found: string[] = [];
-  for (const [pattern, label] of SIGNAL_PATTERNS) {
-    if (!pattern.test(haystack)) continue;
-    // The DigitalSourceType patterns overlap; the first, most specific one wins.
-    if (
-      label.startsWith('DigitalSourceType') &&
-      found.some((item) => item.startsWith('DigitalSourceType'))
-    )
-      continue;
-    found.push(label);
-  }
-  return found;
-}
-
-function preview(text: string): string {
-  // oxlint-disable-next-line no-control-regex -- control characters are what is collapsed to spaces
-  const flat = text.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
-  return flat.length > 160 ? `${flat.slice(0, 160)}…` : flat;
-}
-
 // Parsing
 
-interface Removal {
-  start: number;
-  end: number;
-  finding: MetadataFinding;
+interface Removal extends ByteRange {
   /** The WebP header flag that announces this block. */
   webpFlag?: number;
 }
@@ -154,23 +92,12 @@ interface Parsed {
   warnings: string[];
 }
 
-class ImageParseError extends Error {}
+class ImageParseError extends MetadataParseError {}
 
 const truncated = () =>
   new ImageParseError('The file is cut short or damaged, so it was left unchanged.');
 
-const ascii = (bytes: Uint8Array, start: number, length: number): string => {
-  let text = '';
-  for (let index = start; index < start + length && index < bytes.length; index++) {
-    text += String.fromCharCode(bytes[index]);
-  }
-  return text;
-};
-
-const startsWithText = (bytes: Uint8Array, text: string): boolean =>
-  ascii(bytes, 0, text.length) === text;
-
-function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
+export function detectImageFormat(bytes: Uint8Array): ImageFormat | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
     return 'jpeg';
   if (
@@ -216,7 +143,7 @@ function exifFinding(
   warnings: string[]
 ): MetadataFinding {
   const haystack = searchable(payload);
-  const signals = findSignals(haystack);
+  const signals = findImageSignals(haystack);
   const generated = signals.includes('Stable Diffusion parameters');
   const orientation = exifOrientation(payload);
   if (orientation !== null && orientation >= 2 && orientation <= 8) {
@@ -301,12 +228,12 @@ function parseJpeg(bytes: Uint8Array): Parsed {
       if (startsWithText(payload, 'Exif\0\0')) {
         finding = exifFinding(payload, 'JPEG APP1 (EXIF)', size, parsed.warnings);
       } else if (XMP_JPEG_PREFIXES.some((prefix) => startsWithText(payload, prefix))) {
-        const text = latin1.decode(payload);
+        const text = latin1Text(payload);
         finding = {
           category: 'XMP',
           location: 'JPEG APP1 (XMP)',
           size,
-          signals: findSignals(text),
+          signals: findImageSignals(text),
         };
       }
     } else if (marker === 0xeb && isJumbf(payload)) {
@@ -314,22 +241,22 @@ function parseJpeg(bytes: Uint8Array): Parsed {
         category: 'Content Credentials (C2PA)',
         location: 'JPEG APP11 (JUMBF)',
         size,
-        signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+        signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
       };
     } else if (marker === 0xed && startsWithText(payload, 'Photoshop 3.0\0')) {
       finding = {
         category: 'IPTC / Photoshop',
         location: 'JPEG APP13 (Photoshop)',
         size,
-        signals: findSignals(searchable(payload)),
+        signals: findImageSignals(searchable(payload)),
       };
     } else if (marker === 0xfe) {
-      const text = latin1.decode(payload);
+      const text = latin1Text(payload);
       finding = {
         category: 'Comment',
         location: 'JPEG COM',
         size,
-        signals: findSignals(text),
+        signals: findImageSignals(text),
         preview: preview(text),
       };
     } else if (marker === 0xe2 && startsWithText(payload, 'ICC_PROFILE\0')) {
@@ -348,20 +275,20 @@ const PNG_REMOVABLE = new Set(['tEXt', 'zTXt', 'iTXt', 'eXIf', 'caBX']);
 
 function pngTextFinding(type: string, payload: Uint8Array, size: number): MetadataFinding {
   const nul = payload.indexOf(0);
-  const keyword = latin1.decode(payload.subarray(0, nul < 0 ? payload.length : nul));
+  const keyword = latin1Text(payload.subarray(0, nul < 0 ? payload.length : nul));
   const location = `PNG ${type} "${keyword}"`;
   let text = '';
 
   if (type === 'tEXt' && nul >= 0) {
-    text = latin1.decode(payload.subarray(nul + 1));
+    text = latin1Text(payload.subarray(nul + 1));
   } else if (type === 'iTXt' && nul >= 0 && payload[nul + 1] === 0) {
     // Not compressed: flag, method, language tag, translated keyword, then the text.
     const languageEnd = payload.indexOf(0, nul + 3);
     const translatedEnd = languageEnd < 0 ? -1 : payload.indexOf(0, languageEnd + 1);
-    if (translatedEnd >= 0) text = utf8.decode(payload.subarray(translatedEnd + 1));
+    if (translatedEnd >= 0) text = utf8Text(payload.subarray(translatedEnd + 1));
   }
 
-  const signals = findSignals(`${keyword}\n${text}`);
+  const signals = findImageSignals(`${keyword}\n${text}`);
   const lowerKeyword = keyword.toLowerCase();
 
   let category: FindingCategory = 'Text metadata';
@@ -402,7 +329,7 @@ function parsePng(bytes: Uint8Array): Parsed {
           category: 'Content Credentials (C2PA)',
           location: 'PNG caBX',
           size,
-          signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+          signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
         };
       } else if (type === 'eXIf') {
         finding = exifFinding(payload, 'PNG eXIf', size, parsed.warnings);
@@ -459,7 +386,7 @@ function parseWebp(bytes: Uint8Array): Parsed {
           category: 'XMP',
           location: 'WebP XMP chunk',
           size,
-          signals: findSignals(latin1.decode(payload)),
+          signals: findImageSignals(latin1Text(payload)),
         },
         webpFlag: WEBP_FLAG_XMP,
       });
@@ -471,7 +398,7 @@ function parseWebp(bytes: Uint8Array): Parsed {
           category: 'Content Credentials (C2PA)',
           location: 'WebP C2PA chunk',
           size,
-          signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+          signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
         },
       });
     }
@@ -499,8 +426,6 @@ function parseSafely(bytes: Uint8Array): Parsed | ImageParseError {
       : new ImageParseError('The file could not be read, so it was left unchanged.');
   }
 }
-
-const distinct = (items: readonly string[]): string[] => [...new Set(items)];
 
 // Public API
 
@@ -569,16 +494,7 @@ export function stripImageMetadata(bytes: Uint8Array): StripResult {
     );
   }
 
-  const removedBytes = removals.reduce((sum, removal) => sum + (removal.end - removal.start), 0);
-  const output = new Uint8Array(bytes.length - removedBytes);
-  let read = 0;
-  let write = 0;
-  for (const removal of removals) {
-    output.set(bytes.subarray(read, removal.start), write);
-    write += removal.start - read;
-    read = removal.end;
-  }
-  output.set(bytes.subarray(read), write);
+  const output = cutRemovals(bytes, removals);
 
   if (parsed.format === 'webp') {
     new DataView(output.buffer).setUint32(4, output.length - 8, true);

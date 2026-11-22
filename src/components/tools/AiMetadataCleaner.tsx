@@ -1,16 +1,7 @@
 'use client';
 
 import { useId, useMemo, useRef, useState } from 'react';
-import {
-  Archive,
-  Download,
-  FileImage,
-  Image as ImageIcon,
-  ShieldCheck,
-  Trash2,
-  Type,
-  X,
-} from 'lucide-react';
+import { Archive, Download, FileImage, Files, ShieldCheck, Trash2, Type, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/CopyButton';
 import { Button } from '@/components/ui/button';
@@ -28,10 +19,10 @@ import {
   type FormatBytesOptions,
 } from '@/lib/files';
 import {
-  IMAGE_MIME_TYPES,
-  stripImageMetadata,
-  type StripResult,
-} from '@/lib/tools/ai-image-metadata';
+  MEDIA_MIME_TYPES,
+  stripMediaMetadata,
+  type MediaStripResult,
+} from '@/lib/tools/media-metadata';
 import {
   DEFAULT_TEXT_OPTIONS,
   TEXT_CATEGORIES,
@@ -44,24 +35,37 @@ import { uniqueFileNames } from '@/lib/tools/exif-viewer-remover';
 
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B', decimals: { KB: 1 } };
 
-interface ImageItem {
+/**
+ * Extensions rather than MIME types: some systems report an empty or odd type
+ * for MP3 and FLAC. The image types are listed as well, so a picked JPEG whose
+ * name has no listed extension is still accepted.
+ */
+const ACCEPT =
+  'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.mp4,.m4v,.mov,.m4a,.mp3,.flac,.wav';
+
+/** One file: roomy enough for a phone video, small enough that the copy made while cutting fits. */
+const MAX_FILE_BYTES = 512 * 1024 * 1024;
+/** All cleaned files kept at once, since every result is held for the download and the ZIP. */
+const RETAINED_BUDGET = 1024 * 1024 * 1024;
+
+interface MediaItem {
   id: string;
   file: File;
   /** Null while the file is being read. */
-  result: StripResult | null;
+  result: MediaStripResult | null;
   error?: string;
 }
 
-const cleanedBlob = (result: StripResult, file: File): Blob =>
+const cleanedBlob = (result: MediaStripResult, file: File): Blob =>
   new Blob([result.bytes as BlobPart], {
-    type: result.format ? IMAGE_MIME_TYPES[result.format] : file.type,
+    type: result.format ? MEDIA_MIME_TYPES[result.format] : file.type,
   });
 
 const cleanedName = (file: File) => outputFileName(file.name, { suffix: '-clean' });
 
-// Images
+// Media
 
-function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void }) {
+function MediaResult({ item, onRemove }: { item: MediaItem; onRemove: () => void }) {
   const { file, result } = item;
   const failed =
     item.error !== undefined || (result !== null && !result.changed && !result.verified);
@@ -174,34 +178,66 @@ function ImageResult({ item, onRemove }: { item: ImageItem; onRemove: () => void
   );
 }
 
-function ImageCleaner() {
-  const [items, setItems] = useState<ImageItem[]>([]);
+function MediaCleaner() {
+  const [items, setItems] = useState<MediaItem[]>([]);
   const [zipping, setZipping] = useState(false);
   const [zipError, setZipError] = useState('');
   const nextId = useRef(0);
+  /** The rows that are still on screen, so a file cleaned after its row was removed is dropped. */
+  const live = useRef(new Set<string>());
+  /** Bytes of cleaned output currently held for download. */
+  const retained = useRef(0);
+  /** Files are read one at a time; a batch of large videos would otherwise hold them all at once. */
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
-  const update = (id: string, patch: Partial<ImageItem>) =>
+  const update = (id: string, patch: Partial<MediaItem>) =>
     setItems((previous) => previous.map((item) => (item.id === id ? { ...item, ...patch } : item)));
 
-  const addFiles = (files: File[]) => {
-    setZipError('');
-    const added = files.map((file): ImageItem => {
-      nextId.current += 1;
-      return { id: `image-${nextId.current}`, file, result: null };
-    });
-    setItems((previous) => [...previous, ...added]);
-
-    for (const item of added) {
-      readFileAsArrayBuffer(item.file).then(
-        (buffer) => update(item.id, { result: stripImageMetadata(new Uint8Array(buffer)) }),
-        () => update(item.id, { error: 'The file could not be read.' })
-      );
+  const cleanOne = async (item: MediaItem) => {
+    if (retained.current + item.file.size > RETAINED_BUDGET) {
+      update(item.id, {
+        error: `Only ${formatBytes(RETAINED_BUDGET)} of files are cleaned at once. Remove some and add this one again.`,
+      });
+      return;
+    }
+    try {
+      const buffer = await readFileAsArrayBuffer(item.file);
+      const result = stripMediaMetadata(new Uint8Array(buffer));
+      // Reading and cleaning both fail; either way the row says so instead of staying on "Reading".
+      if (!live.current.has(item.id)) return;
+      retained.current += result.bytes.length;
+      update(item.id, { result });
+    } catch {
+      update(item.id, { error: 'The file could not be read.' });
     }
   };
 
+  const addFiles = (files: File[]) => {
+    setZipError('');
+    const added = files.map((file): MediaItem => {
+      nextId.current += 1;
+      const item = { id: `media-${nextId.current}`, file, result: null };
+      live.current.add(item.id);
+      return item;
+    });
+    setItems((previous) => [...previous, ...added]);
+
+    for (const item of added) queue.current = queue.current.then(() => cleanOne(item));
+  };
+
+  const removeItem = (id: string) => {
+    live.current.delete(id);
+    setItems((previous) => {
+      const removed = previous.find((item) => item.id === id);
+      retained.current -= removed?.result?.bytes.length ?? 0;
+      return previous.filter((item) => item.id !== id);
+    });
+  };
+
   const intake = useFileIntake({
-    accept: 'image/jpeg,image/png,image/webp',
+    accept: ACCEPT,
     multiple: true,
+    maxSize: MAX_FILE_BYTES,
     onFiles: addFiles,
   });
 
@@ -221,7 +257,7 @@ function ImageCleaner() {
       cleaned.forEach((item, index) => {
         if (item.result) zip.file(names[index], cleanedBlob(item.result, item.file));
       });
-      downloadBlob(await zip.generateAsync({ type: 'blob' }), 'cleaned-images.zip');
+      downloadBlob(await zip.generateAsync({ type: 'blob' }), 'cleaned-media.zip');
     } catch {
       setZipError('The ZIP archive could not be created.');
     } finally {
@@ -230,6 +266,8 @@ function ImageCleaner() {
   };
 
   const handleClear = () => {
+    live.current.clear();
+    retained.current = 0;
     setItems([]);
     setZipError('');
     intake.reset();
@@ -240,20 +278,20 @@ function ImageCleaner() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5" />
-            Images
+            <FileImage className="h-5 w-5" />
+            Images, video and audio
           </CardTitle>
           <CardDescription>
-            Finds and cuts out AI provenance metadata (EXIF, XMP, C2PA Content Credentials, IPTC,
-            comments, PNG text chunks) without re-encoding. Pixels and colour profiles stay exactly
-            as they were.
+            Finds and cuts out AI provenance metadata (EXIF, XMP, C2PA Content Credentials, ID3
+            tags) without re-encoding. Pixels, frames and sound stay exactly as they were. Other
+            file types are scanned for markers but never changed.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <FileDropzone
             intake={intake}
-            label="Drag & drop JPEG, PNG or WebP images or click to browse"
-            hint="You can add several at once. Files remain local on your machine"
+            label="Drag & drop media files or click to browse"
+            hint="JPEG, PNG, WebP, MP4, MOV, M4A, MP3, FLAC and WAV. Files remain local on your machine"
           />
         </CardContent>
       </Card>
@@ -262,7 +300,7 @@ function ImageCleaner() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              {items.length} {items.length === 1 ? 'image' : 'images'}
+              {items.length} {items.length === 1 ? 'file' : 'files'}
             </CardTitle>
             <CardDescription>
               {cleaned.length > 0
@@ -292,13 +330,7 @@ function ImageCleaner() {
             )}
             <ul className="space-y-3">
               {items.map((item) => (
-                <ImageResult
-                  key={item.id}
-                  item={item}
-                  onRemove={() =>
-                    setItems((previous) => previous.filter((other) => other.id !== item.id))
-                  }
-                />
+                <MediaResult key={item.id} item={item} onRemove={() => removeItem(item.id)} />
               ))}
             </ul>
           </CardContent>
@@ -412,19 +444,19 @@ function TextCleaner() {
 
 export function AiMetadataCleaner() {
   return (
-    <Tabs defaultValue="images" className="w-full">
+    <Tabs defaultValue="media" className="w-full">
       <TabsList className="mb-4 grid h-auto w-full grid-cols-2 sm:mb-6">
-        <TabsTrigger value="images" className="flex items-center justify-center gap-2 py-3">
-          <ImageIcon className="h-4 w-4" />
-          Images
+        <TabsTrigger value="media" className="flex items-center justify-center gap-2 py-3">
+          <Files className="h-4 w-4" />
+          Media
         </TabsTrigger>
         <TabsTrigger value="text" className="flex items-center justify-center gap-2 py-3">
           <Type className="h-4 w-4" />
           Text
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="images">
-        <ImageCleaner />
+      <TabsContent value="media">
+        <MediaCleaner />
       </TabsContent>
       <TabsContent value="text">
         <TextCleaner />

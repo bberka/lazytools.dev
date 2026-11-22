@@ -79,7 +79,7 @@ Live at [lazytools.dev](https://lazytools.dev/). 99 tools across 12 categories.
 ### 7. Security
 
 - [x] **HMAC Generator**: Compute HMAC signatures (SHA-256/512) with a custom secret key.
-- [x] **AI Metadata Cleaner**: Strip C2PA, EXIF, XMP and generation prompts from images, and invisible characters from text.
+- [x] **AI Metadata Cleaner**: Strip C2PA, EXIF, XMP and generation prompts from images, video and audio files (MP4, MOV, M4A, MP3, FLAC, WAV), and invisible characters from text.
 - [ ] **Password Strength Evaluator**: Real-time password safety metric and warnings using entropy checks.
 - [ ] **Self-Signed Certificate Generator**: Create client-side self-signed X.509 certificates for local HTTPS.
 - [ ] **BIP39 Passphrase Generator**: Generate secure crypto wallet recovery phrases (BIP39).
