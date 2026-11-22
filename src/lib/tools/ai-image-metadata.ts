@@ -19,7 +19,7 @@ import {
   ascii,
   cutRemovals,
   distinct,
-  findSignals,
+  findImageSignals,
   latin1Text,
   preview,
   searchable,
@@ -143,7 +143,7 @@ function exifFinding(
   warnings: string[]
 ): MetadataFinding {
   const haystack = searchable(payload);
-  const signals = findSignals(haystack);
+  const signals = findImageSignals(haystack);
   const generated = signals.includes('Stable Diffusion parameters');
   const orientation = exifOrientation(payload);
   if (orientation !== null && orientation >= 2 && orientation <= 8) {
@@ -233,7 +233,7 @@ function parseJpeg(bytes: Uint8Array): Parsed {
           category: 'XMP',
           location: 'JPEG APP1 (XMP)',
           size,
-          signals: findSignals(text),
+          signals: findImageSignals(text),
         };
       }
     } else if (marker === 0xeb && isJumbf(payload)) {
@@ -241,14 +241,14 @@ function parseJpeg(bytes: Uint8Array): Parsed {
         category: 'Content Credentials (C2PA)',
         location: 'JPEG APP11 (JUMBF)',
         size,
-        signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+        signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
       };
     } else if (marker === 0xed && startsWithText(payload, 'Photoshop 3.0\0')) {
       finding = {
         category: 'IPTC / Photoshop',
         location: 'JPEG APP13 (Photoshop)',
         size,
-        signals: findSignals(searchable(payload)),
+        signals: findImageSignals(searchable(payload)),
       };
     } else if (marker === 0xfe) {
       const text = latin1Text(payload);
@@ -256,7 +256,7 @@ function parseJpeg(bytes: Uint8Array): Parsed {
         category: 'Comment',
         location: 'JPEG COM',
         size,
-        signals: findSignals(text),
+        signals: findImageSignals(text),
         preview: preview(text),
       };
     } else if (marker === 0xe2 && startsWithText(payload, 'ICC_PROFILE\0')) {
@@ -288,7 +288,7 @@ function pngTextFinding(type: string, payload: Uint8Array, size: number): Metada
     if (translatedEnd >= 0) text = utf8Text(payload.subarray(translatedEnd + 1));
   }
 
-  const signals = findSignals(`${keyword}\n${text}`);
+  const signals = findImageSignals(`${keyword}\n${text}`);
   const lowerKeyword = keyword.toLowerCase();
 
   let category: FindingCategory = 'Text metadata';
@@ -329,7 +329,7 @@ function parsePng(bytes: Uint8Array): Parsed {
           category: 'Content Credentials (C2PA)',
           location: 'PNG caBX',
           size,
-          signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+          signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
         };
       } else if (type === 'eXIf') {
         finding = exifFinding(payload, 'PNG eXIf', size, parsed.warnings);
@@ -386,7 +386,7 @@ function parseWebp(bytes: Uint8Array): Parsed {
           category: 'XMP',
           location: 'WebP XMP chunk',
           size,
-          signals: findSignals(latin1Text(payload)),
+          signals: findImageSignals(latin1Text(payload)),
         },
         webpFlag: WEBP_FLAG_XMP,
       });
@@ -398,7 +398,7 @@ function parseWebp(bytes: Uint8Array): Parsed {
           category: 'Content Credentials (C2PA)',
           location: 'WebP C2PA chunk',
           size,
-          signals: [...new Set(['C2PA', ...findSignals(searchable(payload))])],
+          signals: [...new Set(['C2PA', ...findImageSignals(searchable(payload))])],
         },
       });
     }

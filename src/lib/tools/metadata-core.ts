@@ -43,8 +43,10 @@ export interface Removal {
 export interface OffsetPatch {
   /** Where the field sits in the original file. */
   at: number;
-  /** The value it holds in the original file. */
-  value: number;
+  /** The absolute position the field points at in the original file. */
+  target: number;
+  /** For a relative offset, the position it is measured from. */
+  base?: number;
   width: 4 | 8;
 }
 
@@ -53,8 +55,12 @@ export interface ParsedMedia {
   removals: Removal[];
   kept: string[];
   warnings: string[];
-  /** Fix-ups the container needs once the removals are cut, for example a rewritten length field. */
-  finalise?: (output: Uint8Array) => void;
+  /**
+   * Fix-ups the container needs once the removals are cut, for example a
+   * rewritten length field. Returns false when it cannot be done safely, and
+   * the cleaner then hands the original file back.
+   */
+  finalise?: (output: Uint8Array) => boolean;
 }
 
 /** Thrown by a format parser for input it will not touch. The message is shown to the user. */
@@ -62,32 +68,39 @@ export class MetadataParseError extends Error {}
 
 // Signals
 
-const SIGNAL_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+const SIGNAL_PATTERNS: ReadonlyArray<readonly [RegExp, string, boolean]> = [
   [
     /compositeWithTrainedAlgorithmicMedia/i,
     'DigitalSourceType: compositeWithTrainedAlgorithmicMedia',
+    false,
   ],
-  [/trainedAlgorithmicMedia/i, 'DigitalSourceType: trainedAlgorithmicMedia'],
-  [/algorithmicMedia/i, 'DigitalSourceType: algorithmicMedia'],
-  [/c2pa/i, 'C2PA'],
-  [/contentauth|contentcredentials/i, 'Content Authenticity'],
-  [/midjourney/i, 'Midjourney'],
-  [/dall[-_ ]?e/i, 'DALL-E'],
-  [/openai/i, 'OpenAI'],
-  [/stable[-_ ]?diffusion/i, 'Stable Diffusion'],
-  [/\bsdxl\b/i, 'SDXL'],
-  [/comfy-?ui/i, 'ComfyUI'],
-  [/firefly/i, 'Adobe Firefly'],
-  [/invoke-?ai/i, 'InvokeAI'],
-  [/novel-?ai/i, 'NovelAI'],
-  [/synthid/i, 'SynthID'],
-  [/\bSteps: \d+, Sampler: /, 'Stable Diffusion parameters'],
-  [/\bsuno\b/i, 'Suno'],
-  [/\budio\b/i, 'Udio'],
-  [/elevenlabs/i, 'ElevenLabs'],
-  [/google (?:veo|imagen|gemini)/i, 'Google Veo / Imagen'],
-  [/©xyz/, 'GPS location (©xyz)'],
+  [/trainedAlgorithmicMedia/i, 'DigitalSourceType: trainedAlgorithmicMedia', false],
+  [/algorithmicMedia/i, 'DigitalSourceType: algorithmicMedia', false],
+  [/c2pa/i, 'C2PA', false],
+  [/contentauth|contentcredentials/i, 'Content Authenticity', false],
+  [/midjourney/i, 'Midjourney', false],
+  [/dall[-_ ]?e/i, 'DALL-E', false],
+  [/openai/i, 'OpenAI', false],
+  [/stable[-_ ]?diffusion/i, 'Stable Diffusion', false],
+  [/\bsdxl\b/i, 'SDXL', false],
+  [/comfy-?ui/i, 'ComfyUI', false],
+  [/firefly/i, 'Adobe Firefly', false],
+  [/invoke-?ai/i, 'InvokeAI', false],
+  [/novel-?ai/i, 'NovelAI', false],
+  [/synthid/i, 'SynthID', false],
+  [/\bSteps: \d+, Sampler: /, 'Stable Diffusion parameters', false],
+  // Audio and video generators, plus the QuickTime GPS atom. The image matcher
+  // never knew these, and a PNG caption mentioning one of them is not a
+  // generation prompt, so only the media paths search for them.
+  [/\bsuno\b/i, 'Suno', true],
+  [/\budio\b/i, 'Udio', true],
+  [/elevenlabs/i, 'ElevenLabs', true],
+  [/google (?:veo|imagen|gemini)/i, 'Google Veo / Imagen', true],
+  [/©xyz/, 'GPS location (©xyz)', true],
 ];
+
+/** Which marker set to search for: the image one, or the image one plus the audio and video additions. */
+export type SignalScope = 'image' | 'media';
 
 const latin1 = new TextDecoder('latin1');
 const utf8 = new TextDecoder('utf-8');
@@ -98,9 +111,10 @@ export function searchable(bytes: Uint8Array): string {
   return text.includes('\0') ? `${text}\n${text.replace(/\0/g, '')}` : text;
 }
 
-export function findSignals(haystack: string): string[] {
+export function findSignals(haystack: string, scope: SignalScope = 'media'): string[] {
   const found: string[] = [];
-  for (const [pattern, label] of SIGNAL_PATTERNS) {
+  for (const [pattern, label, mediaOnly] of SIGNAL_PATTERNS) {
+    if (mediaOnly && scope === 'image') continue;
     if (!pattern.test(haystack)) continue;
     // The DigitalSourceType patterns overlap; the first, most specific one wins.
     if (
@@ -112,6 +126,9 @@ export function findSignals(haystack: string): string[] {
   }
   return found;
 }
+
+/** The marker set the image cleaner has always used, without the audio and video additions. */
+export const findImageSignals = (haystack: string): string[] => findSignals(haystack, 'image');
 
 export function preview(text: string): string {
   // oxlint-disable-next-line no-control-regex -- control characters are what is collapsed to spaces
@@ -138,11 +155,50 @@ export const latin1Text = (bytes: Uint8Array): string => latin1.decode(bytes);
 
 // Cutting
 
-/** How many bytes the removals take out of everything that sits at or after `offset`. */
-export function removedBytesBefore(offset: number, removals: readonly Removal[]): number {
-  let total = 0;
-  for (const removal of removals) if (removal.end <= offset) total += removal.end - removal.start;
-  return total;
+/**
+ * Where every removal sits, computed once: a file with thousands of removable
+ * boxes and a chunk table of the same size would otherwise rescan the removal
+ * list for every single offset.
+ */
+export interface RemovalIndex {
+  /** How many bytes the removals take out of everything that sits at or after `offset`. */
+  shift(offset: number): number;
+  /** How many bytes the removals take out of the range `start` to `end`. */
+  within(start: number, end: number): number;
+}
+
+/** `removals` must be sorted by start and must not overlap. */
+export function removalIndex(removals: readonly Removal[]): RemovalIndex {
+  // Sorted and non-overlapping, so the ends and the running totals both ascend.
+  const ends = removals.map((removal) => removal.end);
+  const starts = removals.map((removal) => removal.start);
+  const before: number[] = [0];
+  for (const removal of removals)
+    before.push(before[before.length - 1] + (removal.end - removal.start));
+
+  /** Index of the first removal whose value is >= `offset`. */
+  const firstAtLeast = (values: readonly number[], offset: number): number => {
+    let low = 0;
+    let high = values.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if (values[middle] < offset) low = middle + 1;
+      else high = middle;
+    }
+    return low;
+  };
+
+  return {
+    shift: (offset) => before[firstAtLeast(ends, offset + 1)],
+    within: (start, end) => {
+      let total = 0;
+      for (let index = firstAtLeast(starts, start); index < removals.length; index++) {
+        if (removals[index].end > end) break;
+        total += removals[index].end - removals[index].start;
+      }
+      return total;
+    },
+  };
 }
 
 /** The file without the removals, which must be sorted and must not overlap. */
@@ -161,22 +217,29 @@ export function cutRemovals(bytes: Uint8Array, removals: readonly Removal[]): Ui
 }
 
 /**
- * Moves the absolute offsets a container stores for its own media data, so a
- * file whose blocks were cut still plays: the field itself slides forward by
- * what was removed in front of it, and the offset it holds shrinks by what was
- * removed in front of the data it points at.
+ * Moves the offsets a container stores for its own media data, so a file whose
+ * blocks were cut still plays: the field itself slides forward by what was
+ * removed in front of it, and the offset it holds shrinks by what was removed
+ * in front of the data it points at. An absolute offset is a position in the
+ * file; a relative one is a distance from `base`, which is often the start of
+ * the enclosing fragment.
  */
 export function applyOffsetPatches(
   output: Uint8Array,
-  removals: readonly Removal[],
+  index: RemovalIndex,
   patches: readonly OffsetPatch[]
-): void {
+): boolean {
   const view = new DataView(output.buffer, output.byteOffset, output.byteLength);
   for (const patch of patches) {
-    const at = patch.at - removedBytesBefore(patch.at, removals);
-    const value = patch.value - removedBytesBefore(patch.value, removals);
-    if (at < 0 || at + patch.width > output.length || value < 0) continue;
-    if (patch.width === 4) view.setUint32(at, value);
-    else view.setBigUint64(at, BigInt(value));
+    const at = patch.at - index.shift(patch.at);
+    const relativeBase = patch.base === undefined ? 0 : patch.base - index.shift(patch.base);
+    const value = patch.target - index.shift(patch.target) - relativeBase;
+    // An absolute offset is a position, so it cannot be negative; a relative one is a distance.
+    if (at < 0 || at + patch.width > output.length) return false;
+    if (patch.base === undefined && value < 0) return false;
+    if (patch.width === 8) view.setBigInt64(at, BigInt(value));
+    else if (patch.base === undefined) view.setUint32(at, value);
+    else view.setInt32(at, value);
   }
+  return true;
 }
