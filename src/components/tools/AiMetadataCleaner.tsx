@@ -35,8 +35,18 @@ import { uniqueFileNames } from '@/lib/tools/exif-viewer-remover';
 
 const SIZE_FORMAT: FormatBytesOptions = { fixed: true, byteUnit: 'B', decimals: { KB: 1 } };
 
-/** Extensions rather than MIME types: some systems report an empty or odd type for MP3 and FLAC. */
-const ACCEPT = '.jpg,.jpeg,.png,.webp,.mp4,.m4v,.mov,.m4a,.mp3,.flac,.wav';
+/**
+ * Extensions rather than MIME types: some systems report an empty or odd type
+ * for MP3 and FLAC. The image types are listed as well, so a picked JPEG whose
+ * name has no listed extension is still accepted.
+ */
+const ACCEPT =
+  'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp,.mp4,.m4v,.mov,.m4a,.mp3,.flac,.wav';
+
+/** One file: roomy enough for a phone video, small enough that the copy made while cutting fits. */
+const MAX_FILE_BYTES = 512 * 1024 * 1024;
+/** All cleaned files kept at once, since every result is held for the download and the ZIP. */
+const RETAINED_BUDGET = 1024 * 1024 * 1024;
 
 interface MediaItem {
   id: string;
@@ -173,31 +183,61 @@ function MediaCleaner() {
   const [zipping, setZipping] = useState(false);
   const [zipError, setZipError] = useState('');
   const nextId = useRef(0);
+  /** The rows that are still on screen, so a file cleaned after its row was removed is dropped. */
+  const live = useRef(new Set<string>());
+  /** Bytes of cleaned output currently held for download. */
+  const retained = useRef(0);
+  /** Files are read one at a time; a batch of large videos would otherwise hold them all at once. */
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
   const update = (id: string, patch: Partial<MediaItem>) =>
     setItems((previous) => previous.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+
+  const cleanOne = async (item: MediaItem) => {
+    if (retained.current + item.file.size > RETAINED_BUDGET) {
+      update(item.id, {
+        error: `Only ${formatBytes(RETAINED_BUDGET)} of files are cleaned at once. Remove some and add this one again.`,
+      });
+      return;
+    }
+    try {
+      const buffer = await readFileAsArrayBuffer(item.file);
+      const result = stripMediaMetadata(new Uint8Array(buffer));
+      // Reading and cleaning both fail; either way the row says so instead of staying on "Reading".
+      if (!live.current.has(item.id)) return;
+      retained.current += result.bytes.length;
+      update(item.id, { result });
+    } catch {
+      update(item.id, { error: 'The file could not be read.' });
+    }
+  };
 
   const addFiles = (files: File[]) => {
     setZipError('');
     const added = files.map((file): MediaItem => {
       nextId.current += 1;
-      return { id: `media-${nextId.current}`, file, result: null };
+      const item = { id: `media-${nextId.current}`, file, result: null };
+      live.current.add(item.id);
+      return item;
     });
     setItems((previous) => [...previous, ...added]);
 
-    for (const item of added) {
-      readFileAsArrayBuffer(item.file).then(
-        (buffer) => update(item.id, { result: stripMediaMetadata(new Uint8Array(buffer)) }),
-        () => update(item.id, { error: 'The file could not be read.' })
-      );
-    }
+    for (const item of added) queue.current = queue.current.then(() => cleanOne(item));
+  };
+
+  const removeItem = (id: string) => {
+    live.current.delete(id);
+    setItems((previous) => {
+      const removed = previous.find((item) => item.id === id);
+      retained.current -= removed?.result?.bytes.length ?? 0;
+      return previous.filter((item) => item.id !== id);
+    });
   };
 
   const intake = useFileIntake({
     accept: ACCEPT,
     multiple: true,
-    // The whole file is copied to cut blocks out of it, so a phone-sized video is fine and a multi-gigabyte one is not.
-    maxSize: 1024 * 1024 * 1024,
+    maxSize: MAX_FILE_BYTES,
     onFiles: addFiles,
   });
 
@@ -226,6 +266,8 @@ function MediaCleaner() {
   };
 
   const handleClear = () => {
+    live.current.clear();
+    retained.current = 0;
     setItems([]);
     setZipError('');
     intake.reset();
@@ -288,13 +330,7 @@ function MediaCleaner() {
             )}
             <ul className="space-y-3">
               {items.map((item) => (
-                <MediaResult
-                  key={item.id}
-                  item={item}
-                  onRemove={() =>
-                    setItems((previous) => previous.filter((other) => other.id !== item.id))
-                  }
-                />
+                <MediaResult key={item.id} item={item} onRemove={() => removeItem(item.id)} />
               ))}
             </ul>
           </CardContent>
